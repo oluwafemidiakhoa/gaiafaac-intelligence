@@ -1,0 +1,10 @@
+from fastapi import APIRouter
+
+from gaiafaac_api.api.v1.routes.analytics import router as analytics_router
+from gaiafaac_api.api.v1.routes.demo_data import router as demo_data_router
+from gaiafaac_api.api.v1.routes.health import router as health_router
+
+router = APIRouter(prefix="/api/v1")
+router.include_router(health_router)
+router.include_router(demo_data_router)
+router.include_router(analytics_router)

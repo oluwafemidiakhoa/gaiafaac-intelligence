@@ -1,0 +1,31 @@
+{
+  "name": "gaiafaac-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "overrides": {
+    "postcss": "8.5.22",
+    "sharp": "0.35.0"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @gaiafaac/web",
+    "dev": "npm run dev --workspace @gaiafaac/web",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "lint": "npm run lint --workspace @gaiafaac/web",
+    "test": "npm run test --workspace @gaiafaac/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "docker:config": "docker compose config --quiet"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "prettier-plugin-tailwindcss": "0.6.14",
+    "typescript": "5.9.2"
+  }
+}

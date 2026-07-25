@@ -1,0 +1,14 @@
+.git
+.github
+.next
+**/.next
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/node_modules
+.env
+.env.*
+data
+notebooks
+reports
+
