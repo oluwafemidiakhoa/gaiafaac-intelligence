@@ -5,7 +5,7 @@
     "dockerfilePath": "apps/api/Dockerfile"
   },
   "deploy": {
-    "startCommand": "uvicorn gaiafaac_api.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "sh -c \"uvicorn gaiafaac_api.main:app --host 0.0.0.0 --port $PORT\"",
     "healthcheckPath": "/api/v1/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"
