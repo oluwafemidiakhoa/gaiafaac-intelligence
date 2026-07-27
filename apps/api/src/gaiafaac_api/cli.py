@@ -5,12 +5,13 @@ import uuid
 from datetime import date
 from pathlib import Path
 
-from gaiafaac_api.database.models import ExtractionRun
+from gaiafaac_api.database.enums import UserRole
+from gaiafaac_api.database.models import ExtractionRun, User
 from gaiafaac_api.database.seeds import seed_demo_allocations, seed_states
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
 from gaiafaac_api.pipeline.analytics.dataset import generate_analytics_dataset
 from gaiafaac_api.pipeline.analytics.run import compute_analytics
-from gaiafaac_api.pipeline.approval import approve_import, reject_import
+from gaiafaac_api.pipeline.approval import approve_import, publish_import, reject_import
 from gaiafaac_api.pipeline.extraction.file_import import import_file
 from gaiafaac_api.pipeline.importer import ImportRequest, import_allocations_csv
 from gaiafaac_api.pipeline.validation import validate_import
@@ -67,6 +68,17 @@ def build_parser() -> argparse.ArgumentParser:
     reject.add_argument("run_id", type=uuid.UUID)
     reject.add_argument("--reviewer-id", required=True, type=uuid.UUID)
     reject.add_argument("--reason", required=True)
+
+    publish = commands.add_parser("publish-import", help="Publish a human-verified real import")
+    publish.add_argument("run_id", type=uuid.UUID)
+    publish.add_argument("--reviewer-id", required=True, type=uuid.UUID)
+
+    create_user = commands.add_parser("create-user", help="Create a reviewer/administrator user")
+    create_user.add_argument("--email", required=True)
+    create_user.add_argument("--full-name", required=True)
+    create_user.add_argument(
+        "--role", default=UserRole.REVIEWER.value, choices=[role.value for role in UserRole]
+    )
 
     commands.add_parser("seed-analytics-demo", help="Generate the synthetic analytics demo dataset")
     commands.add_parser("compute-analytics", help="Compute and persist demo analytics")
@@ -152,6 +164,22 @@ def main() -> None:
                 reason=args.reason,
             )
             print(f"Import rejected: run={result.run_id}, published=false.")
+        elif args.command == "publish-import":
+            result = publish_import(session, run_id=args.run_id, reviewer_id=args.reviewer_id)
+            print(
+                f"Import PUBLISHED: run={result.run_id}, "
+                f"allocations={result.allocations_approved}, published=true."
+            )
+        elif args.command == "create-user":
+            user = User(
+                email=args.email,
+                full_name=args.full_name,
+                role=UserRole(args.role),
+                is_active=True,
+            )
+            session.add(user)
+            session.commit()
+            print(f"User created: {user.id} ({user.role.value})")
         elif args.command == "seed-analytics-demo":
             summary = generate_analytics_dataset(session)
             print(

@@ -167,3 +167,40 @@ def reject_import(
     )
     session.commit()
     return ApprovalResult(str(run.id), str(period.id), 0, False)
+
+
+def publish_import(
+    session: Session, *, run_id: uuid.UUID, reviewer_id: uuid.UUID
+) -> ApprovalResult:
+    """Publish a human-verified real import so it becomes public. Demo can never publish."""
+    run, source, period, reviewer, allocations = _approval_context(session, run_id, reviewer_id)
+    if period.is_demo or source.is_demo:
+        raise ApprovalError("Demo data can never be published")
+    if period.verification_status is not VerificationStatus.HUMAN_VERIFIED:
+        raise ApprovalError("Only human-verified imports can be published")
+    if any(
+        allocation.verification_status is not VerificationStatus.HUMAN_VERIFIED
+        for allocation in allocations
+    ):
+        raise ApprovalError("Every allocation must be human-verified before publishing")
+    if period.is_published:
+        return ApprovalResult(str(run.id), str(period.id), len(allocations), True)
+
+    published_at = datetime.now(UTC)
+    for allocation in allocations:
+        allocation.is_published = True
+        allocation.published_at = published_at
+    period.is_published = True
+    period.published_at = published_at
+    source.source_status = SourceStatus.APPROVED
+    session.add(
+        AuditLog(
+            actor_user_id=reviewer.id,
+            action="import.published",
+            entity_type="reporting_period",
+            entity_id=period.id,
+            payload={"allocations_published": len(allocations), "published": True},
+        )
+    )
+    session.commit()
+    return ApprovalResult(str(run.id), str(period.id), len(allocations), True)
