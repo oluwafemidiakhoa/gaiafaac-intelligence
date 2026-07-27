@@ -28,6 +28,7 @@ dev = [
 ]
 extraction = [
   "openpyxl>=3.1,<4",
+  "pdfplumber>=0.11,<0.12",
 ]
 
 [tool.hatch.build.targets.wheel]

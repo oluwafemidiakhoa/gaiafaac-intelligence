@@ -11,6 +11,7 @@ from gaiafaac_api.database.session import create_database_engine, create_session
 from gaiafaac_api.pipeline.analytics.dataset import generate_analytics_dataset
 from gaiafaac_api.pipeline.analytics.run import compute_analytics
 from gaiafaac_api.pipeline.approval import approve_import, reject_import
+from gaiafaac_api.pipeline.extraction.file_import import import_file
 from gaiafaac_api.pipeline.importer import ImportRequest, import_allocations_csv
 from gaiafaac_api.pipeline.validation import validate_import
 from gaiafaac_api.services.source_documents import register_source_document
@@ -69,6 +70,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     commands.add_parser("seed-analytics-demo", help="Generate the synthetic analytics demo dataset")
     commands.add_parser("compute-analytics", help="Compute and persist demo analytics")
+
+    file_import = commands.add_parser(
+        "import-file", help="Import a real source file (CSV/XLSX/OAGF PDF) through review"
+    )
+    file_import.add_argument("path", type=Path)
+    file_import.add_argument("--source-organization", required=True)
+    file_import.add_argument("--revenue-month", required=True, type=_date)
+    file_import.add_argument("--reporting-label", required=True)
+    file_import.add_argument("--faac-meeting-date", type=_date)
+    file_import.add_argument("--publication-date", type=_date)
+    file_import.add_argument("--source-url")
+    file_import.add_argument("--document-version", default="1")
+    file_import.add_argument(
+        "--reported-unit", help="Explicit unit for rows without one, e.g. naira"
+    )
+    file_import.add_argument("--demo", action="store_true")
     return parser
 
 
@@ -145,6 +162,28 @@ def main() -> None:
             result = compute_analytics(session)
             print(
                 f"Analytics computed: indicators={result.indicators}, forecasts={result.forecasts}."
+            )
+        elif args.command == "import-file":
+            result = import_file(
+                session,
+                ImportRequest(
+                    path=args.path,
+                    source_organization=args.source_organization,
+                    revenue_month=args.revenue_month,
+                    reporting_label=args.reporting_label,
+                    faac_meeting_date=args.faac_meeting_date,
+                    publication_date=args.publication_date,
+                    source_url=args.source_url,
+                    document_version=args.document_version,
+                    reported_unit=args.reported_unit,
+                    is_demo=args.demo,
+                ),
+            )
+            print(
+                f"File import awaiting review: run={result.run_id}, "
+                f"records={result.records_extracted}, "
+                f"findings={result.finding_count}, "
+                f"blocking={result.blocking_finding_count}."
             )
 
 
