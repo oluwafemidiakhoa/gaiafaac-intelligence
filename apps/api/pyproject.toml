@@ -26,6 +26,10 @@ dev = [
   "pytest-cov>=6.2,<7",
   "ruff>=0.12,<1",
 ]
+extraction = [
+  "openpyxl>=3.1,<4",
+  "pdfplumber>=0.11,<0.12",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gaiafaac_api"]

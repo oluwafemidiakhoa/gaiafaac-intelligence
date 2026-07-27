@@ -49,6 +49,7 @@ class ImportRequest:
     source_url: str | None = None
     document_version: str = "1"
     is_demo: bool = False
+    reported_unit: str | None = None
 
 
 @dataclass(frozen=True)
