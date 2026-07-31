@@ -98,6 +98,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--reported-unit", help="Explicit unit for rows without one, e.g. naira"
     )
     file_import.add_argument("--demo", action="store_true")
+
+    collect = commands.add_parser(
+        "collect-oagf", help="Fetch, import and queue new OAGF months (never publishes)"
+    )
+    collect.add_argument("--months-back", type=int, default=3)
+    collect.add_argument("--dry-run", action="store_true")
     return parser
 
 
@@ -212,6 +218,39 @@ def main() -> None:
                 f"records={result.records_extracted}, "
                 f"findings={result.finding_count}, "
                 f"blocking={result.blocking_finding_count}."
+            )
+        elif args.command == "collect-oagf":
+            from gaiafaac_api.config import get_settings
+            from gaiafaac_api.pipeline.collection.collector import run_collection
+            from gaiafaac_api.pipeline.collection.downloader import http_download
+            from gaiafaac_api.pipeline.collection.notify import send_review_alert
+            from gaiafaac_api.pipeline.collection.oagf_urls import candidate_urls
+
+            if args.dry_run:
+                anchor = date.today().replace(day=1)
+                for step in range(1, args.months_back + 1):
+                    idx = (anchor.year * 12 + anchor.month - 1) - step
+                    revenue = date(idx // 12, idx % 12 + 1, 1)
+                    print(f"{revenue:%B %Y}: {candidate_urls(revenue.year, revenue.month)}")
+                return
+
+            summary = run_collection(
+                session, months_back=args.months_back, downloader=http_download
+            )
+            settings = get_settings()
+            queue_url = "https://gaiafaac-api-production.up.railway.app/review/pending"
+            for month in summary.queued:
+                send_review_alert(
+                    settings,
+                    reporting_label=month.reporting_label,
+                    records_extracted=month.records_extracted,
+                    blocking_finding_count=month.blocking_finding_count,
+                    queue_url=queue_url,
+                )
+            print(
+                f"Collection complete: checked={len(summary.checked)}, "
+                f"queued={len(summary.queued)}, skipped={len(summary.skipped)}, "
+                f"errors={len(summary.errors)}."
             )
 
 
