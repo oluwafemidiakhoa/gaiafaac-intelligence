@@ -1,7 +1,5 @@
 import Link from 'next/link'
 
-import { Button } from '@/components/ui/button'
-
 const navigation = [
   { href: '/live', label: 'Live data' },
   { href: '/review/pending', label: 'Review queue' },
@@ -42,9 +40,6 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/overview">View demo dashboard</Link>
-        </Button>
       </div>
     </header>
   )

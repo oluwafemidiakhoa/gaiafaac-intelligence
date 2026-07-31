@@ -210,11 +210,12 @@ export default async function Home() {
           ))}
         </div>
         <p className="text-muted-foreground mt-8 text-sm">
-          Exploring the platform? The{' '}
-          <Link href="/overview" className="hover:text-foreground underline">
-            labelled demo dataset
-          </Link>{' '}
-          shows the interface with clearly-synthetic sample figures.
+          Every figure is extracted from the official OAGF report and
+          human-approved before it appears.{' '}
+          <Link href="/methodology" className="hover:text-foreground underline">
+            Read the methodology
+          </Link>
+          .
         </p>
       </section>
     </>
