@@ -14,12 +14,13 @@ def candidate_urls(revenue_year: int, revenue_month: int) -> list[str]:
     """OAGF PDF URLs for a revenue month, most-likely publication folder first.
 
     The filename carries the revenue month name + revenue year; the upload folder
-    is the publication month (revenue month + 1, with +2 as a slippage fallback).
+    is the publication month. OAGF's publication lag is usually 1-2 months but has
+    reached 4 (e.g. December 2024 filed under 2025/04), so we try +1..+4.
     """
     month_name = calendar.month_name[revenue_month]
     filename = f"Disbursement-{month_name}-{revenue_year}.pdf"
     urls: list[str] = []
-    for slip in (1, 2):
+    for slip in (1, 2, 3, 4):
         pub_year, pub_month = _add_months(revenue_year, revenue_month, slip)
         urls.append(f"{_BASE}/{pub_year}/{pub_month:02d}/{filename}")
     return urls
