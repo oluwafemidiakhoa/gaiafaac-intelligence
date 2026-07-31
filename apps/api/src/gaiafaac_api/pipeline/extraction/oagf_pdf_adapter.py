@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from gaiafaac_api.pipeline.extraction.fct_extractor import extract_fct_total_net
 from gaiafaac_api.pipeline.extraction.schema import (
     CellProvenance,
     ExtractedAllocationRow,
@@ -10,8 +11,18 @@ from gaiafaac_api.pipeline.extraction.schema import (
 
 # Rows in the OAGF state table that are not a state (subtotals, special beneficiaries).
 # They are still surfaced to the importer, which flags unknown names for review rather
-# than dropping them silently.
-_SKIP_EXACT = {"", "s/n", "beneficiaries", "total", "grand total", "sub total", "sub-total"}
+# than dropping them silently. "soku" is a recurring non-state artifact (a Sukuk-type line
+# at the foot of Table III with a negligible value) and is skipped.
+_SKIP_EXACT = {
+    "",
+    "s/n",
+    "beneficiaries",
+    "total",
+    "grand total",
+    "sub total",
+    "sub-total",
+    "soku",
+}
 
 
 class OagfPdfAdapter:
@@ -72,6 +83,27 @@ class OagfPdfAdapter:
                         source_row=offset,
                     )
                 )
+        # FCT is not in the state table (Table III). Add it net-only from Table I via the
+        # fail-closed reconciliation extractor; if it cannot be verified it is omitted (never
+        # guessed), and the month will fail 37-jurisdiction completeness for human review.
+        fct = extract_fct_total_net(path)
+        if fct.value is not None:
+            rows.append(
+                ExtractedAllocationRow(
+                    submitted_state="FCT",
+                    reported_unit="naira",
+                    cells={
+                        "net_allocation": CellProvenance(
+                            format(fct.value, "f"),
+                            page=1,
+                            table=1,
+                            column="FCT Total Net Amount",
+                        )
+                    },
+                )
+            )
+        else:
+            warnings.append(f"FCT total not reconciled ({fct.note}); FCT omitted.")
         return ExtractedAllocationTable(
             source_organization="Office of the Accountant-General of the Federation",
             adapter_name=self.name,

@@ -98,6 +98,7 @@ def _allocation_findings(
     components: list[StateAllocationComponent],
     *,
     tolerance: Decimal,
+    is_fct: bool = False,
 ) -> list[Finding]:
     findings: list[Finding] = []
     allocation_id = allocation.id
@@ -115,17 +116,22 @@ def _allocation_findings(
         "total_deductions": allocation.total_deductions,
         "net_allocation": allocation.net_allocation,
     }
+    # FCT is published net-only: OAGF does not report its gross/deductions on a basis
+    # comparable to the states, so those are legitimately blank and must not block. Only
+    # net is required for FCT; states still require all three.
+    required = {"net_allocation"} if is_fct else set(values)
     for field_name, value in values.items():
         if value is None:
-            findings.append(
-                Finding(
-                    "MISSING_MONETARY_VALUE",
-                    ValidationSeverity.ERROR,
-                    f"Required allocation value {field_name} is missing.",
-                    allocation_id,
-                    {"field": field_name},
+            if field_name in required:
+                findings.append(
+                    Finding(
+                        "MISSING_MONETARY_VALUE",
+                        ValidationSeverity.ERROR,
+                        f"Required allocation value {field_name} is missing.",
+                        allocation_id,
+                        {"field": field_name},
+                    )
                 )
-            )
         elif value < 0:
             findings.append(
                 Finding(
@@ -302,6 +308,7 @@ def validate_import(
     findings = list(initial_findings if initial_findings is not None else preserved_import_findings)
     findings.extend(_period_findings(period))
     expected_states = session.scalar(select(func.count()).select_from(State)) or 0
+    fct_state_id = session.scalar(select(State.id).where(State.is_fct.is_(True)))
     imported_state_ids = {allocation.state_id for allocation in allocations}
     if len(imported_state_ids) != expected_states:
         missing_codes = list(
@@ -353,6 +360,7 @@ def validate_import(
                 allocation,
                 components_by_allocation.get(allocation.id, []),
                 tolerance=tolerance,
+                is_fct=allocation.state_id == fct_state_id,
             )
         )
     findings.extend(_movement_findings(session, period, allocations, threshold=movement_threshold))
