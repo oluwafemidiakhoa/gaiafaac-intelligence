@@ -39,10 +39,7 @@ class CollectionSummary:
 
 
 def _reporting_label(revenue: date) -> str:
-    return (
-        f"OAGF FAAC Disbursement — {revenue.strftime('%B %Y')} "
-        "(Table III: state distribution)"
-    )
+    return f"OAGF FAAC Disbursement — {revenue.strftime('%B %Y')} (Table III: state distribution)"
 
 
 def _add_months(anchor: date, delta: int) -> date:

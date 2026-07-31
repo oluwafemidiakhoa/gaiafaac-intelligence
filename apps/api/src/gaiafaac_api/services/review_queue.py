@@ -53,9 +53,7 @@ def list_pending_reviews(session: Session) -> list[PendingReviewItem]:
         findings = (
             list(
                 session.scalars(
-                    select(ValidationResult).where(
-                        ValidationResult.extraction_run_id == run.id
-                    )
+                    select(ValidationResult).where(ValidationResult.extraction_run_id == run.id)
                 )
             )
             if run is not None

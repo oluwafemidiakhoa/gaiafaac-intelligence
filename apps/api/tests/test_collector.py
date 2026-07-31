@@ -57,9 +57,7 @@ def test_collects_available_month_and_never_publishes(session, tmp_path):
     ]
     # nothing is ever published
     assert (
-        session.scalars(
-            select(ReportingPeriod).where(ReportingPeriod.is_published.is_(True))
-        ).all()
+        session.scalars(select(ReportingPeriod).where(ReportingPeriod.is_published.is_(True))).all()
         == []
     )
 
