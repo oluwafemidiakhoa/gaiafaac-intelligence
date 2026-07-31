@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 
 const navigation = [
   { href: '/live', label: 'Live data' },
+  { href: '/review/pending', label: 'Review queue' },
   { href: '/overview', label: 'Overview' },
   { href: '/states', label: 'States' },
   { href: '/compare', label: 'Compare' },
