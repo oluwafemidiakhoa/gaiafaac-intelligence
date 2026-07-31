@@ -121,6 +121,13 @@ class ReportingPeriod(IdMixin, TimestampMixin, PublishableMixin, Base):
     )
 
     revenue_month: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    # Month semantics (v1). ``revenue_month`` is retained for backward compatibility and has
+    # historically held the *disbursement* month. ``disbursement_month`` is the customer-facing
+    # key (the month the allocation was shared/reported); ``allocation_period_month`` is the
+    # revenue period the report describes and is left NULL when it cannot be established
+    # confidently (never guessed).
+    disbursement_month: Mapped[date | None] = mapped_column(Date, index=True)
+    allocation_period_month: Mapped[date | None] = mapped_column(Date)
     faac_meeting_date: Mapped[date | None] = mapped_column(Date)
     publication_date: Mapped[date | None] = mapped_column(Date)
     reporting_label: Mapped[str] = mapped_column(String(160), nullable=False)
