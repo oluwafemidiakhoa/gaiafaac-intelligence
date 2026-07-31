@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     database_url: str = Field(
         default="postgresql+psycopg://gaiafaac:change-me@localhost:5432/gaiafaac",
     )
+    smtp_host: str = ""
+    smtp_port: int = 465
+    smtp_username: str = ""
+    smtp_password: str = ""
+    alert_from: str = ""
+    alert_to: str = ""
 
     @field_validator("api_environment", "api_host", "database_url", mode="before")
     @classmethod
