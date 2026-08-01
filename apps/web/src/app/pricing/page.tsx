@@ -1,7 +1,9 @@
-import { Check } from 'lucide-react'
+import { Check, Clock3 } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { PageHeader } from '@/components/page-header'
+import { StatusPill } from '@/components/status-pill'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -13,59 +15,65 @@ import {
 
 export const metadata: Metadata = { title: 'Pricing' }
 
-const CONTACT = 'mailto:ethagagroalliedltd@gmail.com?subject=GaiaFAAC%20plan'
-
 const plans = [
   {
     name: 'Free',
     price: '$0',
-    tagline: 'Official source access, always free.',
+    tagline: 'Inspect the latest verified month.',
+    availableNow: true,
     features: [
       'Latest verified FAAC month',
       'All 37 jurisdictions, source-linked',
-      'National overview, states & comparison',
-      'Insights: trend, rankings, movers',
+      'National overview, states, and comparison',
+      'Public insights and source registry',
     ],
-    cta: 'Start free',
+    cta: 'Explore live data',
+    href: '/live',
     featured: false,
   },
   {
-    name: 'Analyst',
+    name: 'Analyst Pilot',
     price: '$49',
-    tagline: 'Full history for serious analysis.',
+    tagline: 'Historical analysis for an individual researcher.',
+    availableNow: false,
     features: [
-      'Everything in Free',
-      'Full published history',
-      'CSV / XLSX / JSON downloads',
-      'Saved state comparisons',
+      'Manually provisioned historical access',
+      'CSV or XLSX delivery where available',
+      'One customized state comparison',
+      'Direct pilot feedback channel',
     ],
-    cta: 'Choose Analyst',
+    cta: 'Request pilot access',
+    href: '/pilot?plan=analyst',
     featured: true,
   },
   {
-    name: 'Team',
+    name: 'Team Pilot',
     price: '$199',
-    tagline: 'For newsrooms and research teams.',
+    tagline: 'For a newsroom, consultancy, or research team.',
+    availableNow: false,
     features: [
-      'Everything in Analyst',
-      'Email alerts on new months',
-      'Monthly analyst report',
-      'Up to 10 seats',
+      'Everything in Analyst Pilot',
+      'Monthly analyst brief during the pilot',
+      'Up to 10 named users',
+      'Priority support and onboarding',
     ],
-    cta: 'Choose Team',
+    cta: 'Discuss a team pilot',
+    href: '/pilot?plan=team',
     featured: false,
   },
   {
-    name: 'API',
+    name: 'API Pilot',
     price: '$299',
-    tagline: 'Programmatic, source-verified data.',
+    tagline: 'Controlled programmatic access for evaluation.',
+    availableNow: false,
     features: [
-      'Everything in Team',
-      'REST API access (API keys)',
-      '5,000 requests / day',
-      'Bulk historical endpoints',
+      'Entitled API key issued manually',
+      'Published historical endpoints',
+      'Usage recording and daily limits',
+      'Technical onboarding session',
     ],
-    cta: 'Get API access',
+    cta: 'Request API evaluation',
+    href: '/pilot?plan=api',
     featured: false,
   },
 ]
@@ -75,9 +83,21 @@ export default function PricingPage() {
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
         eyebrow="Pricing"
-        title="Source-verified FAAC data, priced to use"
-        description="The latest verified month is always free. Paid plans unlock full history, downloads, alerts, reports, and API access. Basic official-source access is never behind a paywall."
+        title="Start free. Join a paid pilot when you need more."
+        description="The latest verified month and its original sources remain publicly accessible. Historical delivery, reports, team access, and API keys are currently provisioned through a limited pilot while automated checkout and customer accounts are being completed."
       />
+
+      <div className="border-primary/20 bg-primary/5 mt-8 rounded-lg border p-5">
+        <div className="flex items-start gap-3">
+          <Clock3 className="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-medium">Paid access is currently pilot-based</p>
+            <p className="text-muted-foreground mt-1 text-sm leading-6">
+              We confirm data coverage and delivery requirements before accepting payment. No automated subscription is created from this page.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
@@ -86,7 +106,12 @@ export default function PricingPage() {
             className={plan.featured ? 'border-primary shadow-sm' : ''}
           >
             <CardHeader>
-              <CardTitle className="flex items-baseline justify-between">
+              <div className="mb-3">
+                <StatusPill tone={plan.availableNow ? 'success' : 'neutral'}>
+                  {plan.availableNow ? 'Available now' : 'Limited pilot'}
+                </StatusPill>
+              </div>
+              <CardTitle className="flex items-baseline justify-between gap-3">
                 <span>{plan.name}</span>
                 <span className="text-2xl font-semibold">
                   {plan.price}
@@ -116,21 +141,21 @@ export default function PricingPage() {
                 className="mt-6 w-full"
                 variant={plan.featured ? 'default' : 'outline'}
               >
-                <a href={CONTACT}>{plan.cta}</a>
+                <Link href={plan.href}>{plan.cta}</Link>
               </Button>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <p className="text-muted-foreground mt-10 text-sm">
-        Prices in USD. Custom cuts (specific states, longer history, on-prem)
-        are available — just{' '}
-        <a href={CONTACT} className="hover:text-foreground underline">
-          get in touch
-        </a>
-        .
-      </p>
+      <div className="text-muted-foreground mt-10 max-w-3xl space-y-2 text-sm leading-6">
+        <p>
+          Prices are pilot starting points in USD and may vary with historical coverage, export format, onboarding, and custom research requirements.
+        </p>
+        <p>
+          Public-source facts remain attributable to their original publishers. Paid value comes from reviewed compilation, structured delivery, analysis, support, and controlled API access.
+        </p>
+      </div>
     </div>
   )
 }
