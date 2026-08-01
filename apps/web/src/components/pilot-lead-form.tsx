@@ -1,6 +1,7 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 
 import { Button } from '@/components/ui/button'
 
@@ -9,9 +10,9 @@ const fieldClass =
 const textAreaClass = `${fieldClass} min-h-28 py-2`
 
 export function PilotLeadForm() {
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>(
-    'idle',
-  )
+  const [status, setStatus] = useState<
+    'idle' | 'submitting' | 'success' | 'error'
+  >('idle')
   const [message, setMessage] = useState('')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -42,7 +43,10 @@ export function PilotLeadForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      const body = (await response.json()) as { error?: string; message?: string }
+      const body = (await response.json()) as {
+        error?: string
+        message?: string
+      }
       if (!response.ok) {
         throw new Error(body.error ?? 'Unable to submit your request.')
       }
@@ -55,7 +59,9 @@ export function PilotLeadForm() {
     } catch (error) {
       setStatus('error')
       setMessage(
-        error instanceof Error ? error.message : 'Unable to submit your request.',
+        error instanceof Error
+          ? error.message
+          : 'Unable to submit your request.',
       )
     }
   }
@@ -85,7 +91,11 @@ export function PilotLeadForm() {
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Pilot
-          <select className={fieldClass} name="plan_interest" defaultValue="analyst">
+          <select
+            className={fieldClass}
+            name="plan_interest"
+            defaultValue="analyst"
+          >
             <option value="analyst">Analyst Pilot</option>
             <option value="team">Team Pilot</option>
             <option value="api">API Evaluation</option>
@@ -127,7 +137,11 @@ export function PilotLeadForm() {
 
       <label className="grid gap-2 text-sm font-medium">
         Preferred delivery format
-        <select className={fieldClass} name="preferred_format" defaultValue="xlsx">
+        <select
+          className={fieldClass}
+          name="preferred_format"
+          defaultValue="xlsx"
+        >
           <option value="xlsx">Excel workbook</option>
           <option value="pdf">PDF intelligence report</option>
           <option value="csv">CSV data</option>
