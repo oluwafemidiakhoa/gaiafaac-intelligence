@@ -37,6 +37,7 @@ export async function getPendingReviews(): Promise<
   try {
     const response = await fetch(`${apiBaseUrl()}/api/v1/review/pending`, {
       next: { revalidate: 120 },
+      headers: { 'X-Admin-Key': process.env.ADMIN_KEY ?? '' },
     })
     if (!response.ok) {
       return { data: null, error: 'The review queue is unavailable.' }

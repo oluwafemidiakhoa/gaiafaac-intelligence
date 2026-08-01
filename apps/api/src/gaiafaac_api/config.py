@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     alert_from: str = ""
     alert_to: str = ""
+    # Shared admin key gating operational/review endpoints. Empty = deny all (secure default).
+    admin_key: str = ""
 
     @field_validator("api_environment", "api_host", "database_url", mode="before")
     @classmethod

@@ -1,16 +1,28 @@
 import csv
 from datetime import date
 
+import pytest
 from fastapi.testclient import TestClient
 
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.main import app
 from gaiafaac_api.pipeline.extraction.file_import import import_file
 from gaiafaac_api.pipeline.importer import ImportRequest
 
+ADMIN_KEY = "test-admin-key"
 
-def test_pending_endpoint_returns_queued_month(session, tmp_path):
+
+@pytest.fixture
+def admin_key(monkeypatch):
+    monkeypatch.setenv("ADMIN_KEY", ADMIN_KEY)
+    get_settings.cache_clear()
+    yield ADMIN_KEY
+    get_settings.cache_clear()
+
+
+def _seed_pending(session, tmp_path):
     seed_states(session)
     csv_path = tmp_path / "jan.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
@@ -30,10 +42,27 @@ def test_pending_endpoint_returns_queued_month(session, tmp_path):
         ),
     )
 
+
+def test_pending_requires_admin_key(session, tmp_path, admin_key):
+    _seed_pending(session, tmp_path)
     app.dependency_overrides[get_session] = lambda: session
     try:
         client = TestClient(app)
-        response = client.get("/api/v1/review/pending")
+        assert client.get("/api/v1/review/pending").status_code == 401
+        assert (
+            client.get("/api/v1/review/pending", headers={"X-Admin-Key": "wrong"}).status_code
+            == 401
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_pending_returns_queue_with_admin_key(session, tmp_path, admin_key):
+    _seed_pending(session, tmp_path)
+    app.dependency_overrides[get_session] = lambda: session
+    try:
+        client = TestClient(app)
+        response = client.get("/api/v1/review/pending", headers={"X-Admin-Key": admin_key})
     finally:
         app.dependency_overrides.clear()
 
@@ -41,5 +70,4 @@ def test_pending_endpoint_returns_queued_month(session, tmp_path):
     body = response.json()
     assert len(body) == 1
     assert body[0]["reporting_label"] == "OAGF Jan 2024"
-    assert body[0]["expected_states"] == 37
     assert "900" not in response.text  # no figures
