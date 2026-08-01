@@ -85,11 +85,11 @@ export default async function InsightsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex h-52 items-end gap-3 overflow-x-auto pb-2">
+              <div className="flex items-end gap-3 overflow-x-auto pb-2">
                 {data.national_trend.map((t) => (
                   <div
                     key={t.revenue_month}
-                    className="flex min-w-14 flex-1 flex-col items-center gap-2"
+                    className="flex min-w-14 flex-1 flex-col items-center justify-end gap-2"
                   >
                     <span className="text-muted-foreground font-mono text-[0.65rem]">
                       {compactNaira(t.total_net)}
@@ -97,7 +97,7 @@ export default async function InsightsPage() {
                     <div
                       className="bg-primary/80 hover:bg-primary w-full rounded-t transition-colors"
                       style={{
-                        height: `${Math.max(6, (Number(t.total_net) / maxNet) * 100)}%`,
+                        height: `${Math.max(6, (Number(t.total_net) / maxNet) * 180)}px`,
                       }}
                       title={`${t.reporting_label}: ${formatNaira(t.total_net)}`}
                     />
