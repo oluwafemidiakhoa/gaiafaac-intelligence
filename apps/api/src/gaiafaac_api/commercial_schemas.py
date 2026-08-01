@@ -1,17 +1,19 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 PilotPlan = Literal["analyst", "team", "api"]
+_EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
 class PilotLeadCreate(BaseModel):
     name: str = Field(min_length=2, max_length=200)
-    email: EmailStr
+    email: str = Field(min_length=5, max_length=320)
     organization: str | None = Field(default=None, max_length=200)
     role: str | None = Field(default=None, max_length=160)
     country: str | None = Field(default=None, max_length=120)
@@ -24,6 +26,7 @@ class PilotLeadCreate(BaseModel):
 
     @field_validator(
         "name",
+        "email",
         "organization",
         "role",
         "country",
@@ -36,6 +39,14 @@ class PilotLeadCreate(BaseModel):
     @classmethod
     def strip_text(cls, value: object) -> object:
         return value.strip() if isinstance(value, str) else value
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        normalized = value.lower()
+        if not _EMAIL_PATTERN.fullmatch(normalized):
+            raise ValueError("Enter a valid email address.")
+        return normalized
 
 
 class PilotLeadAccepted(BaseModel):
