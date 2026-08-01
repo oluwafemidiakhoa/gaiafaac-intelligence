@@ -96,8 +96,9 @@ export default function PricingPage() {
           <div>
             <p className="font-medium">Paid access is currently pilot-based</p>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              We confirm data coverage and delivery requirements before accepting
-              payment. No automated subscription is created from this page.
+              We confirm data coverage and delivery requirements before
+              accepting payment. No automated subscription is created from this
+              page.
             </p>
           </div>
         </div>

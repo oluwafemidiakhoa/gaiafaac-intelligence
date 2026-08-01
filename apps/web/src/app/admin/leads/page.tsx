@@ -89,22 +89,20 @@ export default async function CommercialLeadsPage() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Status</dt>
-                  <dd className="mt-1 font-medium capitalize">
-                    {lead.status}
-                  </dd>
+                  <dd className="mt-1 font-medium capitalize">{lead.status}</dd>
                 </div>
               </dl>
 
               <div className="mt-6 grid gap-5 lg:grid-cols-2">
                 <div>
                   <h3 className="text-sm font-semibold">Use case</h3>
-                  <p className="text-muted-foreground mt-2 whitespace-pre-wrap text-sm leading-6">
+                  <p className="text-muted-foreground mt-2 text-sm leading-6 whitespace-pre-wrap">
                     {lead.use_case}
                   </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold">States or periods</h3>
-                  <p className="text-muted-foreground mt-2 whitespace-pre-wrap text-sm leading-6">
+                  <p className="text-muted-foreground mt-2 text-sm leading-6 whitespace-pre-wrap">
                     {lead.states_or_periods ?? 'Not specified'}
                   </p>
                 </div>

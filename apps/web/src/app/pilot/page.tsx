@@ -89,8 +89,8 @@ export default function PilotPage() {
               <span className="text-foreground font-medium">
                 2. Pilot scope.
               </span>{' '}
-              We agree on users, delivery format, support, permitted use, and the
-              evaluation period.
+              We agree on users, delivery format, support, permitted use, and
+              the evaluation period.
             </li>
             <li>
               <span className="text-foreground font-medium">
@@ -114,8 +114,8 @@ export default function PilotPage() {
           <ul className="text-muted-foreground mt-4 space-y-3 text-sm leading-6">
             <li>Identify the states and reporting periods you need.</li>
             <li>
-              State whether you require CSV, XLSX, JSON, a written report, or API
-              access.
+              State whether you require CSV, XLSX, JSON, a written report, or
+              API access.
             </li>
             <li>
               Explain whether the output is for internal research, publication,
@@ -123,8 +123,8 @@ export default function PilotPage() {
             </li>
             <li>Provide the number of intended users.</li>
             <li>
-              Do not send payment until coverage and delivery have been confirmed
-              in writing.
+              Do not send payment until coverage and delivery have been
+              confirmed in writing.
             </li>
           </ul>
         </section>
@@ -155,7 +155,8 @@ export default function PilotPage() {
         GaiaFAAC is an independent research platform, not a government service.
         Public-source facts remain attributable to their original publishers.
         Commercial access covers reviewed compilation, structured delivery,
-        analysis, support, and controlled access—not ownership of public records.
+        analysis, support, and controlled access—not ownership of public
+        records.
       </p>
     </div>
   )
