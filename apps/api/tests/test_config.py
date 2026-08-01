@@ -38,3 +38,15 @@ def test_database_url_whitespace_is_collapsed() -> None:
 def test_blank_smtp_port_falls_back_to_default() -> None:
     settings = Settings(smtp_port="")
     assert settings.smtp_port == 465
+
+
+def test_bare_postgres_url_gets_psycopg_driver() -> None:
+    """Railway/Neon emit driver-less URLs; SQLAlchemy would pick psycopg2."""
+    for scheme in ("postgresql", "postgres"):
+        settings = Settings(database_url=f"{scheme}://u:p@host/db?sslmode=require")
+        assert settings.database_url == ("postgresql+psycopg://u:p@host/db?sslmode=require")
+
+
+def test_explicit_driver_url_is_left_untouched() -> None:
+    url = "postgresql+psycopg://u:p@host/db?sslmode=require"
+    assert Settings(database_url=url).database_url == url

@@ -4,6 +4,20 @@ from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _normalize_database_url(url: str) -> str:
+    """Force the psycopg3 driver for bare Postgres URLs.
+
+    Managed platforms (Railway, Neon, Heroku) emit ``postgres://`` or
+    ``postgresql://``, which SQLAlchemy maps to the psycopg2 driver — we only
+    ship psycopg3, so that raises ``ModuleNotFoundError: psycopg2``. Rewrite only
+    the bare, driver-less forms; leave any explicit ``+driver`` untouched.
+    """
+    for bare in ("postgresql://", "postgres://"):
+        if url.startswith(bare):
+            return "postgresql+psycopg://" + url[len(bare) :]
+    return url
+
+
 class Settings(BaseSettings):
     """Validated runtime configuration."""
 
@@ -51,9 +65,13 @@ class Settings(BaseSettings):
         Fall back to the field default when the value is blank.
         """
         if isinstance(value, str):
-            # A connection URL never contains whitespace, so collapse all of it
-            # (including embedded newlines); other fields only trim their ends.
-            cleaned = "".join(value.split()) if info.field_name == "database_url" else value.strip()
+            if info.field_name == "database_url":
+                # A connection URL never contains whitespace, so collapse all of
+                # it (including newlines from a multiline-pasted secret), then
+                # force the psycopg3 driver onto bare `postgres(ql)://` URLs.
+                cleaned = _normalize_database_url("".join(value.split()))
+            else:
+                cleaned = value.strip()
             if not cleaned:
                 return cls.model_fields[info.field_name].default
             return cleaned
