@@ -38,6 +38,7 @@ Run the existing suite once to confirm a green baseline:
 ```bash
 python -m pytest apps/api/tests -q
 ```
+
 Expected: all pass.
 
 ---
@@ -45,11 +46,13 @@ Expected: all pass.
 ## Task 1: Analytics common module (constants, deterministic + stats helpers, shared specs)
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/__init__.py`
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/common.py`
 - Test: `apps/api/tests/test_analytics_common.py`
 
 **Interfaces:**
+
 - Produces (pure): `deterministic_unit(state_code: str, year: int, month: int, salt: str = "") -> Decimal` in `[0,1)`; `state_base(state_code: str) -> Decimal`; `seasonal_factor(month: int) -> Decimal`; `decimal_mean(values: list[Decimal]) -> Decimal`; `decimal_pstdev(values: list[Decimal]) -> Decimal`.
 - Produces (DB, tested in Task 2): `analytics_source(session) -> SourceDocument | None`; `analytics_periods(session) -> list[ReportingPeriod]`; `latest_analytics_period(session) -> ReportingPeriod | None`.
 - Produces (dataclasses): `IndicatorSpec`, `ForecastSpec`.
@@ -232,12 +235,14 @@ def latest_analytics_period(session: Session) -> ReportingPeriod | None:
 - [ ] **Step 4: Fix the loose stats assertion, then run tests**
 
 Edit the last test to:
+
 ```python
 def test_decimal_stats() -> None:
     values = [Decimal("100"), Decimal("200"), Decimal("300")]
     assert decimal_mean(values) == Decimal("200")
     assert decimal_pstdev(values).quantize(Decimal("0.0001")) == Decimal("81.6497")
 ```
+
 Run: `python -m pytest apps/api/tests/test_analytics_common.py -v`
 Expected: PASS.
 
@@ -253,10 +258,12 @@ git commit -m "feat(analytics): add analytics common constants and helpers"
 ## Task 2: Synthetic multi-period dataset generator
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/dataset.py`
 - Test: `apps/api/tests/test_analytics_dataset.py`
 
 **Interfaces:**
+
 - Consumes: `common` constants/helpers; `seed_states`; models `ReportingPeriod`, `SourceDocument`, `StateAllocation`, `StateAllocationComponent`, `State`.
 - Produces: `generate_analytics_dataset(session) -> DatasetSummary` with fields `periods:int, allocations:int, components:int, source_document_id:uuid.UUID`.
 
@@ -529,10 +536,12 @@ git commit -m "feat(analytics): generate labelled synthetic multi-period demo da
 ## Task 3: Rankings analytic
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/rankings.py`
 - Test: `apps/api/tests/test_analytics_rankings.py`
 
 **Interfaces:**
+
 - Consumes: `common`, `generate_analytics_dataset`, models.
 - Produces: `compute_rankings(session) -> list[IndicatorSpec]` — for the latest analytics period, one `ranking`/`net_allocation_rank` (value 1..37) and, where a prior period exists, one `ranking`/`net_allocation_rank_change` per state.
 
@@ -672,10 +681,12 @@ git commit -m "feat(analytics): compute net-allocation rankings and rank change"
 ## Task 4: Volatility analytic
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/volatility.py`
 - Test: `apps/api/tests/test_analytics_volatility.py`
 
 **Interfaces:**
+
 - Consumes: `common`, dataset, models.
 - Produces: `coefficient_of_variation(values: list[Decimal]) -> Decimal | None` (pure); `compute_volatility(session) -> list[IndicatorSpec]` (`volatility`/`net_allocation_cv`, unit `ratio`).
 
@@ -810,10 +821,12 @@ git commit -m "feat(analytics): compute net-allocation volatility (coefficient o
 ## Task 5: Revenue-dependency analytic
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/dependency.py`
 - Test: `apps/api/tests/test_analytics_dependency.py`
 
 **Interfaces:**
+
 - Consumes: `common`, dataset, models.
 - Produces: `component_shares(pairs: list[tuple[str, Decimal]]) -> tuple[dict[str, Decimal], Decimal] | None` (pure — returns per-type share + HHI); `compute_dependency(session) -> list[IndicatorSpec]` (`dependency`/`{component_type}_net_share` + `dependency`/`net_concentration_hhi`).
 
@@ -963,10 +976,12 @@ git commit -m "feat(analytics): compute revenue-dependency shares and concentrat
 ## Task 6: Forecasting analytic
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/forecasting.py`
 - Test: `apps/api/tests/test_analytics_forecasting.py`
 
 **Interfaces:**
+
 - Consumes: `common`, dataset, models.
 - Produces: `ForecastPoint` dataclass (`point, lower, upper, residual_stdev, mae, rmse, observations, window: int`); `moving_average_forecast(history: list[Decimal]) -> ForecastPoint | None`; `compute_forecasts(session) -> list[ForecastSpec]`.
 
@@ -1147,10 +1162,12 @@ git commit -m "feat(analytics): moving-average forecasting with uncertainty inte
 ## Task 7: Orchestrator — persist analytics (idempotent recompute)
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/analytics/run.py`
 - Test: `apps/api/tests/test_analytics_run.py`
 
 **Interfaces:**
+
 - Consumes: all four compute functions, `analytics_source`, models `StateIndicator`, `Forecast`.
 - Produces: `AnalyticsRunResult` (`indicators:int, forecasts:int`); `compute_analytics(session) -> AnalyticsRunResult` — deletes prior analytics rows by `source_document_id`, then inserts fresh; sets `is_demo=True`, `verification_status=PENDING`.
 
@@ -1191,6 +1208,7 @@ def test_compute_analytics_persists_and_is_idempotent(session: Session) -> None:
 ```
 
 > Note: `StateIndicator` has no `is_demo` column (it inherits lineage from its demo source/period). The assertion above only checks `verification_status`. Simplify to:
+>
 > ```python
 > assert all(i.verification_status is VerificationStatus.PENDING for i in session.scalars(select(StateIndicator)))
 > ```
@@ -1295,11 +1313,13 @@ git commit -m "feat(analytics): persist analytics idempotently via orchestrator"
 ## Task 8: Read schemas and services
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/analytics_schemas.py`
 - Create: `apps/api/src/gaiafaac_api/services/analytics.py`
 - Test: `apps/api/tests/test_analytics_service.py`
 
 **Interfaces:**
+
 - Consumes: models `State`, `StateIndicator`, `Forecast`; `common.latest_analytics_period`, `analytics_source`, `DEMO_DATA_LABEL`.
 - Produces schemas: `RankingsResponse`, `VolatilityResponse`, `DependencyResponse`, `ForecastsResponse` (each with `data_label: Literal["DEMO DATA - NOT REAL FAAC DATA"]`).
 - Produces services: `get_rankings(session) -> RankingsResponse | None`, `get_volatility(session) -> VolatilityResponse | None`, `get_dependency(session) -> DependencyResponse | None`, `get_forecasts(session) -> ForecastsResponse | None` (None when no analytics data).
@@ -1641,11 +1661,13 @@ git commit -m "feat(analytics): add read schemas and demo-constrained services"
 ## Task 9: API routes
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/api/v1/routes/analytics.py`
 - Modify: `apps/api/src/gaiafaac_api/api/v1/router.py`
 - Test: `apps/api/tests/test_analytics_api.py`
 
 **Interfaces:**
+
 - Consumes: services from Task 8; `get_session`.
 - Produces: router with `GET /analytics/rankings`, `/analytics/volatility`, `/analytics/dependency`, `/analytics/forecasts`; each 404s when no analytics data.
 
@@ -1778,10 +1800,12 @@ git commit -m "feat(analytics): expose demo-constrained analytics read endpoints
 ## Task 10: CLI wiring
 
 **Files:**
+
 - Modify: `apps/api/src/gaiafaac_api/cli.py`
 - Test: `apps/api/tests/test_analytics_cli.py`
 
 **Interfaces:**
+
 - Consumes: `generate_analytics_dataset`, `compute_analytics`, `build_parser`.
 - Produces: CLI verbs `seed-analytics-demo` and `compute-analytics`.
 
@@ -1806,18 +1830,21 @@ Expected: FAIL (`invalid choice: 'seed-analytics-demo'`).
 - [ ] **Step 3: Write minimal implementation**
 
 In `apps/api/src/gaiafaac_api/cli.py`, add imports near the top:
+
 ```python
 from gaiafaac_api.pipeline.analytics.dataset import generate_analytics_dataset
 from gaiafaac_api.pipeline.analytics.run import compute_analytics
 ```
 
 In `build_parser()`, before `return parser`, register the subcommands:
+
 ```python
     commands.add_parser("seed-analytics-demo", help="Generate the synthetic analytics demo dataset")
     commands.add_parser("compute-analytics", help="Compute and persist demo analytics")
 ```
 
 In `main()`, add dispatch branches alongside the others:
+
 ```python
         elif args.command == "seed-analytics-demo":
             summary = generate_analytics_dataset(session)
@@ -1847,6 +1874,7 @@ python -m pytest apps/api/tests -q
 git add apps/api/src/gaiafaac_api/cli.py apps/api/tests/test_analytics_cli.py
 git commit -m "feat(analytics): add seed-analytics-demo and compute-analytics CLI verbs"
 ```
+
 Expected: ruff clean; full suite passes (existing M4 tests + all new analytics tests).
 
 ---

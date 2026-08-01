@@ -4,23 +4,23 @@ All identifiers are UUIDs. Monetary values are `NUMERIC(24, 2)` and application
 code uses `Decimal`. Timestamps are timezone-aware. Fields shown here summarize
 the storage contract; the migration is authoritative.
 
-| Entity | Purpose and key lineage |
-| --- | --- |
-| `states` | Canonical 36 states plus FCT: code, slug, zone, capital, and FCT marker. |
-| `reporting_periods` | Distinct revenue month, FAAC meeting date, publication date, verification and publication state. |
-| `source_documents` | Publisher, source URL, local/object path, file name, MIME type, SHA-256, version, dates, processing/source status, and supersession. |
-| `national_distributions` | National gross, deductions, net distribution and government/component totals, tied to one period and source. |
-| `state_allocations` | Per-state gross, deductions and net amounts, source, reported text/unit, confidence, and review metadata. |
-| `state_allocation_components` | Typed components of a state allocation with reported text/unit and source page/table. |
-| `state_indicators` | Sourced, period-specific numeric indicators with unit and methodology. |
-| `extraction_runs` | Extractor identity/version, execution state, counts, configuration and errors. |
-| `validation_results` | Rule outcome, severity, details and tolerance linked to a period or allocation. |
-| `forecasts` | Method, training window, estimate and uncertainty interval; always identifiable as an estimate. |
-| `generated_insights` | Generated narrative, methodology, model identity, grounding and approval state. |
-| `organizations` | Tenant/account organization identity. |
-| `users` | Organization membership, identity and role storage for future authorization behavior. |
-| `subscriptions` | Organization plan and external billing references for future billing behavior. |
-| `audit_logs` | Actor, action, entity, request metadata and structured change payload. |
+| Entity                        | Purpose and key lineage                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `states`                      | Canonical 36 states plus FCT: code, slug, zone, capital, and FCT marker.                                                             |
+| `reporting_periods`           | Distinct revenue month, FAAC meeting date, publication date, verification and publication state.                                     |
+| `source_documents`            | Publisher, source URL, local/object path, file name, MIME type, SHA-256, version, dates, processing/source status, and supersession. |
+| `national_distributions`      | National gross, deductions, net distribution and government/component totals, tied to one period and source.                         |
+| `state_allocations`           | Per-state gross, deductions and net amounts, source, reported text/unit, confidence, and review metadata.                            |
+| `state_allocation_components` | Typed components of a state allocation with reported text/unit and source page/table.                                                |
+| `state_indicators`            | Sourced, period-specific numeric indicators with unit and methodology.                                                               |
+| `extraction_runs`             | Extractor identity/version, execution state, counts, configuration and errors.                                                       |
+| `validation_results`          | Rule outcome, severity, details and tolerance linked to a period or allocation.                                                      |
+| `forecasts`                   | Method, training window, estimate and uncertainty interval; always identifiable as an estimate.                                      |
+| `generated_insights`          | Generated narrative, methodology, model identity, grounding and approval state.                                                      |
+| `organizations`               | Tenant/account organization identity.                                                                                                |
+| `users`                       | Organization membership, identity and role storage for future authorization behavior.                                                |
+| `subscriptions`               | Organization plan and external billing references for future billing behavior.                                                       |
+| `audit_logs`                  | Actor, action, entity, request metadata and structured change payload.                                                               |
 
 ## Publication safety
 

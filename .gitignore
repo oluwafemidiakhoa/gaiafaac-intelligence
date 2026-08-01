@@ -32,3 +32,7 @@ data/processed/*
 reports/*
 !reports/.gitkeep
 
+# Local browser-automation snapshots and ad-hoc debug screenshots (never commit)
+.playwright-mcp/
+/*.png
+

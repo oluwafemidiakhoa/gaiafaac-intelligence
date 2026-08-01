@@ -173,7 +173,10 @@ export function getDemoStates(): Promise<ApiResult<DemoStatesResponse>> {
 export function getDemoState(
   slug: string,
 ): Promise<ApiResult<DemoStateDetailResponse>> {
-  return fetchDemo(`/api/v1/states/${encodeURIComponent(slug)}`, stateDetailSchema)
+  return fetchDemo(
+    `/api/v1/states/${encodeURIComponent(slug)}`,
+    stateDetailSchema,
+  )
 }
 
 export function getDemoComparison(

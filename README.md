@@ -125,4 +125,4 @@ See [the implementation plan](docs/implementation-plan.md),
 [validation methodology](docs/validation-methodology.md),
 [data-source policy](docs/data-source-policy.md), and
 [local setup guide](docs/local-setup.md) for details.
-"# gaiafaac-intelligence" 
+"# gaiafaac-intelligence"

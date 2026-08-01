@@ -4,7 +4,7 @@ name: Collect OAGF FAAC data
 # imports + validates it, and queues it for human review. It NEVER publishes.
 on:
   schedule:
-    - cron: "0 6 * * *" # daily 06:00 UTC
+    - cron: '0 6 * * *' # daily 06:00 UTC
   workflow_dispatch: {} # allow manual runs from the Actions tab
 
 concurrency:
@@ -18,9 +18,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - name: Install the API package
-        run: python -m pip install -e "apps/api"
+          python-version: '3.12'
+      - name: Install the API package (with PDF/Excel extraction extras)
+        run: python -m pip install -e "apps/api[extraction]"
       - name: Run the OAGF collector (never publishes)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

@@ -30,18 +30,28 @@ class Settings(BaseSettings):
     # Shared admin key gating operational/review endpoints. Empty = deny all (secure default).
     admin_key: str = ""
 
-    @field_validator("api_environment", "api_host", "database_url", mode="before")
+    @field_validator("api_environment", "api_host", "database_url", "smtp_port", mode="before")
     @classmethod
-    def _default_when_blank(cls, value: object, info: ValidationInfo) -> object:
-        """Treat a blank env var as unset so it cannot crash startup.
+    def _clean_or_default(cls, value: object, info: ValidationInfo) -> object:
+        """Strip surrounding whitespace and treat a blank env var as unset.
 
-        Deployment platforms (e.g. Railway) frequently ship variables set to an
-        empty string. Without this, an empty ``API_ENVIRONMENT`` would override
-        the default and raise a validation error before the app can even serve
-        its health check. Fall back to the field default instead.
+        Two failure modes this guards against:
+
+        * Deployment platforms (e.g. Railway) frequently ship variables set to an
+          empty string. Without this, an empty ``API_ENVIRONMENT`` would override
+          the default and raise a validation error before the app can even serve
+          its health check.
+        * Secrets pasted into CI/CD often carry a trailing newline or space. A
+          ``DATABASE_URL`` ending in ``sslmode=require\\n`` makes libpq reject the
+          connection with "invalid sslmode value". Stripping makes it robust.
+
+        Fall back to the field default when the value is blank.
         """
-        if isinstance(value, str) and not value.strip():
-            return cls.model_fields[info.field_name].default
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return cls.model_fields[info.field_name].default
+            return stripped
         return value
 
     @property

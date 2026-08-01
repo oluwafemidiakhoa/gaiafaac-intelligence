@@ -6,7 +6,10 @@ export function DataUnavailable({ message }: { message: string }) {
   return (
     <Card className="border-dashed">
       <CardHeader>
-        <CircleAlert className="text-muted-foreground size-5" aria-hidden="true" />
+        <CircleAlert
+          className="text-muted-foreground size-5"
+          aria-hidden="true"
+        />
         <CardTitle className="pt-2 text-lg">Demo data unavailable</CardTitle>
       </CardHeader>
       <CardContent>

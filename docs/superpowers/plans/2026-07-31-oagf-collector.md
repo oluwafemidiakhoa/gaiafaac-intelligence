@@ -25,11 +25,13 @@
 ### Task 1: OAGF URL builder
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/collection/__init__.py` (empty)
 - Create: `apps/api/src/gaiafaac_api/pipeline/collection/oagf_urls.py`
 - Test: `apps/api/tests/test_collection_urls.py`
 
 **Interfaces:**
+
 - Produces: `candidate_urls(revenue_year: int, revenue_month: int) -> list[str]` — OAGF PDF URLs to try, most-likely first.
 
 - [ ] **Step 1: Write the failing test**
@@ -112,10 +114,12 @@ git commit -m "feat(collection): OAGF revenue-month -> candidate PDF URLs"
 ### Task 2: HTTP downloader
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/collection/downloader.py`
 - Test: `apps/api/tests/test_collection_downloader.py`
 
 **Interfaces:**
+
 - Produces:
   - `Fetch = Callable[[str], bytes | None]` (returns raw bytes, or `None` on HTTP 404).
   - `http_download(url: str, *, dest_dir: Path = Path("data/raw"), fetch: Fetch = _urlopen_bytes) -> Path | None` — saves a real PDF, returns its path; returns `None` for 404 or non-PDF content.
@@ -220,10 +224,12 @@ git commit -m "feat(collection): PDF-validating HTTP downloader with 404 handlin
 ### Task 3: Collector runner
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/pipeline/collection/collector.py`
 - Test: `apps/api/tests/test_collector.py`
 
 **Interfaces:**
+
 - Consumes: `candidate_urls` (Task 1); `import_file` + `ImportRequest`/`ImportResult` from existing pipeline.
 - Produces:
   - `QueuedMonth` (frozen dataclass): `run_id: str`, `revenue_month: date`, `reporting_label: str`, `records_extracted: int`, `blocking_finding_count: int`.
@@ -492,11 +498,13 @@ git commit -m "feat(collection): idempotent, never-publishing OAGF collector run
 ### Task 4: Config settings + Zoho email notifier
 
 **Files:**
+
 - Modify: `apps/api/src/gaiafaac_api/config.py` (add SMTP settings)
 - Create: `apps/api/src/gaiafaac_api/pipeline/collection/notify.py`
 - Test: `apps/api/tests/test_collection_notify.py`
 
 **Interfaces:**
+
 - Consumes: `Settings` fields `smtp_host, smtp_port, smtp_username, smtp_password, alert_from, alert_to`.
 - Produces: `send_review_alert(settings, *, reporting_label: str, records_extracted: int, blocking_finding_count: int, queue_url: str) -> bool` — sends via Zoho SMTP; returns `False` (never raises) if unconfigured or on any SMTP error.
 
@@ -685,10 +693,12 @@ git commit -m "feat(collection): Zoho SMTP review-alert notifier + settings"
 ### Task 5: `collect-oagf` CLI command
 
 **Files:**
+
 - Modify: `apps/api/src/gaiafaac_api/cli.py`
 - Test: `apps/api/tests/test_cli_collect.py`
 
 **Interfaces:**
+
 - Consumes: `run_collection`, `http_download`, `candidate_urls`, `send_review_alert`, `get_settings`.
 - Produces: `collect-oagf` subcommand with `--months-back N` (default 3) and `--dry-run`.
 
@@ -784,11 +794,13 @@ git commit -m "feat(cli): collect-oagf command with dry-run and email alerts"
 ### Task 6: Review-queue service + schema
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/review_schemas.py`
 - Create: `apps/api/src/gaiafaac_api/services/review_queue.py`
 - Test: `apps/api/tests/test_review_queue.py`
 
 **Interfaces:**
+
 - Produces:
   - `PendingReviewItem` (Pydantic): `run_id, reporting_label, revenue_month, source_organization, status, covered_states, expected_states, finding_count, blocking_count, created_at`.
   - `list_pending_reviews(session) -> list[PendingReviewItem]` — real, unpublished periods only; **no allocation figures**.
@@ -988,11 +1000,13 @@ git commit -m "feat(review): pending-review queue service (metadata only)"
 ### Task 7: Review-queue API endpoint
 
 **Files:**
+
 - Create: `apps/api/src/gaiafaac_api/api/v1/routes/review.py`
 - Modify: `apps/api/src/gaiafaac_api/api/v1/router.py`
 - Test: `apps/api/tests/test_review_endpoint.py`
 
 **Interfaces:**
+
 - Consumes: `list_pending_reviews`, `PendingReviewItem`, `get_session`.
 - Produces: `GET /api/v1/review/pending -> list[PendingReviewItem]`.
 
@@ -1104,12 +1118,14 @@ git commit -m "feat(api): GET /api/v1/review/pending endpoint"
 ### Task 8: Frontend "Pending review" page
 
 **Files:**
+
 - Create: `apps/web/src/lib/review-api.ts`
 - Create: `apps/web/src/app/review/pending/page.tsx`
 - Modify: `apps/web/src/components/site-header.tsx` (add nav link)
 - Test: `apps/web/src/lib/review-api.test.ts`
 
 **Interfaces:**
+
 - Consumes: `GET /api/v1/review/pending`.
 - Produces: `getPendingReviews(): Promise<ApiResult<PendingReviewItem[]>>` mirroring `published-api.ts`.
 
@@ -1185,7 +1201,9 @@ function apiBaseUrl() {
     .replace(/\/$/, '')
 }
 
-export async function getPendingReviews(): Promise<ApiResult<PendingReviewItem[]>> {
+export async function getPendingReviews(): Promise<
+  ApiResult<PendingReviewItem[]>
+> {
   try {
     const response = await fetch(`${apiBaseUrl()}/api/v1/review/pending`, {
       next: { revalidate: 120 },
@@ -1236,8 +1254,13 @@ export default async function PendingReviewPage() {
             </thead>
             <tbody>
               {result.data.map((item) => (
-                <tr key={item.run_id} className="border-border border-b last:border-0">
-                  <td className="py-4 pr-5 font-medium">{item.reporting_label}</td>
+                <tr
+                  key={item.run_id}
+                  className="border-border border-b last:border-0"
+                >
+                  <td className="py-4 pr-5 font-medium">
+                    {item.reporting_label}
+                  </td>
                   <td className="py-4 pr-5">
                     {item.covered_states} / {item.expected_states}
                   </td>
@@ -1298,6 +1321,7 @@ python -m pytest apps/api/tests
 npm run test --workspace @gaiafaac/web
 npm run build
 ```
+
 Expected: all green. Push the branch: `git push`.
 
 - [ ] **Step 2: Dry-run the collector against production (no writes)**
@@ -1308,6 +1332,7 @@ railway link --project 366c7826-db5f-4507-8639-fddc9ba3dc02 \
   --service 294b055c-85cd-430a-826e-b861db55975e >/dev/null 2>&1
 DATABASE_URL="<neon url with current password>" gaiafaac-db collect-oagf --dry-run
 ```
+
 Expected: prints candidate URLs for the last 3 revenue months.
 
 - [ ] **Step 3: Create the cron service (shares the API image + env)**
@@ -1332,15 +1357,18 @@ The user sets these in the Railway dashboard for `gaiafaac-collector`:
 - [ ] **Step 5: Set the cron schedule + start command**
 
 In the Railway dashboard for `gaiafaac-collector` → Settings:
+
 - **Cron Schedule:** `0 6 * * *` (daily 06:00 UTC)
 - **Custom Start Command:** `gaiafaac-db collect-oagf`
 
 - [ ] **Step 6: Trigger once and verify**
 
 Redeploy the collector, then confirm a queued month appears:
+
 ```bash
 curl -s https://gaiafaac-backend-production.up.railway.app/api/v1/review/pending | head -c 800
 ```
+
 Expected: a JSON array; when OAGF's latest month is available it lists an entry with `expected_states: 37` and no figures. Confirm the "Review queue" page renders at the website domain.
 
 - [ ] **Step 7: Commit any config/doc notes** (if a deployment README was updated)
@@ -1354,6 +1382,7 @@ git add -A && git commit -m "docs(collection): record collector cron deployment"
 ## Self-Review
 
 **Spec coverage:**
+
 - URL builder → Task 1. Downloader → Task 2. Collector runner (idempotent, never-publish) → Task 3. Zoho notifier + config → Task 4. `collect-oagf` CLI → Task 5. Review service → Task 6. `/review/pending` endpoint → Task 7. Web page + nav → Task 8. Railway cron → Task 9. Fail-closed behaviours are exercised in Tasks 2 (404/non-PDF), 3 (missing month, idempotency, never-publish), 4 (unconfigured/SMTP error). FCT caveat is documented in the spec; no task publishes. **All spec sections covered.**
 
 **Placeholder scan:** No TBD/TODO; every code step contains full code. The only human-supplied values are the Neon URL and Zoho secrets in Task 9 (correctly kept out of code by design).

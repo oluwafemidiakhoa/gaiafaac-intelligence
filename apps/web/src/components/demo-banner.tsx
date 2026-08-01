@@ -7,7 +7,7 @@ export function DemoBanner({
 }) {
   return (
     <aside
-      className="border-amber-300 bg-amber-50 text-amber-950 border-y"
+      className="border-y border-amber-300 bg-amber-50 text-amber-950"
       aria-label="Demo data warning"
     >
       <div className="mx-auto flex max-w-7xl items-start gap-3 px-5 py-3 lg:px-8">

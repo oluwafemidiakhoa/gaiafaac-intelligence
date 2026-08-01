@@ -14,7 +14,7 @@ and a grounded Ask Gaia Q&A. This spec covers only the analytics engine.
 
 Analytics cannot run on 3 rows in one period. Rankings, volatility,
 revenue-dependency, and forecasting all need many states across many periods. The
-project's non-negotiable rule is that we never invent or infer *real/published*
+project's non-negotiable rule is that we never invent or infer _real/published_
 financial figures. A **clearly-labelled synthetic demo dataset** is the sanctioned
 exception (the existing `seed-demo` already relies on it); analytics then computes
 deterministically over those stored figures and never fabricates values.

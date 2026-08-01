@@ -28,6 +28,7 @@ Run from the repo root. Setup: `npm ci` then `python -m pip install -e "apps/api
 **Host dev:** `npm run dev` (web) · `uvicorn gaiafaac_api.main:app --app-dir apps/api/src --reload` (API).
 
 **Database & ingestion CLI** (`gaiafaac-db`, defined in [cli.py](apps/api/src/gaiafaac_api/cli.py)):
+
 ```bash
 alembic upgrade head            # run from repo root (alembic.ini prepends apps/api/src)
 gaiafaac-db seed-states         # 36 states + FCT, idempotent
@@ -38,6 +39,7 @@ gaiafaac-db approve-import <run_uuid> --reviewer-id <user_uuid>   # requires an 
 ```
 
 **Full verification suite** (must all pass before handing off — mirrors [.github/workflows/ci.yml](.github/workflows/ci.yml)):
+
 ```bash
 npm run format          # prettier --check (repo-wide)
 npm run lint            # eslint, --max-warnings=0
@@ -51,6 +53,7 @@ npm run docker:config   # docker compose config --quiet
 ```
 
 **Single tests:**
+
 ```bash
 python -m pytest apps/api/tests/test_monetary.py::test_name
 python -m pytest apps/api/tests -k "monetary"
@@ -72,6 +75,7 @@ Browser → Next.js Server Components → FastAPI /api/v1 (read-only) → Postgr
 **Governed write path (CLI only, no HTTP endpoints yet).** [pipeline/importer.py](apps/api/src/gaiafaac_api/pipeline/importer.py) registers a SHA-256'd source, parses money by explicit unit, normalizes state names via a curated alias table with **no fuzzy matching** ([pipeline/states.py](apps/api/src/gaiafaac_api/pipeline/states.py)), and writes `pending` allocations. [pipeline/validation.py](apps/api/src/gaiafaac_api/pipeline/validation.py) rebuilds durable `ValidationResult` findings (gross−deductions=net, component-sum reconciliation, month-over-month movement, full-state-set completeness) and moves the run to `requires_review`. [pipeline/approval.py](apps/api/src/gaiafaac_api/pipeline/approval.py) **re-runs validation** (to avoid approving stale results), enforces an active `reviewer`/`administrator` role, writes an `AuditLog`, and sets records to `human_verified` — still unpublished.
 
 **Three-layer integrity invariant.** Every data guarantee is enforced at three layers, and all three must stay in sync when you change a field:
+
 1. DB constraints in [database/models.py](apps/api/src/gaiafaac_api/database/models.py) (`NOT (is_demo AND is_published)`, confidence 0–1, forecast bound ordering, sha256 length, unique period/state).
 2. Pydantic response models in [demo_schemas.py](apps/api/src/gaiafaac_api/demo_schemas.py) (every response carries a literal `data_label` = `"DEMO DATA - NOT REAL FAAC DATA"`).
 3. Frontend Zod schemas in [demo-api.ts](apps/web/src/lib/demo-api.ts) and the **hand-maintained** TS mirror in [packages/shared-types/src/index.ts](packages/shared-types/src/index.ts) — these are not generated from OpenAPI, so update them by hand.
