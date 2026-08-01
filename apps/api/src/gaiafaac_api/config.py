@@ -41,17 +41,22 @@ class Settings(BaseSettings):
           empty string. Without this, an empty ``API_ENVIRONMENT`` would override
           the default and raise a validation error before the app can even serve
           its health check.
-        * Secrets pasted into CI/CD often carry a trailing newline or space. A
-          ``DATABASE_URL`` ending in ``sslmode=require\\n`` makes libpq reject the
-          connection with "invalid sslmode value". Stripping makes it robust.
+        * Secrets pasted into CI/CD often carry stray whitespace, including a
+          newline embedded *mid-string* when the value wrapped across lines. A
+          ``DATABASE_URL`` containing ``sslmode=require\\n`` makes libpq reject the
+          connection with "invalid sslmode value". A connection URL never
+          legitimately contains whitespace, so we collapse all of it — not just
+          the ends — for ``database_url``.
 
         Fall back to the field default when the value is blank.
         """
         if isinstance(value, str):
-            stripped = value.strip()
-            if not stripped:
+            # A connection URL never contains whitespace, so collapse all of it
+            # (including embedded newlines); other fields only trim their ends.
+            cleaned = "".join(value.split()) if info.field_name == "database_url" else value.strip()
+            if not cleaned:
                 return cls.model_fields[info.field_name].default
-            return stripped
+            return cleaned
         return value
 
     @property
