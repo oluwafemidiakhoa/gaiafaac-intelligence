@@ -1,7 +1,8 @@
-import { ArrowRight, Building2, Code2, FileSpreadsheet } from 'lucide-react'
+import { ArrowDown, Building2, Code2, FileSpreadsheet } from 'lucide-react'
 import type { Metadata } from 'next'
 
 import { PageHeader } from '@/components/page-header'
+import { PilotLeadForm } from '@/components/pilot-lead-form'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -13,8 +14,6 @@ import {
 
 export const metadata: Metadata = { title: 'Pilot access' }
 
-const CONTACT_EMAIL = 'partnerships@gailabai.com'
-
 const pilots = [
   {
     name: 'Analyst Pilot',
@@ -22,7 +21,6 @@ const pilots = [
     audience: 'Journalists, researchers, analysts, and independent consultants',
     outcome:
       'Evaluate reviewed historical data, structured exports, and one customized state comparison.',
-    subject: 'GaiaFAAC Analyst Pilot',
   },
   {
     name: 'Team Pilot',
@@ -30,7 +28,6 @@ const pilots = [
     audience: 'Newsrooms, consultancies, NGOs, universities, and research teams',
     outcome:
       'Test a shared monthly intelligence workflow with onboarding, reports, and priority support.',
-    subject: 'GaiaFAAC Team Pilot',
   },
   {
     name: 'API Evaluation',
@@ -38,30 +35,8 @@ const pilots = [
     audience: 'Data teams, fintechs, research platforms, and institutional users',
     outcome:
       'Evaluate controlled access to published historical endpoints with an entitled API key.',
-    subject: 'GaiaFAAC API Evaluation',
   },
 ]
-
-function mailto(subject: string) {
-  const body = [
-    'Hello GaiaFAAC team,',
-    '',
-    `I am interested in the ${subject}.`,
-    '',
-    'Name:',
-    'Organization:',
-    'Role:',
-    'Country:',
-    'Primary use case:',
-    'States or periods of interest:',
-    'Preferred delivery format:',
-    'Expected number of users:',
-    '',
-    'Please contact me about availability, coverage, and pricing.',
-  ].join('\n')
-
-  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-}
 
 export default function PilotPage() {
   return (
@@ -73,7 +48,7 @@ export default function PilotPage() {
       />
 
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
-        {pilots.map(({ name, icon: Icon, audience, outcome, subject }) => (
+        {pilots.map(({ name, icon: Icon, audience, outcome }) => (
           <Card key={name}>
             <CardHeader>
               <Icon className="text-primary size-5" aria-hidden="true" />
@@ -83,9 +58,9 @@ export default function PilotPage() {
             <CardContent>
               <p className="text-muted-foreground text-sm leading-6">{outcome}</p>
               <Button asChild className="mt-6 w-full">
-                <a href={mailto(subject)}>
+                <a href="#request-form">
                   Request access
-                  <ArrowRight className="size-4" aria-hidden="true" />
+                  <ArrowDown className="size-4" aria-hidden="true" />
                 </a>
               </Button>
             </CardContent>
@@ -127,6 +102,23 @@ export default function PilotPage() {
           </ul>
         </section>
       </div>
+
+      <section id="request-form" className="border-border mt-14 scroll-mt-8 rounded-xl border p-6 sm:p-8">
+        <div className="max-w-3xl">
+          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+            Pilot request
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            Tell us what you need
+          </h2>
+          <p className="text-muted-foreground mt-3 text-sm leading-6">
+            Your request is stored securely for commercial follow-up. We use it only to evaluate coverage, scope, licensing, and pricing.
+          </p>
+        </div>
+        <div className="mt-8 max-w-4xl">
+          <PilotLeadForm />
+        </div>
+      </section>
 
       <p className="text-muted-foreground mt-10 text-sm leading-6">
         GaiaFAAC is an independent research platform, not a government service. Public-source facts remain attributable to their original publishers. Commercial access covers reviewed compilation, structured delivery, analysis, support, and controlled access—not ownership of public records.
