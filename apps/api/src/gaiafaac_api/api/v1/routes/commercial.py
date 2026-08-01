@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
@@ -32,7 +33,7 @@ def create_pilot_lead(
 ) -> PilotLeadAccepted:
     # Hidden honeypot field. Bots receive the same response but are not stored.
     if payload.website:
-        return PilotLeadAccepted(id=PilotLead().id)
+        return PilotLeadAccepted(id=uuid.uuid4())
 
     lead = PilotLead(
         name=payload.name,
