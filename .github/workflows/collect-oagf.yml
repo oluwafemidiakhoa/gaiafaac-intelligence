@@ -21,6 +21,22 @@ jobs:
           python-version: '3.12'
       - name: Install the API package (with PDF/Excel extraction extras)
         run: python -m pip install -e "apps/api[extraction]"
+      - name: TEMP diagnose DATABASE_URL (codepoints only, no credentials)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python - <<'PY'
+          import os
+          from urllib.parse import urlsplit
+          from gaiafaac_api.config import get_settings
+          raw = os.environ.get("DATABASE_URL", "")
+          cleaned = get_settings().database_url
+          print("RAW len", len(raw), "scheme", urlsplit(raw).scheme)
+          print("RAW query codepoints", [ord(c) for c in urlsplit(raw).query])
+          print("CLEANED len", len(cleaned), "scheme", urlsplit(cleaned).scheme)
+          print("CLEANED query codepoints", [ord(c) for c in urlsplit(cleaned).query])
+          print("CLEANED host", repr(urlsplit(cleaned).netloc.split("@")[-1]))
+          PY
       - name: Run the OAGF collector (never publishes)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
