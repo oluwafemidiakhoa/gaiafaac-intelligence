@@ -44,7 +44,19 @@ class Settings(BaseSettings):
     # Shared admin key gating operational/review endpoints. Empty = deny all (secure default).
     admin_key: str = ""
 
-    @field_validator("api_environment", "api_host", "database_url", "smtp_port", mode="before")
+    @field_validator(
+        "api_environment",
+        "api_host",
+        "database_url",
+        "smtp_port",
+        "smtp_host",
+        "smtp_username",
+        "smtp_password",
+        "alert_from",
+        "alert_to",
+        "admin_key",
+        mode="before",
+    )
     @classmethod
     def _clean_or_default(cls, value: object, info: ValidationInfo) -> object:
         """Strip surrounding whitespace and treat a blank env var as unset.

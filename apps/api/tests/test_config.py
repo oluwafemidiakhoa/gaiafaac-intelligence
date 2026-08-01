@@ -50,3 +50,17 @@ def test_bare_postgres_url_gets_psycopg_driver() -> None:
 def test_explicit_driver_url_is_left_untouched() -> None:
     url = "postgresql+psycopg://u:p@host/db?sslmode=require"
     assert Settings(database_url=url).database_url == url
+
+
+def test_alert_and_smtp_fields_are_trimmed() -> None:
+    """Trailing newlines here become illegal email-header linefeeds."""
+    settings = Settings(
+        alert_from="alerts@example.com\n",
+        alert_to="  team@example.com \n",
+        smtp_host="smtp.example.com\r\n",
+        smtp_username="user\n",
+    )
+    assert settings.alert_from == "alerts@example.com"
+    assert settings.alert_to == "team@example.com"
+    assert settings.smtp_host == "smtp.example.com"
+    assert settings.smtp_username == "user"
