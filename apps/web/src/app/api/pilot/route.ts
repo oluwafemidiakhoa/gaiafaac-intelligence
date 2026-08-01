@@ -31,7 +31,10 @@ export async function POST(request: Request) {
   try {
     input = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid request body.' },
+      { status: 400 },
+    )
   }
 
   const parsed = requestSchema.safeParse(input)
