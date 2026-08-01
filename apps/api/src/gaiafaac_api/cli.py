@@ -5,7 +5,9 @@ import uuid
 from datetime import date
 from pathlib import Path
 
-from gaiafaac_api.database.enums import UserRole
+from sqlalchemy import select
+
+from gaiafaac_api.database.enums import PlanCode, UserRole
 from gaiafaac_api.database.models import ExtractionRun, User
 from gaiafaac_api.database.seeds import seed_demo_allocations, seed_states
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
@@ -104,6 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     collect.add_argument("--months-back", type=int, default=3)
     collect.add_argument("--dry-run", action="store_true")
+
+    api_key = commands.add_parser("create-api-key", help="Issue an API key for an organization")
+    api_key.add_argument("--org-slug", required=True)
+    api_key.add_argument("--org-name")
+    api_key.add_argument("--name", required=True)
+    api_key.add_argument("--plan", default="api", choices=[p.value for p in PlanCode])
     return parser
 
 
@@ -252,6 +260,25 @@ def main() -> None:
                 f"queued={len(summary.queued)}, skipped={len(summary.skipped)}, "
                 f"errors={len(summary.errors)}."
             )
+        elif args.command == "create-api-key":
+            from gaiafaac_api.database.models import Organization
+            from gaiafaac_api.services.api_keys import generate_api_key
+
+            org = session.scalar(select(Organization).where(Organization.slug == args.org_slug))
+            if org is None:
+                org = Organization(name=args.org_name or args.org_slug, slug=args.org_slug)
+                session.add(org)
+                session.flush()
+            key, raw = generate_api_key(
+                session, organization_id=org.id, name=args.name, plan_code=args.plan
+            )
+            session.commit()
+            print(
+                f"API key created for org '{org.slug}' "
+                f"(plan={args.plan}, prefix={key.key_prefix}). "
+                "Store it now - it will not be shown again:"
+            )
+            print(raw)
 
 
 if __name__ == "__main__":

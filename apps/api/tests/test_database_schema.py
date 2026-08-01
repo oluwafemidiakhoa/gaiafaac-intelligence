@@ -11,6 +11,8 @@ from gaiafaac_api.database.enums import VerificationStatus
 from gaiafaac_api.database.models import ReportingPeriod
 
 EXPECTED_TABLES = {
+    "api_keys",
+    "api_requests",
     "audit_logs",
     "extraction_runs",
     "forecasts",

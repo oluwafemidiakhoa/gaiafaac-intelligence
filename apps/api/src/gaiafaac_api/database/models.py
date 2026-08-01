@@ -15,6 +15,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -458,6 +459,31 @@ class Subscription(IdMixin, TimestampMixin, Base):
     external_subscription_id: Mapped[str | None] = mapped_column(String(160), unique=True)
     current_period_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ApiKey(IdMixin, TimestampMixin, Base):
+    __tablename__ = "api_keys"
+
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    key_prefix: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    key_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    plan_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ApiRequest(IdMixin, TimestampMixin, Base):
+    __tablename__ = "api_requests"
+    __table_args__ = (Index("ix_api_requests_key_created", "api_key_id", "created_at"),)
+
+    api_key_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("api_keys.id", ondelete="CASCADE"), nullable=False
+    )
+    endpoint: Mapped[str] = mapped_column(String(200), nullable=False)
+    status_code: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class AuditLog(IdMixin, Base):

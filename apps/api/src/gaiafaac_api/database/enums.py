@@ -92,3 +92,10 @@ class SubscriptionStatus(StrEnum):
     PAST_DUE = "past_due"
     CANCELED = "canceled"
     EXPIRED = "expired"
+
+
+class PlanCode(StrEnum):
+    FREE = "free"
+    ANALYST = "analyst"
+    TEAM = "team"
+    API = "api"
