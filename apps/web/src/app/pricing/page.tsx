@@ -89,11 +89,15 @@ export default function PricingPage() {
 
       <div className="border-primary/20 bg-primary/5 mt-8 rounded-lg border p-5">
         <div className="flex items-start gap-3">
-          <Clock3 className="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+          <Clock3
+            className="text-primary mt-0.5 size-5 shrink-0"
+            aria-hidden="true"
+          />
           <div>
             <p className="font-medium">Paid access is currently pilot-based</p>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              We confirm data coverage and delivery requirements before accepting payment. No automated subscription is created from this page.
+              We confirm data coverage and delivery requirements before accepting
+              payment. No automated subscription is created from this page.
             </p>
           </div>
         </div>
@@ -150,10 +154,13 @@ export default function PricingPage() {
 
       <div className="text-muted-foreground mt-10 max-w-3xl space-y-2 text-sm leading-6">
         <p>
-          Prices are pilot starting points in USD and may vary with historical coverage, export format, onboarding, and custom research requirements.
+          Prices are pilot starting points in USD and may vary with historical
+          coverage, export format, onboarding, and custom research requirements.
         </p>
         <p>
-          Public-source facts remain attributable to their original publishers. Paid value comes from reviewed compilation, structured delivery, analysis, support, and controlled API access.
+          Public-source facts remain attributable to their original publishers.
+          Paid value comes from reviewed compilation, structured delivery,
+          analysis, support, and controlled API access.
         </p>
       </div>
     </div>
