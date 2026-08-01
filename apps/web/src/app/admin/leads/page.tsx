@@ -27,7 +27,9 @@ export default async function CommercialLeadsPage() {
       />
 
       {result.error ? (
-        <p className="text-destructive mt-10 text-sm font-medium">{result.error}</p>
+        <p className="text-destructive mt-10 text-sm font-medium">
+          {result.error}
+        </p>
       ) : leads.length === 0 ? (
         <p className="text-muted-foreground mt-10 text-sm">
           No pilot enquiries have been submitted yet.
@@ -38,7 +40,10 @@ export default async function CommercialLeadsPage() {
             {leads.length} lead{leads.length === 1 ? '' : 's'}, newest first.
           </p>
           {leads.map((lead) => (
-            <article key={lead.id} className="border-border rounded-lg border p-6">
+            <article
+              key={lead.id}
+              className="border-border rounded-lg border p-6"
+            >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold">{lead.name}</h2>
@@ -49,7 +54,9 @@ export default async function CommercialLeadsPage() {
                   </p>
                 </div>
                 <div className="text-right text-sm">
-                  <p className="font-medium capitalize">{lead.plan_interest} pilot</p>
+                  <p className="font-medium capitalize">
+                    {lead.plan_interest} pilot
+                  </p>
                   <p className="text-muted-foreground mt-1">
                     {displayDate(lead.created_at)}
                   </p>
@@ -60,22 +67,31 @@ export default async function CommercialLeadsPage() {
                 <div>
                   <dt className="text-muted-foreground">Email</dt>
                   <dd className="mt-1 font-medium">
-                    <a className="hover:underline" href={`mailto:${lead.email}`}>
+                    <a
+                      className="hover:underline"
+                      href={`mailto:${lead.email}`}
+                    >
                       {lead.email}
                     </a>
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Format</dt>
-                  <dd className="mt-1 font-medium">{lead.preferred_format ?? 'Not specified'}</dd>
+                  <dd className="mt-1 font-medium">
+                    {lead.preferred_format ?? 'Not specified'}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Expected users</dt>
-                  <dd className="mt-1 font-medium">{lead.expected_users ?? 'Not specified'}</dd>
+                  <dd className="mt-1 font-medium">
+                    {lead.expected_users ?? 'Not specified'}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Status</dt>
-                  <dd className="mt-1 font-medium capitalize">{lead.status}</dd>
+                  <dd className="mt-1 font-medium capitalize">
+                    {lead.status}
+                  </dd>
                 </div>
               </dl>
 
