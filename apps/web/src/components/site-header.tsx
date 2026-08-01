@@ -9,6 +9,7 @@ const navigation = [
   { href: '/sources', label: 'Sources' },
   { href: '/methodology', label: 'Methodology' },
   { href: '/pricing', label: 'Pricing' },
+  { href: '/pilot', label: 'Pilot access' },
 ]
 
 export function SiteHeader() {
