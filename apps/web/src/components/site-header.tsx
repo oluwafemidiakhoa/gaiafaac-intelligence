@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 const navigation = [
   { href: '/live', label: 'Live data' },
+  { href: '/insights', label: 'Insights' },
   { href: '/overview', label: 'Overview' },
   { href: '/states', label: 'States' },
   { href: '/compare', label: 'Compare' },
