@@ -19,6 +19,7 @@ EXPECTED_TABLES = {
     "generated_insights",
     "national_distributions",
     "organizations",
+    "pilot_leads",
     "reporting_periods",
     "source_documents",
     "state_allocation_components",
