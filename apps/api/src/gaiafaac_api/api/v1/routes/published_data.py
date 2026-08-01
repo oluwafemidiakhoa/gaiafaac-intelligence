@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.session import get_session
+from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse
+from gaiafaac_api.services.published_analytics import published_analytics
 from gaiafaac_api.services.published_data import (
     get_published_overview,
     latest_published_period,
@@ -12,6 +14,15 @@ from gaiafaac_api.services.published_data import (
 
 router = APIRouter(prefix="/published", tags=["published data"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
+
+
+@router.get(
+    "/analytics",
+    response_model=PublishedAnalytics,
+    summary="Analytics over published, human-verified FAAC data",
+)
+def published_analytics_endpoint(session: DatabaseSession) -> PublishedAnalytics:
+    return published_analytics(session)
 
 
 @router.get(
