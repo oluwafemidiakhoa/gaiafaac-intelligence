@@ -40,3 +40,15 @@ class PublishedOverviewResponse(BaseModel):
     total_deductions: str | None
     total_net: str | None
     allocations: list[PublishedAllocation]
+
+
+class PublishedSourceItem(BaseModel):
+    revenue_month: date
+    reporting_label: str
+    source_organization: str
+    original_filename: str
+    sha256: str
+    source_url: str | None
+    publication_date: date | None
+    covered_states: int
+    expected_states: int

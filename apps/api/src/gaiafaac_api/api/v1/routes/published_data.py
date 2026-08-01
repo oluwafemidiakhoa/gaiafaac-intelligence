@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
-from gaiafaac_api.published_schemas import PublishedOverviewResponse
+from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
 from gaiafaac_api.services.published_analytics import published_analytics
 from gaiafaac_api.services.published_data import (
     get_published_overview,
     latest_published_period,
+    published_sources,
 )
 
 router = APIRouter(prefix="/published", tags=["published data"])
@@ -23,6 +24,15 @@ DatabaseSession = Annotated[Session, Depends(get_session)]
 )
 def published_analytics_endpoint(session: DatabaseSession) -> PublishedAnalytics:
     return published_analytics(session)
+
+
+@router.get(
+    "/sources",
+    response_model=list[PublishedSourceItem],
+    summary="Source document for every published month",
+)
+def published_sources_endpoint(session: DatabaseSession) -> list[PublishedSourceItem]:
+    return published_sources(session)
 
 
 @router.get(

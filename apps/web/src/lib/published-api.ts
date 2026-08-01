@@ -57,7 +57,9 @@ function apiBaseUrl() {
     .replace(/\/$/, '')
 }
 
-export async function getPublishedOverview(): Promise<ApiResult<PublishedOverview>> {
+export async function getPublishedOverview(): Promise<
+  ApiResult<PublishedOverview>
+> {
   try {
     const response = await fetch(
       `${apiBaseUrl()}/api/v1/published/overview/latest`,
@@ -78,5 +80,38 @@ export async function getPublishedOverview(): Promise<ApiResult<PublishedOvervie
     }
   } catch {
     return { data: null, error: 'The published-data service is unavailable.' }
+  }
+}
+
+export const publishedSourceSchema = z.object({
+  revenue_month: z.iso.date(),
+  reporting_label: z.string(),
+  source_organization: z.string(),
+  original_filename: z.string(),
+  sha256: z.string().length(64),
+  source_url: z.url().nullable(),
+  publication_date: z.iso.date().nullable(),
+  covered_states: z.number().int(),
+  expected_states: z.number().int(),
+})
+
+export type PublishedSourceItem = z.infer<typeof publishedSourceSchema>
+
+export async function getPublishedSources(): Promise<
+  ApiResult<PublishedSourceItem[]>
+> {
+  try {
+    const response = await fetch(`${apiBaseUrl()}/api/v1/published/sources`, {
+      next: { revalidate: 300 },
+    })
+    if (!response.ok) {
+      return { data: null, error: 'The source registry is unavailable.' }
+    }
+    return {
+      data: z.array(publishedSourceSchema).parse(await response.json()),
+      error: null,
+    }
+  } catch {
+    return { data: null, error: 'The source registry is unavailable.' }
   }
 }

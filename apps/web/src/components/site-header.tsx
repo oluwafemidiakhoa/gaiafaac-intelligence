@@ -8,6 +8,7 @@ const navigation = [
   { href: '/compare', label: 'Compare' },
   { href: '/sources', label: 'Sources' },
   { href: '/methodology', label: 'Methodology' },
+  { href: '/pricing', label: 'Pricing' },
 ]
 
 export function SiteHeader() {

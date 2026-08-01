@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.models import (
@@ -16,6 +16,7 @@ from gaiafaac_api.published_schemas import (
     PublishedOverviewResponse,
     PublishedPeriod,
     PublishedSource,
+    PublishedSourceItem,
 )
 
 EXPECTED_STATE_COUNT = 37
@@ -38,6 +39,48 @@ def latest_published_period(session: Session) -> ReportingPeriod | None:
         .order_by(ReportingPeriod.revenue_month.desc())
         .limit(1)
     )
+
+
+def published_sources(session: Session) -> list[PublishedSourceItem]:
+    """One source-document record per published month, newest first."""
+    periods = session.scalars(
+        select(ReportingPeriod)
+        .where(ReportingPeriod.is_published.is_(True), ReportingPeriod.is_demo.is_(False))
+        .order_by(ReportingPeriod.revenue_month.desc())
+    )
+    items: list[PublishedSourceItem] = []
+    for period in periods:
+        source = session.scalar(
+            select(SourceDocument).where(SourceDocument.reporting_period_id == period.id)
+        )
+        if source is None:
+            continue
+        covered = (
+            session.scalar(
+                select(func.count())
+                .select_from(StateAllocation)
+                .where(
+                    StateAllocation.reporting_period_id == period.id,
+                    StateAllocation.is_published.is_(True),
+                    StateAllocation.is_demo.is_(False),
+                )
+            )
+            or 0
+        )
+        items.append(
+            PublishedSourceItem(
+                revenue_month=period.revenue_month,
+                reporting_label=period.reporting_label,
+                source_organization=source.source_organization,
+                original_filename=source.original_filename,
+                sha256=source.sha256,
+                source_url=source.source_url,
+                publication_date=source.publication_date,
+                covered_states=covered,
+                expected_states=EXPECTED_STATE_COUNT,
+            )
+        )
+    return items
 
 
 def get_published_overview(
