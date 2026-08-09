@@ -48,7 +48,9 @@ function apiBaseUrl() {
     .replace(/\/$/, '')
 }
 
-export async function getFiscalPulse(year = 2024): Promise<ApiResult<FiscalPulse>> {
+export async function getFiscalPulse(
+  year = 2024,
+): Promise<ApiResult<FiscalPulse>> {
   try {
     const response = await fetch(
       `${apiBaseUrl()}/api/v1/published/fiscal-pulse?year=${year}`,
