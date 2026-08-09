@@ -9,7 +9,6 @@ from gaiafaac_api.pipeline.extraction.schema import (
     ExtractedAllocationTable,
 )
 
-
 # Rows in the OAGF state table that are not states.
 #
 # Subtotals and table labels must never become allocations. Unknown names that are
