@@ -67,7 +67,14 @@ def test_fiscal_pulse_metrics_and_fct_missing_financials(session):
     fct = session.scalars(select(State).where(State.is_fct.is_(True))).one()
     source = _source(session)
 
-    regular_nets = [Decimal("90"), Decimal("90"), Decimal("90"), Decimal("110"), Decimal("110"), Decimal("110")]
+    regular_nets = [
+        Decimal("90"),
+        Decimal("90"),
+        Decimal("90"),
+        Decimal("110"),
+        Decimal("110"),
+        Decimal("110"),
+    ]
     for month, net in enumerate(regular_nets, start=1):
         period = _period(session, month)
         _allocation(
