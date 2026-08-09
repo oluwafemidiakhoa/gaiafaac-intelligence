@@ -1,12 +1,15 @@
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.session import get_session
+from gaiafaac_api.fiscal_proof_schemas import FiscalProofResponse
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
+from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
 from gaiafaac_api.services.fiscal_pulse import fiscal_pulse
 from gaiafaac_api.services.published_analytics import published_analytics
 from gaiafaac_api.services.published_data import (
@@ -38,6 +41,25 @@ def fiscal_pulse_endpoint(
     year: Annotated[int, Query(ge=2000, le=2100)] = 2024,
 ) -> FiscalPulseResponse:
     return fiscal_pulse(session, year)
+
+
+@router.get(
+    "/fiscal-proof/{state_slug}/{revenue_month}",
+    response_model=FiscalProofResponse,
+    summary="Deterministic evidence proof for a published state allocation",
+)
+def fiscal_proof_endpoint(
+    state_slug: str,
+    revenue_month: date,
+    session: DatabaseSession,
+) -> FiscalProofResponse:
+    proof = get_fiscal_proof(session, state_slug=state_slug, revenue_month=revenue_month)
+    if proof is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published allocation proof exists for this state and revenue month.",
+        )
+    return proof
 
 
 @router.get(

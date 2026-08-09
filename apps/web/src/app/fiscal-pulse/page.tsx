@@ -52,6 +52,7 @@ export default async function FiscalPulsePage() {
     )
   }
 
+  const completeYear = data.coverage_status === 'complete_year'
   const completeStates = data.states.filter(
     (state) => state.evidence_status === 'Verified',
   ).length
@@ -61,25 +62,39 @@ export default async function FiscalPulsePage() {
   const highVolatility = data.states.filter(
     (state) => state.volatility === 'High',
   ).length
+  const periodLabel = completeYear
+    ? 'Annual 2024'
+    : `Partial 2024 (${data.months_published}/12 months)`
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
-        eyebrow="GaiaFAAC Fiscal Pulse · 2024"
+        eyebrow={`GaiaFAAC Fiscal Pulse · ${periodLabel}`}
         title="Verified fiscal intelligence for every Nigerian state"
-        description="Compare annual allocations, deduction burden, net retention, momentum and allocation volatility—with evidence status attached to every signal."
+        description="Compare published-period allocations, deduction burden, net retention, momentum and allocation volatility—with evidence status attached to every signal."
       />
+
+      {!completeYear ? (
+        <div className="border-primary/30 bg-primary/5 mt-8 rounded-lg border p-5 text-sm leading-6">
+          <p className="font-semibold">Partial-year coverage</p>
+          <p className="text-muted-foreground mt-1">
+            {data.coverage_label}. Every total below represents only the
+            published months and must not be interpreted as a complete annual
+            2024 total.
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Published months"
-          value={String(data.months_published)}
+          value={`${data.months_published}/${data.expected_months}`}
           detail={data.latest_period_label ?? '2024 verified series'}
         />
         <MetricCard
           label="Verified state profiles"
           value={String(completeStates)}
-          detail="Complete gross, deductions and net across the published year."
+          detail="Complete gross, deductions and net across every currently published month."
         />
         <MetricCard
           label="Improving momentum"
@@ -97,7 +112,7 @@ export default async function FiscalPulsePage() {
         <CardHeader>
           <CardTitle>State Fiscal Pulse</CardTitle>
           <CardDescription>
-            Annual 2024 signals derived only from published, non-demo records.
+            {periodLabel} signals derived only from published, non-demo records.
             Missing inputs remain unavailable.
           </CardDescription>
         </CardHeader>
@@ -106,7 +121,9 @@ export default async function FiscalPulsePage() {
             <thead>
               <tr className="border-border text-muted-foreground border-b">
                 <th className="py-3 pr-4 font-medium">State</th>
-                <th className="py-3 pr-4 text-right font-medium">Annual net</th>
+                <th className="py-3 pr-4 text-right font-medium">
+                  Published-period net
+                </th>
                 <th className="py-3 pr-4 text-right font-medium">
                   Deduction burden
                 </th>

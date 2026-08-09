@@ -10,7 +10,7 @@ export function DataUnavailable({ message }: { message: string }) {
           className="text-muted-foreground size-5"
           aria-hidden="true"
         />
-        <CardTitle className="pt-2 text-lg">Demo data unavailable</CardTitle>
+        <CardTitle className="pt-2 text-lg">Data unavailable</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground max-w-2xl text-sm leading-6">
