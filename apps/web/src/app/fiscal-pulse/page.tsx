@@ -62,7 +62,9 @@ export default async function FiscalPulsePage() {
   const highVolatility = data.states.filter(
     (state) => state.volatility === 'High',
   ).length
-  const periodLabel = completeYear ? 'Annual 2024' : `Partial 2024 (${data.months_published}/12 months)`
+  const periodLabel = completeYear
+    ? 'Annual 2024'
+    : `Partial 2024 (${data.months_published}/12 months)`
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -76,7 +78,9 @@ export default async function FiscalPulsePage() {
         <div className="border-primary/30 bg-primary/5 mt-8 rounded-lg border p-5 text-sm leading-6">
           <p className="font-semibold">Partial-year coverage</p>
           <p className="text-muted-foreground mt-1">
-            {data.coverage_label}. Every total below represents only the published months and must not be interpreted as a complete annual 2024 total.
+            {data.coverage_label}. Every total below represents only the
+            published months and must not be interpreted as a complete annual
+            2024 total.
           </p>
         </div>
       ) : null}
@@ -108,7 +112,8 @@ export default async function FiscalPulsePage() {
         <CardHeader>
           <CardTitle>State Fiscal Pulse</CardTitle>
           <CardDescription>
-            {periodLabel} signals derived only from published, non-demo records. Missing inputs remain unavailable.
+            {periodLabel} signals derived only from published, non-demo records.
+            Missing inputs remain unavailable.
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
@@ -116,9 +121,15 @@ export default async function FiscalPulsePage() {
             <thead>
               <tr className="border-border text-muted-foreground border-b">
                 <th className="py-3 pr-4 font-medium">State</th>
-                <th className="py-3 pr-4 text-right font-medium">Published-period net</th>
-                <th className="py-3 pr-4 text-right font-medium">Deduction burden</th>
-                <th className="py-3 pr-4 text-right font-medium">Net retention</th>
+                <th className="py-3 pr-4 text-right font-medium">
+                  Published-period net
+                </th>
+                <th className="py-3 pr-4 text-right font-medium">
+                  Deduction burden
+                </th>
+                <th className="py-3 pr-4 text-right font-medium">
+                  Net retention
+                </th>
                 <th className="py-3 pr-4 font-medium">Momentum</th>
                 <th className="py-3 pr-4 font-medium">Volatility</th>
                 <th className="py-3 font-medium">Evidence</th>
@@ -126,24 +137,44 @@ export default async function FiscalPulsePage() {
             </thead>
             <tbody>
               {data.states.map((state) => (
-                <tr key={state.state_slug} className="border-border border-b last:border-0">
+                <tr
+                  key={state.state_slug}
+                  className="border-border border-b last:border-0"
+                >
                   <td className="py-3 pr-4">
-                    <Link href={`/states/${state.state_slug}`} className="hover:text-primary font-medium">
+                    <Link
+                      href={`/states/${state.state_slug}`}
+                      className="hover:text-primary font-medium"
+                    >
                       {state.state_name}
                     </Link>
-                    <span className="text-muted-foreground ml-2 text-xs">{state.geopolitical_zone}</span>
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      {state.geopolitical_zone}
+                    </span>
                   </td>
-                  <td className="py-3 pr-4 text-right font-mono font-semibold">{formatNaira(state.annual_net)}</td>
-                  <td className="py-3 pr-4 text-right font-mono">{percent(state.deduction_burden_pct)}</td>
-                  <td className="py-3 pr-4 text-right font-mono">{percent(state.net_retention_pct)}</td>
-                  <td className="py-3 pr-4">
-                    <StatusPill tone={signalTone(state.momentum)}>{state.momentum}</StatusPill>
+                  <td className="py-3 pr-4 text-right font-mono font-semibold">
+                    {formatNaira(state.annual_net)}
+                  </td>
+                  <td className="py-3 pr-4 text-right font-mono">
+                    {percent(state.deduction_burden_pct)}
+                  </td>
+                  <td className="py-3 pr-4 text-right font-mono">
+                    {percent(state.net_retention_pct)}
                   </td>
                   <td className="py-3 pr-4">
-                    <StatusPill tone={signalTone(state.volatility)}>{state.volatility}</StatusPill>
+                    <StatusPill tone={signalTone(state.momentum)}>
+                      {state.momentum}
+                    </StatusPill>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <StatusPill tone={signalTone(state.volatility)}>
+                      {state.volatility}
+                    </StatusPill>
                   </td>
                   <td className="py-3">
-                    <StatusPill tone={signalTone(state.evidence_status)}>{state.evidence_status}</StatusPill>
+                    <StatusPill tone={signalTone(state.evidence_status)}>
+                      {state.evidence_status}
+                    </StatusPill>
                   </td>
                 </tr>
               ))}
@@ -157,29 +188,53 @@ export default async function FiscalPulsePage() {
           <CardHeader>
             <CardTitle>How to interpret the signals</CardTitle>
             <CardDescription>
-              Momentum compares the latest three available monthly net allocations with the preceding three. Volatility uses coefficient of variation.
+              Momentum compares the latest three available monthly net
+              allocations with the preceding three. Volatility uses coefficient
+              of variation.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
-            <p>These metrics describe allocation patterns only. They do not measure creditworthiness, solvency, corruption, governance quality or default risk.</p>
-            <p>Broader fiscal-risk analysis would require additional evidence such as IGR, debt service, debt stock, expenditure and liabilities.</p>
-            <Link href="/methodology" className="text-foreground font-medium hover:underline">Read the methodology →</Link>
+            <p>
+              These metrics describe allocation patterns only. They do not
+              measure creditworthiness, solvency, corruption, governance quality
+              or default risk.
+            </p>
+            <p>
+              Broader fiscal-risk analysis would require additional evidence
+              such as IGR, debt service, debt stock, expenditure and
+              liabilities.
+            </p>
+            <Link
+              href="/methodology"
+              className="text-foreground font-medium hover:underline"
+            >
+              Read the methodology →
+            </Link>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Need the complete historical intelligence?</CardTitle>
-            <CardDescription>Request licensed historical data, organization analysis or controlled API access.</CardDescription>
+            <CardDescription>
+              Request licensed historical data, organization analysis or
+              controlled API access.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild><Link href="/pilot?plan=analyst">Request pilot access</Link></Button>
-            <p className="text-muted-foreground mt-4 text-sm">Commercial enquiries: gaiafacc@gailabai.com</p>
+            <Button asChild>
+              <Link href="/pilot?plan=analyst">Request pilot access</Link>
+            </Button>
+            <p className="text-muted-foreground mt-4 text-sm">
+              Commercial enquiries: gaiafacc@gailabai.com
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <p className="text-muted-foreground mt-8 text-xs leading-5">{data.note}</p>
+      <p className="text-muted-foreground mt-8 text-xs leading-5">
+        {data.note}
+      </p>
     </div>
   )
 }
