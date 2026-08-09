@@ -67,9 +67,7 @@ class OagfPdfAdapter:
 
             if located is None:
                 return ExtractedAllocationTable(
-                    source_organization=(
-                        "Office of the Accountant-General of the Federation"
-                    ),
+                    source_organization=("Office of the Accountant-General of the Federation"),
                     adapter_name=self.name,
                     rows=[],
                     warnings=[
@@ -154,14 +152,10 @@ class OagfPdfAdapter:
                 )
             )
         else:
-            warnings.append(
-                f"FCT total not reconciled ({fct.note}); FCT omitted."
-            )
+            warnings.append(f"FCT total not reconciled ({fct.note}); FCT omitted.")
 
         return ExtractedAllocationTable(
-            source_organization=(
-                "Office of the Accountant-General of the Federation"
-            ),
+            source_organization=("Office of the Accountant-General of the Federation"),
             adapter_name=self.name,
             rows=rows,
             warnings=warnings,
@@ -233,11 +227,7 @@ def _resolve_columns(
             continue
 
         state_i = next(
-            (
-                i
-                for i, cell in enumerate(cells)
-                if "beneficiaries" in cell
-            ),
+            (i for i, cell in enumerate(cells) if "beneficiaries" in cell),
             None,
         )
 
@@ -245,10 +235,7 @@ def _resolve_columns(
             (
                 i
                 for i, cell in enumerate(cells)
-                if (
-                    "total gross amount" in cell
-                    or "total gross allocation" in cell
-                )
+                if ("total gross amount" in cell or "total gross allocation" in cell)
             ),
             None,
         )
@@ -257,10 +244,7 @@ def _resolve_columns(
             (
                 i
                 for i, cell in enumerate(cells)
-                if (
-                    "total net amount" in cell
-                    or "total net allocation" in cell
-                )
+                if ("total net amount" in cell or "total net allocation" in cell)
             ),
             None,
         )
