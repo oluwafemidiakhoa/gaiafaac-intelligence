@@ -174,9 +174,11 @@ def fiscal_pulse(session: Session, year: int) -> FiscalPulseResponse:
         total_net=_money(total_net) if has_total_net else None,
         states=states,
         note=(
-            "Derived only from published, non-demo, human-approved records. Momentum compares the "
-            "latest three available monthly net allocations with the preceding three; changes within "
-            "+/-5% are labelled Stable. Volatility is population coefficient of variation: Low <10%, "
-            "Moderate 10-25%, High >=25%. These are descriptive allocation signals, not credit ratings."
+            "Derived only from published, non-demo, human-approved records. "
+            "Momentum compares the latest three available monthly net allocations "
+            "with the preceding three; changes within +/-5% are labelled Stable. "
+            "Volatility is population coefficient of variation: Low <10%, Moderate "
+            "10-25%, High >=25%. These are descriptive allocation signals, not credit "
+            "ratings."
         ),
     )
