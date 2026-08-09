@@ -7,6 +7,7 @@ from pydantic import BaseModel
 MomentumLabel = Literal["Improving", "Stable", "Weakening", "Insufficient data"]
 VolatilityLabel = Literal["Low", "Moderate", "High", "Insufficient data"]
 EvidenceLabel = Literal["Verified", "Partial", "Review required"]
+CoverageStatus = Literal["complete_year", "partial_year", "no_data"]
 
 
 class FiscalPulseState(BaseModel):
@@ -32,6 +33,9 @@ class FiscalPulseState(BaseModel):
 class FiscalPulseResponse(BaseModel):
     year: int
     months_published: int
+    expected_months: int = 12
+    coverage_status: CoverageStatus
+    coverage_label: str
     latest_period_label: str | None
     total_net: str | None
     states: list[FiscalPulseState]
