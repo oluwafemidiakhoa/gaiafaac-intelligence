@@ -24,8 +24,10 @@ function percent(value: number | null): string {
 }
 
 function signalTone(value: string): 'success' | 'neutral' | 'demo' {
-  if (value === 'Improving' || value === 'Verified' || value === 'Low') return 'success'
-  if (value === 'Weakening' || value === 'Review required' || value === 'High') return 'demo'
+  if (value === 'Improving' || value === 'Verified' || value === 'Low')
+    return 'success'
+  if (value === 'Weakening' || value === 'Review required' || value === 'High')
+    return 'demo'
   return 'neutral'
 }
 
@@ -182,7 +184,8 @@ export default async function FiscalPulsePage() {
             </p>
             <p>
               Broader fiscal-risk analysis would require additional evidence
-              such as IGR, debt service, debt stock, expenditure and liabilities.
+              such as IGR, debt service, debt stock, expenditure and
+              liabilities.
             </p>
             <Link
               href="/methodology"
