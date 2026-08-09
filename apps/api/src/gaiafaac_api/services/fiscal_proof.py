@@ -85,11 +85,11 @@ def get_fiscal_proof(
     proof_id = f"GF1-NG-{state.code}-{period.revenue_month:%Y%m}-{digest[:12].upper()}"
 
     net = _money(allocation.net_allocation)
-    claim = (
-        f"{state.name} published net FAAC allocation for {period.revenue_month:%B %Y}: NGN {net}."
-        if net is not None
-        else f"{state.name} has a published FAAC record for {period.revenue_month:%B %Y}; net allocation is unavailable."
-    )
+    month_label = f"{period.revenue_month:%B %Y}"
+    if net is not None:
+        claim = f"{state.name} published net FAAC allocation for {month_label}: NGN {net}."
+    else:
+        claim = f"{state.name} has a published FAAC record for {month_label}; net is unavailable."
 
     return FiscalProofResponse(
         proof_id=proof_id,
@@ -130,7 +130,7 @@ def get_fiscal_proof(
         ),
         disclaimer=(
             "GaiaFAAC Fiscal Proof is a deterministic evidence record over a published allocation. "
-            "The proof digest is content-derived for reproducibility; it is not a cryptographic "
-            "signature by the source organization and does not make GaiaFAAC a government authority."
+            "Its digest is content-derived for reproducibility. It is not a signature from the "
+            "source organization, and GaiaFAAC is not a government authority."
         ),
     )
