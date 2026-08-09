@@ -1,4 +1,10 @@
-import { ArrowRight, BarChart3, GitCompareArrows, Map, Radio } from 'lucide-react'
+import {
+  ArrowRight,
+  BarChart3,
+  GitCompareArrows,
+  Map,
+  Radio,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -51,10 +57,22 @@ const destinations = [
 ]
 
 const audiences = [
-  ['Banks & financial institutions', 'Understand historical state allocation patterns and cash-flow variability without treating FAAC alone as a credit rating.'],
-  ['Newsrooms', 'Find state fiscal movements and source evidence faster for reporting and investigations.'],
-  ['Consultancies & researchers', 'Compare states without rebuilding government tables manually every month.'],
-  ['Governance organizations', 'Track allocations and deductions with traceable evidence and explicit data limitations.'],
+  [
+    'Banks & financial institutions',
+    'Understand historical state allocation patterns and cash-flow variability without treating FAAC alone as a credit rating.',
+  ],
+  [
+    'Newsrooms',
+    'Find state fiscal movements and source evidence faster for reporting and investigations.',
+  ],
+  [
+    'Consultancies & researchers',
+    'Compare states without rebuilding government tables manually every month.',
+  ],
+  [
+    'Governance organizations',
+    'Track allocations and deductions with traceable evidence and explicit data limitations.',
+  ],
 ]
 
 export default async function Home() {
@@ -183,7 +201,9 @@ export default async function Home() {
             />
           </div>
 
-          <h3 className="mt-12 text-lg font-semibold">Largest net allocations</h3>
+          <h3 className="mt-12 text-lg font-semibold">
+            Largest net allocations
+          </h3>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-2xl border-collapse text-left text-sm">
               <thead>
@@ -195,8 +215,13 @@ export default async function Home() {
               </thead>
               <tbody>
                 {ranked.map((a, i) => (
-                  <tr key={a.state_code} className="border-border border-b last:border-0">
-                    <td className="text-muted-foreground py-3 pr-5 font-mono">{i + 1}</td>
+                  <tr
+                    key={a.state_code}
+                    className="border-border border-b last:border-0"
+                  >
+                    <td className="text-muted-foreground py-3 pr-5 font-mono">
+                      {i + 1}
+                    </td>
                     <td className="py-3 pr-5">
                       <Link
                         href={`/states/${a.state_slug}`}
@@ -204,9 +229,13 @@ export default async function Home() {
                       >
                         {a.state_name}
                       </Link>
-                      <span className="text-muted-foreground ml-2 text-xs">{a.geopolitical_zone}</span>
+                      <span className="text-muted-foreground ml-2 text-xs">
+                        {a.geopolitical_zone}
+                      </span>
                     </td>
-                    <td className="py-3 font-mono font-semibold">{formatNaira(a.net_allocation)}</td>
+                    <td className="py-3 font-mono font-semibold">
+                      {formatNaira(a.net_allocation)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -231,9 +260,13 @@ export default async function Home() {
         </div>
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Button asChild>
-            <Link href="/pilot?plan=analyst">Request licensed intelligence</Link>
+            <Link href="/pilot?plan=analyst">
+              Request licensed intelligence
+            </Link>
           </Button>
-          <span className="text-muted-foreground text-sm">gaiafacc@gailabai.com</span>
+          <span className="text-muted-foreground text-sm">
+            gaiafacc@gailabai.com
+          </span>
         </div>
         <p className="text-muted-foreground mt-8 text-sm">
           Every published figure is extracted from an official source and
