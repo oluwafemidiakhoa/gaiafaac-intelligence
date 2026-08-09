@@ -77,40 +77,31 @@ def test_import_file_derives_deductions_and_marks_real(
     assert result.records_extracted == 37
     assert result.blocking_finding_count == 0
 
-    allocations = list(
-        session.scalars(
-            select(StateAllocation)
-        )
-    )
+    allocations = list(session.scalars(select(StateAllocation)))
 
     assert len(allocations) == 37
 
     assert all(
-        allocation.is_demo is False
-        and allocation.is_published is False
+        allocation.is_demo is False and allocation.is_published is False
         for allocation in allocations
     )
 
     # Deductions are derived as gross - net when the source has
     # no explicit deductions column.
     assert all(
-        allocation.total_deductions
-        == allocation.gross_total - allocation.net_allocation
+        allocation.total_deductions == allocation.gross_total - allocation.net_allocation
         for allocation in allocations
     )
 
     assert all(
-        allocation.verification_status
-        is VerificationStatus.AUTOMATICALLY_VALIDATED
+        allocation.verification_status is VerificationStatus.AUTOMATICALLY_VALIDATED
         for allocation in allocations
     )
 
     published = session.scalar(
         select(func.count())
         .select_from(StateAllocation)
-        .where(
-            StateAllocation.is_published.is_(True)
-        )
+        .where(StateAllocation.is_published.is_(True))
     )
 
     assert published == 0
@@ -153,11 +144,7 @@ def test_import_file_flags_unknown_state(
         ),
     )
 
-    codes = set(
-        session.scalars(
-            select(ValidationResult.rule_code)
-        )
-    )
+    codes = set(session.scalars(select(ValidationResult.rule_code)))
 
     assert "IMPORT_INVALID_STATE_ALIAS" in codes
     assert result.blocking_finding_count >= 1
@@ -342,18 +329,12 @@ def test_locate_scans_beyond_first_eight_pages() -> None:
 
     class FakePdf:
         def __init__(self) -> None:
-            self.pages = [
-                FakePage(page_number)
-                for page_number in range(1, 10)
-            ]
+            self.pages = [FakePage(page_number) for page_number in range(1, 10)]
 
             self.pages.append(
                 FakePage(
                     10,
-                    (
-                        "Table III Distribution of Revenue Allocation "
-                        "to State Governments"
-                    ),
+                    ("Table III Distribution of Revenue Allocation to State Governments"),
                     [state_table],
                 )
             )
