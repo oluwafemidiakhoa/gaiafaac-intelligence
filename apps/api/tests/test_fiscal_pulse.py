@@ -92,6 +92,11 @@ def test_fiscal_pulse_metrics_and_fct_missing_financials(session):
     result = fiscal_pulse(session, 2024)
     by_slug = {state.state_slug: state for state in result.states}
 
+    assert result.months_published == 6
+    assert result.expected_months == 12
+    assert result.coverage_status == "partial_year"
+    assert result.coverage_label == "Partial 2024 series · 6 of 12 months published"
+
     regular_result = by_slug[regular.slug]
     assert regular_result.annual_gross == "720.00"
     assert regular_result.annual_net == "600.00"
@@ -136,8 +141,34 @@ def test_fiscal_pulse_excludes_demo_unpublished_and_incomplete_rows(session):
     session.flush()
     result = fiscal_pulse(session, 2024)
     assert result.months_published == 1
+    assert result.coverage_status == "partial_year"
+    assert result.coverage_label == "Partial 2024 series · 1 of 12 months published"
     assert len(result.states) == 1
     item = result.states[0]
     assert item.annual_net == "90.00"
     assert item.momentum == "Insufficient data"
     assert item.volatility == "Insufficient data"
+
+
+def test_fiscal_pulse_marks_full_twelve_month_series_complete(session):
+    seed_states(session)
+    state = session.scalars(select(State).where(State.is_fct.is_(False))).first()
+    source = _source(session)
+
+    for month in range(1, 13):
+        period = _period(session, month)
+        _allocation(
+            session,
+            source,
+            period,
+            state,
+            gross=Decimal("100"),
+            deductions=Decimal("10"),
+            net=Decimal("90"),
+        )
+
+    session.flush()
+    result = fiscal_pulse(session, 2024)
+    assert result.months_published == 12
+    assert result.coverage_status == "complete_year"
+    assert result.coverage_label == "Complete 2024 series · 12 of 12 months published"
