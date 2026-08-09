@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.models import ReportingPeriod, State, StateAllocation
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse, FiscalPulseState
 
+EXPECTED_MONTHS = 12
+
 
 def _money(value: Decimal | None) -> str | None:
     return format(value, ".2f") if value is not None else None
@@ -95,6 +97,20 @@ def fiscal_pulse(session: Session, year: int) -> FiscalPulseResponse:
     for row in rows:
         grouped[row[1].id].append(row)
 
+    months_published = len(periods)
+    complete_year = months_published == EXPECTED_MONTHS
+    if months_published == 0:
+        coverage_status = "no_data"
+        coverage_label = f"No published {year} months"
+    elif complete_year:
+        coverage_status = "complete_year"
+        coverage_label = f"Complete {year} series · 12 of 12 months published"
+    else:
+        coverage_status = "partial_year"
+        coverage_label = (
+            f"Partial {year} series · {months_published} of {EXPECTED_MONTHS} months published"
+        )
+
     states: list[FiscalPulseState] = []
     total_net = Decimal("0")
     has_total_net = False
@@ -115,13 +131,13 @@ def fiscal_pulse(session: Session, year: int) -> FiscalPulseResponse:
             and allocation.net_allocation is not None
         ]
 
-        annual_net = sum(net_values, Decimal("0")) if net_values else None
-        annual_gross = (
+        period_net = sum(net_values, Decimal("0")) if net_values else None
+        period_gross = (
             sum((allocation.gross_total for allocation in complete), Decimal("0"))
             if complete and len(complete) == len(periods)
             else None
         )
-        annual_deductions = (
+        period_deductions = (
             sum((allocation.total_deductions for allocation in complete), Decimal("0"))
             if complete and len(complete) == len(periods)
             else None
@@ -129,9 +145,9 @@ def fiscal_pulse(session: Session, year: int) -> FiscalPulseResponse:
 
         deduction_burden = None
         net_retention = None
-        if annual_gross is not None and annual_gross > 0:
-            deduction_burden = round(float(annual_deductions / annual_gross * 100), 2)
-            net_retention = round(float(annual_net / annual_gross * 100), 2) if annual_net else 0.0
+        if period_gross is not None and period_gross > 0:
+            deduction_burden = round(float(period_deductions / period_gross * 100), 2)
+            net_retention = round(float(period_net / period_gross * 100), 2) if period_net else 0.0
 
         momentum, momentum_pct = _momentum(net_values)
         volatility, volatility_cv = _volatility(net_values)
@@ -140,8 +156,8 @@ def fiscal_pulse(session: Session, year: int) -> FiscalPulseResponse:
         else:
             evidence = "Review required"
 
-        if annual_net is not None:
-            total_net += annual_net
+        if period_net is not None:
+            total_net += period_net
             has_total_net = True
 
         states.append(
@@ -153,9 +169,9 @@ def fiscal_pulse(session: Session, year: int) -> FiscalPulseResponse:
                 months_published=len(state_rows),
                 months_with_net=len(net_values),
                 months_with_complete_financials=len(complete),
-                annual_gross=_money(annual_gross),
-                annual_deductions=_money(annual_deductions),
-                annual_net=_money(annual_net),
+                annual_gross=_money(period_gross),
+                annual_deductions=_money(period_deductions),
+                annual_net=_money(period_net),
                 deduction_burden_pct=deduction_burden,
                 net_retention_pct=net_retention,
                 momentum=momentum,
@@ -169,16 +185,20 @@ def fiscal_pulse(session: Session, year: int) -> FiscalPulseResponse:
     states.sort(key=lambda item: float(item.annual_net or 0), reverse=True)
     return FiscalPulseResponse(
         year=year,
-        months_published=len(periods),
+        months_published=months_published,
+        expected_months=EXPECTED_MONTHS,
+        coverage_status=coverage_status,
+        coverage_label=coverage_label,
         latest_period_label=periods[-1].reporting_label if periods else None,
         total_net=_money(total_net) if has_total_net else None,
         states=states,
         note=(
             "Derived only from published, non-demo, human-approved records. "
-            "Momentum compares the latest three available monthly net allocations "
-            "with the preceding three; changes within +/-5% are labelled Stable. "
-            "Volatility is population coefficient of variation: Low <10%, Moderate "
-            "10-25%, High >=25%. These are descriptive allocation signals, not credit "
-            "ratings."
+            f"Coverage: {coverage_label}. Totals represent only the published months "
+            "when the year is incomplete and must not be interpreted as full-year annual totals. "
+            "Momentum compares the latest three available monthly net allocations with the "
+            "preceding three; changes within +/-5% are labelled Stable. Volatility is population "
+            "coefficient of variation: Low <10%, Moderate 10-25%, High >=25%. These are "
+            "descriptive allocation signals, not credit ratings."
         ),
     )
