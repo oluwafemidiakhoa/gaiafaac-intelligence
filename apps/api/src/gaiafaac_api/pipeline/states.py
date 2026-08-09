@@ -13,6 +13,7 @@ _EXPLICIT_ALIASES = {
     "abuja": "FC",
     "f c t": "FC",
     "fct": "FC",
+    "fct abuja": "FC",
     "federal capital territory abuja": "FC",
     "akwaibom": "AK",
     "crossriver": "CR",

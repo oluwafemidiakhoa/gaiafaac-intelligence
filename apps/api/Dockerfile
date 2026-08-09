@@ -9,7 +9,7 @@ COPY apps/api /app
 COPY alembic.ini /app/alembic.ini
 COPY database/migrations /app/database/migrations
 COPY database/seeds /app/database/seeds
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[extraction]"
 
 RUN useradd --create-home --uid 10001 appuser
 USER appuser
