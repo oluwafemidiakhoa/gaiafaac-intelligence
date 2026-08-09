@@ -23,9 +23,9 @@ function percent(value: number | null): string {
   return value === null ? 'Unavailable' : `${value.toFixed(1)}%`
 }
 
-function signalTone(value: string): 'success' | 'neutral' | 'warning' {
+function signalTone(value: string): 'success' | 'neutral' | 'demo' {
   if (value === 'Improving' || value === 'Verified' || value === 'Low') return 'success'
-  if (value === 'Weakening' || value === 'Review required' || value === 'High') return 'warning'
+  if (value === 'Weakening' || value === 'Review required' || value === 'High') return 'demo'
   return 'neutral'
 }
 
@@ -42,15 +42,23 @@ export default async function FiscalPulsePage() {
           description="Derived only from published, human-approved allocation records."
         />
         <div className="mt-10">
-          <DataUnavailable message={result.error ?? 'No verified 2024 data is available.'} />
+          <DataUnavailable
+            message={result.error ?? 'No verified 2024 data is available.'}
+          />
         </div>
       </div>
     )
   }
 
-  const completeStates = data.states.filter((state) => state.evidence_status === 'Verified').length
-  const improving = data.states.filter((state) => state.momentum === 'Improving').length
-  const highVolatility = data.states.filter((state) => state.volatility === 'High').length
+  const completeStates = data.states.filter(
+    (state) => state.evidence_status === 'Verified',
+  ).length
+  const improving = data.states.filter(
+    (state) => state.momentum === 'Improving',
+  ).length
+  const highVolatility = data.states.filter(
+    (state) => state.volatility === 'High',
+  ).length
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -87,7 +95,8 @@ export default async function FiscalPulsePage() {
         <CardHeader>
           <CardTitle>State Fiscal Pulse</CardTitle>
           <CardDescription>
-            Annual 2024 signals derived only from published, non-demo records. Missing inputs remain unavailable.
+            Annual 2024 signals derived only from published, non-demo records.
+            Missing inputs remain unavailable.
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
@@ -96,8 +105,12 @@ export default async function FiscalPulsePage() {
               <tr className="border-border text-muted-foreground border-b">
                 <th className="py-3 pr-4 font-medium">State</th>
                 <th className="py-3 pr-4 text-right font-medium">Annual net</th>
-                <th className="py-3 pr-4 text-right font-medium">Deduction burden</th>
-                <th className="py-3 pr-4 text-right font-medium">Net retention</th>
+                <th className="py-3 pr-4 text-right font-medium">
+                  Deduction burden
+                </th>
+                <th className="py-3 pr-4 text-right font-medium">
+                  Net retention
+                </th>
                 <th className="py-3 pr-4 font-medium">Momentum</th>
                 <th className="py-3 pr-4 font-medium">Volatility</th>
                 <th className="py-3 font-medium">Evidence</th>
@@ -105,7 +118,10 @@ export default async function FiscalPulsePage() {
             </thead>
             <tbody>
               {data.states.map((state) => (
-                <tr key={state.state_slug} className="border-border border-b last:border-0">
+                <tr
+                  key={state.state_slug}
+                  className="border-border border-b last:border-0"
+                >
                   <td className="py-3 pr-4">
                     <Link
                       href={`/states/${state.state_slug}`}
@@ -113,21 +129,33 @@ export default async function FiscalPulsePage() {
                     >
                       {state.state_name}
                     </Link>
-                    <span className="text-muted-foreground ml-2 text-xs">{state.geopolitical_zone}</span>
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      {state.geopolitical_zone}
+                    </span>
                   </td>
                   <td className="py-3 pr-4 text-right font-mono font-semibold">
                     {formatNaira(state.annual_net)}
                   </td>
-                  <td className="py-3 pr-4 text-right font-mono">{percent(state.deduction_burden_pct)}</td>
-                  <td className="py-3 pr-4 text-right font-mono">{percent(state.net_retention_pct)}</td>
-                  <td className="py-3 pr-4">
-                    <StatusPill tone={signalTone(state.momentum)}>{state.momentum}</StatusPill>
+                  <td className="py-3 pr-4 text-right font-mono">
+                    {percent(state.deduction_burden_pct)}
+                  </td>
+                  <td className="py-3 pr-4 text-right font-mono">
+                    {percent(state.net_retention_pct)}
                   </td>
                   <td className="py-3 pr-4">
-                    <StatusPill tone={signalTone(state.volatility)}>{state.volatility}</StatusPill>
+                    <StatusPill tone={signalTone(state.momentum)}>
+                      {state.momentum}
+                    </StatusPill>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <StatusPill tone={signalTone(state.volatility)}>
+                      {state.volatility}
+                    </StatusPill>
                   </td>
                   <td className="py-3">
-                    <StatusPill tone={signalTone(state.evidence_status)}>{state.evidence_status}</StatusPill>
+                    <StatusPill tone={signalTone(state.evidence_status)}>
+                      {state.evidence_status}
+                    </StatusPill>
                   </td>
                 </tr>
               ))}
@@ -141,13 +169,27 @@ export default async function FiscalPulsePage() {
           <CardHeader>
             <CardTitle>How to interpret the signals</CardTitle>
             <CardDescription>
-              Momentum compares the latest three available monthly net allocations with the preceding three. Volatility uses coefficient of variation.
+              Momentum compares the latest three available monthly net
+              allocations with the preceding three. Volatility uses coefficient
+              of variation.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
-            <p>These metrics describe allocation patterns only. They do not measure creditworthiness, solvency, corruption, governance quality or default risk.</p>
-            <p>Broader fiscal-risk analysis would require additional evidence such as IGR, debt service, debt stock, expenditure and liabilities.</p>
-            <Link href="/methodology" className="text-foreground font-medium hover:underline">Read the methodology →</Link>
+            <p>
+              These metrics describe allocation patterns only. They do not
+              measure creditworthiness, solvency, corruption, governance quality
+              or default risk.
+            </p>
+            <p>
+              Broader fiscal-risk analysis would require additional evidence
+              such as IGR, debt service, debt stock, expenditure and liabilities.
+            </p>
+            <Link
+              href="/methodology"
+              className="text-foreground font-medium hover:underline"
+            >
+              Read the methodology →
+            </Link>
           </CardContent>
         </Card>
 
@@ -155,19 +197,24 @@ export default async function FiscalPulsePage() {
           <CardHeader>
             <CardTitle>Need the complete historical intelligence?</CardTitle>
             <CardDescription>
-              Request licensed historical data, organization analysis or controlled API access.
+              Request licensed historical data, organization analysis or
+              controlled API access.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
               <Link href="/pilot?plan=analyst">Request pilot access</Link>
             </Button>
-            <p className="text-muted-foreground mt-4 text-sm">Commercial enquiries: gaiafacc@gailabai.com</p>
+            <p className="text-muted-foreground mt-4 text-sm">
+              Commercial enquiries: gaiafacc@gailabai.com
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <p className="text-muted-foreground mt-8 text-xs leading-5">{data.note}</p>
+      <p className="text-muted-foreground mt-8 text-xs leading-5">
+        {data.note}
+      </p>
     </div>
   )
 }
