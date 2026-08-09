@@ -61,7 +61,9 @@ export default function MethodologyPage() {
 
       <section className="border-border mt-12 grid gap-8 border-t pt-10 lg:grid-cols-2">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">How the pipeline works</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            How the pipeline works
+          </h2>
           <div className="text-muted-foreground mt-4 space-y-4 leading-7">
             <p>
               The official OAGF monthly disbursement report is downloaded and
@@ -78,7 +80,9 @@ export default function MethodologyPage() {
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">What totals mean, and their limits</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            What totals mean, and their limits
+          </h2>
           <div className="text-muted-foreground mt-4 space-y-4 leading-7">
             <p>
               Published totals are the exact sum of verified allocations. Where
@@ -95,7 +99,9 @@ export default function MethodologyPage() {
       </section>
 
       <section className="border-border mt-12 border-t pt-10">
-        <h2 className="text-2xl font-semibold tracking-tight">Fiscal Pulse indicators</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Fiscal Pulse indicators
+        </h2>
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -149,8 +155,8 @@ export default function MethodologyPage() {
             default. FAAC is only one component of a state’s fiscal capacity.
           </p>
           <p>
-            Broader fiscal-risk assessment would require additional evidence such
-            as internally generated revenue, debt service, debt stock,
+            Broader fiscal-risk assessment would require additional evidence
+            such as internally generated revenue, debt service, debt stock,
             expenditure, liabilities and other economic variables.
           </p>
         </div>
