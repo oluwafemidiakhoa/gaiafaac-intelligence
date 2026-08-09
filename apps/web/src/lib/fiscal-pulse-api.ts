@@ -23,6 +23,9 @@ const fiscalPulseStateSchema = z.object({
 export const fiscalPulseSchema = z.object({
   year: z.number().int(),
   months_published: z.number().int(),
+  expected_months: z.number().int(),
+  coverage_status: z.enum(['complete_year', 'partial_year', 'no_data']),
+  coverage_label: z.string(),
   latest_period_label: z.string().nullable(),
   total_net: z.string().nullable(),
   states: z.array(fiscalPulseStateSchema),
