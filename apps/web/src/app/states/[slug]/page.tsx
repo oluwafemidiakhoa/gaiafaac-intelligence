@@ -5,6 +5,7 @@ import { DataUnavailable } from '@/components/data-unavailable'
 import { MetricCard } from '@/components/metric-card'
 import { PageHeader } from '@/components/page-header'
 import { StatusPill } from '@/components/status-pill'
+import { Button } from '@/components/ui/button'
 import { formatDate, formatNaira, humanize } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
@@ -27,8 +28,7 @@ export default async function StatePage({
   const { slug } = await params
   const result = await getPublishedOverview()
   const data = result.data
-  const allocation =
-    data?.allocations.find((a) => a.state_slug === slug) ?? null
+  const allocation = data?.allocations.find((a) => a.state_slug === slug) ?? null
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -85,6 +85,18 @@ export default async function StatePage({
               value={formatNaira(allocation.total_deductions)}
               detail="Applied at source."
             />
+          </div>
+
+          <div className="border-border mt-8 rounded-lg border p-5">
+            <p className="font-semibold">Fiscal Proof</p>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+              Open the deterministic evidence record for this published allocation, including source-document SHA-256, reconciliation status, verification chain and reproducible proof digest.
+            </p>
+            <Button asChild className="mt-4" variant="outline">
+              <Link href={`/fiscal-proof/${allocation.state_slug}/${data.period.revenue_month}`}>
+                Verify this allocation
+              </Link>
+            </Button>
           </div>
 
           <p className="text-muted-foreground mt-6 text-sm">
