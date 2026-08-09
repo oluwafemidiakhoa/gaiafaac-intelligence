@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
+from datetime import date
 from decimal import Decimal
 from statistics import mean, pstdev
 
@@ -23,8 +24,8 @@ def _published_periods_for_year(session: Session, year: int) -> list[ReportingPe
             .where(
                 ReportingPeriod.is_published.is_(True),
                 ReportingPeriod.is_demo.is_(False),
-                ReportingPeriod.revenue_month >= f"{year}-01-01",
-                ReportingPeriod.revenue_month < f"{year + 1}-01-01",
+                ReportingPeriod.revenue_month >= date(year, 1, 1),
+                ReportingPeriod.revenue_month < date(year + 1, 1, 1),
             )
             .order_by(ReportingPeriod.revenue_month)
         )
