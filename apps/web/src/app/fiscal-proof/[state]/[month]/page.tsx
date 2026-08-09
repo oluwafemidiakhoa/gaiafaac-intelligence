@@ -46,11 +46,17 @@ export default async function FiscalProofPage({
       />
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
-        <StatusPill tone={proof.verification.human_verified ? 'success' : 'neutral'}>
-          {proof.verification.human_verified ? 'Human verified' : 'Verification incomplete'}
+        <StatusPill
+          tone={proof.verification.human_verified ? 'success' : 'neutral'}
+        >
+          {proof.verification.human_verified
+            ? 'Human verified'
+            : 'Verification incomplete'}
         </StatusPill>
         <StatusPill tone={reconciled ? 'success' : 'neutral'}>
-          {reconciled ? 'Arithmetic reconciled' : 'Reconciliation not applicable'}
+          {reconciled
+            ? 'Arithmetic reconciled'
+            : 'Reconciliation not applicable'}
         </StatusPill>
       </div>
 
@@ -58,17 +64,22 @@ export default async function FiscalProofPage({
         <CardHeader>
           <CardTitle>Proof identity</CardTitle>
           <CardDescription>
-            Deterministic identifier derived from the published claim, financial values, verification state and source-document fingerprint.
+            Deterministic identifier derived from the published claim, financial
+            values, verification state and source-document fingerprint.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div>
             <p className="text-muted-foreground">Fiscal Proof ID</p>
-            <p className="mt-1 break-all font-mono font-semibold">{proof.proof_id}</p>
+            <p className="mt-1 font-mono font-semibold break-all">
+              {proof.proof_id}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground">Proof digest · SHA-256</p>
-            <p className="mt-1 break-all font-mono">{proof.proof_digest_sha256}</p>
+            <p className="mt-1 font-mono break-all">
+              {proof.proof_digest_sha256}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -83,15 +94,21 @@ export default async function FiscalProofPage({
             <dl className="grid gap-5 text-sm">
               <div className="flex items-center justify-between gap-4">
                 <dt className="text-muted-foreground">Gross allocation</dt>
-                <dd className="font-mono font-semibold">{formatNaira(proof.financials.gross_total)}</dd>
+                <dd className="font-mono font-semibold">
+                  {formatNaira(proof.financials.gross_total)}
+                </dd>
               </div>
               <div className="flex items-center justify-between gap-4">
                 <dt className="text-muted-foreground">Deductions</dt>
-                <dd className="font-mono font-semibold">{formatNaira(proof.financials.total_deductions)}</dd>
+                <dd className="font-mono font-semibold">
+                  {formatNaira(proof.financials.total_deductions)}
+                </dd>
               </div>
               <div className="flex items-center justify-between gap-4">
                 <dt className="text-muted-foreground">Net allocation</dt>
-                <dd className="font-mono font-semibold">{formatNaira(proof.financials.net_allocation)}</dd>
+                <dd className="font-mono font-semibold">
+                  {formatNaira(proof.financials.net_allocation)}
+                </dd>
               </div>
               <div className="flex items-center justify-between gap-4">
                 <dt className="text-muted-foreground">Reconciliation</dt>
@@ -106,20 +123,28 @@ export default async function FiscalProofPage({
         <Card>
           <CardHeader>
             <CardTitle>Source evidence</CardTitle>
-            <CardDescription>{proof.source.source_organization}</CardDescription>
+            <CardDescription>
+              {proof.source.source_organization}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div>
               <p className="text-muted-foreground">Document</p>
-              <p className="mt-1 font-medium">{proof.source.original_filename}</p>
+              <p className="mt-1 font-medium">
+                {proof.source.original_filename}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">Source-document SHA-256</p>
-              <p className="mt-1 break-all font-mono">{proof.source.sha256}</p>
+              <p className="mt-1 font-mono break-all">{proof.source.sha256}</p>
             </div>
             {proof.source.source_url ? (
               <Button asChild variant="outline">
-                <a href={proof.source.source_url} target="_blank" rel="noreferrer">
+                <a
+                  href={proof.source.source_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Open original source
                 </a>
               </Button>
@@ -132,40 +157,57 @@ export default async function FiscalProofPage({
         <CardHeader>
           <CardTitle>Verification chain</CardTitle>
           <CardDescription>
-            The proof exposes the publication and verification states used to generate this record.
+            The proof exposes the publication and verification states used to
+            generate this record.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <dl className="grid gap-5 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <dt className="text-muted-foreground">Allocation</dt>
-              <dd className="mt-1 font-medium">{proof.verification.allocation_status}</dd>
+              <dd className="mt-1 font-medium">
+                {proof.verification.allocation_status}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Period</dt>
-              <dd className="mt-1 font-medium">{proof.verification.period_status}</dd>
+              <dd className="mt-1 font-medium">
+                {proof.verification.period_status}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Source</dt>
-              <dd className="mt-1 font-medium">{proof.verification.source_status}</dd>
+              <dd className="mt-1 font-medium">
+                {proof.verification.source_status}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Human review</dt>
               <dd className="mt-1 font-medium">
-                {proof.verification.human_verified ? 'Confirmed' : 'Not confirmed'}
+                {proof.verification.human_verified
+                  ? 'Confirmed'
+                  : 'Not confirmed'}
               </dd>
             </div>
           </dl>
         </CardContent>
       </Card>
 
-      <p className="text-muted-foreground mt-6 text-xs leading-5">{proof.disclaimer}</p>
+      <p className="text-muted-foreground mt-6 text-xs leading-5">
+        {proof.disclaimer}
+      </p>
 
       <div className="mt-8 flex flex-wrap gap-4">
-        <Link href={`/states/${proof.state_slug}`} className="text-primary text-sm font-medium hover:underline">
+        <Link
+          href={`/states/${proof.state_slug}`}
+          className="text-primary text-sm font-medium hover:underline"
+        >
           ← Back to {proof.state_name}
         </Link>
-        <Link href="/methodology" className="text-primary text-sm font-medium hover:underline">
+        <Link
+          href="/methodology"
+          className="text-primary text-sm font-medium hover:underline"
+        >
           Read verification methodology →
         </Link>
       </div>
