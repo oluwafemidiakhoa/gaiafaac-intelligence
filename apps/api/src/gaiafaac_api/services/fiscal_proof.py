@@ -86,8 +86,7 @@ def get_fiscal_proof(
 
     net = _money(allocation.net_allocation)
     claim = (
-        f"{state.name} published net FAAC allocation for {period.revenue_month:%B %Y}: "
-        f"NGN {net}."
+        f"{state.name} published net FAAC allocation for {period.revenue_month:%B %Y}: NGN {net}."
         if net is not None
         else f"{state.name} has a published FAAC record for {period.revenue_month:%B %Y}; net allocation is unavailable."
     )
