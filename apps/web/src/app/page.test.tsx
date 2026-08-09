@@ -11,7 +11,7 @@ vi.mock('@/lib/published-api', () => ({
 }))
 
 describe('Home', () => {
-  it('leads with the latest verified month and links to live data', async () => {
+  it('leads with fiscal intelligence and links to verified data', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
       error: null,
@@ -20,14 +20,17 @@ describe('Home', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /Federation Account, verified and traceable/i,
+        name: /Verified fiscal intelligence for every Nigerian state/i,
       }),
     ).toBeInTheDocument()
     // Real total shown; no demo labelling anywhere on the live-first homepage.
     expect(screen.getAllByText('₦5,400.00').length).toBeGreaterThan(0)
     expect(screen.queryByText(/DEMO DATA/i)).not.toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /See the latest verified data/i }),
+      screen.getByRole('link', { name: /Explore Fiscal Pulse/i }),
+    ).toHaveAttribute('href', '/fiscal-pulse')
+    expect(
+      screen.getByRole('link', { name: /View verified data/i }),
     ).toHaveAttribute('href', '/live')
   })
 
