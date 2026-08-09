@@ -1,4 +1,10 @@
-import { ArrowRight, GitCompareArrows, Map, Radio } from 'lucide-react'
+import {
+  ArrowRight,
+  BarChart3,
+  GitCompareArrows,
+  Map,
+  Radio,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -15,11 +21,18 @@ import { formatDate, formatNaira } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
-  title: 'GaiaFAAC Intelligence — source-linked Nigerian public-revenue data',
+  title: 'GaiaFAAC Intelligence — verified Nigerian state fiscal intelligence',
 }
 export const dynamic = 'force-dynamic'
 
 const destinations = [
+  {
+    href: '/fiscal-pulse',
+    icon: BarChart3,
+    title: 'Fiscal Pulse',
+    description:
+      'Annual allocations, deduction burden, net retention, momentum and volatility with evidence status.',
+  },
   {
     href: '/live',
     icon: Radio,
@@ -43,6 +56,25 @@ const destinations = [
   },
 ]
 
+const audiences = [
+  [
+    'Banks & financial institutions',
+    'Understand historical state allocation patterns and cash-flow variability without treating FAAC alone as a credit rating.',
+  ],
+  [
+    'Newsrooms',
+    'Find state fiscal movements and source evidence faster for reporting and investigations.',
+  ],
+  [
+    'Consultancies & researchers',
+    'Compare states without rebuilding government tables manually every month.',
+  ],
+  [
+    'Governance organizations',
+    'Track allocations and deductions with traceable evidence and explicit data limitations.',
+  ],
+]
+
 export default async function Home() {
   const result = await getPublishedOverview()
   const data = result.data
@@ -59,26 +91,25 @@ export default async function Home() {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 py-20 lg:grid-cols-[1.3fr_0.7fr] lg:px-8 lg:py-28">
           <div className="max-w-3xl">
             <p className="text-primary mb-5 font-mono text-xs font-semibold tracking-[0.18em] uppercase">
-              Source-linked public-revenue intelligence
+              Source-linked state fiscal intelligence
             </p>
             <h1 className="text-5xl font-semibold tracking-[-0.045em] text-balance sm:text-6xl lg:text-7xl">
-              Nigeria’s Federation Account, verified and traceable
+              Verified fiscal intelligence for every Nigerian state
             </h1>
             <p className="text-muted-foreground mt-7 max-w-2xl text-lg leading-8 text-pretty">
-              Every state’s monthly FAAC allocation — extracted from the
-              official OAGF disbursement report, reconciled, and human-approved
-              before publication. Every figure traces back to its source
-              document by SHA-256.
+              Track allocations, deductions, fiscal momentum and monthly
+              volatility—with government-source evidence behind every number.
+              Missing values remain unavailable rather than inferred.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
-                <Link href="/live">
-                  See the latest verified data
+                <Link href="/fiscal-pulse">
+                  Explore Fiscal Pulse
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/methodology">How it’s verified</Link>
+                <Link href="/live">View verified data</Link>
               </Button>
             </div>
           </div>
@@ -92,7 +123,7 @@ export default async function Home() {
                     {formatNaira(data.total_net)}
                   </CardTitle>
                   <CardDescription>
-                    Total net allocation ·{' '}
+                    Latest total net allocation ·{' '}
                     {formatDate(data.period.revenue_month)} · coverage{' '}
                     {data.covered_states}/{data.expected_states} · source:{' '}
                     {data.source.source_organization}
@@ -112,6 +143,24 @@ export default async function Home() {
               )}
             </CardHeader>
           </Card>
+        </div>
+      </section>
+
+      <section className="border-border/80 border-b">
+        <div className="mx-auto max-w-7xl px-5 py-14 lg:px-8">
+          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+            Built for real research workflows
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {audiences.map(([title, description]) => (
+              <Card key={title}>
+                <CardHeader>
+                  <CardTitle className="text-base">{title}</CardTitle>
+                  <CardDescription>{description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -196,7 +245,7 @@ export default async function Home() {
       ) : null}
 
       <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {destinations.map(({ href, icon: Icon, title, description }) => (
             <Link key={href} href={href} className="group">
               <Card className="group-hover:border-primary/40 h-full transition-colors">
@@ -209,9 +258,20 @@ export default async function Home() {
             </Link>
           ))}
         </div>
+        <div className="mt-10 flex flex-wrap items-center gap-3">
+          <Button asChild>
+            <Link href="/pilot?plan=analyst">
+              Request licensed intelligence
+            </Link>
+          </Button>
+          <span className="text-muted-foreground text-sm">
+            gaiafacc@gailabai.com
+          </span>
+        </div>
         <p className="text-muted-foreground mt-8 text-sm">
-          Every figure is extracted from the official OAGF report and
-          human-approved before it appears.{' '}
+          Every published figure is extracted from an official source and
+          human-approved before it appears. Fiscal Pulse signals are descriptive
+          allocation analytics, not credit ratings.{' '}
           <Link href="/methodology" className="hover:text-foreground underline">
             Read the methodology
           </Link>

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 const navigation = [
+  { href: '/fiscal-pulse', label: 'Fiscal Pulse' },
   { href: '/live', label: 'Live data' },
   { href: '/insights', label: 'Insights' },
   { href: '/overview', label: 'Overview' },
