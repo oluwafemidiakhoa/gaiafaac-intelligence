@@ -60,12 +60,8 @@ def _published_record(session):
 
 def test_fiscal_proof_is_deterministic_and_reconciled(session):
     state = _published_record(session)
-    first = get_fiscal_proof(
-        session, state_slug=state.slug, revenue_month=date(2024, 1, 1)
-    )
-    second = get_fiscal_proof(
-        session, state_slug=state.slug, revenue_month=date(2024, 1, 1)
-    )
+    first = get_fiscal_proof(session, state_slug=state.slug, revenue_month=date(2024, 1, 1))
+    second = get_fiscal_proof(session, state_slug=state.slug, revenue_month=date(2024, 1, 1))
 
     assert first is not None
     assert second is not None
@@ -84,9 +80,7 @@ def test_fiscal_proof_excludes_unpublished_records(session):
     allocation.is_published = False
     session.flush()
 
-    proof = get_fiscal_proof(
-        session, state_slug=state.slug, revenue_month=date(2024, 1, 1)
-    )
+    proof = get_fiscal_proof(session, state_slug=state.slug, revenue_month=date(2024, 1, 1))
     assert proof is None
 
 
@@ -97,9 +91,7 @@ def test_fiscal_proof_allows_net_only_record_without_inventing_reconciliation(se
     allocation.total_deductions = None
     session.flush()
 
-    proof = get_fiscal_proof(
-        session, state_slug=state.slug, revenue_month=date(2024, 1, 1)
-    )
+    proof = get_fiscal_proof(session, state_slug=state.slug, revenue_month=date(2024, 1, 1))
     assert proof is not None
     assert proof.financials.gross_total is None
     assert proof.financials.total_deductions is None
