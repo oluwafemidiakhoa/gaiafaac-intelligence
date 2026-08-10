@@ -112,7 +112,9 @@ export default async function DecisionPacketsPage({
                       {formatNaira(state.annual_net)}
                     </p>
                   </div>
-                  <StatusPill tone="success">{state.evidence_status}</StatusPill>
+                  <StatusPill tone="success">
+                    {state.evidence_status}
+                  </StatusPill>
                 </div>
 
                 <p className="text-primary mt-4 text-sm font-medium">
