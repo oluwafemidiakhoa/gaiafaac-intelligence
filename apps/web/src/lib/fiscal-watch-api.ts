@@ -59,7 +59,10 @@ export async function getFiscalWatch(
     if (!response.ok) {
       return { data: null, error: 'Fiscal Watch is unavailable.' }
     }
-    return { data: fiscalWatchSchema.parse(await response.json()), error: null }
+    return {
+      data: fiscalWatchSchema.parse(await response.json()),
+      error: null,
+    }
   } catch {
     return { data: null, error: 'Fiscal Watch is unavailable.' }
   }
