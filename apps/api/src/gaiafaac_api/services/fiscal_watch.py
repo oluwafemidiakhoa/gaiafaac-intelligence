@@ -65,9 +65,7 @@ def fiscal_watch(session: Session, year: int) -> FiscalWatchResponse:
 
     grouped: dict[object, list[tuple[StateAllocation, State, ReportingPeriod]]] = defaultdict(list)
     for allocation, state in rows:
-        grouped[state.id].append(
-            (allocation, state, period_by_id[allocation.reporting_period_id])
-        )
+        grouped[state.id].append((allocation, state, period_by_id[allocation.reporting_period_id]))
 
     events: list[FiscalWatchEvent] = []
 
@@ -76,9 +74,7 @@ def fiscal_watch(session: Session, year: int) -> FiscalWatchResponse:
         current, state, current_period = state_rows[-1]
         previous = state_rows[-2][0] if len(state_rows) >= 2 else None
 
-        proof_path = (
-            f"/fiscal-proof/{state.slug}/{current_period.revenue_month.isoformat()}"
-        )
+        proof_path = f"/fiscal-proof/{state.slug}/{current_period.revenue_month.isoformat()}"
 
         if current.net_allocation is not None and current.net_allocation < 0:
             events.append(
