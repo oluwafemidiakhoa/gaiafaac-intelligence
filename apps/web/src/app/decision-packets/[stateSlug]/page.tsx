@@ -62,7 +62,7 @@ export default async function DecisionPacketPage({
   }
 
   return (
-    <article className="mx-auto max-w-5xl px-5 py-12 print:max-w-none print:px-0 print:py-0 lg:px-8 lg:py-16">
+    <article className="mx-auto max-w-5xl px-5 py-12 lg:px-8 lg:py-16 print:max-w-none print:px-0 print:py-0">
       <div className="flex flex-wrap items-start justify-between gap-4 print:block">
         <PageHeader
           eyebrow={`GaiaFAAC Decision Packet · v${data.packet_version}`}
@@ -120,9 +120,7 @@ export default async function DecisionPacketPage({
         <CardContent className="grid gap-4 text-sm md:grid-cols-2">
           <div>
             <p className="text-muted-foreground">Gross allocation</p>
-            <p className="mt-1 font-medium">
-              {formatNaira(data.annual_gross)}
-            </p>
+            <p className="mt-1 font-medium">{formatNaira(data.annual_gross)}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Deductions</p>
@@ -201,9 +199,7 @@ export default async function DecisionPacketPage({
               className="border-border grid gap-3 rounded-lg border p-4 md:grid-cols-[10rem_1fr_auto] print:grid-cols-[8rem_1fr]"
             >
               <div>
-                <p className="font-medium">
-                  {formatDate(month.revenue_month)}
-                </p>
+                <p className="font-medium">{formatDate(month.revenue_month)}</p>
                 <p className="text-muted-foreground mt-1 font-mono text-xs">
                   {month.proof_id}
                 </p>
@@ -216,7 +212,7 @@ export default async function DecisionPacketPage({
                     ? 'human verified'
                     : 'verification incomplete'}
                 </p>
-                <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
+                <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
                   SHA-256 {month.source_sha256}
                 </p>
               </div>
