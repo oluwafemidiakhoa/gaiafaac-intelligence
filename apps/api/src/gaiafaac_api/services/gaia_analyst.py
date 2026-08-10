@@ -179,7 +179,8 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
         first = state_match.first
         second = state_match.second
         answer = (
-            f"{first.state_name} has {_money(first.annual_net)} net allocation across the published "
+            f"{first.state_name} has {_money(first.annual_net)} net allocation "
+            "across the published "
             f"{year} months, versus {_money(second.annual_net)} for {second.state_name}. "
             f"Momentum is {first.momentum} for {first.state_name} and {second.momentum} for "
             f"{second.state_name}; volatility is {first.volatility} and {second.volatility}, "
