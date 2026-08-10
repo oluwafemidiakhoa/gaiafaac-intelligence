@@ -1,0 +1,39 @@
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel
+
+AnalystIntent = Literal[
+    "latest_changes",
+    "top_net",
+    "lowest_net",
+    "highest_deduction_burden",
+    "most_volatile",
+    "momentum",
+    "compare",
+    "unsupported",
+]
+AnalystStatus = Literal["answered", "insufficient_data", "unsupported"]
+
+
+class GaiaAnalystEvidence(BaseModel):
+    state_name: str | None
+    state_slug: str | None
+    label: str
+    value: str
+    metric: str
+    reference_path: str | None
+    reference_label: str | None
+
+
+class GaiaAnalystResponse(BaseModel):
+    question: str
+    year: int
+    intent: AnalystIntent
+    status: AnalystStatus
+    answer: str
+    coverage_label: str
+    evidence: list[GaiaAnalystEvidence]
+    caveat: str
+    suggested_questions: list[str]
