@@ -10,6 +10,7 @@ from gaiafaac_api.fiscal_proof_schemas import FiscalProofResponse
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchResponse
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystResponse
+from gaiafaac_api.igr_schemas import PublishedIgrResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
 from gaiafaac_api.services.decision_packet import decision_packet
@@ -23,6 +24,7 @@ from gaiafaac_api.services.published_data import (
     latest_published_period,
     published_sources,
 )
+from gaiafaac_api.services.published_igr import published_igr
 
 router = APIRouter(prefix="/published", tags=["published data"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -72,6 +74,19 @@ def gaia_analyst_endpoint(
     year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
 ) -> GaiaAnalystResponse:
     return gaia_analyst(session, question=question, year=year)
+
+
+@router.get(
+    "/igr",
+    response_model=PublishedIgrResponse,
+    summary="Published, human-verified state internally generated revenue evidence",
+)
+def published_igr_endpoint(
+    session: DatabaseSession,
+    year: Annotated[int, Query(ge=2000, le=2100)],
+    state_slug: Annotated[str | None, Query(min_length=2, max_length=100)] = None,
+) -> PublishedIgrResponse:
+    return published_igr(session, year=year, state_slug=state_slug)
 
 
 @router.get(
