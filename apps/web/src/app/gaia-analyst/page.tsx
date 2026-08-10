@@ -54,7 +54,10 @@ export default async function GaiaAnalystPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form method="get" className="grid gap-4 lg:grid-cols-[1fr_8rem_auto]">
+          <form
+            method="get"
+            className="grid gap-4 lg:grid-cols-[1fr_8rem_auto]"
+          >
             <label className="grid gap-2 text-sm font-medium">
               Question
               <input
@@ -95,8 +98,8 @@ export default async function GaiaAnalystPage({
           <CardHeader>
             <CardTitle>Suggested questions</CardTitle>
             <CardDescription>
-              Start with a question that can be resolved directly from the verified
-              ledger.
+              Start with a question that can be resolved directly from the
+              verified ledger.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
@@ -122,7 +125,9 @@ export default async function GaiaAnalystPage({
 
       {submitted && !data ? (
         <div className="mt-8">
-          <DataUnavailable message={result?.error ?? 'Gaia Analyst is unavailable.'} />
+          <DataUnavailable
+            message={result?.error ?? 'Gaia Analyst is unavailable.'}
+          />
         </div>
       ) : null}
 
@@ -135,8 +140,12 @@ export default async function GaiaAnalystPage({
                   <CardTitle>Analyst answer</CardTitle>
                   <CardDescription>{data.coverage_label}</CardDescription>
                 </div>
-                <StatusPill tone={data.status === 'answered' ? 'neutral' : 'demo'}>
-                  {data.status === 'answered' ? 'Evidence grounded' : data.status}
+                <StatusPill
+                  tone={data.status === 'answered' ? 'neutral' : 'demo'}
+                >
+                  {data.status === 'answered'
+                    ? 'Evidence grounded'
+                    : data.status}
                 </StatusPill>
               </div>
             </CardHeader>
@@ -156,8 +165,8 @@ export default async function GaiaAnalystPage({
             <CardContent>
               {data.evidence.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  No evidence was returned because this question is unsupported or
-                  has insufficient published data.
+                  No evidence was returned because this question is unsupported
+                  or has insufficient published data.
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -200,7 +209,9 @@ export default async function GaiaAnalystPage({
               <CardTitle>Evidence boundary</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm leading-6">{data.caveat}</p>
+              <p className="text-muted-foreground text-sm leading-6">
+                {data.caveat}
+              </p>
             </CardContent>
           </Card>
 
