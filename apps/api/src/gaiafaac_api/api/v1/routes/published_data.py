@@ -8,11 +8,13 @@ from gaiafaac_api.database.session import get_session
 from gaiafaac_api.fiscal_proof_schemas import FiscalProofResponse
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchResponse
+from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
 from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
 from gaiafaac_api.services.fiscal_pulse import fiscal_pulse
 from gaiafaac_api.services.fiscal_watch import fiscal_watch
+from gaiafaac_api.services.gaia_analyst import gaia_analyst
 from gaiafaac_api.services.published_analytics import published_analytics
 from gaiafaac_api.services.published_data import (
     get_published_overview,
@@ -55,6 +57,19 @@ def fiscal_watch_endpoint(
     year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
 ) -> FiscalWatchResponse:
     return fiscal_watch(session, year)
+
+
+@router.get(
+    "/gaia-analyst",
+    response_model=GaiaAnalystResponse,
+    summary="Evidence-grounded natural-language questions over published FAAC data",
+)
+def gaia_analyst_endpoint(
+    session: DatabaseSession,
+    question: Annotated[str, Query(min_length=3, max_length=500)],
+    year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
+) -> GaiaAnalystResponse:
+    return gaia_analyst(session, question=question, year=year)
 
 
 @router.get(
