@@ -69,9 +69,7 @@ class StateIgrRecord(Base):
         Index("ix_state_igr_period", "period_start", "period_end"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     state_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("states.state_id", ondelete="RESTRICT"), nullable=False, index=True
     )
