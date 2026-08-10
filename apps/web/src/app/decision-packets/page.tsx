@@ -105,7 +105,9 @@ export default async function DecisionPacketsPage({
 
                 <div className="mt-4 flex items-end justify-between gap-3">
                   <div>
-                    <p className="text-muted-foreground text-xs">Published-period net</p>
+                    <p className="text-muted-foreground text-xs">
+                      Published-period net
+                    </p>
                     <p className="mt-1 font-mono text-sm font-semibold">
                       {formatNaira(state.annual_net)}
                     </p>
