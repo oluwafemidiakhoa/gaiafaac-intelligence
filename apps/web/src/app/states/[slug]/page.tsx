@@ -28,7 +28,8 @@ export default async function StatePage({
   const { slug } = await params
   const result = await getPublishedOverview()
   const data = result.data
-  const allocation = data?.allocations.find((a) => a.state_slug === slug) ?? null
+  const allocation =
+    data?.allocations.find((a) => a.state_slug === slug) ?? null
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -90,8 +91,9 @@ export default async function StatePage({
           <div className="border-border mt-8 rounded-lg border p-5">
             <p className="font-semibold">Evidence tools</p>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-              Verify this month with Fiscal Proof, or open the state Decision Packet for a
-              print-ready evidence dossier across the published year.
+              Verify this month with Fiscal Proof, or open the state Decision
+              Packet for a print-ready evidence dossier across the published
+              year.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Button asChild variant="outline">
