@@ -12,8 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { formatDate, formatNaira, humanize } from '@/lib/format'
 import { getDecisionPacket } from '@/lib/decision-packet-api'
+import { formatDate, formatNaira, humanize } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,7 +53,9 @@ export default async function DecisionPacketPage({
           description="Evidence-backed state fiscal brief over published GaiaFAAC records."
         />
         <div className="mt-8">
-          <DataUnavailable message={result.error ?? 'Decision Packet is unavailable.'} />
+          <DataUnavailable
+            message={result.error ?? 'Decision Packet is unavailable.'}
+          />
         </div>
       </div>
     )
@@ -73,7 +75,8 @@ export default async function DecisionPacketPage({
       <div className="mt-6 flex flex-wrap gap-3">
         <StatusPill tone="success">{data.evidence_status}</StatusPill>
         <span className="text-muted-foreground text-sm">
-          {data.state_code} · {data.geopolitical_zone} · {data.months_published} published months
+          {data.state_code} · {data.geopolitical_zone} · {data.months_published}{' '}
+          published months
         </span>
       </div>
 
@@ -117,11 +120,15 @@ export default async function DecisionPacketPage({
         <CardContent className="grid gap-4 text-sm md:grid-cols-2">
           <div>
             <p className="text-muted-foreground">Gross allocation</p>
-            <p className="mt-1 font-medium">{formatNaira(data.annual_gross)}</p>
+            <p className="mt-1 font-medium">
+              {formatNaira(data.annual_gross)}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground">Deductions</p>
-            <p className="mt-1 font-medium">{formatNaira(data.annual_deductions)}</p>
+            <p className="mt-1 font-medium">
+              {formatNaira(data.annual_deductions)}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground">Net retention</p>
@@ -135,7 +142,9 @@ export default async function DecisionPacketPage({
             <p className="text-muted-foreground">Momentum</p>
             <p className="mt-1 font-medium">
               {data.momentum}
-              {data.momentum_pct === null ? '' : ` · ${data.momentum_pct.toFixed(2)}%`}
+              {data.momentum_pct === null
+                ? ''
+                : ` · ${data.momentum_pct.toFixed(2)}%`}
             </p>
           </div>
         </CardContent>
@@ -156,9 +165,14 @@ export default async function DecisionPacketPage({
           ) : (
             <div className="space-y-3">
               {data.watch_events.map((event) => (
-                <div key={`${event.kind}-${event.proof_path}`} className="border-border rounded-lg border p-4">
+                <div
+                  key={`${event.kind}-${event.proof_path}`}
+                  className="border-border rounded-lg border p-4"
+                >
                   <p className="font-medium">{event.headline}</p>
-                  <p className="text-muted-foreground mt-1 text-sm">{event.detail}</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {event.detail}
+                  </p>
                   <Link
                     href={event.proof_path}
                     className="text-primary mt-2 inline-block text-sm font-medium hover:underline print:hidden"
@@ -176,7 +190,8 @@ export default async function DecisionPacketPage({
         <CardHeader>
           <CardTitle>Monthly evidence chain</CardTitle>
           <CardDescription>
-            Every available month is tied to a deterministic Fiscal Proof and source hash.
+            Every available month is tied to a deterministic Fiscal Proof and
+            source hash.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -186,14 +201,20 @@ export default async function DecisionPacketPage({
               className="border-border grid gap-3 rounded-lg border p-4 md:grid-cols-[10rem_1fr_auto] print:grid-cols-[8rem_1fr]"
             >
               <div>
-                <p className="font-medium">{formatDate(month.revenue_month)}</p>
-                <p className="text-muted-foreground mt-1 font-mono text-xs">{month.proof_id}</p>
+                <p className="font-medium">
+                  {formatDate(month.revenue_month)}
+                </p>
+                <p className="text-muted-foreground mt-1 font-mono text-xs">
+                  {month.proof_id}
+                </p>
               </div>
               <div className="text-sm">
                 <p>Net: {formatNaira(month.net_allocation)}</p>
                 <p className="text-muted-foreground mt-1">
                   {month.source_organization} · {month.reconciliation_status} ·{' '}
-                  {month.human_verified ? 'human verified' : 'verification incomplete'}
+                  {month.human_verified
+                    ? 'human verified'
+                    : 'verification incomplete'}
                 </p>
                 <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
                   SHA-256 {month.source_sha256}
@@ -210,7 +231,9 @@ export default async function DecisionPacketPage({
         </CardContent>
       </Card>
 
-      <p className="text-muted-foreground mt-8 text-xs leading-5">{data.disclaimer}</p>
+      <p className="text-muted-foreground mt-8 text-xs leading-5">
+        {data.disclaimer}
+      </p>
     </article>
   )
 }
