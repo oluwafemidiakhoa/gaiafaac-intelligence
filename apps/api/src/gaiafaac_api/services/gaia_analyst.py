@@ -171,8 +171,10 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
             suggested_questions=_suggested_questions(year),
         )
 
-    if state_match.first is not None and state_match.second is not None and any(
-        token in lowered for token in ("compare", "versus", " vs ", "difference")
+    if (
+        state_match.first is not None
+        and state_match.second is not None
+        and any(token in lowered for token in ("compare", "versus", " vs ", "difference"))
     ):
         first = state_match.first
         second = state_match.second
@@ -184,8 +186,12 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
             "respectively."
         )
         evidence = [
-            _evidence(first, label="Published-period net", value=_money(first.annual_net), metric="net"),
-            _evidence(second, label="Published-period net", value=_money(second.annual_net), metric="net"),
+            _evidence(
+                first, label="Published-period net", value=_money(first.annual_net), metric="net"
+            ),
+            _evidence(
+                second, label="Published-period net", value=_money(second.annual_net), metric="net"
+            ),
             _evidence(first, label="Momentum", value=first.momentum, metric="momentum"),
             _evidence(second, label="Momentum", value=second.momentum, metric="momentum"),
         ]
@@ -214,9 +220,11 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
             )
             for state in ranked
         ]
-        answer = "The highest deduction burdens are: " + "; ".join(
-            f"{state.state_name} {state.deduction_burden_pct:.2f}%" for state in ranked
-        ) + "."
+        answer = (
+            "The highest deduction burdens are: "
+            + "; ".join(f"{state.state_name} {state.deduction_burden_pct:.2f}%" for state in ranked)
+            + "."
+        )
         return GaiaAnalystResponse(
             question=question,
             year=year,
@@ -242,10 +250,14 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
             )
             for state in ranked
         ]
-        answer = "The most volatile published allocation series are: " + "; ".join(
-            f"{state.state_name} {state.volatility_cv_pct:.2f}% ({state.volatility})"
-            for state in ranked
-        ) + "."
+        answer = (
+            "The most volatile published allocation series are: "
+            + "; ".join(
+                f"{state.state_name} {state.volatility_cv_pct:.2f}% ({state.volatility})"
+                for state in ranked
+            )
+            + "."
+        )
         return GaiaAnalystResponse(
             question=question,
             year=year,
@@ -272,7 +284,9 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
             if state.momentum_pct is not None
             and (requested_label is None or state.momentum == requested_label)
         ]
-        ranked.sort(key=lambda state: state.momentum_pct or 0, reverse=requested_label != "Weakening")
+        ranked.sort(
+            key=lambda state: state.momentum_pct or 0, reverse=requested_label != "Weakening"
+        )
         ranked = ranked[:_TOP_N]
         evidence = [
             _evidence(
@@ -286,10 +300,14 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
         if not ranked:
             answer = f"No states match that momentum condition in the published {year} data."
         else:
-            answer = "Momentum results: " + "; ".join(
-                f"{state.state_name} {state.momentum} ({state.momentum_pct:+.2f}%)"
-                for state in ranked
-            ) + "."
+            answer = (
+                "Momentum results: "
+                + "; ".join(
+                    f"{state.state_name} {state.momentum} ({state.momentum_pct:+.2f}%)"
+                    for state in ranked
+                )
+                + "."
+            )
         return GaiaAnalystResponse(
             question=question,
             year=year,
@@ -307,12 +325,16 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
         ranked.sort(key=lambda state: Decimal(state.annual_net or "0"))
         ranked = ranked[:_TOP_N]
         evidence = [
-            _evidence(state, label="Published-period net", value=_money(state.annual_net), metric="net")
+            _evidence(
+                state, label="Published-period net", value=_money(state.annual_net), metric="net"
+            )
             for state in ranked
         ]
-        answer = "The lowest net allocations across the published period are: " + "; ".join(
-            f"{state.state_name} {_money(state.annual_net)}" for state in ranked
-        ) + "."
+        answer = (
+            "The lowest net allocations across the published period are: "
+            + "; ".join(f"{state.state_name} {_money(state.annual_net)}" for state in ranked)
+            + "."
+        )
         return GaiaAnalystResponse(
             question=question,
             year=year,
@@ -330,12 +352,16 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
     ):
         ranked = [state for state in pulse.states if state.annual_net is not None][:_TOP_N]
         evidence = [
-            _evidence(state, label="Published-period net", value=_money(state.annual_net), metric="net")
+            _evidence(
+                state, label="Published-period net", value=_money(state.annual_net), metric="net"
+            )
             for state in ranked
         ]
-        answer = "The highest net allocations across the published period are: " + "; ".join(
-            f"{state.state_name} {_money(state.annual_net)}" for state in ranked
-        ) + "."
+        answer = (
+            "The highest net allocations across the published period are: "
+            + "; ".join(f"{state.state_name} {_money(state.annual_net)}" for state in ranked)
+            + "."
+        )
         return GaiaAnalystResponse(
             question=question,
             year=year,
