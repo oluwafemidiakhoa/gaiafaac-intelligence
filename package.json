@@ -16,7 +16,7 @@
   "scripts": {
     "build": "npm run build --workspace @gaiafaac/web",
     "dev": "npm run dev --workspace @gaiafaac/web",
-    "format": "prettier --write apps/web/src/app/decision-packets/page.tsx && git diff -- apps/web/src/app/decision-packets/page.tsx && git diff --exit-code -- apps/web/src/app/decision-packets/page.tsx",
+    "format": "prettier --check .",
     "format:write": "prettier --write .",
     "lint": "npm run lint --workspace @gaiafaac/web",
     "test": "npm run test --workspace @gaiafaac/web",
