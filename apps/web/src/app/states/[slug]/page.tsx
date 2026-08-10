@@ -28,8 +28,7 @@ export default async function StatePage({
   const { slug } = await params
   const result = await getPublishedOverview()
   const data = result.data
-  const allocation =
-    data?.allocations.find((a) => a.state_slug === slug) ?? null
+  const allocation = data?.allocations.find((a) => a.state_slug === slug) ?? null
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -89,19 +88,27 @@ export default async function StatePage({
           </div>
 
           <div className="border-border mt-8 rounded-lg border p-5">
-            <p className="font-semibold">Fiscal Proof</p>
+            <p className="font-semibold">Evidence tools</p>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-              Open the deterministic evidence record for this published
-              allocation, including source-document SHA-256, reconciliation
-              status, verification chain and reproducible proof digest.
+              Verify this month with Fiscal Proof, or open the state Decision Packet for a
+              print-ready evidence dossier across the published year.
             </p>
-            <Button asChild className="mt-4" variant="outline">
-              <Link
-                href={`/fiscal-proof/${allocation.state_slug}/${data.period.revenue_month}`}
-              >
-                Verify this allocation
-              </Link>
-            </Button>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button asChild variant="outline">
+                <Link
+                  href={`/fiscal-proof/${allocation.state_slug}/${data.period.revenue_month}`}
+                >
+                  Verify this allocation
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link
+                  href={`/decision-packets/${allocation.state_slug}?year=${data.period.revenue_month.slice(0, 4)}`}
+                >
+                  Open Decision Packet
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <p className="text-muted-foreground mt-6 text-sm">
