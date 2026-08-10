@@ -103,9 +103,7 @@ def test_fiscal_watch_flags_negative_net_large_move_and_high_deductions(session)
     assert by_kind["negative_net"].severity == "elevated"
     assert by_kind["large_monthly_move"].change_pct == -150.0
     assert by_kind["high_deduction_burden"].deduction_burden_pct == 140.0
-    assert by_kind["negative_net"].proof_path == (
-        f"/fiscal-proof/{state.slug}/2026-02-01"
-    )
+    assert by_kind["negative_net"].proof_path == (f"/fiscal-proof/{state.slug}/2026-02-01")
 
 
 def test_fiscal_watch_ignores_unpublished_rows(session):
