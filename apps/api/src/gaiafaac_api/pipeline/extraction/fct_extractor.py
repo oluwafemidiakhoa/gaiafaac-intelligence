@@ -29,12 +29,7 @@ def parse_fct_line(line: str) -> list[Decimal]:
     """Parse every Naira figure out of a raw FCT table-row text line, in order."""
     numbers: list[Decimal] = []
     for token in _NUMBER.findall(line):
-        cleaned = (
-            token.replace(" ", "")
-            .replace(",", "")
-            .replace("(", "-")
-            .replace(")", "")
-        )
+        cleaned = token.replace(" ", "").replace(",", "").replace("(", "-").replace(")", "")
         try:
             numbers.append(Decimal(cleaned))
         except InvalidOperation:
