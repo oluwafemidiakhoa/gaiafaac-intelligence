@@ -4,6 +4,7 @@ const navigation = [
   { href: '/gaia-analyst', label: 'Gaia Analyst' },
   { href: '/fiscal-watch', label: 'Fiscal Watch' },
   { href: '/fiscal-pulse', label: 'Fiscal Pulse' },
+  { href: '/decision-packets', label: 'Decision Packets' },
   { href: '/live', label: 'Live data' },
   { href: '/insights', label: 'Insights' },
   { href: '/overview', label: 'Overview' },
