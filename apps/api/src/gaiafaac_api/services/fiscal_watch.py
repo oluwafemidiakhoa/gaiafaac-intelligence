@@ -88,7 +88,8 @@ def fiscal_watch(session: Session, year: int) -> FiscalWatchResponse:
                     headline=f"{state.name} reported a negative net FAAC allocation",
                     detail=(
                         f"Published net allocation is NGN {_money(current.net_allocation)}. "
-                        "This is a source-reported value and should be reviewed in its Fiscal Proof."
+                        "This is a source-reported value and should be reviewed "
+                        "in its Fiscal Proof."
                     ),
                     current_net=_money(current.net_allocation),
                     previous_net=_money(previous.net_allocation) if previous else None,
@@ -123,7 +124,8 @@ def fiscal_watch(session: Session, year: int) -> FiscalWatchResponse:
                             f"{state.name} net FAAC allocation {direction} sharply month over month"
                         ),
                         detail=(
-                            f"Net allocation moved {_pct(change):+.2f}% from the prior published month."
+                            f"Net allocation moved {_pct(change):+.2f}% from the prior "
+                            "published month."
                         ),
                         current_net=_money(current.net_allocation),
                         previous_net=_money(previous.net_allocation),
@@ -150,7 +152,8 @@ def fiscal_watch(session: Session, year: int) -> FiscalWatchResponse:
                         revenue_month=current_period.revenue_month,
                         headline=f"{state.name} deductions exceeded half of gross allocation",
                         detail=(
-                            f"Deductions were {_pct(burden):.2f}% of gross allocation in the latest published month."
+                            f"Deductions were {_pct(burden):.2f}% of gross allocation "
+                            "in the latest published month."
                         ),
                         current_net=_money(current.net_allocation),
                         previous_net=_money(previous.net_allocation) if previous else None,
