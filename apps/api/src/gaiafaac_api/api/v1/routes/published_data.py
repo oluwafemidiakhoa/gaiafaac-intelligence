@@ -5,12 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.session import get_session
+from gaiafaac_api.decision_packet_schemas import DecisionPacketResponse
 from gaiafaac_api.fiscal_proof_schemas import FiscalProofResponse
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchResponse
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
+from gaiafaac_api.services.decision_packet import decision_packet
 from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
 from gaiafaac_api.services.fiscal_pulse import fiscal_pulse
 from gaiafaac_api.services.fiscal_watch import fiscal_watch
@@ -70,6 +72,25 @@ def gaia_analyst_endpoint(
     year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
 ) -> GaiaAnalystResponse:
     return gaia_analyst(session, question=question, year=year)
+
+
+@router.get(
+    "/decision-packet/{state_slug}",
+    response_model=DecisionPacketResponse,
+    summary="Print-ready evidence dossier for a state and year",
+)
+def decision_packet_endpoint(
+    state_slug: str,
+    session: DatabaseSession,
+    year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
+) -> DecisionPacketResponse:
+    packet = decision_packet(session, state_slug=state_slug, year=year)
+    if packet is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published Decision Packet exists for this state and year.",
+        )
+    return packet
 
 
 @router.get(
