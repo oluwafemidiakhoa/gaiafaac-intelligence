@@ -58,9 +58,7 @@ def decision_packet(
                 net_allocation=proof.financials.net_allocation,
                 reconciliation_status=proof.financials.reconciliation_status,
                 proof_id=proof.proof_id,
-                proof_path=(
-                    f"/fiscal-proof/{proof.state_slug}/{proof.revenue_month.isoformat()}"
-                ),
+                proof_path=(f"/fiscal-proof/{proof.state_slug}/{proof.revenue_month.isoformat()}"),
                 source_organization=proof.source.source_organization,
                 source_sha256=proof.source.sha256,
                 human_verified=proof.verification.human_verified,
