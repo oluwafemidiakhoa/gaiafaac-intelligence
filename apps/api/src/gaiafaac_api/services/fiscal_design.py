@@ -179,15 +179,17 @@ def fiscal_design(
             ),
         )
 
+    objective = (
+        "Explore hypothetical fiscal-resilience scenarios using governed FAAC and IGR "
+        "evidence."
+    )
+
     return FiscalDesignResponse(
         state_name=packet.state_name,
         state_slug=packet.state_slug,
         state_code=packet.state_code,
         year=year,
-        objective=(
-            "Explore hypothetical fiscal-resilience scenarios using governed FAAC and IGR "
-            "evidence."
-        ),
+        objective=objective,
         coverage_label=packet.coverage_label,
         faac_months_published=packet.months_published,
         faac_complete_year=complete_year,
