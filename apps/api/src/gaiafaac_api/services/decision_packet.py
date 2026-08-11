@@ -86,7 +86,10 @@ def decision_packet(
     igr_note = (
         igr.note
         if igr_records
-        else f"No published, human-verified IGR evidence is available for {state.state_name} in {year}."
+        else (
+            "No published, human-verified IGR evidence is available for "
+            f"{state.state_name} in {year}."
+        )
     )
 
     watch = fiscal_watch(session, year)
