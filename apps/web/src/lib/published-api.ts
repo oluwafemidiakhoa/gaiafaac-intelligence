@@ -115,3 +115,55 @@ export async function getPublishedSources(): Promise<
     return { data: null, error: 'The source registry is unavailable.' }
   }
 }
+
+const publishedIgrSourceSchema = z.object({
+  organization: z.string(),
+  source_url: z.url().nullable(),
+  sha256: z.string().length(64),
+  publication_date: z.iso.date().nullable(),
+})
+
+export const publishedIgrRecordSchema = z.object({
+  state_name: z.string(),
+  state_slug: z.string(),
+  state_code: z.string(),
+  fiscal_year: z.number().int(),
+  period_type: z.enum(['annual', 'quarterly']),
+  quarter: z.number().int().nullable(),
+  period_start: z.iso.date(),
+  period_end: z.iso.date(),
+  igr_amount: z.string(),
+  reported_unit: z.string(),
+  source_page: z.number().int().nullable(),
+  source_table: z.string().nullable(),
+  verification_status: z.string(),
+  source: publishedIgrSourceSchema,
+})
+
+export type PublishedIgrRecord = z.infer<typeof publishedIgrRecordSchema>
+
+export async function getLatestPublishedIgr(
+  stateSlug: string,
+): Promise<ApiResult<PublishedIgrRecord>> {
+  try {
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/published/igr/latest?state_slug=${encodeURIComponent(stateSlug)}`,
+      { next: { revalidate: 300 } },
+    )
+    if (!response.ok) {
+      return {
+        data: null,
+        error:
+          response.status === 404
+            ? 'No published IGR evidence is available for this state yet.'
+            : 'The IGR evidence service is unavailable.',
+      }
+    }
+    return {
+      data: publishedIgrRecordSchema.parse(await response.json()),
+      error: null,
+    }
+  } catch {
+    return { data: null, error: 'The IGR evidence service is unavailable.' }
+  }
+}
