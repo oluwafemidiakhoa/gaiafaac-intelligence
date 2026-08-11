@@ -28,15 +28,26 @@ interface FiscalDesignPageProps {
   }>
 }
 
-function bounded(value: string | undefined, fallback: number, min: number, max: number) {
+function bounded(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+) {
   const parsed = Number(value)
-  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : fallback
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max
+    ? parsed
+    : fallback
 }
 
-export default async function FiscalDesignPage({ searchParams }: FiscalDesignPageProps) {
+export default async function FiscalDesignPage({
+  searchParams,
+}: FiscalDesignPageProps) {
   const query = await searchParams
   const state = (query.state ?? '').trim().toLowerCase()
-  const year = Math.trunc(bounded(query.year, new Date().getUTCFullYear(), 2000, 2100))
+  const year = Math.trunc(
+    bounded(query.year, new Date().getUTCFullYear(), 2000, 2100),
+  )
   const faacShock = bounded(query.faacShock, -20, -100, 100)
   const igrShock = bounded(query.igrShock, 0, -100, 100)
   const reserveShare = bounded(query.reserveShare, 10, 0, 100)
@@ -56,7 +67,8 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
         <CardHeader>
           <CardTitle>Scenario inputs</CardTitle>
           <CardDescription>
-            Enter a state slug and explicit assumptions. Negative percentages model declines; positive percentages model increases.
+            Enter a state slug and explicit assumptions. Negative percentages
+            model declines; positive percentages model increases.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -130,7 +142,8 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
           <CardHeader>
             <CardTitle>Start with a governed evidence boundary</CardTitle>
             <CardDescription>
-              Example: use <span className="font-mono">lagos</span>, choose a year, then test explicit revenue shocks.
+              Example: use <span className="font-mono">lagos</span>, choose a
+              year, then test explicit revenue shocks.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -138,20 +151,32 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
 
       {state && !result.data ? (
         <div className="mt-6">
-          <DataUnavailable message={result.error ?? 'No governed evidence is available.'} />
+          <DataUnavailable
+            message={result.error ?? 'No governed evidence is available.'}
+          />
         </div>
       ) : null}
 
       {result.data ? (
         <>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <StatusPill tone={result.data.faac_complete_year ? 'success' : 'neutral'}>
-              {result.data.faac_complete_year ? 'Complete FAAC year' : 'Partial FAAC year'}
+            <StatusPill
+              tone={result.data.faac_complete_year ? 'success' : 'neutral'}
+            >
+              {result.data.faac_complete_year
+                ? 'Complete FAAC year'
+                : 'Partial FAAC year'}
             </StatusPill>
-            <StatusPill tone={result.data.annual_igr_available ? 'success' : 'neutral'}>
-              {result.data.annual_igr_available ? 'Annual IGR available' : 'Annual IGR unavailable'}
+            <StatusPill
+              tone={result.data.annual_igr_available ? 'success' : 'neutral'}
+            >
+              {result.data.annual_igr_available
+                ? 'Annual IGR available'
+                : 'Annual IGR unavailable'}
             </StatusPill>
-            <span className="text-muted-foreground text-sm">{result.data.coverage_label}</span>
+            <span className="text-muted-foreground text-sm">
+              {result.data.coverage_label}
+            </span>
           </div>
 
           <section className="mt-6 grid gap-5 lg:grid-cols-3">
@@ -159,8 +184,14 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
               <Card key={candidate.key}>
                 <CardHeader>
                   <div className="mb-2">
-                    <StatusPill tone={candidate.status === 'available' ? 'success' : 'neutral'}>
-                      {candidate.status === 'available' ? 'Available' : 'Insufficient data'}
+                    <StatusPill
+                      tone={
+                        candidate.status === 'available' ? 'success' : 'neutral'
+                      }
+                    >
+                      {candidate.status === 'available'
+                        ? 'Available'
+                        : 'Insufficient data'}
                     </StatusPill>
                   </div>
                   <CardTitle>{candidate.title}</CardTitle>
@@ -171,15 +202,21 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
                     <div className="space-y-4">
                       {candidate.metrics.map((metric) => (
                         <div key={metric.label}>
-                          <p className="text-muted-foreground text-xs uppercase tracking-wide">{metric.label}</p>
+                          <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                            {metric.label}
+                          </p>
                           <p className="mt-1 text-xl font-semibold">
-                            {metric.unit === 'NGN' ? formatNaira(metric.value) : `${metric.value} ${metric.unit}`}
+                            {metric.unit === 'NGN'
+                              ? formatNaira(metric.value)
+                              : `${metric.value} ${metric.unit}`}
                           </p>
                         </div>
                       ))}
                     </div>
                   ) : null}
-                  <p className="text-muted-foreground mt-5 text-sm leading-6">{candidate.note}</p>
+                  <p className="text-muted-foreground mt-5 text-sm leading-6">
+                    {candidate.note}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -189,7 +226,10 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
             <Card>
               <CardHeader>
                 <CardTitle>Assumptions</CardTitle>
-                <CardDescription>Scenario parameters are explicit and kept separate from evidence.</CardDescription>
+                <CardDescription>
+                  Scenario parameters are explicit and kept separate from
+                  evidence.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
@@ -203,21 +243,37 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
             <Card>
               <CardHeader>
                 <CardTitle>Evidence chain</CardTitle>
-                <CardDescription>{result.data.evidence.length} governed evidence records used.</CardDescription>
+                <CardDescription>
+                  {result.data.evidence.length} governed evidence records used.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {result.data.evidence.map((item) => (
-                  <div key={`${item.evidence_domain}-${item.label}`} className="border-border rounded-lg border p-3 text-sm">
+                  <div
+                    key={`${item.evidence_domain}-${item.label}`}
+                    className="border-border rounded-lg border p-3 text-sm"
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium">{item.label}</p>
                       <span className="bg-muted rounded-full px-2 py-1 text-xs font-medium tracking-wide uppercase">
                         {item.evidence_domain}
                       </span>
                     </div>
-                    <p className="mt-2">{item.value === 'Unavailable' ? item.value : formatNaira(item.value)}</p>
-                    <p className="text-muted-foreground mt-1">{item.source_organization}</p>
-                    <p className="text-muted-foreground mt-1 font-mono text-xs break-all">SHA-256 {item.source_sha256}</p>
-                    <Link href={item.reference_path} className="text-primary mt-2 inline-block font-medium hover:underline">
+                    <p className="mt-2">
+                      {item.value === 'Unavailable'
+                        ? item.value
+                        : formatNaira(item.value)}
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      {item.source_organization}
+                    </p>
+                    <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
+                      SHA-256 {item.source_sha256}
+                    </p>
+                    <Link
+                      href={item.reference_path}
+                      className="text-primary mt-2 inline-block font-medium hover:underline"
+                    >
                       Open evidence →
                     </Link>
                   </div>
@@ -226,7 +282,9 @@ export default async function FiscalDesignPage({ searchParams }: FiscalDesignPag
             </Card>
           </div>
 
-          <p className="text-muted-foreground mt-8 text-xs leading-5">{result.data.disclaimer}</p>
+          <p className="text-muted-foreground mt-8 text-xs leading-5">
+            {result.data.disclaimer}
+          </p>
         </>
       ) : null}
     </div>
