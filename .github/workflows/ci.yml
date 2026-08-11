@@ -24,11 +24,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Print exact Prettier diff for IGR UI
-        run: |
-          npx prettier --write 'apps/web/src/app/decision-packets/[stateSlug]/page.tsx' 'apps/web/src/app/states/[slug]/page.tsx'
-          git diff -- 'apps/web/src/app/decision-packets/[stateSlug]/page.tsx' 'apps/web/src/app/states/[slug]/page.tsx'
-          exit 1
+      - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
