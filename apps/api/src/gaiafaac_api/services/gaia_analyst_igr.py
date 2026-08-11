@@ -37,7 +37,7 @@ def _is_igr_question(question: str) -> bool:
 
 
 def _state_refs(session: Session, records: list[PublishedIgrRecord]) -> list[_StateRef]:
-    refs: dict[str, _StateRef] = {
+    refs = {
         record.state_slug: _StateRef(record.state_name, record.state_slug, record.state_code)
         for record in records
     }
@@ -51,10 +51,14 @@ def _match_states(question: str, refs: list[_StateRef]) -> list[_StateRef]:
     question_tokens = _tokens(question)
     matches: list[_StateRef] = []
     for state in refs:
-        aliases = {state.name.lower(), state.slug.lower(), state.code.lower()}
-        if state.code == "FC":
-            aliases.update({"fct", "abuja", "federal capital territory"})
-        if any(alias in lowered for alias in aliases) or _tokens(state.name).issubset(question_tokens):
+        named = state.name.lower() in lowered or state.slug.lower() in lowered
+        coded = state.code.lower() in question_tokens
+        fct = state.code == "FC" and bool(
+            {"fct", "abuja"} & question_tokens
+            or "federal capital territory" in lowered
+        )
+        token_named = _tokens(state.name).issubset(question_tokens)
+        if named or coded or fct or token_named:
             matches.append(state)
     unique: list[_StateRef] = []
     seen: set[str] = set()
@@ -147,11 +151,11 @@ def _comparable_group(records: list[PublishedIgrRecord]) -> list[PublishedIgrRec
     groups: dict[tuple[object, ...], dict[str, PublishedIgrRecord]] = {}
     for record in records:
         groups.setdefault(_period_key(record), {})[record.state_slug] = record
-    groups_by_period = [list(group.values()) for group in groups.values()]
-    if not groups_by_period:
+    candidates = [list(group.values()) for group in groups.values()]
+    if not candidates:
         return []
     return max(
-        groups_by_period,
+        candidates,
         key=lambda group: (len(group), group[0].period_end, group[0].period_start),
     )
 
@@ -162,9 +166,7 @@ def _common_pair(
     first = {_period_key(record): record for record in records if record.state_slug == first_slug}
     second = {_period_key(record): record for record in records if record.state_slug == second_slug}
     pairs = [(first[key], second[key]) for key in first.keys() & second.keys()]
-    if not pairs:
-        return None
-    return max(pairs, key=lambda pair: (pair[0].period_end, pair[0].period_start))
+    return max(pairs, key=lambda pair: (pair[0].period_end, pair[0].period_start)) if pairs else None
 
 
 def _state_record(records: list[PublishedIgrRecord], state_slug: str) -> PublishedIgrRecord | None:
