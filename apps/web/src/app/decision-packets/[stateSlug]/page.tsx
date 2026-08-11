@@ -185,7 +185,7 @@ export default async function DecisionPacketPage({
                         ? 'Human verified · published'
                         : 'Verification incomplete'}
                     </p>
-                    <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
+                    <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
                       SHA-256 {record.source_sha256}
                     </p>
                   </div>
@@ -203,7 +203,8 @@ export default async function DecisionPacketPage({
         <CardHeader>
           <CardTitle>Current watch events</CardTitle>
           <CardDescription>
-            Latest FAAC threshold events for this jurisdiction. No cause is inferred.
+            Latest FAAC threshold events for this jurisdiction. No cause is
+            inferred.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -263,7 +264,7 @@ export default async function DecisionPacketPage({
                     ? 'human verified'
                     : 'verification incomplete'}
                 </p>
-                <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
+                <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
                   SHA-256 {month.source_sha256}
                 </p>
               </div>
