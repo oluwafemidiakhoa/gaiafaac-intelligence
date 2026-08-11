@@ -82,13 +82,19 @@ export async function getFiscalDesign(
       { next: { revalidate: 300 } },
     )
     if (!response.ok) {
-      return { data: null, error: 'Fiscal Design Lab is unavailable for this selection.' }
+      return {
+        data: null,
+        error: 'Fiscal Design Lab is unavailable for this selection.',
+      }
     }
     return {
       data: fiscalDesignSchema.parse(await response.json()),
       error: null,
     }
   } catch {
-    return { data: null, error: 'Fiscal Design Lab is unavailable for this selection.' }
+    return {
+      data: null,
+      error: 'Fiscal Design Lab is unavailable for this selection.',
+    }
   }
 }
