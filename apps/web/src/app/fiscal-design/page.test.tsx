@@ -138,7 +138,7 @@ describe('FiscalDesignPage', () => {
       screen.getByText('Blended revenue stress scenario'),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('FAAC scenario change: -20.00%.'),
+      screen.getByText(/FAAC scenario change: -20\.00%\./),
     ).toBeInTheDocument()
     expect(screen.getAllByText(sourceSha)).toHaveLength(2)
     expect(screen.getByText('OAGF')).toBeInTheDocument()
@@ -206,7 +206,9 @@ describe('FiscalDesignPage', () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('Missing or partial periods are not annualized or borrowed.'),
+      screen.getByText(
+        'Missing or partial periods are not annualized or borrowed.',
+      ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Scenario envelope')).not.toBeInTheDocument()
   })
