@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 import zipfile
 from decimal import Decimal
 from pathlib import Path
@@ -98,7 +99,7 @@ def test_imports_37_annual_records_for_review_and_never_publishes(session, tmp_p
     assert all(record.period_start.isoformat() == "2024-01-01" for record in records)
     assert all(record.period_end.isoformat() == "2024-12-31" for record in records)
 
-    source = session.get(SourceDocument, result.source_document_id)
+    source = session.get(SourceDocument, uuid.UUID(result.source_document_id))
     assert source is not None
     assert source.mime_type == "application/zip"
     assert source.original_filename == "IGR_2024.zip"
