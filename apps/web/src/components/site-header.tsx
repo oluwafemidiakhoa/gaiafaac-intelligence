@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 const navigation = [
   { href: '/gaia-analyst', label: 'Gaia Analyst' },
+  { href: '/fiscal-design', label: 'Fiscal Design Lab' },
   { href: '/fiscal-watch', label: 'Fiscal Watch' },
   { href: '/fiscal-pulse', label: 'Fiscal Pulse' },
   { href: '/decision-packets', label: 'Decision Packets' },
