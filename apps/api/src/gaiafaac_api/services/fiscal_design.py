@@ -125,8 +125,12 @@ def fiscal_design(
             purpose="Explore a user-selected buffer share against exact-year annual IGR evidence.",
             status="available",
             metrics=[
-                FiscalDesignMetric(label="Annual IGR baseline", value=_money(annual_igr), unit="NGN"),
-                FiscalDesignMetric(label="Scenario annual IGR", value=_money(stressed_igr), unit="NGN"),
+                FiscalDesignMetric(
+                    label="Annual IGR baseline", value=_money(annual_igr), unit="NGN"
+                ),
+                FiscalDesignMetric(
+                    label="Scenario annual IGR", value=_money(stressed_igr), unit="NGN"
+                ),
                 FiscalDesignMetric(
                     label=f"Illustrative buffer at {_pct(reserve_share_pct)}%",
                     value=_money(buffer_amount),
@@ -148,7 +152,8 @@ def fiscal_design(
             metrics=[],
             note=(
                 "This scenario requires 12 published FAAC months and a published annual IGR "
-                "record for the same year. Missing or partial periods are not annualized or borrowed."
+                "record for the same year. Missing or partial periods are not annualized "
+                "or borrowed."
             ),
         )
     else:
@@ -164,7 +169,9 @@ def fiscal_design(
             metrics=[
                 FiscalDesignMetric(label="Combined baseline", value=_money(baseline), unit="NGN"),
                 FiscalDesignMetric(label="Scenario envelope", value=_money(stressed), unit="NGN"),
-                FiscalDesignMetric(label="Scenario delta", value=_money(stressed - baseline), unit="NGN"),
+                FiscalDesignMetric(
+                    label="Scenario delta", value=_money(stressed - baseline), unit="NGN"
+                ),
             ],
             note=(
                 "This combines only complete-year published FAAC with exact-year annual IGR. "
@@ -177,7 +184,10 @@ def fiscal_design(
         state_slug=packet.state_slug,
         state_code=packet.state_code,
         year=year,
-        objective="Explore hypothetical fiscal-resilience scenarios using governed FAAC and IGR evidence.",
+        objective=(
+            "Explore hypothetical fiscal-resilience scenarios using governed FAAC and IGR "
+            "evidence."
+        ),
         coverage_label=packet.coverage_label,
         faac_months_published=packet.months_published,
         faac_complete_year=complete_year,
