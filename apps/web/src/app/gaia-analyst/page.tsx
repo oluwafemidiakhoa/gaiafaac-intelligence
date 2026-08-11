@@ -216,7 +216,9 @@ export default async function GaiaAnalystPage({
                           ) : null}
                           {item.source_sha256 ? (
                             <div>
-                              <p className="text-muted-foreground">Source SHA-256</p>
+                              <p className="text-muted-foreground">
+                                Source SHA-256
+                              </p>
                               <p
                                 className="mt-1 font-mono break-all"
                                 title={item.source_sha256}
