@@ -11,10 +11,16 @@ vi.mock('@/lib/gaia-analyst-api', () => ({
 
 describe('GaiaAnalystPage', () => {
   it('surfaces both FAAC and IGR suggested questions before submission', async () => {
-    render(await GaiaAnalystPage({ searchParams: Promise.resolve({ year: '2024' }) }))
+    render(
+      await GaiaAnalystPage({
+        searchParams: Promise.resolve({ year: '2024' }),
+      }),
+    )
 
     expect(
-      screen.getByText('What changed in the latest published FAAC data for 2024?'),
+      screen.getByText(
+        'What changed in the latest published FAAC data for 2024?',
+      ),
     ).toBeInTheDocument()
     expect(screen.getByText('What is Lagos IGR in 2024?')).toBeInTheDocument()
     expect(
@@ -66,7 +72,9 @@ describe('GaiaAnalystPage', () => {
 
     expect(screen.getByText('igr')).toBeInTheDocument()
     expect(screen.getByText('2024 annual')).toBeInTheDocument()
-    expect(screen.getByText('National Bureau of Statistics')).toBeInTheDocument()
+    expect(
+      screen.getByText('National Bureau of Statistics'),
+    ).toBeInTheDocument()
     expect(screen.getByText('a'.repeat(64))).toBeInTheDocument()
     expect(screen.getByText('Open state record →')).toBeInTheDocument()
     expect(screen.queryByText('Fiscal Proof')).not.toBeInTheDocument()
@@ -75,7 +83,8 @@ describe('GaiaAnalystPage', () => {
   it('keeps FAAC evidence free of IGR-only provenance fields', async () => {
     vi.mocked(askGaiaAnalyst).mockResolvedValue({
       data: {
-        question: 'Which states received the highest net FAAC allocation in 2024?',
+        question:
+          'Which states received the highest net FAAC allocation in 2024?',
         year: 2024,
         intent: 'top_net',
         status: 'answered',
@@ -97,7 +106,9 @@ describe('GaiaAnalystPage', () => {
           },
         ],
         caveat: 'FAAC answers use published verified ledger evidence.',
-        suggested_questions: ['What changed in the latest published FAAC data for 2024?'],
+        suggested_questions: [
+          'What changed in the latest published FAAC data for 2024?',
+        ],
       },
       error: null,
     })
@@ -105,7 +116,8 @@ describe('GaiaAnalystPage', () => {
     render(
       await GaiaAnalystPage({
         searchParams: Promise.resolve({
-          question: 'Which states received the highest net FAAC allocation in 2024?',
+          question:
+            'Which states received the highest net FAAC allocation in 2024?',
           year: '2024',
         }),
       }),
@@ -132,7 +144,9 @@ describe('GaiaAnalystPage', () => {
       }),
     )
 
-    expect(screen.getByText('Gaia Analyst is unavailable.')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Gaia Analyst is unavailable\./),
+    ).toBeInTheDocument()
     expect(screen.queryByText('Evidence used')).not.toBeInTheDocument()
   })
 })
