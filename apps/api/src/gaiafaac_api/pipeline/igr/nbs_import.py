@@ -123,9 +123,7 @@ def import_nbs_igr_zip(
         )
         is not None
     ):
-        raise ImportContractError(
-            f"Non-demo annual IGR records already exist for {fiscal_year}"
-        )
+        raise ImportContractError(f"Non-demo annual IGR records already exist for {fiscal_year}")
 
     try:
         source = register_source_document(
