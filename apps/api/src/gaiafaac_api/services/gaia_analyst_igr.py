@@ -208,15 +208,13 @@ def _igr_answer(session: Session, *, question: str, year: int) -> GaiaAnalystRes
                 evidence=[],
             )
         label = _period_label(record)
+        answer = f"The latest published IGR for {record.state_name} is {label}: {_money(record)}."
         return _response(
             question=question,
             year=year,
             intent="igr_latest",
             status="answered",
-            answer=(
-                f"The latest published IGR for {record.state_name} is {label}: "
-                f"{_money(record)}."
-            ),
+            answer=answer,
             coverage_label=f"Latest published IGR · {label}",
             evidence=[_evidence(record)],
         )
@@ -248,15 +246,13 @@ def _igr_answer(session: Session, *, question: str, year: int) -> GaiaAnalystRes
             )
         first, second = pair
         if first.reported_unit != second.reported_unit:
+            answer = "The matching IGR records use different reported units and are not compared."
             return _response(
                 question=question,
                 year=year,
                 intent="igr_compare",
                 status="insufficient_data",
-                answer=(
-                    "The matching IGR records use different reported units and are "
-                    "not compared."
-                ),
+                answer=answer,
                 coverage_label=coverage,
                 evidence=[_evidence(first), _evidence(second)],
             )
@@ -295,15 +291,13 @@ def _igr_answer(session: Session, *, question: str, year: int) -> GaiaAnalystRes
                 evidence=[],
             )
         if len({record.reported_unit for record in comparable}) != 1:
+            answer = "The comparable IGR records use different reported units and are not ranked."
             return _response(
                 question=question,
                 year=year,
                 intent=ranking_intent,
                 status="insufficient_data",
-                answer=(
-                    "The comparable IGR records use different reported units and are "
-                    "not ranked."
-                ),
+                answer=answer,
                 coverage_label=coverage,
                 evidence=[],
             )
