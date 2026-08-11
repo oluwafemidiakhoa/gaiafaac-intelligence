@@ -17,7 +17,7 @@ from gaiafaac_api.services.decision_packet import decision_packet
 from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
 from gaiafaac_api.services.fiscal_pulse import fiscal_pulse
 from gaiafaac_api.services.fiscal_watch import fiscal_watch
-from gaiafaac_api.services.gaia_analyst import gaia_analyst
+from gaiafaac_api.services.gaia_analyst_igr import gaia_analyst
 from gaiafaac_api.services.published_analytics import published_analytics
 from gaiafaac_api.services.published_data import (
     get_published_overview,
@@ -66,7 +66,7 @@ def fiscal_watch_endpoint(
 @router.get(
     "/gaia-analyst",
     response_model=GaiaAnalystResponse,
-    summary="Evidence-grounded natural-language questions over published FAAC data",
+    summary="Evidence-grounded natural-language questions over published FAAC and IGR data",
 )
 def gaia_analyst_endpoint(
     session: DatabaseSession,
