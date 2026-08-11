@@ -7,7 +7,7 @@ from gaiafaac_api.database.enums import ReportedUnit, VerificationStatus
 from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
 from gaiafaac_api.database.models import SourceDocument, State
 from gaiafaac_api.database.seeds import seed_states
-from gaiafaac_api.services.published_igr import published_igr
+from gaiafaac_api.services.published_igr import latest_published_igr, published_igr
 
 
 def test_published_igr_returns_only_human_verified_published_records(session):
@@ -116,3 +116,80 @@ def test_published_igr_can_filter_by_state_slug(session):
     assert match.records[0].quarter == 1
     assert miss.record_count == 0
     assert miss.records == []
+
+
+def test_latest_published_igr_uses_latest_period_without_cross_state_leakage(session):
+    seed_states(session)
+    states = list(session.scalars(select(State).order_by(State.name)).all())
+    first = states[0]
+    second = states[1]
+    source = SourceDocument(
+        source_organization="NBS",
+        original_filename="igr.xlsx",
+        storage_path="igr.xlsx",
+        sha256="c" * 64,
+        mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        is_demo=False,
+    )
+    session.add(source)
+    session.flush()
+
+    session.add_all(
+        [
+            StateIgrRecord(
+                state_id=first.id,
+                source_document_id=source.id,
+                fiscal_year=2024,
+                period_type=IgrPeriodType.ANNUAL,
+                quarter=None,
+                period_start=date(2024, 1, 1),
+                period_end=date(2024, 12, 31),
+                igr_amount=Decimal("100.00"),
+                igr_amount_original="100.00",
+                reported_unit=ReportedUnit.NAIRA,
+                verification_status=VerificationStatus.HUMAN_VERIFIED,
+                is_demo=False,
+                is_published=True,
+            ),
+            StateIgrRecord(
+                state_id=first.id,
+                source_document_id=source.id,
+                fiscal_year=2025,
+                period_type=IgrPeriodType.QUARTERLY,
+                quarter=1,
+                period_start=date(2025, 1, 1),
+                period_end=date(2025, 3, 31),
+                igr_amount=Decimal("30.00"),
+                igr_amount_original="30.00",
+                reported_unit=ReportedUnit.NAIRA,
+                verification_status=VerificationStatus.HUMAN_VERIFIED,
+                is_demo=False,
+                is_published=True,
+            ),
+            StateIgrRecord(
+                state_id=second.id,
+                source_document_id=source.id,
+                fiscal_year=2026,
+                period_type=IgrPeriodType.ANNUAL,
+                quarter=None,
+                period_start=date(2026, 1, 1),
+                period_end=date(2026, 12, 31),
+                igr_amount=Decimal("999.00"),
+                igr_amount_original="999.00",
+                reported_unit=ReportedUnit.NAIRA,
+                verification_status=VerificationStatus.HUMAN_VERIFIED,
+                is_demo=False,
+                is_published=True,
+            ),
+        ]
+    )
+    session.flush()
+
+    latest = latest_published_igr(session, state_slug=first.slug)
+
+    assert latest is not None
+    assert latest.state_slug == first.slug
+    assert latest.fiscal_year == 2025
+    assert latest.quarter == 1
+    assert latest.igr_amount == "30.00"
+    assert latest_published_igr(session, state_slug="not-a-state") is None
