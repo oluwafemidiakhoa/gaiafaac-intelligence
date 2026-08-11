@@ -12,9 +12,15 @@ AnalystIntent = Literal[
     "most_volatile",
     "momentum",
     "compare",
+    "igr_latest",
+    "igr_state",
+    "igr_top",
+    "igr_lowest",
+    "igr_compare",
     "unsupported",
 ]
 AnalystStatus = Literal["answered", "insufficient_data", "unsupported"]
+EvidenceDomain = Literal["faac", "igr"]
 
 
 class GaiaAnalystEvidence(BaseModel):
@@ -25,6 +31,10 @@ class GaiaAnalystEvidence(BaseModel):
     metric: str
     reference_path: str | None
     reference_label: str | None
+    evidence_domain: EvidenceDomain = "faac"
+    period_label: str | None = None
+    source_organization: str | None = None
+    source_sha256: str | None = None
 
 
 class GaiaAnalystResponse(BaseModel):
