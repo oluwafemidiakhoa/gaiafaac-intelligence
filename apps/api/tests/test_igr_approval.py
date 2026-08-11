@@ -77,10 +77,14 @@ def test_approve_then_publish_igr_source(session):
     assert approved.published is False
 
     records = list(
-        session.scalars(select(StateIgrRecord).where(StateIgrRecord.source_document_id == source.id))
+        session.scalars(
+            select(StateIgrRecord).where(StateIgrRecord.source_document_id == source.id)
+        )
     )
     assert len(records) == 37
-    assert all(record.verification_status is VerificationStatus.HUMAN_VERIFIED for record in records)
+    assert all(
+        record.verification_status is VerificationStatus.HUMAN_VERIFIED for record in records
+    )
     assert all(record.reviewed_by == reviewer.id for record in records)
     assert all(record.reviewed_at is not None for record in records)
     assert all(record.is_published is False for record in records)
