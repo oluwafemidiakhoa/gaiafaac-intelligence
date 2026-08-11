@@ -24,6 +24,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Show exact Prettier rewrite for Gaia Analyst tests
+        run: |
+          npx prettier --write apps/web/src/app/gaia-analyst/page.test.tsx
+          git diff -- apps/web/src/app/gaia-analyst/page.test.tsx
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
