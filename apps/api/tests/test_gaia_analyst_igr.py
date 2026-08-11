@@ -1,0 +1,160 @@
+from datetime import date
+from decimal import Decimal
+
+from sqlalchemy import select
+
+from gaiafaac_api.database.enums import ReportedUnit, VerificationStatus
+from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
+from gaiafaac_api.database.models import SourceDocument, State
+from gaiafaac_api.database.seeds import seed_states
+from gaiafaac_api.services.gaia_analyst_igr import gaia_analyst
+
+
+def _source(session) -> SourceDocument:
+    source = SourceDocument(
+        source_organization="National Bureau of Statistics",
+        original_filename="igr.xlsx",
+        storage_path="igr.xlsx",
+        sha256="a" * 64,
+        mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        is_demo=False,
+    )
+    session.add(source)
+    session.flush()
+    return source
+
+
+def _record(
+    *,
+    state: State,
+    source: SourceDocument,
+    year: int,
+    amount: str,
+    period_type: IgrPeriodType = IgrPeriodType.ANNUAL,
+    quarter: int | None = None,
+) -> StateIgrRecord:
+    if period_type == IgrPeriodType.ANNUAL:
+        period_start = date(year, 1, 1)
+        period_end = date(year, 12, 31)
+    else:
+        assert quarter is not None
+        starts = {1: (1, 1), 2: (4, 1), 3: (7, 1), 4: (10, 1)}
+        ends = {1: (3, 31), 2: (6, 30), 3: (9, 30), 4: (12, 31)}
+        period_start = date(year, *starts[quarter])
+        period_end = date(year, *ends[quarter])
+    return StateIgrRecord(
+        state_id=state.id,
+        source_document_id=source.id,
+        fiscal_year=year,
+        period_type=period_type,
+        quarter=quarter,
+        period_start=period_start,
+        period_end=period_end,
+        igr_amount=Decimal(amount),
+        igr_amount_original=amount,
+        reported_unit=ReportedUnit.NAIRA,
+        verification_status=VerificationStatus.HUMAN_VERIFIED,
+        is_demo=False,
+        is_published=True,
+    )
+
+
+def test_gaia_analyst_answers_exact_year_state_igr_without_faac(session):
+    seed_states(session)
+    lagos = session.scalars(select(State).where(State.slug == "lagos")).one()
+    source = _source(session)
+    session.add(_record(state=lagos, source=source, year=2024, amount="1000000.00"))
+    session.flush()
+
+    result = gaia_analyst(session, question="What is Lagos IGR in 2024?", year=2024)
+
+    assert result.intent == "igr_state"
+    assert result.status == "answered"
+    assert result.evidence[0].evidence_domain == "igr"
+    assert result.evidence[0].source_sha256 == "a" * 64
+    assert "NGN 1,000,000.00" in result.answer
+
+
+def test_gaia_analyst_latest_igr_can_use_an_earlier_year(session):
+    seed_states(session)
+    lagos = session.scalars(select(State).where(State.slug == "lagos")).one()
+    source = _source(session)
+    session.add(_record(state=lagos, source=source, year=2024, amount="100.00"))
+    session.add(
+        _record(
+            state=lagos,
+            source=source,
+            year=2025,
+            amount="30.00",
+            period_type=IgrPeriodType.QUARTERLY,
+            quarter=1,
+        )
+    )
+    session.flush()
+
+    result = gaia_analyst(
+        session,
+        question="What is the latest published IGR for Lagos?",
+        year=2026,
+    )
+
+    assert result.intent == "igr_latest"
+    assert result.status == "answered"
+    assert result.evidence[0].period_label == "2025 Q1"
+    assert "NGN 30.00" in result.answer
+
+
+def test_gaia_analyst_ranks_only_a_common_igr_period(session):
+    seed_states(session)
+    states = list(session.scalars(select(State).order_by(State.name)).all())[:3]
+    source = _source(session)
+    session.add_all(
+        [
+            _record(state=states[0], source=source, year=2024, amount="300.00"),
+            _record(state=states[1], source=source, year=2024, amount="200.00"),
+            _record(state=states[2], source=source, year=2024, amount="100.00"),
+            _record(
+                state=states[0],
+                source=source,
+                year=2024,
+                amount="999.00",
+                period_type=IgrPeriodType.QUARTERLY,
+                quarter=1,
+            ),
+        ]
+    )
+    session.flush()
+
+    result = gaia_analyst(session, question="Which states had the highest IGR in 2024?", year=2024)
+
+    assert result.intent == "igr_top"
+    assert result.status == "answered"
+    assert len(result.evidence) == 3
+    assert all(item.period_label == "2024 annual" for item in result.evidence)
+    assert result.evidence[0].value == "NGN 300.00"
+
+
+def test_gaia_analyst_does_not_compare_mismatched_igr_periods(session):
+    seed_states(session)
+    rivers = session.scalars(select(State).where(State.slug == "rivers")).one()
+    lagos = session.scalars(select(State).where(State.slug == "lagos")).one()
+    source = _source(session)
+    session.add(_record(state=rivers, source=source, year=2024, amount="300.00"))
+    session.add(
+        _record(
+            state=lagos,
+            source=source,
+            year=2024,
+            amount="100.00",
+            period_type=IgrPeriodType.QUARTERLY,
+            quarter=1,
+        )
+    )
+    session.flush()
+
+    result = gaia_analyst(session, question="Compare Rivers and Lagos IGR in 2024", year=2024)
+
+    assert result.intent == "igr_compare"
+    assert result.status == "insufficient_data"
+    assert result.evidence == []
+    assert "No common published IGR period" in result.answer
