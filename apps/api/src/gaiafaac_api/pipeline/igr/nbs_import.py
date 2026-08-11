@@ -169,14 +169,15 @@ def import_nbs_igr_zip(
                     continue
                 try:
                     match = normalizer.match(str(state_value))
-                except StateNormalizationError:
+                except StateNormalizationError as error:
                     # Rows below the jurisdiction table (totals/notes) are ignored only when
                     # they are not numbered data rows. A numbered unknown state is blocking.
                     serial = row[0] if row else None
                     if isinstance(serial, (int, float)) or str(serial).strip().isdigit():
                         raise ImportContractError(
-                            f"Unknown IGR jurisdiction at workbook row {row_number}: {state_value!r}"
-                        )
+                            "Unknown IGR jurisdiction at workbook row "
+                            f"{row_number}: {state_value!r}"
+                        ) from error
                     continue
 
                 if match.state.id in seen_ids:
