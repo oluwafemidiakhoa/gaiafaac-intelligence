@@ -51,7 +51,8 @@ export default async function StatePage({
             <DataUnavailable
               message={
                 data === null
-                  ? (overviewResult.error ?? 'No verified FAAC month is published yet.')
+                  ? (overviewResult.error ??
+                    'No verified FAAC month is published yet.')
                   : 'This jurisdiction has no verified allocation in the latest published month.'
               }
             />
@@ -100,11 +101,13 @@ export default async function StatePage({
               <div>
                 <p className="font-semibold">Internally Generated Revenue</p>
                 <p className="text-muted-foreground mt-1 max-w-2xl text-sm leading-6">
-                  Latest separately published IGR evidence. It is not combined with
-                  FAAC and missing fiscal periods are not inferred.
+                  Latest separately published IGR evidence. It is not combined
+                  with FAAC and missing fiscal periods are not inferred.
                 </p>
               </div>
-              {igr ? <StatusPill tone="success">Human verified</StatusPill> : null}
+              {igr ? (
+                <StatusPill tone="success">Human verified</StatusPill>
+              ) : null}
             </div>
             {igr ? (
               <div className="mt-5 grid gap-4 md:grid-cols-3">
@@ -124,7 +127,7 @@ export default async function StatePage({
                 <div>
                   <p className="text-muted-foreground text-sm">Evidence source</p>
                   <p className="mt-1 font-medium">{igr.source.organization}</p>
-                  <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
+                  <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
                     SHA-256 {igr.source.sha256}
                   </p>
                 </div>
@@ -140,8 +143,9 @@ export default async function StatePage({
           <div className="border-border mt-8 rounded-lg border p-5">
             <p className="font-semibold">Evidence tools</p>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-              Verify this FAAC month with Fiscal Proof, or open the state Decision
-              Packet for a print-ready evidence dossier across the selected year.
+              Verify this FAAC month with Fiscal Proof, or open the state
+              Decision Packet for a print-ready evidence dossier across the
+              selected year.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Button asChild variant="outline">
