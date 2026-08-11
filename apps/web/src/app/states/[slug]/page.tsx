@@ -125,9 +125,11 @@ export default async function StatePage({
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Evidence source</p>
+                  <p className="text-muted-foreground text-sm">
+                    Evidence source
+                  </p>
                   <p className="mt-1 font-medium">{igr.source.organization}</p>
-                  <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
+                  <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
                     SHA-256 {igr.source.sha256}
                   </p>
                 </div>
