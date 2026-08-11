@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.decision_packet_schemas import DecisionPacketResponse
+from gaiafaac_api.fiscal_design_schemas import FiscalDesignResponse
 from gaiafaac_api.fiscal_proof_schemas import FiscalProofResponse
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchResponse
@@ -14,6 +16,7 @@ from gaiafaac_api.igr_schemas import PublishedIgrRecord, PublishedIgrResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
 from gaiafaac_api.services.decision_packet import decision_packet
+from gaiafaac_api.services.fiscal_design import fiscal_design
 from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
 from gaiafaac_api.services.fiscal_pulse import fiscal_pulse
 from gaiafaac_api.services.fiscal_watch import fiscal_watch
@@ -61,6 +64,35 @@ def fiscal_watch_endpoint(
     year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
 ) -> FiscalWatchResponse:
     return fiscal_watch(session, year)
+
+
+@router.get(
+    "/fiscal-design/{state_slug}",
+    response_model=FiscalDesignResponse,
+    summary="Hypothetical fiscal-resilience scenarios over governed FAAC and IGR evidence",
+)
+def fiscal_design_endpoint(
+    state_slug: str,
+    session: DatabaseSession,
+    year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
+    faac_shock_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("-20"),
+    igr_shock_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("0"),
+    reserve_share_pct: Annotated[Decimal, Query(ge=0, le=100)] = Decimal("10"),
+) -> FiscalDesignResponse:
+    result = fiscal_design(
+        session,
+        state_slug=state_slug,
+        year=year,
+        faac_shock_pct=faac_shock_pct,
+        igr_shock_pct=igr_shock_pct,
+        reserve_share_pct=reserve_share_pct,
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published fiscal evidence exists for this state and year.",
+        )
+    return result
 
 
 @router.get(
