@@ -4,7 +4,7 @@ import io
 import zipfile
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -113,14 +113,19 @@ def import_nbs_igr_zip(
     if not resolved.is_file():
         raise ImportContractError(f"IGR source is not a regular file: {resolved}")
 
-    if session.scalar(
-        select(StateIgrRecord.id).where(
-            StateIgrRecord.fiscal_year == fiscal_year,
-            StateIgrRecord.period_type == IgrPeriodType.ANNUAL,
-            StateIgrRecord.is_demo.is_(False),
+    if (
+        session.scalar(
+            select(StateIgrRecord.id).where(
+                StateIgrRecord.fiscal_year == fiscal_year,
+                StateIgrRecord.period_type == IgrPeriodType.ANNUAL,
+                StateIgrRecord.is_demo.is_(False),
+            )
         )
-    ) is not None:
-        raise ImportContractError(f"Non-demo annual IGR records already exist for {fiscal_year}")
+        is not None
+    ):
+        raise ImportContractError(
+            f"Non-demo annual IGR records already exist for {fiscal_year}"
+        )
 
     try:
         source = register_source_document(
@@ -228,7 +233,9 @@ def import_nbs_igr_zip(
             missing = expected_ids - seen_ids
             extra = seen_ids - expected_ids
             if missing or extra or len(records) != 37:
-                missing_codes = sorted(state.code for state in expected_states if state.id in missing)
+                missing_codes = sorted(
+                    state.code for state in expected_states if state.id in missing
+                )
                 raise ImportContractError(
                     "NBS IGR jurisdiction coverage failed: "
                     f"records={len(records)}, missing={missing_codes}, extra_count={len(extra)}"
