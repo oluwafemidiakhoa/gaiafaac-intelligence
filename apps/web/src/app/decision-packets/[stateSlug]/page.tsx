@@ -76,14 +76,14 @@ export default async function DecisionPacketPage({
         <StatusPill tone="success">{data.evidence_status}</StatusPill>
         <span className="text-muted-foreground text-sm">
           {data.state_code} · {data.geopolitical_zone} · {data.months_published}{' '}
-          published months
+          published FAAC months
         </span>
       </div>
 
       <section className="mt-8 grid gap-4 md:grid-cols-3 print:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardDescription>Published-period net</CardDescription>
+            <CardDescription>Published-period FAAC net</CardDescription>
             <CardTitle>{formatNaira(data.annual_net)}</CardTitle>
           </CardHeader>
         </Card>
@@ -112,9 +112,9 @@ export default async function DecisionPacketPage({
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Fiscal signal summary</CardTitle>
+          <CardTitle>FAAC fiscal signal summary</CardTitle>
           <CardDescription>
-            Deterministic Fiscal Pulse measures over the published period.
+            Deterministic Fiscal Pulse measures over the published FAAC period.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm md:grid-cols-2">
@@ -150,9 +150,60 @@ export default async function DecisionPacketPage({
 
       <Card className="mt-6">
         <CardHeader>
+          <CardTitle>Internally Generated Revenue</CardTitle>
+          <CardDescription>
+            Published IGR evidence for this exact packet year. GaiaFAAC does not
+            substitute IGR from another year or infer missing periods.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {data.igr_records.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{data.igr_note}</p>
+          ) : (
+            <div className="space-y-3">
+              {data.igr_records.map((record) => (
+                <div
+                  key={`${record.fiscal_year}-${record.period_type}-${record.quarter ?? 'annual'}`}
+                  className="border-border grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_1fr]"
+                >
+                  <div>
+                    <p className="text-muted-foreground text-sm">IGR amount</p>
+                    <p className="mt-1 text-xl font-semibold">
+                      {formatNaira(record.igr_amount)}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      {humanize(record.period_type)}
+                      {record.quarter === null ? '' : ` · Q${record.quarter}`} ·{' '}
+                      {formatDate(record.period_start)} to{' '}
+                      {formatDate(record.period_end)}
+                    </p>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium">{record.source_organization}</p>
+                    <p className="text-muted-foreground mt-1">
+                      {record.human_verified
+                        ? 'Human verified · published'
+                        : 'Verification incomplete'}
+                    </p>
+                    <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
+                      SHA-256 {record.source_sha256}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <p className="text-muted-foreground text-xs leading-5">
+                {data.igr_note}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
           <CardTitle>Current watch events</CardTitle>
           <CardDescription>
-            Latest threshold events for this jurisdiction. No cause is inferred.
+            Latest FAAC threshold events for this jurisdiction. No cause is inferred.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -186,10 +237,10 @@ export default async function DecisionPacketPage({
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Monthly evidence chain</CardTitle>
+          <CardTitle>Monthly FAAC evidence chain</CardTitle>
           <CardDescription>
-            Every available month is tied to a deterministic Fiscal Proof and
-            source hash.
+            Every available FAAC month is tied to a deterministic Fiscal Proof
+            and source hash.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
