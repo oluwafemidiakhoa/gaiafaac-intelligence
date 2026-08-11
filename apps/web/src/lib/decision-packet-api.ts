@@ -22,6 +22,19 @@ const watchEventSchema = z.object({
   proof_path: z.string(),
 })
 
+const igrRecordSchema = z.object({
+  fiscal_year: z.number().int(),
+  period_type: z.string(),
+  quarter: z.number().int().nullable(),
+  period_start: z.iso.date(),
+  period_end: z.iso.date(),
+  igr_amount: z.string(),
+  reported_unit: z.string(),
+  source_organization: z.string(),
+  source_sha256: z.string().length(64),
+  human_verified: z.boolean(),
+})
+
 export const decisionPacketSchema = z.object({
   packet_version: z.string(),
   state_name: z.string(),
@@ -41,6 +54,8 @@ export const decisionPacketSchema = z.object({
   volatility: z.string(),
   volatility_cv_pct: z.number().nullable(),
   evidence_status: z.string(),
+  igr_records: z.array(igrRecordSchema),
+  igr_note: z.string(),
   watch_events: z.array(watchEventSchema),
   months: z.array(monthSchema),
   disclaimer: z.string(),
