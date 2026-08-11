@@ -15,6 +15,7 @@ from gaiafaac_api.pipeline.analytics.dataset import generate_analytics_dataset
 from gaiafaac_api.pipeline.analytics.run import compute_analytics
 from gaiafaac_api.pipeline.approval import approve_import, publish_import, reject_import
 from gaiafaac_api.pipeline.extraction.file_import import import_file
+from gaiafaac_api.pipeline.igr.approval import approve_igr_source, publish_igr_source
 from gaiafaac_api.pipeline.importer import ImportRequest, import_allocations_csv
 from gaiafaac_api.pipeline.validation import validate_import
 from gaiafaac_api.services.source_documents import register_source_document
@@ -108,6 +109,20 @@ def build_parser() -> argparse.ArgumentParser:
     igr_import.add_argument("path", type=Path)
     igr_import.add_argument("--year", type=int, required=True)
     igr_import.add_argument("--source-url")
+
+    igr_approve = commands.add_parser(
+        "approve-igr",
+        help="Explicitly human-verify a complete IGR source without publishing it",
+    )
+    igr_approve.add_argument("source_document_id", type=uuid.UUID)
+    igr_approve.add_argument("--reviewer-id", required=True, type=uuid.UUID)
+
+    igr_publish = commands.add_parser(
+        "publish-igr",
+        help="Publish a complete, human-verified IGR source",
+    )
+    igr_publish.add_argument("source_document_id", type=uuid.UUID)
+    igr_publish.add_argument("--reviewer-id", required=True, type=uuid.UUID)
 
     collect = commands.add_parser(
         "collect-oagf", help="Fetch, import and queue new OAGF months (never publishes)"
@@ -251,6 +266,28 @@ def main() -> None:
                 f"NBS IGR import awaiting review: source={result.source_document_id}, "
                 f"year={result.fiscal_year}, records={result.records_imported}, "
                 f"total_igr={result.total_igr}, published=false."
+            )
+        elif args.command == "approve-igr":
+            result = approve_igr_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+            print(
+                f"IGR approved: source={result.source_document_id}, "
+                f"year={result.fiscal_year}, records={result.records_approved}, "
+                "published=false."
+            )
+        elif args.command == "publish-igr":
+            result = publish_igr_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+            print(
+                f"IGR PUBLISHED: source={result.source_document_id}, "
+                f"year={result.fiscal_year}, records={result.records_approved}, "
+                "published=true."
             )
         elif args.command == "collect-oagf":
             from gaiafaac_api.config import get_settings
