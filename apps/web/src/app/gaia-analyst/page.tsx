@@ -16,7 +16,7 @@ import { askGaiaAnalyst } from '@/lib/gaia-analyst-api'
 export const metadata: Metadata = { title: 'Gaia Analyst' }
 export const dynamic = 'force-dynamic'
 
-const defaultQuestion = 'What changed in the latest published FAAC data?'
+const defaultQuestion = 'What is the latest published IGR for Lagos?'
 
 interface GaiaAnalystPageProps {
   searchParams: Promise<{
@@ -37,20 +37,29 @@ export default async function GaiaAnalystPage({
   const result = submitted ? await askGaiaAnalyst(question, year) : null
   const data = result?.data ?? null
 
+  const suggestions = [
+    `What changed in the latest published FAAC data for ${year}?`,
+    `Which states received the highest net FAAC allocation in ${year}?`,
+    `What is Lagos IGR in ${year}?`,
+    'What is the latest published IGR for Lagos?',
+    `Which states had the highest IGR in ${year}?`,
+    `Compare Rivers and Lagos IGR in ${year}.`,
+  ]
+
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
         eyebrow="Gaia Analyst"
         title="Ask the verified fiscal ledger"
-        description="Natural-language questions over published GaiaFAAC evidence. The analyst calculates from deterministic ledger services and refuses unsupported claims instead of guessing."
+        description="Natural-language questions over published FAAC and internally generated revenue evidence. Gaia Analyst calculates from deterministic ledger services and refuses unsupported claims instead of guessing."
       />
 
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Ask a fiscal question</CardTitle>
           <CardDescription>
-            v1 supports latest changes, rankings, deduction burden, volatility,
-            momentum and two-state comparisons.
+            Ask about published FAAC movements, rankings and comparisons, or
+            governed IGR records, rankings and state-to-state comparisons.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -67,7 +76,7 @@ export default async function GaiaAnalystPage({
                 maxLength={500}
                 required
                 className="border-input bg-background h-11 rounded-md border px-3 text-sm"
-                placeholder="Compare Rivers and Lagos in 2026"
+                placeholder="Compare Rivers and Lagos IGR in 2024"
               />
             </label>
             <label className="grid gap-2 text-sm font-medium">
@@ -98,19 +107,12 @@ export default async function GaiaAnalystPage({
           <CardHeader>
             <CardTitle>Suggested questions</CardTitle>
             <CardDescription>
-              Start with a question that can be resolved directly from the
-              verified ledger.
+              Start with a FAAC or IGR question that can be resolved directly
+              from governed, published ledger evidence.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
-            {[
-              `What changed in the latest published FAAC data for ${year}?`,
-              `Which states received the highest net FAAC allocation in ${year}?`,
-              `Which states had the highest deduction burden in ${year}?`,
-              `Which states were the most volatile in ${year}?`,
-              `Which states have weakening momentum in ${year}?`,
-              `Compare Rivers and Lagos in ${year}.`,
-            ].map((suggestion) => (
+            {suggestions.map((suggestion) => (
               <Link
                 key={suggestion}
                 href={`/gaia-analyst?question=${encodeURIComponent(suggestion)}&year=${year}`}
@@ -158,8 +160,9 @@ export default async function GaiaAnalystPage({
             <CardHeader>
               <CardTitle>Evidence used</CardTitle>
               <CardDescription>
-                Structured ledger outputs supporting the answer. Open the linked
-                record or Fiscal Proof to inspect the source evidence.
+                Structured FAAC or IGR ledger outputs supporting the answer.
+                Open the linked state record or Fiscal Proof to inspect the
+                underlying published evidence.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -177,7 +180,17 @@ export default async function GaiaAnalystPage({
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="bg-muted rounded-full px-2 py-1 text-xs font-medium tracking-wide uppercase">
+                              {item.evidence_domain}
+                            </span>
+                            {item.period_label ? (
+                              <span className="text-muted-foreground text-xs">
+                                {item.period_label}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-2 font-medium">
                             {item.state_name ? `${item.state_name} · ` : ''}
                             {item.label}
                           </p>
@@ -189,6 +202,34 @@ export default async function GaiaAnalystPage({
                           {item.metric}
                         </span>
                       </div>
+
+                      {item.evidence_domain === 'igr' &&
+                      (item.source_organization || item.source_sha256) ? (
+                        <div className="border-border mt-4 grid gap-2 border-t pt-4 text-xs sm:grid-cols-2">
+                          {item.source_organization ? (
+                            <div>
+                              <p className="text-muted-foreground">Source</p>
+                              <p className="mt-1 font-medium">
+                                {item.source_organization}
+                              </p>
+                            </div>
+                          ) : null}
+                          {item.source_sha256 ? (
+                            <div>
+                              <p className="text-muted-foreground">
+                                Source SHA-256
+                              </p>
+                              <p
+                                className="mt-1 font-mono break-all"
+                                title={item.source_sha256}
+                              >
+                                {item.source_sha256}
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+
                       {item.reference_path && item.reference_label ? (
                         <Link
                           href={item.reference_path}
