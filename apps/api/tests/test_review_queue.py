@@ -45,9 +45,14 @@ def test_lists_pending_real_period_metadata_only(session, tmp_path):
     assert item.expected_states == 37
     assert item.covered_states == 2
     assert item.blocking_count >= 1  # MISSING_STATES
-    # metadata only — no figures leak through the schema
+
+    # Metadata only — no allocation figures or financial fields leak through the schema.
+    payload = item.model_dump()
     assert not hasattr(item, "allocations")
-    assert "900" not in item.model_dump_json()
+    assert "allocations" not in payload
+    assert "gross_total" not in payload
+    assert "total_deductions" not in payload
+    assert "net_allocation" not in payload
 
 
 def test_excludes_demo_and_published(session, tmp_path):
