@@ -181,7 +181,7 @@ export default async function GaiaAnalystPage({
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="bg-muted rounded-full px-2 py-1 text-xs font-medium uppercase tracking-wide">
+                            <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium tracking-wide uppercase">
                               {item.evidence_domain}
                             </span>
                             {item.period_label ? (
@@ -218,7 +218,7 @@ export default async function GaiaAnalystPage({
                             <div>
                               <p className="text-muted-foreground">Source SHA-256</p>
                               <p
-                                className="mt-1 break-all font-mono"
+                                className="mt-1 font-mono break-all"
                                 title={item.source_sha256}
                               >
                                 {item.source_sha256}
