@@ -54,8 +54,7 @@ def _match_states(question: str, refs: list[_StateRef]) -> list[_StateRef]:
         named = state.name.lower() in lowered or state.slug.lower() in lowered
         coded = state.code.lower() in question_tokens
         fct = state.code == "FC" and bool(
-            {"fct", "abuja"} & question_tokens
-            or "federal capital territory" in lowered
+            {"fct", "abuja"} & question_tokens or "federal capital territory" in lowered
         )
         token_named = _tokens(state.name).issubset(question_tokens)
         if named or coded or fct or token_named:
@@ -166,7 +165,9 @@ def _common_pair(
     first = {_period_key(record): record for record in records if record.state_slug == first_slug}
     second = {_period_key(record): record for record in records if record.state_slug == second_slug}
     pairs = [(first[key], second[key]) for key in first.keys() & second.keys()]
-    return max(pairs, key=lambda pair: (pair[0].period_end, pair[0].period_start)) if pairs else None
+    return (
+        max(pairs, key=lambda pair: (pair[0].period_end, pair[0].period_start)) if pairs else None
+    )
 
 
 def _state_record(records: list[PublishedIgrRecord], state_slug: str) -> PublishedIgrRecord | None:
