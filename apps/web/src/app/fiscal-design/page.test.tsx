@@ -140,7 +140,7 @@ describe('FiscalDesignPage', () => {
     expect(
       screen.getByText(/FAAC scenario change: -20\.00%\./),
     ).toBeInTheDocument()
-    expect(screen.getAllByText(sourceSha)).toHaveLength(2)
+    expect(screen.getAllByText(new RegExp(sourceSha))).toHaveLength(2)
     expect(screen.getByText('OAGF')).toBeInTheDocument()
     expect(
       screen.getByText('National Bureau of Statistics'),
