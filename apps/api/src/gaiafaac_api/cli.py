@@ -101,6 +101,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     file_import.add_argument("--demo", action="store_true")
 
+    igr_import = commands.add_parser(
+        "import-nbs-igr",
+        help="Import an official NBS IGR ZIP into unpublished review records",
+    )
+    igr_import.add_argument("path", type=Path)
+    igr_import.add_argument("--year", type=int, required=True)
+    igr_import.add_argument("--source-url")
+
     collect = commands.add_parser(
         "collect-oagf", help="Fetch, import and queue new OAGF months (never publishes)"
     )
@@ -226,6 +234,23 @@ def main() -> None:
                 f"records={result.records_extracted}, "
                 f"findings={result.finding_count}, "
                 f"blocking={result.blocking_finding_count}."
+            )
+        elif args.command == "import-nbs-igr":
+            from gaiafaac_api.pipeline.igr.nbs_import import (
+                NBS_IGR_2024_SOURCE_URL,
+                import_nbs_igr_zip,
+            )
+
+            result = import_nbs_igr_zip(
+                session,
+                path=args.path,
+                fiscal_year=args.year,
+                source_url=args.source_url or NBS_IGR_2024_SOURCE_URL,
+            )
+            print(
+                f"NBS IGR import awaiting review: source={result.source_document_id}, "
+                f"year={result.fiscal_year}, records={result.records_imported}, "
+                f"total_igr={result.total_igr}, published=false."
             )
         elif args.command == "collect-oagf":
             from gaiafaac_api.config import get_settings
