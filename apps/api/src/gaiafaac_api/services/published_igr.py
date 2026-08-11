@@ -64,7 +64,9 @@ def published_igr(
     statement = _published_statement().where(StateIgrRecord.fiscal_year == year)
     if state_slug is not None:
         statement = statement.where(State.slug == state_slug)
-    statement = statement.order_by(State.name, StateIgrRecord.period_start, StateIgrRecord.period_end)
+    statement = statement.order_by(
+        State.name, StateIgrRecord.period_start, StateIgrRecord.period_end
+    )
 
     records = [
         _published_record(record, state, source)
