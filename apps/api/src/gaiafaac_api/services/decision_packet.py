@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.models import ReportingPeriod
 from gaiafaac_api.decision_packet_schemas import (
+    DecisionPacketIgrRecord,
     DecisionPacketMonth,
     DecisionPacketResponse,
     DecisionPacketWatchEvent,
@@ -14,6 +15,7 @@ from gaiafaac_api.decision_packet_schemas import (
 from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
 from gaiafaac_api.services.fiscal_pulse import fiscal_pulse
 from gaiafaac_api.services.fiscal_watch import fiscal_watch
+from gaiafaac_api.services.published_igr import published_igr
 
 
 def decision_packet(
@@ -65,6 +67,31 @@ def decision_packet(
             )
         )
 
+    igr = published_igr(session, year=year, state_slug=state_slug)
+    igr_records = [
+        DecisionPacketIgrRecord(
+            fiscal_year=record.fiscal_year,
+            period_type=record.period_type,
+            quarter=record.quarter,
+            period_start=record.period_start,
+            period_end=record.period_end,
+            igr_amount=record.igr_amount,
+            reported_unit=record.reported_unit,
+            source_organization=record.source.organization,
+            source_sha256=record.source.sha256,
+            human_verified=record.verification_status == "human_verified",
+        )
+        for record in igr.records
+    ]
+    igr_note = (
+        igr.note
+        if igr_records
+        else (
+            "No published, human-verified IGR evidence is available for "
+            f"{state.state_name} in {year}."
+        )
+    )
+
     watch = fiscal_watch(session, year)
     watch_events = [
         DecisionPacketWatchEvent(
@@ -96,10 +123,13 @@ def decision_packet(
         volatility=state.volatility,
         volatility_cv_pct=state.volatility_cv_pct,
         evidence_status=state.evidence_status,
+        igr_records=igr_records,
+        igr_note=igr_note,
         watch_events=watch_events,
         months=months,
         disclaimer=(
             "Decision Packets summarize only published, non-demo GaiaFAAC evidence. "
+            "FAAC and IGR are separate evidence domains and no missing periods are inferred. "
             "They are descriptive evidence dossiers, not credit ratings, investment advice, "
             "solvency assessments, corruption indicators, or predictions."
         ),

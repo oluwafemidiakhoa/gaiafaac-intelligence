@@ -10,7 +10,7 @@ from gaiafaac_api.fiscal_proof_schemas import FiscalProofResponse
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchResponse
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystResponse
-from gaiafaac_api.igr_schemas import PublishedIgrResponse
+from gaiafaac_api.igr_schemas import PublishedIgrRecord, PublishedIgrResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
 from gaiafaac_api.services.decision_packet import decision_packet
@@ -24,7 +24,7 @@ from gaiafaac_api.services.published_data import (
     latest_published_period,
     published_sources,
 )
-from gaiafaac_api.services.published_igr import published_igr
+from gaiafaac_api.services.published_igr import latest_published_igr, published_igr
 
 router = APIRouter(prefix="/published", tags=["published data"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -74,6 +74,24 @@ def gaia_analyst_endpoint(
     year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
 ) -> GaiaAnalystResponse:
     return gaia_analyst(session, question=question, year=year)
+
+
+@router.get(
+    "/igr/latest",
+    response_model=PublishedIgrRecord,
+    summary="Latest published, human-verified IGR evidence for a state",
+)
+def latest_published_igr_endpoint(
+    session: DatabaseSession,
+    state_slug: Annotated[str, Query(min_length=2, max_length=100)],
+) -> PublishedIgrRecord:
+    record = latest_published_igr(session, state_slug=state_slug)
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published IGR evidence exists for this state.",
+        )
+    return record
 
 
 @router.get(

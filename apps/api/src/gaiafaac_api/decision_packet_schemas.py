@@ -27,8 +27,21 @@ class DecisionPacketWatchEvent(BaseModel):
     proof_path: str
 
 
+class DecisionPacketIgrRecord(BaseModel):
+    fiscal_year: int
+    period_type: str
+    quarter: int | None
+    period_start: date
+    period_end: date
+    igr_amount: str
+    reported_unit: str
+    source_organization: str
+    source_sha256: str
+    human_verified: bool
+
+
 class DecisionPacketResponse(BaseModel):
-    packet_version: str = "1"
+    packet_version: str = "2"
     state_name: str
     state_slug: str
     state_code: str
@@ -46,6 +59,8 @@ class DecisionPacketResponse(BaseModel):
     volatility: str
     volatility_cv_pct: float | None
     evidence_status: str
+    igr_records: list[DecisionPacketIgrRecord]
+    igr_note: str
     watch_events: list[DecisionPacketWatchEvent]
     months: list[DecisionPacketMonth]
     disclaimer: str
