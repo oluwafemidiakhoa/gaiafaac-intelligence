@@ -2,9 +2,9 @@
 
 **Verified fiscal intelligence for every Nigerian state.**
 
-GaiaFAAC Intelligence is an independent public-finance research platform that turns Nigerian Federation Account Allocation Committee records into source-linked data, comparisons, and derived fiscal signals. It is **not an official government platform**.
+GaiaFAAC Intelligence is an independent public-finance research platform that turns Nigerian Federation Account Allocation Committee records and governed state internally generated revenue evidence into source-linked data, comparisons, and derived fiscal signals. It is **not an official government platform**.
 
-The platform publishes real, human-approved FAAC records extracted from Office of the Accountant-General of the Federation source documents. Every published month preserves its source URL, document metadata, and SHA-256 fingerprint.
+The platform publishes real, human-approved FAAC records extracted from Office of the Accountant-General of the Federation source documents and governed, human-verified IGR records from registered source documents. Published evidence preserves source lineage and SHA-256 fingerprints.
 
 ## Live product
 
@@ -16,6 +16,9 @@ Current public capabilities:
 
 - Latest verified FAAC month across all 36 states and the FCT
 - Gross allocation, deductions, and net allocation where reported
+- Published, human-verified state IGR evidence with source provenance
+- Gaia Analyst natural-language questions over governed FAAC and IGR evidence
+- IGR state lookup, latest-record lookup, comparable-period rankings, and two-state comparisons
 - GaiaFAAC Fiscal Pulse for the verified 2024 series
 - Deduction burden and net-retention indicators where comparable inputs are complete
 - Allocation momentum and volatility signals
@@ -33,6 +36,19 @@ Commercial API foundations are also implemented:
 - Plan entitlements are enforced server-side
 - Daily request limits are recorded and enforced
 - Published historical-month and allocation endpoints require an entitled key
+
+## Gaia Analyst
+
+Gaia Analyst is an evidence-grounded natural-language interface over governed published data. It routes FAAC questions through the existing deterministic fiscal services and IGR questions through the published IGR evidence layer.
+
+Supported IGR question patterns include:
+
+- state-specific IGR for an exact fiscal year
+- latest published IGR for a named state
+- highest or lowest IGR rankings within one comparable published fiscal period
+- two-state IGR comparisons when both states have matching period evidence
+
+Gaia Analyst does not infer missing periods, annualize partial-year IGR, substitute another fiscal year for an exact-year question, or compare mismatched fiscal periods. IGR evidence surfaces its fiscal period, source organization, and source SHA-256 provenance in the public interface.
 
 ## Fiscal Pulse
 
@@ -65,7 +81,7 @@ Commercial and pilot enquiries:
 The system separates collection, extraction, validation, approval, publication, and public access:
 
 ```text
-OAGF source document
+Registered source document
   -> download and SHA-256 registration
   -> structured extraction
   -> deterministic validation
@@ -73,17 +89,19 @@ OAGF source document
   -> explicit human approval
   -> publication
   -> public pages and entitled API access
-  -> derived Fiscal Pulse signals
+  -> deterministic analytical services
 ```
 
 Important safeguards:
 
 - Collection and extraction never publish automatically.
-- Demo, pending, rejected, and unpublished records are excluded from live-data and Fiscal Pulse endpoints.
+- Demo, pending, rejected, and unpublished records are excluded from public evidence services.
+- IGR publication requires human-verified, non-demo evidence.
 - Missing figures remain unavailable; they are never silently converted to zero.
 - Source inconsistencies are preserved and flagged rather than rewritten.
 - The FCT may be published net-only when that is the only directly reconcilable value in the source.
 - Derived metrics that require unavailable FCT gross or deduction values remain unavailable.
+- Gaia Analyst does not infer missing IGR periods, annualize partial-year IGR, or compare mismatched IGR periods.
 - Statistical movements are not treated as evidence of fraud, misconduct, governance performance, or credit quality.
 
 A scheduled GitHub Actions collector checks for newly available OAGF reports daily, imports and validates them, and queues them for review. Human approval remains mandatory.
@@ -103,12 +121,13 @@ docs/                 Architecture, methodology, and operating documentation
 ## Main routes
 
 ```text
+/gaia-analyst       Natural-language questions over governed FAAC and IGR evidence
 /fiscal-pulse       Derived state fiscal signals over verified published records
 /live               Latest verified allocations and source record
 /insights           National trend, rankings, and movers
 /overview           Latest published national overview
 /states             All 36 states and the FCT
-/states/{slug}      State detail
+/states/{slug}      State detail, including published IGR evidence where available
 /compare            Two-to-six-jurisdiction comparison
 /sources            Source record for every published month
 /methodology        Collection, validation, publication, and Fiscal Pulse methodology
@@ -132,6 +151,10 @@ GET  /api/v1/health
 GET  /api/v1/published/overview/latest
 GET  /api/v1/published/analytics
 GET  /api/v1/published/fiscal-pulse?year=2024
+GET  /api/v1/published/gaia-analyst?question=...&year=2024
+GET  /api/v1/published/igr?year=2024
+GET  /api/v1/published/igr?year=2024&state_slug=lagos
+GET  /api/v1/published/igr/latest?state_slug=lagos
 GET  /api/v1/published/sources
 GET  /api/v1/data/months                         # API key required
 GET  /api/v1/data/allocations?month=...          # API key required
