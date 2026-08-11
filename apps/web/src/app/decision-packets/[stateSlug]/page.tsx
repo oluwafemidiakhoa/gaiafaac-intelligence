@@ -173,7 +173,9 @@ export default async function DecisionPacketPage({
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm">
                       {humanize(record.period_type)}
-                      {record.quarter === null ? '' : ` · Q${record.quarter}`} ·{' '}
+                      {record.quarter === null
+                        ? ''
+                        : ` · Q${record.quarter}`} ·{' '}
                       {formatDate(record.period_start)} to{' '}
                       {formatDate(record.period_end)}
                     </p>
@@ -185,7 +187,7 @@ export default async function DecisionPacketPage({
                         ? 'Human verified · published'
                         : 'Verification incomplete'}
                     </p>
-                    <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
+                    <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
                       SHA-256 {record.source_sha256}
                     </p>
                   </div>
@@ -264,7 +266,7 @@ export default async function DecisionPacketPage({
                     ? 'human verified'
                     : 'verification incomplete'}
                 </p>
-                <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
+                <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
                   SHA-256 {month.source_sha256}
                 </p>
               </div>
