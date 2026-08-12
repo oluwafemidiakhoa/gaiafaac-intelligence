@@ -24,10 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Capture exact Prettier output for Fiscal Proof evidence comparison
-        run: |
-          npx prettier --write 'apps/web/src/app/fiscal-proof/[state]/[month]/page.tsx'
-          git diff -- 'apps/web/src/app/fiscal-proof/[state]/[month]/page.tsx'
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
