@@ -132,7 +132,9 @@ export default async function FiscalDesignBriefPage({
             <CardTitle className="text-base">FAAC coverage</CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusPill tone={design.faac_complete_year ? 'success' : 'neutral'}>
+            <StatusPill
+              tone={design.faac_complete_year ? 'success' : 'neutral'}
+            >
               {design.faac_complete_year
                 ? 'Complete 12-month year'
                 : `${design.faac_months_published} published months`}
@@ -190,7 +192,9 @@ export default async function FiscalDesignBriefPage({
             <CardHeader>
               <div className="mb-2">
                 <StatusPill
-                  tone={candidate.status === 'available' ? 'success' : 'neutral'}
+                  tone={
+                    candidate.status === 'available' ? 'success' : 'neutral'
+                  }
                 >
                   {candidate.status === 'available'
                     ? 'Available'
