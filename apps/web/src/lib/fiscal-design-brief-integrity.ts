@@ -3,12 +3,13 @@ import { createHash } from 'node:crypto'
 import type { FiscalDesign } from '@/lib/fiscal-design-api'
 
 const fingerprintVersion = 'gaia-fiscal-design-brief-v1'
+const manifestVersion = 'gaia-fiscal-design-evidence-manifest-v1'
 
 function compareText(left: string, right: string) {
   return left.localeCompare(right)
 }
 
-export function fiscalDesignBriefFingerprint(
+export function fiscalDesignBriefPayload(
   design: FiscalDesign,
   researchObjective = '',
 ) {
@@ -45,7 +46,7 @@ export function fiscalDesignBriefFingerprint(
       note: candidate.note,
     }))
 
-  const payload = {
+  return {
     fingerprint_version: fingerprintVersion,
     research_objective: researchObjective.trim() || design.objective,
     design_version: design.design_version,
@@ -67,6 +68,29 @@ export function fiscalDesignBriefFingerprint(
     candidates,
     disclaimer: design.disclaimer,
   }
+}
 
+export function fiscalDesignBriefFingerprint(
+  design: FiscalDesign,
+  researchObjective = '',
+) {
+  const payload = fiscalDesignBriefPayload(design, researchObjective)
   return createHash('sha256').update(JSON.stringify(payload)).digest('hex')
+}
+
+export function fiscalDesignEvidenceManifest(
+  design: FiscalDesign,
+  researchObjective = '',
+) {
+  const payload = fiscalDesignBriefPayload(design, researchObjective)
+  const fingerprint = createHash('sha256')
+    .update(JSON.stringify(payload))
+    .digest('hex')
+
+  return {
+    manifest_version: manifestVersion,
+    fingerprint_algorithm: 'sha256',
+    fingerprint,
+    payload,
+  }
 }
