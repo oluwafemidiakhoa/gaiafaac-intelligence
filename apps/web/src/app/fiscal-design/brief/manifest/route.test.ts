@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   fiscalDesignBriefFingerprint,
@@ -12,6 +12,10 @@ import { GET } from './route'
 vi.mock('@/lib/fiscal-design-api', () => ({
   getFiscalDesign: vi.fn(),
 }))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
 const sourceSha = 'a'.repeat(64)
 const researchObjective = 'Assess revenue resilience.'
