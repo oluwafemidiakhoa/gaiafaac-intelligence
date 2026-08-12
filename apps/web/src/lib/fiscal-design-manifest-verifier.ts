@@ -8,6 +8,17 @@ export interface CurrentEvidenceCheckRequest {
   researchObjective: string
 }
 
+export interface EvidenceChangeDetail {
+  category:
+    | 'coverage'
+    | 'evidence'
+    | 'assumptions'
+    | 'scenario'
+    | 'objective'
+    | 'other'
+  detail: string
+}
+
 export type ManifestVerification =
   | {
       status: 'verified'
@@ -15,6 +26,7 @@ export type ManifestVerification =
       stateName: string | null
       year: number | null
       evidenceCount: number | null
+      payload: Record<string, unknown>
       currentEvidenceCheck: CurrentEvidenceCheckRequest | null
     }
   | {
@@ -40,6 +52,167 @@ function finiteNumber(value: unknown) {
     return Number.isFinite(parsed) ? parsed : null
   }
   return null
+}
+
+function displayValue(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return 'not supplied'
+  }
+  return String(value)
+}
+
+function evidenceKey(value: Record<string, unknown>) {
+  return [value.evidence_domain, value.label, value.reference_path]
+    .map((part) => (typeof part === 'string' ? part : ''))
+    .join('\u0000')
+}
+
+function evidenceLabel(value: Record<string, unknown>) {
+  return typeof value.label === 'string' && value.label.trim()
+    ? value.label
+    : 'Unnamed evidence record'
+}
+
+function evidenceRecords(value: unknown) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.filter(isRecord)
+}
+
+function changed(left: unknown, right: unknown) {
+  return JSON.stringify(left) !== JSON.stringify(right)
+}
+
+export function summarizeFiscalDesignPayloadChanges(
+  previous: Record<string, unknown>,
+  current: Record<string, unknown>,
+): EvidenceChangeDetail[] {
+  const changes: EvidenceChangeDetail[] = []
+
+  const coverageFields: Array<[string, string]> = [
+    ['coverage_label', 'Coverage label'],
+    ['faac_months_published', 'Published FAAC months'],
+    ['faac_complete_year', 'Complete FAAC year'],
+    ['annual_igr_available', 'Annual IGR availability'],
+    ['latest_comparable_year', 'Latest comparable year'],
+  ]
+  for (const [field, label] of coverageFields) {
+    if (changed(previous[field], current[field])) {
+      changes.push({
+        category: 'coverage',
+        detail: `${label} changed from ${displayValue(previous[field])} to ${displayValue(current[field])}.`,
+      })
+    }
+  }
+
+  const previousEvidence = new Map(
+    evidenceRecords(previous.evidence).map((record) => [
+      evidenceKey(record),
+      record,
+    ]),
+  )
+  const currentEvidence = new Map(
+    evidenceRecords(current.evidence).map((record) => [
+      evidenceKey(record),
+      record,
+    ]),
+  )
+
+  for (const [key, record] of previousEvidence) {
+    const currentRecord = currentEvidence.get(key)
+    if (!currentRecord) {
+      changes.push({
+        category: 'evidence',
+        detail: `Evidence removed: ${evidenceLabel(record)}.`,
+      })
+      continue
+    }
+
+    const changedParts: string[] = []
+    if (record.source_sha256 !== currentRecord.source_sha256) {
+      changedParts.push('source hash')
+    }
+    if (record.value !== currentRecord.value) {
+      changedParts.push('value')
+    }
+    if (record.source_organization !== currentRecord.source_organization) {
+      changedParts.push('source organization')
+    }
+    if (changedParts.length) {
+      changes.push({
+        category: 'evidence',
+        detail: `Evidence changed: ${evidenceLabel(record)} (${changedParts.join(', ')}).`,
+      })
+    }
+  }
+
+  for (const [key, record] of currentEvidence) {
+    if (!previousEvidence.has(key)) {
+      changes.push({
+        category: 'evidence',
+        detail: `Evidence added: ${evidenceLabel(record)}.`,
+      })
+    }
+  }
+
+  if (changed(previous.assumptions, current.assumptions)) {
+    changes.push({
+      category: 'assumptions',
+      detail: 'Scenario assumptions changed.',
+    })
+  }
+
+  if (changed(previous.candidates, current.candidates)) {
+    changes.push({
+      category: 'scenario',
+      detail: 'Scenario outputs or availability changed.',
+    })
+  }
+
+  if (changed(previous.research_objective, current.research_objective)) {
+    changes.push({
+      category: 'objective',
+      detail: 'Research objective changed.',
+    })
+  }
+
+  if (changed(previous.design_version, current.design_version)) {
+    changes.push({
+      category: 'other',
+      detail: `Fiscal Design version changed from ${displayValue(previous.design_version)} to ${displayValue(current.design_version)}.`,
+    })
+  }
+
+  const categorizedFields = new Set([
+    'coverage_label',
+    'faac_months_published',
+    'faac_complete_year',
+    'annual_igr_available',
+    'latest_comparable_year',
+    'evidence',
+    'assumptions',
+    'candidates',
+    'research_objective',
+    'design_version',
+  ])
+  const uncategorizedPrevious = Object.fromEntries(
+    Object.entries(previous).filter(([key]) => !categorizedFields.has(key)),
+  )
+  const uncategorizedCurrent = Object.fromEntries(
+    Object.entries(current).filter(([key]) => !categorizedFields.has(key)),
+  )
+  if (
+    changed(uncategorizedPrevious, uncategorizedCurrent) &&
+    changes.length === 0
+  ) {
+    changes.push({
+      category: 'other',
+      detail: 'Other canonical brief fields changed.',
+    })
+  }
+
+  return changes
 }
 
 async function sha256Hex(value: string) {
@@ -146,6 +319,7 @@ export async function verifyFiscalDesignEvidenceManifestText(
     stateName,
     year,
     evidenceCount,
+    payload: parsed.payload,
     currentEvidenceCheck,
   }
 }
