@@ -35,6 +35,7 @@ class FiscalDesignResponse(BaseModel):
     state_slug: str
     state_code: str
     year: int
+    latest_comparable_year: int | None
     objective: str
     coverage_label: str
     faac_months_published: int
