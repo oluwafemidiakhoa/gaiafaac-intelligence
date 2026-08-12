@@ -106,6 +106,18 @@ export default async function FiscalDesignBriefPage({
       : suppliedFingerprint === computedFingerprint
         ? 'verified'
         : 'mismatch'
+  const manifestParams = new URLSearchParams({
+    state,
+    year: String(year),
+    faacShock: String(faacShock),
+    igrShock: String(igrShock),
+    reserveShare: String(reserveShare),
+    fingerprint: suppliedFingerprint ?? computedFingerprint,
+  })
+  if (researchObjective) {
+    manifestParams.set('objective', researchObjective)
+  }
+  const manifestHref = `/fiscal-design/brief/manifest?${manifestParams.toString()}`
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-12 lg:px-8 lg:py-16">
@@ -120,6 +132,9 @@ export default async function FiscalDesignBriefPage({
           <Link href={`/fiscal-design?${backParams.toString()}`}>
             Back to Fiscal Design Lab
           </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={manifestHref}>Download evidence manifest</Link>
         </Button>
         <p className="text-muted-foreground self-center text-sm">
           Use your browser print command to print or save this brief as PDF.
