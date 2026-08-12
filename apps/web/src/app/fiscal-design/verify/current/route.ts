@@ -39,7 +39,10 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return Response.json({ error: 'A valid JSON request is required.' }, { status: 400 })
+    return Response.json(
+      { error: 'A valid JSON request is required.' },
+      { status: 400 },
+    )
   }
 
   if (!validRequest(body)) {
@@ -58,7 +61,10 @@ export async function POST(request: Request) {
   )
   if (!result.data) {
     return Response.json(
-      { error: result.error ?? 'Current governed fiscal evidence is unavailable.' },
+      {
+        error:
+          result.error ?? 'Current governed fiscal evidence is unavailable.',
+      },
       { status: 404 },
     )
   }
