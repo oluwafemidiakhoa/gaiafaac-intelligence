@@ -53,9 +53,7 @@ def latest_comparable_design_year(session: Session, *, state_slug: str) -> int |
     months_by_year: dict[int, set[int]] = defaultdict(set)
     for revenue_month in published_months:
         months_by_year[revenue_month.year].add(revenue_month.month)
-    complete_faac_years = {
-        year for year, months in months_by_year.items() if len(months) == 12
-    }
+    complete_faac_years = {year for year, months in months_by_year.items() if len(months) == 12}
 
     annual_igr_years = set(
         session.scalars(
