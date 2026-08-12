@@ -57,6 +57,15 @@ describe('verifyFiscalDesignEvidenceManifestText', () => {
       stateName: 'Lagos',
       year: 2024,
       evidenceCount: 1,
+      currentEvidenceCheck: {
+        fingerprint: manifest.fingerprint,
+        stateSlug: 'lagos',
+        year: 2024,
+        faacShock: -25,
+        igrShock: -10,
+        reserveShare: 20,
+        researchObjective: 'Assess resilience',
+      },
     })
   })
 
