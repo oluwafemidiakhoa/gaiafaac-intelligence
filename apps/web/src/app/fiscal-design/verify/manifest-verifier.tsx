@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card'
 import {
   type ManifestVerification,
+  summarizeFiscalDesignPayloadChanges,
   verifyFiscalDesignEvidenceManifestText,
 } from '@/lib/fiscal-design-manifest-verifier'
 
@@ -23,6 +24,7 @@ type CurrentEvidenceResult =
       state_name: string
       year: number
       coverage_label: string
+      current_payload: Record<string, unknown>
     }
   | { status: 'error'; message: string }
 
@@ -86,6 +88,15 @@ export function ManifestVerifier() {
       setIsCheckingCurrent(false)
     }
   }
+
+  const changeDetails =
+    verification?.status === 'verified' &&
+    currentEvidence?.status === 'superseded'
+      ? summarizeFiscalDesignPayloadChanges(
+          verification.payload,
+          currentEvidence.current_payload,
+        )
+      : []
 
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
@@ -182,6 +193,8 @@ export function ManifestVerifier() {
                   <p className="text-muted-foreground mt-2 text-xs leading-5">
                     This optional check sends only the scenario identifiers and
                     fingerprint needed to recompute the current governed brief.
+                    Change details are calculated locally against the pasted
+                    manifest.
                   </p>
                 </div>
               ) : null}
@@ -209,6 +222,26 @@ export function ManifestVerifier() {
                   <p className="text-muted-foreground mt-3 font-mono text-xs break-all">
                     Current SHA-256 {currentEvidence.current_fingerprint}
                   </p>
+                  <div className="mt-4 border-t pt-4">
+                    <p className="text-sm font-semibold">What changed</p>
+                    {changeDetails.length ? (
+                      <ul className="text-muted-foreground mt-2 space-y-2 text-sm leading-6">
+                        {changeDetails.map((change, index) => (
+                          <li key={`${change.category}-${index}`}>
+                            <span className="font-medium capitalize">
+                              {change.category}:
+                            </span>{' '}
+                            {change.detail}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground mt-2 text-sm leading-6">
+                        The canonical payload changed, but no supported
+                        difference category was detected.
+                      </p>
+                    )}
+                  </div>
                 </div>
               ) : null}
 

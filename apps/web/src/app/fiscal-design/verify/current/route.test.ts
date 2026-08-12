@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fiscalDesignBriefFingerprint } from '@/lib/fiscal-design-brief-integrity'
+import {
+  fiscalDesignBriefFingerprint,
+  fiscalDesignBriefPayload,
+} from '@/lib/fiscal-design-brief-integrity'
 import type { FiscalDesign } from '@/lib/fiscal-design-api'
 import { getFiscalDesign } from '@/lib/fiscal-design-api'
 
@@ -75,7 +78,7 @@ describe('Fiscal Design current evidence route', () => {
     vi.clearAllMocks()
   })
 
-  it('reports a verified manifest as current when fingerprints still match', async () => {
+  it('reports a verified manifest as current with the canonical payload', async () => {
     vi.mocked(getFiscalDesign).mockResolvedValue({ data: design, error: null })
 
     const response = await POST(request(requestBody))
@@ -87,11 +90,12 @@ describe('Fiscal Design current evidence route', () => {
       current_fingerprint: fingerprint,
       state_name: 'Lagos',
       year: 2024,
+      current_payload: fiscalDesignBriefPayload(design, objective),
     })
     expect(getFiscalDesign).toHaveBeenCalledWith('lagos', 2024, -25, -10, 20)
   })
 
-  it('reports a manifest as superseded when current governed evidence changed', async () => {
+  it('reports a manifest as superseded with the changed canonical payload', async () => {
     const changed: FiscalDesign = {
       ...design,
       coverage_label: 'Updated governed coverage',
@@ -104,6 +108,9 @@ describe('Fiscal Design current evidence route', () => {
     expect(response.status).toBe(200)
     expect(body.status).toBe('superseded')
     expect(body.current_fingerprint).not.toBe(fingerprint)
+    expect(body.current_payload.coverage_label).toBe(
+      'Updated governed coverage',
+    )
   })
 
   it('fails closed on invalid comparison requests', async () => {

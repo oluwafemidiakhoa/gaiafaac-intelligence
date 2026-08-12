@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { fiscalDesignEvidenceManifest } from '@/lib/fiscal-design-brief-integrity'
 import type { FiscalDesign } from '@/lib/fiscal-design-api'
 
-import { verifyFiscalDesignEvidenceManifestText } from './fiscal-design-manifest-verifier'
+import {
+  summarizeFiscalDesignPayloadChanges,
+  verifyFiscalDesignEvidenceManifestText,
+} from './fiscal-design-manifest-verifier'
 
 const design: FiscalDesign = {
   design_version: '0.1',
@@ -57,6 +60,7 @@ describe('verifyFiscalDesignEvidenceManifestText', () => {
       stateName: 'Lagos',
       year: 2024,
       evidenceCount: 1,
+      payload: manifest.payload,
       currentEvidenceCheck: {
         fingerprint: manifest.fingerprint,
         stateSlug: 'lagos',
@@ -102,5 +106,72 @@ describe('verifyFiscalDesignEvidenceManifestText', () => {
       status: 'invalid',
       message: 'Unsupported or missing Gaia evidence manifest version.',
     })
+  })
+})
+
+describe('summarizeFiscalDesignPayloadChanges', () => {
+  it('explains coverage, provenance, assumptions, and scenario changes', () => {
+    const previous = fiscalDesignEvidenceManifest(
+      design,
+      'Assess resilience',
+    ).payload
+    const current = {
+      ...previous,
+      coverage_label: 'Updated governed coverage',
+      faac_months_published: 11,
+      assumptions: ['FAAC scenario change: -30.00%.'],
+      evidence: previous.evidence.map((item) => ({
+        ...item,
+        value: '1100.00',
+        source_sha256: 'b'.repeat(64),
+      })),
+      candidates: previous.candidates.map((candidate) => ({
+        ...candidate,
+        metrics: candidate.metrics.map((metric) => ({
+          ...metric,
+          value: '700.00',
+        })),
+      })),
+    }
+
+    expect(summarizeFiscalDesignPayloadChanges(previous, current)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'coverage' }),
+        expect.objectContaining({
+          category: 'evidence',
+          detail: expect.stringContaining('source hash, value'),
+        }),
+        expect.objectContaining({ category: 'assumptions' }),
+        expect.objectContaining({ category: 'scenario' }),
+      ]),
+    )
+  })
+
+  it('reports added and removed evidence records without inferring data', () => {
+    const previous = fiscalDesignEvidenceManifest(
+      design,
+      'Assess resilience',
+    ).payload
+    const replacement = {
+      ...previous.evidence[0],
+      label: 'February 2024 net FAAC allocation',
+      reference_path: '/fiscal-proof/lagos/2024-02-01',
+    }
+    const current = { ...previous, evidence: [replacement] }
+
+    const changes = summarizeFiscalDesignPayloadChanges(previous, current)
+
+    expect(changes).toEqual(
+      expect.arrayContaining([
+        {
+          category: 'evidence',
+          detail: 'Evidence removed: January 2024 net FAAC allocation.',
+        },
+        {
+          category: 'evidence',
+          detail: 'Evidence added: February 2024 net FAAC allocation.',
+        },
+      ]),
+    )
   })
 })
