@@ -1,4 +1,7 @@
-import { fiscalDesignBriefFingerprint } from '@/lib/fiscal-design-brief-integrity'
+import {
+  fiscalDesignBriefFingerprint,
+  fiscalDesignBriefPayload,
+} from '@/lib/fiscal-design-brief-integrity'
 import { getFiscalDesign } from '@/lib/fiscal-design-api'
 import type { CurrentEvidenceCheckRequest } from '@/lib/fiscal-design-manifest-verifier'
 
@@ -73,6 +76,10 @@ export async function POST(request: Request) {
     result.data,
     body.researchObjective,
   )
+  const currentPayload = fiscalDesignBriefPayload(
+    result.data,
+    body.researchObjective,
+  )
 
   return Response.json({
     status: currentFingerprint === body.fingerprint ? 'current' : 'superseded',
@@ -81,5 +88,6 @@ export async function POST(request: Request) {
     state_name: result.data.state_name,
     year: result.data.year,
     coverage_label: result.data.coverage_label,
+    current_payload: currentPayload,
   })
 }
