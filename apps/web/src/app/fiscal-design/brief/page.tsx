@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { fiscalDesignBriefFingerprint } from '@/lib/fiscal-design-brief-integrity'
 import { getFiscalDesign } from '@/lib/fiscal-design-api'
 import { formatNaira } from '@/lib/format'
 
@@ -26,6 +27,7 @@ interface FiscalDesignBriefPageProps {
     igrShock?: string
     reserveShare?: string
     objective?: string
+    fingerprint?: string
   }>
 }
 
@@ -53,6 +55,9 @@ export default async function FiscalDesignBriefPage({
   const igrShock = bounded(query.igrShock, 0, -100, 100)
   const reserveShare = bounded(query.reserveShare, 10, 0, 100)
   const researchObjective = (query.objective ?? '').trim().slice(0, 240)
+  const suppliedFingerprint = /^[a-f0-9]{64}$/i.test(query.fingerprint ?? '')
+    ? (query.fingerprint ?? '').toLowerCase()
+    : null
   const result = state
     ? await getFiscalDesign(state, year, faacShock, igrShock, reserveShare)
     : { data: null, error: 'Select a state in Fiscal Design Lab first.' }
@@ -91,6 +96,16 @@ export default async function FiscalDesignBriefPage({
   }
 
   const design = result.data
+  const computedFingerprint = fiscalDesignBriefFingerprint(
+    design,
+    researchObjective,
+  )
+  const integrityStatus =
+    suppliedFingerprint === null
+      ? 'unverified'
+      : suppliedFingerprint === computedFingerprint
+        ? 'verified'
+        : 'mismatch'
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-12 lg:px-8 lg:py-16">
@@ -112,6 +127,35 @@ export default async function FiscalDesignBriefPage({
       </div>
 
       <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Artifact integrity</CardTitle>
+          <CardDescription>
+            The fingerprint binds this brief to its governed scenario response,
+            assumptions, candidates, and evidence provenance.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StatusPill tone={integrityStatus === 'verified' ? 'success' : 'neutral'}>
+            {integrityStatus === 'verified'
+              ? 'Verified fingerprint'
+              : integrityStatus === 'mismatch'
+                ? 'Fingerprint mismatch'
+                : 'Fingerprint not supplied'}
+          </StatusPill>
+          <p className="text-muted-foreground mt-3 text-sm leading-6">
+            {integrityStatus === 'verified'
+              ? 'The shared fingerprint matches the current governed scenario response.'
+              : integrityStatus === 'mismatch'
+                ? 'The shared fingerprint does not match the current governed scenario response. Re-open the brief from Fiscal Design Lab before relying on it.'
+                : 'Open this brief from Fiscal Design Lab to attach a verifiable fingerprint.'}
+          </p>
+          <p className="text-muted-foreground mt-3 font-mono text-xs break-all">
+            SHA-256 {computedFingerprint}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>Research objective</CardTitle>
           <CardDescription>
