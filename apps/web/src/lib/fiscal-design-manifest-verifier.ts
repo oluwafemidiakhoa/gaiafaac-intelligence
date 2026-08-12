@@ -1,3 +1,13 @@
+export interface CurrentEvidenceCheckRequest {
+  fingerprint: string
+  stateSlug: string
+  year: number
+  faacShock: number
+  igrShock: number
+  reserveShare: number
+  researchObjective: string
+}
+
 export type ManifestVerification =
   | {
       status: 'verified'
@@ -5,6 +15,7 @@ export type ManifestVerification =
       stateName: string | null
       year: number | null
       evidenceCount: number | null
+      currentEvidenceCheck: CurrentEvidenceCheckRequest | null
     }
   | {
       status: 'mismatch'
@@ -18,6 +29,17 @@ export type ManifestVerification =
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function finiteNumber(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
 }
 
 async function sha256Hex(value: string) {
@@ -82,6 +104,10 @@ export async function verifyFiscalDesignEvidenceManifestText(
     typeof parsed.payload.state_name === 'string'
       ? parsed.payload.state_name
       : null
+  const stateSlug =
+    typeof parsed.payload.state_slug === 'string'
+      ? parsed.payload.state_slug.trim().toLowerCase()
+      : ''
   const year =
     typeof parsed.payload.year === 'number' &&
     Number.isInteger(parsed.payload.year)
@@ -90,6 +116,29 @@ export async function verifyFiscalDesignEvidenceManifestText(
   const evidenceCount = Array.isArray(parsed.payload.evidence)
     ? parsed.payload.evidence.length
     : null
+  const faacShock = finiteNumber(parsed.payload.faac_shock_pct)
+  const igrShock = finiteNumber(parsed.payload.igr_shock_pct)
+  const reserveShare = finiteNumber(parsed.payload.reserve_share_pct)
+  const researchObjective =
+    typeof parsed.payload.research_objective === 'string'
+      ? parsed.payload.research_objective.trim().slice(0, 240)
+      : ''
+  const currentEvidenceCheck =
+    stateSlug &&
+    year !== null &&
+    faacShock !== null &&
+    igrShock !== null &&
+    reserveShare !== null
+      ? {
+          fingerprint,
+          stateSlug,
+          year,
+          faacShock,
+          igrShock,
+          reserveShare,
+          researchObjective,
+        }
+      : null
 
   return {
     status: 'verified',
@@ -97,5 +146,6 @@ export async function verifyFiscalDesignEvidenceManifestText(
     stateName,
     year,
     evidenceCount,
+    currentEvidenceCheck,
   }
 }
