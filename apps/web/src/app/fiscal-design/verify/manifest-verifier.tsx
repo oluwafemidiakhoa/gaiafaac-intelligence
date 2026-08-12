@@ -15,21 +15,75 @@ import {
   verifyFiscalDesignEvidenceManifestText,
 } from '@/lib/fiscal-design-manifest-verifier'
 
+type CurrentEvidenceResult =
+  | {
+      status: 'current' | 'superseded'
+      manifest_fingerprint: string
+      current_fingerprint: string
+      state_name: string
+      year: number
+      coverage_label: string
+    }
+  | { status: 'error'; message: string }
+
 export function ManifestVerifier() {
   const [manifestText, setManifestText] = useState('')
   const [verification, setVerification] = useState<ManifestVerification | null>(
     null,
   )
   const [isVerifying, setIsVerifying] = useState(false)
+  const [currentEvidence, setCurrentEvidence] =
+    useState<CurrentEvidenceResult | null>(null)
+  const [isCheckingCurrent, setIsCheckingCurrent] = useState(false)
 
   async function verify() {
     setIsVerifying(true)
+    setCurrentEvidence(null)
     try {
       setVerification(
         await verifyFiscalDesignEvidenceManifestText(manifestText),
       )
     } finally {
       setIsVerifying(false)
+    }
+  }
+
+  async function checkCurrentEvidence() {
+    if (
+      verification?.status !== 'verified' ||
+      !verification.currentEvidenceCheck
+    ) {
+      return
+    }
+
+    setIsCheckingCurrent(true)
+    setCurrentEvidence(null)
+    try {
+      const response = await fetch('/fiscal-design/verify/current', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(verification.currentEvidenceCheck),
+      })
+      const body = (await response.json()) as Record<string, unknown>
+      if (!response.ok) {
+        setCurrentEvidence({
+          status: 'error',
+          message:
+            typeof body.error === 'string'
+              ? body.error
+              : 'Current governed evidence could not be checked.',
+        })
+        return
+      }
+
+      setCurrentEvidence(body as CurrentEvidenceResult)
+    } catch {
+      setCurrentEvidence({
+        status: 'error',
+        message: 'Current governed evidence could not be checked.',
+      })
+    } finally {
+      setIsCheckingCurrent(false)
     }
   }
 
@@ -50,6 +104,7 @@ export function ManifestVerifier() {
             onChange={(event) => {
               setManifestText(event.target.value)
               setVerification(null)
+              setCurrentEvidence(null)
             }}
             placeholder='{"manifest_version":"gaia-fiscal-design-evidence-manifest-v1",...}'
             className="border-input bg-background min-h-80 w-full rounded-md border p-3 font-mono text-xs leading-5"
@@ -111,6 +166,60 @@ export function ManifestVerifier() {
               <p className="text-muted-foreground mt-5 font-mono text-xs break-all">
                 SHA-256 {verification.fingerprint}
               </p>
+
+              {verification.currentEvidenceCheck ? (
+                <div className="mt-5 border-t pt-5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={checkCurrentEvidence}
+                    disabled={isCheckingCurrent}
+                  >
+                    {isCheckingCurrent
+                      ? 'Checking current evidence…'
+                      : 'Check against current evidence'}
+                  </Button>
+                  <p className="text-muted-foreground mt-2 text-xs leading-5">
+                    This optional check sends only the scenario identifiers and
+                    fingerprint needed to recompute the current governed brief.
+                  </p>
+                </div>
+              ) : null}
+
+              {currentEvidence?.status === 'current' ? (
+                <div className="mt-5 rounded-md border p-4">
+                  <p className="font-semibold">Current governed evidence</p>
+                  <p className="text-muted-foreground mt-2 text-sm leading-6">
+                    This manifest fingerprint still matches Gaia&apos;s current
+                    governed Fiscal Design response for this scenario.
+                  </p>
+                  <p className="text-muted-foreground mt-2 text-xs">
+                    {currentEvidence.coverage_label}
+                  </p>
+                </div>
+              ) : null}
+
+              {currentEvidence?.status === 'superseded' ? (
+                <div className="mt-5 rounded-md border p-4">
+                  <p className="font-semibold">Superseded manifest</p>
+                  <p className="text-muted-foreground mt-2 text-sm leading-6">
+                    The artifact is internally intact, but Gaia&apos;s current
+                    governed response now produces a different fingerprint.
+                  </p>
+                  <p className="text-muted-foreground mt-3 font-mono text-xs break-all">
+                    Current SHA-256 {currentEvidence.current_fingerprint}
+                  </p>
+                </div>
+              ) : null}
+
+              {currentEvidence?.status === 'error' ? (
+                <div className="mt-5 rounded-md border p-4">
+                  <p className="font-semibold">Current evidence unavailable</p>
+                  <p className="text-muted-foreground mt-2 text-sm leading-6">
+                    {currentEvidence.message}
+                  </p>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
