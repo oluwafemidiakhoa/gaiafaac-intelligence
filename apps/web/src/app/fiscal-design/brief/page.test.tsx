@@ -122,10 +122,17 @@ describe('FiscalDesignBriefPage', () => {
       'href',
       '/fiscal-design?state=lagos&year=2024&faacShock=-25&igrShock=-10&reserveShare=20&objective=Assess+revenue+resilience+under+a+severe+FAAC+decline.',
     )
+    expect(
+      screen.getByRole('link', { name: 'Download evidence manifest' }),
+    ).toHaveAttribute(
+      'href',
+      `/fiscal-design/brief/manifest?state=lagos&year=2024&faacShock=-25&igrShock=-10&reserveShare=20&fingerprint=${fingerprint}&objective=Assess+revenue+resilience+under+a+severe+FAAC+decline.`,
+    )
   })
 
-  it('shows a mismatch when the shared fingerprint no longer matches', async () => {
+  it('keeps a stale fingerprint on the manifest link so the endpoint can fail closed', async () => {
     vi.mocked(getFiscalDesign).mockResolvedValue({ data: design, error: null })
+    const staleFingerprint = 'b'.repeat(64)
 
     render(
       await FiscalDesignBriefPage({
@@ -133,15 +140,18 @@ describe('FiscalDesignBriefPage', () => {
           state: 'lagos',
           year: '2024',
           objective: researchObjective,
-          fingerprint: 'b'.repeat(64),
+          fingerprint: staleFingerprint,
         }),
       }),
     )
 
     expect(screen.getByText('Fingerprint mismatch')).toBeInTheDocument()
     expect(
-      screen.getByText(/Re-open the brief from Fiscal Design Lab/),
-    ).toBeInTheDocument()
+      screen.getByRole('link', { name: 'Download evidence manifest' }),
+    ).toHaveAttribute(
+      'href',
+      expect.stringContaining(`fingerprint=${staleFingerprint}`),
+    )
   })
 
   it('fails closed when the governed design response is unavailable', async () => {
