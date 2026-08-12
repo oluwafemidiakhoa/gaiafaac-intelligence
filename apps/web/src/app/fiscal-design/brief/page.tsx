@@ -135,7 +135,9 @@ export default async function FiscalDesignBriefPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <StatusPill tone={integrityStatus === 'verified' ? 'success' : 'neutral'}>
+          <StatusPill
+            tone={integrityStatus === 'verified' ? 'success' : 'neutral'}
+          >
             {integrityStatus === 'verified'
               ? 'Verified fingerprint'
               : integrityStatus === 'mismatch'
