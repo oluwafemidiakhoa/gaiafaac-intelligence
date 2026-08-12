@@ -108,7 +108,9 @@ describe('Fiscal Design current evidence route', () => {
     expect(response.status).toBe(200)
     expect(body.status).toBe('superseded')
     expect(body.current_fingerprint).not.toBe(fingerprint)
-    expect(body.current_payload.coverage_label).toBe('Updated governed coverage')
+    expect(body.current_payload.coverage_label).toBe(
+      'Updated governed coverage',
+    )
   })
 
   it('fails closed on invalid comparison requests', async () => {
