@@ -71,12 +71,10 @@ describe('fiscalDesignBriefFingerprint', () => {
       ...design,
       assumptions: [...design.assumptions].reverse(),
       evidence: [...design.evidence].reverse(),
-      candidates: [...design.candidates]
-        .reverse()
-        .map((candidate) => ({
-          ...candidate,
-          metrics: [...candidate.metrics].reverse(),
-        })),
+      candidates: [...design.candidates].reverse().map((candidate) => ({
+        ...candidate,
+        metrics: [...candidate.metrics].reverse(),
+      })),
     }
 
     expect(fiscalDesignBriefFingerprint(design, 'Assess resilience')).toBe(
@@ -94,11 +92,11 @@ describe('fiscalDesignBriefFingerprint', () => {
 
     const baseline = fiscalDesignBriefFingerprint(design, 'Assess resilience')
 
-    expect(fiscalDesignBriefFingerprint(changedEvidence, 'Assess resilience')).not.toBe(
-      baseline,
-    )
-    expect(fiscalDesignBriefFingerprint(design, 'Assess a different objective')).not.toBe(
-      baseline,
-    )
+    expect(
+      fiscalDesignBriefFingerprint(changedEvidence, 'Assess resilience'),
+    ).not.toBe(baseline)
+    expect(
+      fiscalDesignBriefFingerprint(design, 'Assess a different objective'),
+    ).not.toBe(baseline)
   })
 })
