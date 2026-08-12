@@ -24,6 +24,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Capture exact Prettier output for Fiscal Design brief integrity
+        run: |
+          npx prettier --write apps/web/src/app/fiscal-design/brief/page.test.tsx apps/web/src/app/fiscal-design/brief/page.tsx apps/web/src/lib/fiscal-design-brief-integrity.test.ts
+          git diff -- apps/web/src/app/fiscal-design/brief/page.test.tsx apps/web/src/app/fiscal-design/brief/page.tsx apps/web/src/lib/fiscal-design-brief-integrity.test.ts
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
