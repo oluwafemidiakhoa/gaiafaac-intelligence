@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { fiscalDesignBriefFingerprint } from '@/lib/fiscal-design-brief-integrity'
 import { getFiscalDesign } from '@/lib/fiscal-design-api'
 import { formatNaira } from '@/lib/format'
 
@@ -83,6 +84,7 @@ export default async function FiscalDesignPage({
         faacShock: String(faacShock),
         igrShock: String(igrShock),
         reserveShare: String(reserveShare),
+        fingerprint: fiscalDesignBriefFingerprint(result.data, objective),
       })
     : null
   if (briefParams && objective) {
