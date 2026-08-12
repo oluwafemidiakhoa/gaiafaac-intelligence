@@ -104,7 +104,10 @@ describe('fiscalDesignBriefFingerprint', () => {
   })
 
   it('uses the same canonical payload for the evidence manifest fingerprint', () => {
-    const fingerprint = fiscalDesignBriefFingerprint(design, 'Assess resilience')
+    const fingerprint = fiscalDesignBriefFingerprint(
+      design,
+      'Assess resilience',
+    )
     const manifest = fiscalDesignEvidenceManifest(design, 'Assess resilience')
 
     expect(manifest.manifest_version).toBe(
@@ -113,8 +116,8 @@ describe('fiscalDesignBriefFingerprint', () => {
     expect(manifest.fingerprint_algorithm).toBe('sha256')
     expect(manifest.fingerprint).toBe(fingerprint)
     expect(manifest.payload.research_objective).toBe('Assess resilience')
-    expect(manifest.payload.evidence.map((item) => item.evidence_domain)).toEqual(
-      ['faac', 'igr'],
-    )
+    expect(
+      manifest.payload.evidence.map((item) => item.evidence_domain),
+    ).toEqual(['faac', 'igr'])
   })
 })
