@@ -25,6 +25,7 @@ interface FiscalDesignPageProps {
     faacShock?: string
     igrShock?: string
     reserveShare?: string
+    objective?: string
   }>
 }
 
@@ -51,23 +52,45 @@ export default async function FiscalDesignPage({
   const faacShock = bounded(query.faacShock, -20, -100, 100)
   const igrShock = bounded(query.igrShock, 0, -100, 100)
   const reserveShare = bounded(query.reserveShare, 10, 0, 100)
+  const objective = (query.objective ?? '').trim().slice(0, 240)
   const result = state
     ? await getFiscalDesign(state, year, faacShock, igrShock, reserveShare)
     : { data: null, error: null }
   const latestComparableYear = result.data?.latest_comparable_year ?? null
-  const comparableYearHref =
+  const comparableYearParams =
     result.data &&
     latestComparableYear !== null &&
     latestComparableYear !== year &&
     (!result.data.faac_complete_year || !result.data.annual_igr_available)
-      ? `/fiscal-design?${new URLSearchParams({
+      ? new URLSearchParams({
           state,
           year: String(latestComparableYear),
           faacShock: String(faacShock),
           igrShock: String(igrShock),
           reserveShare: String(reserveShare),
-        }).toString()}`
+        })
       : null
+  if (comparableYearParams && objective) {
+    comparableYearParams.set('objective', objective)
+  }
+  const comparableYearHref = comparableYearParams
+    ? `/fiscal-design?${comparableYearParams.toString()}`
+    : null
+  const briefParams = result.data
+    ? new URLSearchParams({
+        state,
+        year: String(year),
+        faacShock: String(faacShock),
+        igrShock: String(igrShock),
+        reserveShare: String(reserveShare),
+      })
+    : null
+  if (briefParams && objective) {
+    briefParams.set('objective', objective)
+  }
+  const briefHref = briefParams
+    ? `/fiscal-design/brief?${briefParams.toString()}`
+    : null
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -144,6 +167,16 @@ export default async function FiscalDesignPage({
                 className="border-input bg-background mt-2 h-10 w-full rounded-md border px-3 text-sm"
               />
             </label>
+            <label className="text-sm font-medium md:col-span-5">
+              Research objective (optional)
+              <input
+                name="objective"
+                defaultValue={objective}
+                maxLength={240}
+                placeholder="Assess revenue resilience under a FAAC decline"
+                className="border-input bg-background mt-2 h-10 w-full rounded-md border px-3 text-sm"
+              />
+            </label>
             <div className="md:col-span-5">
               <Button type="submit">Run fiscal scenarios</Button>
             </div>
@@ -192,6 +225,14 @@ export default async function FiscalDesignPage({
               {result.data.coverage_label}
             </span>
           </div>
+
+          {briefHref ? (
+            <div className="mt-4">
+              <Button asChild variant="outline">
+                <Link href={briefHref}>Open research brief</Link>
+              </Button>
+            </div>
+          ) : null}
 
           {comparableYearHref && latestComparableYear !== null ? (
             <Card className="mt-6 border-dashed">
