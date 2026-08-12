@@ -24,10 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Capture exact Prettier output for Fiscal Design current evidence route
-        run: |
-          npx prettier --write apps/web/src/app/fiscal-design/verify/current/route.ts
-          git diff -- apps/web/src/app/fiscal-design/verify/current/route.ts
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
