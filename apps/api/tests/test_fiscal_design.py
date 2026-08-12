@@ -7,25 +7,25 @@ from gaiafaac_api.database.enums import ReportedUnit, VerificationStatus
 from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
 from gaiafaac_api.database.models import ReportingPeriod, SourceDocument, State, StateAllocation
 from gaiafaac_api.database.seeds import seed_states
-from gaiafaac_api.services.fiscal_design import fiscal_design
+from gaiafaac_api.services.fiscal_design import fiscal_design, latest_comparable_design_year
 
 
-def _seed_state_evidence(session, *, months: int = 12):
+def _seed_state_evidence(session, *, months: int = 12, year: int = 2026):
     seed_states(session)
     state = session.scalars(select(State).where(State.is_fct.is_(False))).first()
     faac_source = SourceDocument(
         source_organization="OAGF",
-        original_filename="design-faac.pdf",
-        storage_path="design-faac.pdf",
-        sha256="a" * 64,
+        original_filename=f"design-faac-{year}.pdf",
+        storage_path=f"design-faac-{year}.pdf",
+        sha256=f"{year}".ljust(64, "a")[:64],
         mime_type="application/pdf",
         is_demo=False,
     )
     igr_source = SourceDocument(
         source_organization="NBS",
-        original_filename="design-igr.xlsx",
-        storage_path="design-igr.xlsx",
-        sha256="b" * 64,
+        original_filename=f"design-igr-{year}.xlsx",
+        storage_path=f"design-igr-{year}.xlsx",
+        sha256=f"{year}".ljust(64, "b")[:64],
         mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         is_demo=False,
     )
@@ -34,8 +34,8 @@ def _seed_state_evidence(session, *, months: int = 12):
 
     for month in range(1, months + 1):
         period = ReportingPeriod(
-            revenue_month=date(2026, month, 1),
-            reporting_label=f"2026-{month:02d}",
+            revenue_month=date(year, month, 1),
+            reporting_label=f"{year}-{month:02d}",
             is_demo=False,
             is_published=True,
         )
@@ -59,11 +59,11 @@ def _seed_state_evidence(session, *, months: int = 12):
         StateIgrRecord(
             state_id=state.id,
             source_document_id=igr_source.id,
-            fiscal_year=2026,
+            fiscal_year=year,
             period_type=IgrPeriodType.ANNUAL,
             quarter=None,
-            period_start=date(2026, 1, 1),
-            period_end=date(2026, 12, 31),
+            period_start=date(year, 1, 1),
+            period_end=date(year, 12, 31),
             igr_amount=Decimal("600.00"),
             igr_amount_original="600.00",
             reported_unit=ReportedUnit.NAIRA,
@@ -91,6 +91,7 @@ def test_fiscal_design_computes_deterministic_complete_year_scenarios(session):
     assert result is not None
     assert result.faac_complete_year is True
     assert result.annual_igr_available is True
+    assert result.latest_comparable_year == 2026
     assert len(result.evidence) == 13
 
     by_key = {candidate.key: candidate for candidate in result.candidates}
@@ -114,11 +115,23 @@ def test_fiscal_design_refuses_to_blend_partial_faac_with_annual_igr(session):
 
     assert result is not None
     assert result.faac_complete_year is False
+    assert result.latest_comparable_year is None
     by_key = {candidate.key: candidate for candidate in result.candidates}
     assert by_key["faac_shock"].status == "available"
     assert "not annualized" in by_key["faac_shock"].note
     assert by_key["blended_revenue"].status == "insufficient_data"
     assert by_key["blended_revenue"].metrics == []
+
+
+def test_latest_comparable_design_year_falls_back_to_latest_complete_intersection(session):
+    state = _seed_state_evidence(session, year=2025)
+    _seed_state_evidence(session, months=2, year=2026)
+
+    assert latest_comparable_design_year(session, state_slug=state.slug) == 2025
+
+    result = fiscal_design(session, state_slug=state.slug, year=2026)
+    assert result is not None
+    assert result.latest_comparable_year == 2025
 
 
 def test_fiscal_design_returns_none_for_unknown_state(session):
