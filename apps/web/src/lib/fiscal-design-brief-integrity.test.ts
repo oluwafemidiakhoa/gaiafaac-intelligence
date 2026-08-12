@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import type { FiscalDesign } from '@/lib/fiscal-design-api'
 
-import { fiscalDesignBriefFingerprint } from './fiscal-design-brief-integrity'
+import {
+  fiscalDesignBriefFingerprint,
+  fiscalDesignEvidenceManifest,
+} from './fiscal-design-brief-integrity'
 
 const sourceSha = 'a'.repeat(64)
 
@@ -98,5 +101,20 @@ describe('fiscalDesignBriefFingerprint', () => {
     expect(
       fiscalDesignBriefFingerprint(design, 'Assess a different objective'),
     ).not.toBe(baseline)
+  })
+
+  it('uses the same canonical payload for the evidence manifest fingerprint', () => {
+    const fingerprint = fiscalDesignBriefFingerprint(design, 'Assess resilience')
+    const manifest = fiscalDesignEvidenceManifest(design, 'Assess resilience')
+
+    expect(manifest.manifest_version).toBe(
+      'gaia-fiscal-design-evidence-manifest-v1',
+    )
+    expect(manifest.fingerprint_algorithm).toBe('sha256')
+    expect(manifest.fingerprint).toBe(fingerprint)
+    expect(manifest.payload.research_objective).toBe('Assess resilience')
+    expect(manifest.payload.evidence.map((item) => item.evidence_domain)).toEqual(
+      ['faac', 'igr'],
+    )
   })
 })
