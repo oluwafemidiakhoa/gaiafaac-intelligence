@@ -88,9 +88,10 @@ export default async function FiscalProofPage({
         <CardHeader>
           <CardTitle>Compare evidence history</CardTitle>
           <CardDescription>
-            This page proves the current published record. Evidence Change Detail
-            compares a previously downloaded Fiscal Design evidence manifest
-            against Gaia&apos;s current governed evidence and explains what changed.
+            This page proves the current published record. Evidence Change
+            Detail compares a previously downloaded Fiscal Design evidence
+            manifest against Gaia&apos;s current governed evidence and explains
+            what changed.
           </CardDescription>
         </CardHeader>
         <CardContent>
