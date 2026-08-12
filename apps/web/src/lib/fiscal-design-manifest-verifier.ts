@@ -83,7 +83,8 @@ export async function verifyFiscalDesignEvidenceManifestText(
       ? parsed.payload.state_name
       : null
   const year =
-    typeof parsed.payload.year === 'number' && Number.isInteger(parsed.payload.year)
+    typeof parsed.payload.year === 'number' &&
+    Number.isInteger(parsed.payload.year)
       ? parsed.payload.year
       : null
   const evidenceCount = Array.isArray(parsed.payload.evidence)
