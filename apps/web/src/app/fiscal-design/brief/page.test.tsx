@@ -12,7 +12,8 @@ vi.mock('@/lib/fiscal-design-api', () => ({
 }))
 
 const sourceSha = 'a'.repeat(64)
-const researchObjective = 'Assess revenue resilience under a severe FAAC decline.'
+const researchObjective =
+  'Assess revenue resilience under a severe FAAC decline.'
 
 const design: FiscalDesign = {
   design_version: '0.1',
