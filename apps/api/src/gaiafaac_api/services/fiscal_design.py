@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from gaiafaac_api.database.enums import VerificationStatus
+from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
+from gaiafaac_api.database.models import ReportingPeriod, State, StateAllocation
 from gaiafaac_api.fiscal_design_schemas import (
     FiscalDesignCandidate,
     FiscalDesignEvidence,
@@ -25,6 +30,49 @@ def _pct(value: Decimal) -> str:
 
 def _apply_change(value: Decimal, change_pct: Decimal) -> Decimal:
     return value * (_HUNDRED + change_pct) / _HUNDRED
+
+
+def latest_comparable_design_year(session: Session, *, state_slug: str) -> int | None:
+    published_months = session.scalars(
+        select(ReportingPeriod.revenue_month)
+        .join(
+            StateAllocation,
+            StateAllocation.reporting_period_id == ReportingPeriod.id,
+        )
+        .join(State, StateAllocation.state_id == State.id)
+        .where(
+            State.slug == state_slug,
+            ReportingPeriod.is_published.is_(True),
+            ReportingPeriod.is_demo.is_(False),
+            StateAllocation.is_published.is_(True),
+            StateAllocation.is_demo.is_(False),
+        )
+        .distinct()
+    ).all()
+
+    months_by_year: dict[int, set[int]] = defaultdict(set)
+    for revenue_month in published_months:
+        months_by_year[revenue_month.year].add(revenue_month.month)
+    complete_faac_years = {year for year, months in months_by_year.items() if len(months) == 12}
+
+    annual_igr_years = set(
+        session.scalars(
+            select(StateIgrRecord.fiscal_year)
+            .join(State, StateIgrRecord.state_id == State.id)
+            .where(
+                State.slug == state_slug,
+                StateIgrRecord.period_type == IgrPeriodType.ANNUAL,
+                StateIgrRecord.quarter.is_(None),
+                StateIgrRecord.is_published.is_(True),
+                StateIgrRecord.is_demo.is_(False),
+                StateIgrRecord.verification_status == VerificationStatus.HUMAN_VERIFIED,
+            )
+            .distinct()
+        ).all()
+    )
+
+    comparable_years = complete_faac_years & annual_igr_years
+    return max(comparable_years) if comparable_years else None
 
 
 def fiscal_design(
@@ -188,6 +236,7 @@ def fiscal_design(
         state_slug=packet.state_slug,
         state_code=packet.state_code,
         year=year,
+        latest_comparable_year=latest_comparable_design_year(session, state_slug=state_slug),
         objective=objective,
         coverage_label=packet.coverage_label,
         faac_months_published=packet.months_published,

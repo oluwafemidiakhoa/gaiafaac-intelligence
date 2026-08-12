@@ -30,6 +30,7 @@ export const fiscalDesignSchema = z.object({
   state_slug: z.string(),
   state_code: z.string(),
   year: z.number().int(),
+  latest_comparable_year: z.number().int().nullable(),
   objective: z.string(),
   coverage_label: z.string(),
   faac_months_published: z.number().int(),

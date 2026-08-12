@@ -54,6 +54,20 @@ export default async function FiscalDesignPage({
   const result = state
     ? await getFiscalDesign(state, year, faacShock, igrShock, reserveShare)
     : { data: null, error: null }
+  const latestComparableYear = result.data?.latest_comparable_year ?? null
+  const comparableYearHref =
+    result.data &&
+    latestComparableYear !== null &&
+    latestComparableYear !== year &&
+    (!result.data.faac_complete_year || !result.data.annual_igr_available)
+      ? `/fiscal-design?${new URLSearchParams({
+          state,
+          year: String(latestComparableYear),
+          faacShock: String(faacShock),
+          igrShock: String(igrShock),
+          reserveShare: String(reserveShare),
+        }).toString()}`
+      : null
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -178,6 +192,27 @@ export default async function FiscalDesignPage({
               {result.data.coverage_label}
             </span>
           </div>
+
+          {comparableYearHref && latestComparableYear !== null ? (
+            <Card className="mt-6 border-dashed">
+              <CardHeader>
+                <CardTitle>Use the latest comparable year</CardTitle>
+                <CardDescription>
+                  {year} does not yet have both a complete 12-month FAAC series
+                  and published annual IGR for {result.data.state_name}. The
+                  latest year that satisfies both evidence requirements is{' '}
+                  {latestComparableYear}.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline">
+                  <Link href={comparableYearHref}>
+                    Run {latestComparableYear} comparable year
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <section className="mt-6 grid gap-5 lg:grid-cols-3">
             {result.data.candidates.map((candidate) => (

@@ -36,6 +36,7 @@ describe('FiscalDesignPage', () => {
         state_slug: 'lagos',
         state_code: 'LA',
         year: 2024,
+        latest_comparable_year: 2024,
         objective:
           'Explore hypothetical fiscal-resilience scenarios using governed FAAC and IGR evidence.',
         coverage_label: 'Published 2024 FAAC + annual IGR',
@@ -147,19 +148,23 @@ describe('FiscalDesignPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('faac')).toBeInTheDocument()
     expect(screen.getByText('igr')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Use the latest comparable year'),
+    ).not.toBeInTheDocument()
   })
 
-  it('surfaces insufficient-data scenarios without inventing metrics', async () => {
+  it('guides incomplete evidence to the latest comparable year without inventing metrics', async () => {
     vi.mocked(getFiscalDesign).mockResolvedValue({
       data: {
         design_version: 'v0',
         state_name: 'Abia',
         state_slug: 'abia',
         state_code: 'AB',
-        year: 2024,
+        year: 2026,
+        latest_comparable_year: 2025,
         objective:
           'Explore hypothetical fiscal-resilience scenarios using governed FAAC and IGR evidence.',
-        coverage_label: 'Published partial-year 2024 FAAC',
+        coverage_label: 'Published partial-year 2026 FAAC',
         faac_months_published: 5,
         faac_complete_year: false,
         annual_igr_available: false,
@@ -193,13 +198,23 @@ describe('FiscalDesignPage', () => {
 
     render(
       await FiscalDesignPage({
-        searchParams: Promise.resolve({ state: 'abia', year: '2024' }),
+        searchParams: Promise.resolve({ state: 'abia', year: '2026' }),
       }),
     )
 
     expect(screen.getByText('Partial FAAC year')).toBeInTheDocument()
     expect(screen.getByText('Annual IGR unavailable')).toBeInTheDocument()
     expect(screen.getAllByText('Insufficient data')).toHaveLength(2)
+    expect(
+      screen.getByText('Use the latest comparable year'),
+    ).toBeInTheDocument()
+    const comparableLink = screen.getByRole('link', {
+      name: 'Run 2025 comparable year',
+    })
+    expect(comparableLink).toHaveAttribute(
+      'href',
+      '/fiscal-design?state=abia&year=2025&faacShock=-20&igrShock=0&reserveShare=10',
+    )
     expect(
       screen.getByText(
         'No published annual IGR record is available for this exact year.',
