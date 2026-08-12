@@ -84,6 +84,25 @@ export default async function FiscalProofPage({
         </CardContent>
       </Card>
 
+      <Card className="mt-6 border-dashed">
+        <CardHeader>
+          <CardTitle>Compare evidence history</CardTitle>
+          <CardDescription>
+            This page proves the current published record. Evidence Change
+            Detail compares a previously downloaded Fiscal Design evidence
+            manifest against Gaia&apos;s current governed evidence and explains
+            what changed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline">
+            <Link href="/fiscal-design/verify">
+              Verify / compare evidence manifest
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
