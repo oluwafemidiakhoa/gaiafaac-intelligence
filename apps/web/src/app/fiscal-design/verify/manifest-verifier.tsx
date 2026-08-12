@@ -17,14 +17,17 @@ import {
 
 export function ManifestVerifier() {
   const [manifestText, setManifestText] = useState('')
-  const [verification, setVerification] =
-    useState<ManifestVerification | null>(null)
+  const [verification, setVerification] = useState<ManifestVerification | null>(
+    null,
+  )
   const [isVerifying, setIsVerifying] = useState(false)
 
   async function verify() {
     setIsVerifying(true)
     try {
-      setVerification(await verifyFiscalDesignEvidenceManifestText(manifestText))
+      setVerification(
+        await verifyFiscalDesignEvidenceManifestText(manifestText),
+      )
     } finally {
       setIsVerifying(false)
     }
