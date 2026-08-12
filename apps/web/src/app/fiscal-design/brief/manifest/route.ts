@@ -26,12 +26,7 @@ export async function GET(request: Request) {
   )
   const faacShock = bounded(url.searchParams.get('faacShock'), -20, -100, 100)
   const igrShock = bounded(url.searchParams.get('igrShock'), 0, -100, 100)
-  const reserveShare = bounded(
-    url.searchParams.get('reserveShare'),
-    10,
-    0,
-    100,
-  )
+  const reserveShare = bounded(url.searchParams.get('reserveShare'), 10, 0, 100)
   const researchObjective = (url.searchParams.get('objective') ?? '')
     .trim()
     .slice(0, 240)
