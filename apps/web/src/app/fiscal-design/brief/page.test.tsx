@@ -103,7 +103,9 @@ describe('FiscalDesignBriefPage', () => {
 
     expect(getFiscalDesign).toHaveBeenCalledWith('lagos', 2024, -25, -10, 20)
     expect(
-      screen.getByText('Assess revenue resilience under a severe FAAC decline.'),
+      screen.getByText(
+        'Assess revenue resilience under a severe FAAC decline.',
+      ),
     ).toBeInTheDocument()
     expect(screen.getByText('Complete 12-month year')).toBeInTheDocument()
     expect(screen.getByText('FAAC shock scenario')).toBeInTheDocument()
@@ -135,6 +137,8 @@ describe('FiscalDesignBriefPage', () => {
       screen.getByText(/Fiscal Design Lab is unavailable for this selection\./),
     ).toBeInTheDocument()
     expect(screen.queryByText('Scenario results')).not.toBeInTheDocument()
-    expect(screen.queryByText('Governed evidence chain')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Governed evidence chain'),
+    ).not.toBeInTheDocument()
   })
 })
