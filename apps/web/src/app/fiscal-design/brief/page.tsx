@@ -136,6 +136,9 @@ export default async function FiscalDesignBriefPage({
         <Button asChild variant="outline">
           <Link href={manifestHref}>Download evidence manifest</Link>
         </Button>
+        <Button asChild variant="outline">
+          <Link href="/fiscal-design/verify">Verify / compare manifest</Link>
+        </Button>
         <p className="text-muted-foreground self-center text-sm">
           Use your browser print command to print or save this brief as PDF.
         </p>
