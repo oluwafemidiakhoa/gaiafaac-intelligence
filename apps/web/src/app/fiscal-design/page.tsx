@@ -229,9 +229,14 @@ export default async function FiscalDesignPage({
           </div>
 
           {briefHref ? (
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap gap-3">
               <Button asChild variant="outline">
                 <Link href={briefHref}>Open research brief</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/fiscal-design/verify">
+                  Verify evidence manifest
+                </Link>
               </Button>
             </div>
           ) : null}

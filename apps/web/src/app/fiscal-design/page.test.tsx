@@ -149,6 +149,9 @@ describe('FiscalDesignPage', () => {
     expect(screen.getByText('faac')).toBeInTheDocument()
     expect(screen.getByText('igr')).toBeInTheDocument()
     expect(
+      screen.getByRole('link', { name: 'Verify evidence manifest' }),
+    ).toHaveAttribute('href', '/fiscal-design/verify')
+    expect(
       screen.queryByText('Use the latest comparable year'),
     ).not.toBeInTheDocument()
   })

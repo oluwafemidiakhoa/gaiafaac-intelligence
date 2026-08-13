@@ -128,6 +128,9 @@ describe('FiscalDesignBriefPage', () => {
       'href',
       `/fiscal-design/brief/manifest?state=lagos&year=2024&faacShock=-25&igrShock=-10&reserveShare=20&fingerprint=${fingerprint}&objective=Assess+revenue+resilience+under+a+severe+FAAC+decline.`,
     )
+    expect(
+      screen.getByRole('link', { name: 'Verify / compare manifest' }),
+    ).toHaveAttribute('href', '/fiscal-design/verify')
   })
 
   it('keeps a stale fingerprint on the manifest link so the endpoint can fail closed', async () => {
