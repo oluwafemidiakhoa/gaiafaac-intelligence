@@ -24,10 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Capture exact Prettier output for Fiscal Design verifier navigation
-        run: |
-          npx prettier --write apps/web/src/app/fiscal-design/page.tsx
-          git diff -- apps/web/src/app/fiscal-design/page.tsx
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
