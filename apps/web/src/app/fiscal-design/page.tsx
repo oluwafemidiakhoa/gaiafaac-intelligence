@@ -234,7 +234,9 @@ export default async function FiscalDesignPage({
                 <Link href={briefHref}>Open research brief</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/fiscal-design/verify">Verify evidence manifest</Link>
+                <Link href="/fiscal-design/verify">
+                  Verify evidence manifest
+                </Link>
               </Button>
             </div>
           ) : null}
