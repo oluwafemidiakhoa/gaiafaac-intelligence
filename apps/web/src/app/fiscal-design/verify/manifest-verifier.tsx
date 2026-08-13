@@ -274,8 +274,9 @@ export function ManifestVerifier() {
                     <div>
                       <p className="font-semibold">Superseded manifest</p>
                       <p className="text-muted-foreground mt-1 text-sm leading-6">
-                        The artifact is internally intact, but Gaia&apos;s current
-                        governed response now produces a different fingerprint.
+                        The artifact is internally intact, but Gaia&apos;s
+                        current governed response now produces a different
+                        fingerprint.
                       </p>
                     </div>
                     <StatusPill tone="demo">Superseded</StatusPill>
@@ -298,7 +299,9 @@ export function ManifestVerifier() {
                       <p className="text-muted-foreground text-xs tracking-wide uppercase">
                         Detected changes
                       </p>
-                      <p className="mt-1 font-semibold">{changeDetails.length}</p>
+                      <p className="mt-1 font-semibold">
+                        {changeDetails.length}
+                      </p>
                     </div>
                     <div className="bg-background/70 rounded-md border p-3">
                       <p className="text-muted-foreground text-xs tracking-wide uppercase">
@@ -334,8 +337,8 @@ export function ManifestVerifier() {
                       <div>
                         <p className="text-sm font-semibold">What changed</p>
                         <p className="text-muted-foreground mt-1 text-xs leading-5">
-                          Differences are grouped by governed dimension so you can
-                          see why the fingerprint moved.
+                          Differences are grouped by governed dimension so you
+                          can see why the fingerprint moved.
                         </p>
                       </div>
                       {changeDetails.length ? (
@@ -363,7 +366,9 @@ export function ManifestVerifier() {
                               </div>
                               <ul className="text-muted-foreground mt-2 space-y-2 text-sm leading-6">
                                 {details.map((detail, index) => (
-                                  <li key={`${category}-${index}`}>• {detail}</li>
+                                  <li key={`${category}-${index}`}>
+                                    • {detail}
+                                  </li>
                                 ))}
                               </ul>
                             </div>
