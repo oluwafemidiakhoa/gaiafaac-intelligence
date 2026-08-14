@@ -16,6 +16,7 @@ import {
   getFiscalEvents,
   getJurisdictionEvidenceSources,
   getJurisdictionFiscalState,
+  getJurisdictionFiscalIntelligence,
 } from '@/lib/fiscal-ledger-api'
 import { formatDate, formatNaira, humanize } from '@/lib/format'
 
@@ -48,11 +49,13 @@ export default async function JurisdictionFiscalStatePage({
 }) {
   const { code } = await params
   const canonicalCode = code.toUpperCase()
-  const [stateResult, eventResult, sourceResult] = await Promise.all([
-    getJurisdictionFiscalState(canonicalCode),
-    getFiscalEvents({ jurisdiction: canonicalCode }),
-    getJurisdictionEvidenceSources(canonicalCode),
-  ])
+  const [stateResult, eventResult, sourceResult, intelligenceResult] =
+    await Promise.all([
+      getJurisdictionFiscalState(canonicalCode),
+      getFiscalEvents({ jurisdiction: canonicalCode }),
+      getJurisdictionEvidenceSources(canonicalCode),
+      getJurisdictionFiscalIntelligence(canonicalCode),
+    ])
 
   if (!stateResult.data) {
     return (
@@ -185,6 +188,55 @@ export default async function JurisdictionFiscalStatePage({
           ))}
         </div>
       </section>
+
+      {intelligenceResult.data ? (
+        <section className="mt-10">
+          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+            Derived intelligence
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold">Deterministic metrics</h2>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Exact calculations over verified claims. Insufficient evidence is
+            never converted to zero or an estimate.
+          </p>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {intelligenceResult.data.data.metrics.map((metric) => (
+              <Card key={metric.key}>
+                <CardHeader>
+                  <CardTitle className="text-base">{metric.label}</CardTitle>
+                  <CardDescription>
+                    {metric.fiscal_period ?? 'Period unavailable'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-mono text-xl font-semibold">
+                    {metric.value === null
+                      ? 'Insufficient evidence'
+                      : metric.unit === 'percent' ||
+                          metric.unit === 'percent_cv'
+                        ? `${metric.value}%`
+                        : metric.value}
+                  </p>
+                  <p className="text-muted-foreground mt-3 text-sm">
+                    {metric.explanation}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card className="mt-5 border-dashed">
+            <CardHeader>
+              <CardTitle>
+                {intelligenceResult.data.data.resilience.index_name}
+              </CardTitle>
+              <CardDescription>
+                Not calculated ·{' '}
+                {intelligenceResult.data.data.resilience.reason}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </section>
+      ) : null}
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         <Card>

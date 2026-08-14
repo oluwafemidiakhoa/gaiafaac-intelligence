@@ -73,5 +73,16 @@ percentage from the revision record. Severity describes the lifecycle change;
 `material` for a revision means only that the documented 5% revision threshold was
 met. No event template infers cause, corruption, or misconduct.
 
-Fiscal movement classification such as FAAC spikes or debt pressure is intentionally
-deferred to Phase 4.
+Phase 4 additionally classifies a `faac_spike` or `faac_decline` only when two
+verified, unit-compatible claims cover consecutive months and the absolute change
+is at least 25%. The event records the inputs, threshold, and arithmetic; it does
+not assert a cause or imply misconduct.
+
+## Fiscal State intelligence
+
+Derived FAAC totals, month-over-month movement, six-month momentum, and population
+coefficient of variation use Decimal arithmetic over verified, unit-compatible
+claims. Totals cover published months only and are never annualized. Momentum
+requires six consecutive months; volatility requires at least three. FAAC
+dependence, debt-service pressure, and Gaia Fiscal Resilience remain unavailable
+until complete comparable evidence exists. Missing evidence is not treated as zero.

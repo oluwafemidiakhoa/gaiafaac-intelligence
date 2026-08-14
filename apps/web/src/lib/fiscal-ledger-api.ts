@@ -241,6 +241,56 @@ export const fiscalCertificateEnvelopeSchema = z.object({
   }),
 })
 
+const intelligenceMetricSchema = z.object({
+  key: z.string(),
+  status: z.enum(['calculated', 'insufficient_evidence']),
+  value: z.string().nullable(),
+  unit: z.string(),
+  label: z.string(),
+  fiscal_period: z.string().nullable(),
+  evidence_ids: z.array(z.string()),
+  explanation: z.string(),
+})
+
+const jurisdictionIntelligenceSchema = z.object({
+  fiscal_state_id: z.string(),
+  jurisdiction: jurisdictionSchema,
+  fiscal_period: z.string(),
+  effective_at: z.string(),
+  ledger_status: evidenceStatusSchema,
+  metrics: z.array(intelligenceMetricSchema),
+  resilience: z.object({
+    index_name: z.string(),
+    status: z.literal('not_calculated'),
+    score: z.null(),
+    reason: z.string(),
+    required_coverage: z.string(),
+    observed_coverage: z.string().nullable(),
+    missing_components: z.array(z.string()),
+  }),
+})
+
+export const jurisdictionIntelligenceEnvelopeSchema = z.object({
+  data: jurisdictionIntelligenceSchema,
+  evidence: z.record(z.string(), z.unknown()),
+  meta: z.object({
+    schema_version: z.string(),
+    methodology_version: z.string(),
+  }),
+})
+
+export const fiscalIntelligenceComparisonSchema = z.object({
+  data: z.object({
+    jurisdictions: z.array(jurisdictionIntelligenceSchema),
+    comparable_fiscal_period: z.string().nullable(),
+  }),
+  evidence: z.record(z.string(), z.unknown()),
+  meta: z.object({
+    schema_version: z.string(),
+    methodology_version: z.string(),
+  }),
+})
+
 export type LedgerFiscalProof = z.infer<typeof fiscalProofEnvelopeSchema>
 export type LedgerFiscalState = z.infer<typeof fiscalStateEnvelopeSchema>
 export type LedgerFiscalEvent = z.infer<typeof eventSchema>
@@ -283,6 +333,22 @@ export function getJurisdictionFiscalState(code: string) {
   return getLedgerObject(
     `/api/v1/jurisdictions/${encodeURIComponent(code)}/state`,
     fiscalStateEnvelopeSchema,
+  )
+}
+
+export function getJurisdictionFiscalIntelligence(code: string) {
+  return getLedgerObject(
+    `/api/v1/jurisdictions/${encodeURIComponent(code)}/intelligence`,
+    jurisdictionIntelligenceEnvelopeSchema,
+  )
+}
+
+export function getFiscalIntelligenceComparison(codes: string[]) {
+  const search = new URLSearchParams()
+  codes.forEach((code) => search.append('jurisdictions', code))
+  return getLedgerObject(
+    `/api/v1/intelligence/compare?${search.toString()}`,
+    fiscalIntelligenceComparisonSchema,
   )
 }
 

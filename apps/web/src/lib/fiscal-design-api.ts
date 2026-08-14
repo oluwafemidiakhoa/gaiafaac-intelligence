@@ -39,6 +39,13 @@ export const fiscalDesignSchema = z.object({
   faac_shock_pct: z.string(),
   igr_shock_pct: z.string(),
   reserve_share_pct: z.string(),
+  debt_change_pct: z.string().optional(),
+  debt_service_change_pct: z.string().optional(),
+  expenditure_change_pct: z.string().optional(),
+  capital_spending_change_pct: z.string().optional(),
+  inflation_assumption_pct: z.string().optional(),
+  scenario_gaia_id: z.string().optional(),
+  unsupported_dimensions: z.array(z.string()).optional(),
   assumptions: z.array(z.string()),
   evidence: z.array(evidenceSchema),
   candidates: z.array(candidateSchema),
@@ -69,6 +76,13 @@ export async function getFiscalDesign(
   faacShock: number,
   igrShock: number,
   reserveShare: number,
+  expanded?: {
+    debtChange: number
+    debtServiceChange: number
+    expenditureChange: number
+    capitalSpendingChange: number
+    inflationAssumption: number
+  },
 ): Promise<ApiResult<FiscalDesign>> {
   const params = new URLSearchParams({
     year: String(year),
@@ -76,6 +90,16 @@ export async function getFiscalDesign(
     igr_shock_pct: String(igrShock),
     reserve_share_pct: String(reserveShare),
   })
+  if (expanded) {
+    params.set('debt_change_pct', String(expanded.debtChange))
+    params.set('debt_service_change_pct', String(expanded.debtServiceChange))
+    params.set('expenditure_change_pct', String(expanded.expenditureChange))
+    params.set(
+      'capital_spending_change_pct',
+      String(expanded.capitalSpendingChange),
+    )
+    params.set('inflation_assumption_pct', String(expanded.inflationAssumption))
+  }
 
   try {
     const response = await fetch(

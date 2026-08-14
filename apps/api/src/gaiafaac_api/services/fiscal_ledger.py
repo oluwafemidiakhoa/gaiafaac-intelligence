@@ -46,6 +46,10 @@ from gaiafaac_api.ledger import (
     fiscal_state_id,
     gaia_object_id,
 )
+from gaiafaac_api.ledger.intelligence import (
+    DEFAULT_INTELLIGENCE_CONFIG,
+    classify_faac_monthly_change,
+)
 from gaiafaac_api.services.fiscal_institutional import evidence_history, publish_fiscal_event
 from gaiafaac_api.services.fiscal_trust import (
     claim_revisions,
@@ -305,6 +309,48 @@ def publish_faac_claim_proof(
     )
     session.add_all([claim, verification, manifest, proof])
     session.flush()
+    prior_month_claim = session.scalar(
+        select(FiscalClaim)
+        .where(
+            FiscalClaim.state_id == state.id,
+            FiscalClaim.object_type == "faac",
+            FiscalClaim.metric == "faac_net_allocation",
+            FiscalClaim.effective_at < effective_at,
+        )
+        .order_by(FiscalClaim.effective_at.desc(), FiscalClaim.published_at.desc())
+        .limit(1)
+    )
+    if (
+        prior_month_claim is not None
+        and prior_month_claim.evidence_status is EvidenceStatus.VERIFIED
+        and evidence_status is EvidenceStatus.VERIFIED
+        and prior_month_claim.unit == claim.unit
+        and prior_month_claim.currency == claim.currency
+    ):
+        classification = classify_faac_monthly_change(
+            previous_period=prior_month_claim.fiscal_period,
+            previous_value=prior_month_claim.value_text,
+            current_period=claim.fiscal_period,
+            current_value=claim.value_text,
+        )
+        if classification is not None:
+            publish_fiscal_event(
+                session,
+                state_id=state.id,
+                event_type=str(classification["event_type"]),
+                severity=FiscalEventSeverity.MATERIAL,
+                effective_at=effective_at,
+                detected_at=published_at,
+                evidence_status=EvidenceStatus.VERIFIED,
+                evidence_ids=[prior_month_claim.gaia_id, claim.gaia_id],
+                calculation={
+                    key: value
+                    for key, value in classification.items()
+                    if key not in {"event_type", "explanation"}
+                },
+                explanation=str(classification["explanation"]),
+                methodology_version=(DEFAULT_INTELLIGENCE_CONFIG.event_methodology_version),
+            )
     register_evidence_source(
         session,
         source=source,

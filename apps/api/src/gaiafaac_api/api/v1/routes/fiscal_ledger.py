@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.enums import EvidenceStatus, FiscalEventSeverity
 from gaiafaac_api.database.session import get_session
+from gaiafaac_api.fiscal_intelligence_schemas import (
+    FiscalComparisonEnvelope,
+    JurisdictionIntelligenceEnvelope,
+)
 from gaiafaac_api.fiscal_ledger_schemas import (
     EvidenceManifestResponse,
     EvidenceSourceRegistryEnvelope,
@@ -17,6 +21,10 @@ from gaiafaac_api.fiscal_ledger_schemas import (
 )
 from gaiafaac_api.ledger import canonical_sha256
 from gaiafaac_api.services.fiscal_institutional import fiscal_events, get_fiscal_certificate
+from gaiafaac_api.services.fiscal_intelligence import (
+    compare_jurisdictions,
+    jurisdiction_intelligence,
+)
 from gaiafaac_api.services.fiscal_ledger import (
     METHODOLOGY_VERSION,
     get_fiscal_proof_by_gaia_id,
@@ -27,6 +35,48 @@ from gaiafaac_api.services.fiscal_trust import evidence_sources
 
 router = APIRouter(tags=["fiscal ledger"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
+
+
+@router.get(
+    "/jurisdictions/{code}/intelligence",
+    response_model=JurisdictionIntelligenceEnvelope,
+    summary="Deterministic derived metrics for a published Fiscal State",
+)
+def jurisdiction_fiscal_intelligence(
+    code: str,
+    session: DatabaseSession,
+    as_of: Annotated[date | datetime | None, Query()] = None,
+) -> JurisdictionIntelligenceEnvelope:
+    try:
+        result = jurisdiction_intelligence(session, jurisdiction_code=code, as_of=as_of)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published Fiscal State exists for this jurisdiction and date.",
+        )
+    return result
+
+
+@router.get(
+    "/intelligence/compare",
+    response_model=FiscalComparisonEnvelope,
+    summary="Compare deterministic Fiscal State intelligence across jurisdictions",
+)
+def fiscal_intelligence_comparison(
+    session: DatabaseSession,
+    jurisdictions: Annotated[list[str], Query(min_length=2, max_length=6)],
+    as_of: Annotated[date | datetime | None, Query()] = None,
+) -> FiscalComparisonEnvelope:
+    try:
+        return compare_jurisdictions(session, jurisdiction_codes=jurisdictions, as_of=as_of)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
 
 
 @router.get(

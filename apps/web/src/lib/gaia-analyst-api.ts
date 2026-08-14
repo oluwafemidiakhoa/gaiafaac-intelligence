@@ -8,10 +8,13 @@ const analystEvidenceSchema = z.object({
   metric: z.string(),
   reference_path: z.string().nullable(),
   reference_label: z.string().nullable(),
-  evidence_domain: z.enum(['faac', 'igr']).default('faac'),
+  evidence_domain: z.enum(['faac', 'igr', 'ledger']).default('faac'),
   period_label: z.string().nullable().optional(),
   source_organization: z.string().nullable().optional(),
   source_sha256: z.string().nullable().optional(),
+  gaia_object_id: z.string().nullable().optional(),
+  evidence_status: z.string().nullable().optional(),
+  relevant_date: z.string().nullable().optional(),
 })
 
 const gaiaAnalystSchema = z.object({
@@ -30,6 +33,7 @@ const gaiaAnalystSchema = z.object({
     'igr_top',
     'igr_lowest',
     'igr_compare',
+    'ledger_metric',
     'unsupported',
   ]),
   status: z.enum(['answered', 'insufficient_data', 'unsupported']),

@@ -10,6 +10,8 @@ GET  /api/v1/fiscal-states/{gaia_id}
 GET  /api/v1/proofs/{gaia_id}
 GET  /api/v1/events?jurisdiction=&event_type=&severity=&evidence_status=&date_from=&date_to=
 GET  /api/v1/jurisdictions/{code}/events
+GET  /api/v1/jurisdictions/{code}/intelligence?as_of=
+GET  /api/v1/intelligence/compare?jurisdictions=NG-LA&jurisdictions=NG-KN&as_of=
 GET  /api/v1/certificates/{gaia_id}
 POST /api/v1/verify
 ```

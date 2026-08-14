@@ -80,6 +80,8 @@ export default async function FiscalEventsPage({
                 <option value="fiscal_state_changed">
                   Fiscal State changed
                 </option>
+                <option value="faac_spike">FAAC spike</option>
+                <option value="faac_decline">FAAC decline</option>
               </select>
             </label>
             <label className="grid gap-1.5 text-xs font-medium">

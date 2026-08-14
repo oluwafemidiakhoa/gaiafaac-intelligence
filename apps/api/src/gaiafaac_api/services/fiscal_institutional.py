@@ -49,6 +49,8 @@ LIFECYCLE_EVENT_TYPES = {
     "evidence_downgraded",
     "cross_source_conflict",
     "fiscal_state_changed",
+    "faac_spike",
+    "faac_decline",
 }
 
 
@@ -88,7 +90,7 @@ def publish_fiscal_event(
     """Publish a deterministic lifecycle event from explicit retained evidence."""
 
     if event_type not in LIFECYCLE_EVENT_TYPES:
-        raise ValueError("Phase 3 only publishes supported fiscal evidence lifecycle events.")
+        raise ValueError("Unsupported deterministic fiscal event type.")
     if not explanation.strip():
         raise ValueError("Fiscal events require a deterministic explanation.")
     state = session.get(State, state_id)
@@ -197,7 +199,8 @@ def fiscal_events(
         evidence=FiscalEventStreamEvidence(
             record_count=len(events),
             meaning=(
-                "Events describe recorded evidence lifecycle changes. They do not infer cause, "
+                "Events describe recorded evidence changes or threshold classifications. "
+                "They do not infer cause, "
                 "misconduct, or an unstated fiscal value."
             ),
         ),

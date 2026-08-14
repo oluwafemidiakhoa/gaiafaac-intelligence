@@ -5,6 +5,7 @@ import {
   getFiscalEvents,
   getJurisdictionEvidenceSources,
   getJurisdictionFiscalState,
+  getJurisdictionFiscalIntelligence,
 } from '@/lib/fiscal-ledger-api'
 
 import JurisdictionFiscalStatePage from './page'
@@ -13,6 +14,7 @@ vi.mock('@/lib/fiscal-ledger-api', () => ({
   getFiscalEvents: vi.fn(),
   getJurisdictionEvidenceSources: vi.fn(),
   getJurisdictionFiscalState: vi.fn(),
+  getJurisdictionFiscalIntelligence: vi.fn(),
 }))
 
 const hash = 'a'.repeat(64)
@@ -20,6 +22,10 @@ const proofId = 'GF-FAAC-NG-LA-202606-FF3373'
 
 describe('JurisdictionFiscalStatePage', () => {
   it('renders proof-linked claims and keeps missing domains unavailable', async () => {
+    vi.mocked(getJurisdictionFiscalIntelligence).mockResolvedValue({
+      data: null,
+      error: 'Unavailable',
+    })
     vi.mocked(getJurisdictionFiscalState).mockResolvedValue({
       data: {
         data: {

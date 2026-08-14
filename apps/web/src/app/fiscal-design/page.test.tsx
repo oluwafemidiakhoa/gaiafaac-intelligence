@@ -23,7 +23,7 @@ describe('FiscalDesignPage', () => {
       screen.getByText('Start with a governed evidence boundary'),
     ).toBeInTheDocument()
     expect(screen.getByDisplayValue('-20')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('0')).toBeInTheDocument()
+    expect(screen.getAllByDisplayValue('0')).toHaveLength(6)
     expect(screen.getByDisplayValue('10')).toBeInTheDocument()
     expect(getFiscalDesign).not.toHaveBeenCalled()
   })

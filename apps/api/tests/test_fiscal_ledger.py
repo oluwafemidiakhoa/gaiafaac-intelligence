@@ -11,6 +11,7 @@ from gaiafaac_api.api.v1.routes.fiscal_ledger import (
     fiscal_event_stream,
     fiscal_proof_by_id,
     fiscal_state_by_id,
+    jurisdiction_fiscal_intelligence,
     jurisdiction_fiscal_state,
     verify_fiscal_artifact,
 )
@@ -119,6 +120,7 @@ def test_proof_and_fiscal_state_are_deterministic_and_do_not_infer_gaps(session:
         claim_gaia_ids=[proof.gaia_id],
     )
     state_detail = get_jurisdiction_fiscal_state(session, jurisdiction_code="NG-LA")
+    intelligence = jurisdiction_fiscal_intelligence("NG-LA", session)
 
     assert fiscal_state.fiscal_state_id.startswith("GFS-NG-LA-20260814-")
     assert duplicate_state.fiscal_state_id == fiscal_state.fiscal_state_id
@@ -134,6 +136,10 @@ def test_proof_and_fiscal_state_are_deterministic_and_do_not_infer_gaps(session:
         "score": None,
         "status": "insufficient_evidence",
     }
+    metrics = {metric.key: metric for metric in intelligence.data.metrics}
+    assert metrics["faac_published_period_total"].value == "60348388366.77"
+    assert metrics["faac_month_over_month_change"].status == "insufficient_evidence"
+    assert intelligence.data.resilience.status == "not_calculated"
 
 
 def test_published_ledger_objects_are_immutable(session: Session) -> None:

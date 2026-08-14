@@ -230,6 +230,35 @@ export default async function GaiaAnalystPage({
                         </div>
                       ) : null}
 
+                      {item.gaia_object_id ? (
+                        <div className="border-border mt-4 grid gap-2 border-t pt-4 text-xs sm:grid-cols-3">
+                          <div>
+                            <p className="text-muted-foreground">
+                              Gaia object ID
+                            </p>
+                            <p className="mt-1 font-mono break-all">
+                              {item.gaia_object_id}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">
+                              Evidence status
+                            </p>
+                            <p className="mt-1 font-medium">
+                              {item.evidence_status ?? 'Unavailable'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">
+                              Relevant date
+                            </p>
+                            <p className="mt-1 font-mono">
+                              {item.relevant_date ?? 'Unavailable'}
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
+
                       {item.reference_path && item.reference_label ? (
                         <Link
                           href={item.reference_path}
