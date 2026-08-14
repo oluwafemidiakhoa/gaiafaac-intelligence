@@ -40,6 +40,10 @@ const changeCategoryLabels: Record<string, string> = {
 
 export function ManifestVerifier() {
   const [manifestText, setManifestText] = useState('')
+  const [selectedManifestName, setSelectedManifestName] = useState<string | null>(
+    null,
+  )
+  const [fileError, setFileError] = useState<string | null>(null)
   const [verification, setVerification] = useState<ManifestVerification | null>(
     null,
   )
@@ -47,6 +51,33 @@ export function ManifestVerifier() {
   const [currentEvidence, setCurrentEvidence] =
     useState<CurrentEvidenceResult | null>(null)
   const [isCheckingCurrent, setIsCheckingCurrent] = useState(false)
+
+  function resetVerificationState() {
+    setVerification(null)
+    setCurrentEvidence(null)
+  }
+
+  async function loadManifestFile(file: File | null) {
+    if (!file) return
+
+    setFileError(null)
+    resetVerificationState()
+
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      setSelectedManifestName(null)
+      setFileError('Choose a .json Gaia Fiscal Design evidence manifest.')
+      return
+    }
+
+    try {
+      const text = await file.text()
+      setManifestText(text)
+      setSelectedManifestName(file.name)
+    } catch {
+      setSelectedManifestName(null)
+      setFileError('The selected manifest could not be read in this browser.')
+    }
+  }
 
   async function verify() {
     setIsVerifying(true)
@@ -123,20 +154,56 @@ export function ManifestVerifier() {
     <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
       <Card>
         <CardHeader>
-          <CardTitle>Paste evidence manifest</CardTitle>
+          <CardTitle>Load evidence manifest</CardTitle>
           <CardDescription>
-            Verification happens in your browser. Gaia recomputes SHA-256 over
-            the embedded canonical payload and compares it with the manifest
-            fingerprint.
+            Choose a downloaded Gaia manifest or paste its JSON below.
+            Verification stays in your browser until you explicitly run the
+            optional current-evidence comparison.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="rounded-lg border border-dashed p-4">
+            <label className="text-sm font-medium" htmlFor="manifest-file">
+              Choose manifest file
+            </label>
+            <input
+              id="manifest-file"
+              type="file"
+              accept="application/json,.json"
+              className="border-input bg-background mt-2 block w-full rounded-md border px-3 py-2 text-sm"
+              onChange={(event) => {
+                void loadManifestFile(event.target.files?.[0] ?? null)
+              }}
+            />
+            <p className="text-muted-foreground mt-2 text-xs leading-5">
+              The file is read locally in your browser. Selecting it does not
+              upload the manifest to Gaia.
+            </p>
+            {selectedManifestName ? (
+              <p className="mt-3 text-sm font-medium">
+                Loaded: {selectedManifestName}
+              </p>
+            ) : null}
+            {fileError ? (
+              <p className="mt-3 text-sm font-medium">{fileError}</p>
+            ) : null}
+          </div>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="border-border h-px flex-1 border-t" />
+            <span className="text-muted-foreground text-xs font-medium uppercase">
+              Or paste JSON
+            </span>
+            <div className="border-border h-px flex-1 border-t" />
+          </div>
+
           <textarea
             value={manifestText}
             onChange={(event) => {
               setManifestText(event.target.value)
-              setVerification(null)
-              setCurrentEvidence(null)
+              setSelectedManifestName(null)
+              setFileError(null)
+              resetVerificationState()
             }}
             placeholder='{"manifest_version":"gaia-fiscal-design-evidence-manifest-v1",...}'
             className="border-input bg-background min-h-80 w-full rounded-md border p-3 font-mono text-xs leading-5"
@@ -165,7 +232,8 @@ export function ManifestVerifier() {
         <CardContent>
           {!verification ? (
             <p className="text-muted-foreground text-sm leading-6">
-              Paste a Gaia Fiscal Design evidence manifest and run verification.
+              Load or paste a Gaia Fiscal Design evidence manifest and run
+              verification.
             </p>
           ) : null}
 
@@ -223,7 +291,7 @@ export function ManifestVerifier() {
                   <p className="text-muted-foreground mt-2 text-xs leading-5">
                     This optional check sends only the scenario identifiers and
                     fingerprint needed to recompute the current governed brief.
-                    Change details are calculated locally against the pasted
+                    Change details are calculated locally against the loaded
                     manifest.
                   </p>
                 </div>
@@ -274,9 +342,8 @@ export function ManifestVerifier() {
                     <div>
                       <p className="font-semibold">Superseded manifest</p>
                       <p className="text-muted-foreground mt-1 text-sm leading-6">
-                        The artifact is internally intact, but Gaia&apos;s
-                        current governed response now produces a different
-                        fingerprint.
+                        The artifact is internally intact, but Gaia&apos;s current
+                        governed response now produces a different fingerprint.
                       </p>
                     </div>
                     <StatusPill tone="demo">Superseded</StatusPill>
@@ -299,9 +366,7 @@ export function ManifestVerifier() {
                       <p className="text-muted-foreground text-xs tracking-wide uppercase">
                         Detected changes
                       </p>
-                      <p className="mt-1 font-semibold">
-                        {changeDetails.length}
-                      </p>
+                      <p className="mt-1 font-semibold">{changeDetails.length}</p>
                     </div>
                     <div className="bg-background/70 rounded-md border p-3">
                       <p className="text-muted-foreground text-xs tracking-wide uppercase">
@@ -337,8 +402,8 @@ export function ManifestVerifier() {
                       <div>
                         <p className="text-sm font-semibold">What changed</p>
                         <p className="text-muted-foreground mt-1 text-xs leading-5">
-                          Differences are grouped by governed dimension so you
-                          can see why the fingerprint moved.
+                          Differences are grouped by governed dimension so you can
+                          see why the fingerprint moved.
                         </p>
                       </div>
                       {changeDetails.length ? (
@@ -366,9 +431,7 @@ export function ManifestVerifier() {
                               </div>
                               <ul className="text-muted-foreground mt-2 space-y-2 text-sm leading-6">
                                 {details.map((detail, index) => (
-                                  <li key={`${category}-${index}`}>
-                                    • {detail}
-                                  </li>
+                                  <li key={`${category}-${index}`}>• {detail}</li>
                                 ))}
                               </ul>
                             </div>
