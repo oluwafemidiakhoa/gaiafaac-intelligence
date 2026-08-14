@@ -39,6 +39,13 @@ export default async function FiscalEventsPage({
     dateTo: filters.date_to,
   })
   const events = result.data?.data ?? []
+  const activeFilterCount = Object.values(filters).filter(Boolean).length
+  const hasFilters = activeFilterCount > 0
+  const emptyMessage = result.error
+    ? 'The fiscal event ledger is temporarily unavailable.'
+    : hasFilters
+      ? 'No fiscal evidence lifecycle events match the current filters. Clear one or more filters to broaden the search.'
+      : 'No published fiscal evidence lifecycle events are available yet.'
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -130,13 +137,18 @@ export default async function FiscalEventsPage({
                 className="border-input bg-background h-9 rounded-md border px-3 text-sm"
               />
             </label>
-            <div className="flex gap-2 md:col-span-3 xl:col-span-6">
+            <div className="flex flex-wrap items-center gap-2 md:col-span-3 xl:col-span-6">
               <Button type="submit" size="sm">
                 Apply filters
               </Button>
               <Button asChild variant="outline" size="sm">
                 <Link href="/events">Clear</Link>
               </Button>
+              {hasFilters ? (
+                <span className="text-muted-foreground text-xs">
+                  {activeFilterCount} active {activeFilterCount === 1 ? 'filter' : 'filters'}
+                </span>
+              ) : null}
             </div>
           </form>
         </CardContent>
@@ -192,13 +204,15 @@ export default async function FiscalEventsPage({
             ))}
           </ol>
         ) : (
-          <DataUnavailable message="No fiscal evidence lifecycle events match these filters." />
+          <DataUnavailable message={emptyMessage} />
         )}
       </div>
 
       <p className="text-muted-foreground mt-6 text-xs leading-5">
-        {result.data?.evidence.meaning ??
-          'No event metadata is available. No causal explanation has been inferred.'}
+        {result.error
+          ? 'The event service did not return ledger metadata. No event records have been fabricated.'
+          : (result.data?.evidence.meaning ??
+            'No event metadata is available. No causal explanation has been inferred.')}
       </p>
     </div>
   )
