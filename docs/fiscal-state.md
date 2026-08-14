@@ -11,11 +11,12 @@ Each state stores:
   and liabilities;
 - claim Gaia IDs rather than copied or inferred values;
 - source-document hashes;
-- nullable evidence coverage and Evidence Integrity results;
+- versioned Evidence Coverage and Evidence Integrity results with nullable components;
 - schema and methodology versions;
 - an immutable manifest hash and `previous_state_id`.
 
-Missing domains are `unavailable`, never zero. Phase 1 does not calculate evidence
-coverage or Evidence Integrity, so both return `score: null` with
-`status: insufficient_evidence`. New information creates a new Fiscal State; reads
-support exact IDs and point-in-time `as_of` selection.
+Missing domains are `unavailable`, never zero. Coverage is calculated from explicit
+domain statuses under `gaia-evidence-coverage-v1`. Evidence Integrity is calculated
+only when its documented minimum evidence exists; missing components remain
+`insufficient_evidence`. New information creates a new Fiscal State; reads support
+exact IDs and inclusive point-in-time `as_of` selection by date or timestamp.

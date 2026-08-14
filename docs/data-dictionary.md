@@ -26,6 +26,10 @@ the storage contract; the migration is authoritative.
 | `evidence_manifests`          | Versioned canonical JSON payloads and their deterministic SHA-256 hashes.                                                                                 |
 | `fiscal_proofs`               | Published portable proof identity linking one claim to one manifest.                                                                                      |
 | `fiscal_states`               | Immutable jurisdiction snapshots with domain availability, source lineage, previous-state reference, and manifest.                                        |
+| `evidence_sources`            | Versioned source-registry records by document, jurisdiction, and fiscal domain with workflow and revision lineage.                                        |
+| `claim_revisions`             | Immutable old/new claim links with exact delta, optional percentage/materiality, reason, and methodology.                                                 |
+| `evidence_conflicts`          | Explicit disagreement identity, scope, status, explanation, timestamps, and methodology.                                                                  |
+| `evidence_conflict_claims`    | Normalized participants linking every retained conflicting claim to its conflict object.                                                                  |
 
 ## Publication safety
 

@@ -89,14 +89,36 @@ sorts object keys, and rejects binary floating point. Browser verification imple
 the same canonical object ordering for proof manifests while preserving the existing
 Fiscal Design v1 `JSON.stringify(payload)` behavior.
 
-### Phase 1 assessment
+## Gaia Fiscal Ledger trust layer
+
+Phase 2 remains inside the governed publication boundary:
+
+```text
+approved source + published claim
+  -> versioned evidence-source registry record
+  -> optional immutable claim revision
+  -> optional explicit conflict + participants
+  -> deterministic coverage + Evidence Integrity
+  -> immutable Fiscal State v1.1
+  -> historical state and source-registry APIs
+```
+
+Trust calculations are pure `Decimal` functions configured in
+`gaiafaac_api.ledger.trust`. Conflict detection is not inferred from narrative or an
+LLM: a service must explicitly register claims that share jurisdiction, domain,
+period, and metric but have different retained values. Reads do not recalculate old
+states, so historical methodology and results remain reproducible.
+
+### Phase 2 assessment
 
 - **Strengths retained:** exact money, distinct fiscal dates, source SHA-256 lineage,
   human approval, deterministic services, and fail-closed missing data.
-- **Debt addressed:** durable Gaia IDs, stored manifests/proofs/states, schema and
-  methodology versions, one server canonicalization utility, historical state reads.
-- **Remaining gaps:** evidence coverage, Evidence Integrity, conflict resolution,
-  automated revision workflows, and production backfill belong to Phase 2.
-- **Primary migration risk:** assigning ledger status without sufficient evidence.
-  Therefore the migration creates no claims or states, and Phase 1 reports coverage
-  and integrity as `insufficient_evidence` rather than inventing scores.
+- **Debt addressed:** deterministic coverage/integrity, immutable revision records,
+  explicit conflict participants, richer source metadata, and inclusive date history.
+- **Reusable foundation:** Phase 1 claims, manifests, proofs, states, canonical hashing,
+  and approval integration are extended rather than replaced.
+- **Remaining gaps:** conflict-resolution governance and UI, historical backfill,
+  evidence timelines, events, and certificates remain later work.
+- **Primary migration risk:** implying quality where evidence is absent. Component
+  scores therefore remain `insufficient_evidence` until their documented inputs exist;
+  the migration creates no synthetic registry, revision, conflict, or state records.

@@ -12,5 +12,13 @@ retain `manifest_version` and `canonicalization_version`.
 - Historical reads select the latest Fiscal State whose `effective_at` is on or before
   the requested `as_of` timestamp.
 
+Phase 2 publishes Fiscal State schema `1.1.0`, state manifest
+`gaia-fiscal-state-manifest-v2`, ledger methodology `1.1.0`, coverage methodology
+`gaia-evidence-coverage-v1`, and integrity methodology
+`gaia-evidence-integrity-v1`. Fiscal Proof schema and manifest remain at `1.0.0` and
+`gaia-fiscal-proof-manifest-v1`; their canonical payload and browser verification
+semantics are unchanged. The verification endpoint continues to accept stored state
+manifest v1 objects.
+
 The initial migration does not backfill IDs because doing so without a reviewed
 publication process could overstate legacy verification.

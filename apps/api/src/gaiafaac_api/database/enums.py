@@ -23,6 +23,12 @@ class EvidenceStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class EvidenceConflictStatus(StrEnum):
+    UNRESOLVED = "unresolved"
+    RESOLVED = "resolved"
+    DISMISSED = "dismissed"
+
+
 class SourceStatus(StrEnum):
     PENDING = "pending"
     REGISTERED = "registered"

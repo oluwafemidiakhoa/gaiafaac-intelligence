@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -7,16 +7,19 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.fiscal_ledger_schemas import (
     EvidenceManifestResponse,
+    EvidenceSourceRegistryEnvelope,
     FiscalArtifactVerificationResponse,
     FiscalProofEnvelope,
     FiscalStateEnvelope,
 )
 from gaiafaac_api.ledger import canonical_sha256
 from gaiafaac_api.services.fiscal_ledger import (
+    METHODOLOGY_VERSION,
     get_fiscal_proof_by_gaia_id,
     get_fiscal_state_by_id,
     get_jurisdiction_fiscal_state,
 )
+from gaiafaac_api.services.fiscal_trust import evidence_sources
 
 router = APIRouter(tags=["fiscal ledger"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -30,7 +33,7 @@ DatabaseSession = Annotated[Session, Depends(get_session)]
 def jurisdiction_fiscal_state(
     code: str,
     session: DatabaseSession,
-    as_of: Annotated[datetime | None, Query()] = None,
+    as_of: Annotated[date | datetime | None, Query()] = None,
 ) -> FiscalStateEnvelope:
     try:
         result = get_jurisdiction_fiscal_state(session, jurisdiction_code=code, as_of=as_of)
@@ -73,6 +76,55 @@ def fiscal_proof_by_id(gaia_id: str, session: DatabaseSession) -> FiscalProofEnv
     return result
 
 
+@router.get(
+    "/evidence-sources",
+    response_model=EvidenceSourceRegistryEnvelope,
+    summary="Browse the versioned Gaia evidence source registry",
+)
+def evidence_source_registry(
+    session: DatabaseSession,
+    jurisdiction: Annotated[str | None, Query(min_length=2, max_length=16)] = None,
+    publisher: Annotated[str | None, Query(min_length=2, max_length=200)] = None,
+    fiscal_domain: Annotated[str | None, Query(min_length=2, max_length=40)] = None,
+) -> EvidenceSourceRegistryEnvelope:
+    items = evidence_sources(
+        session,
+        jurisdiction_code=jurisdiction,
+        publisher=publisher,
+        fiscal_domain=fiscal_domain,
+    )
+    return EvidenceSourceRegistryEnvelope(
+        data=items,
+        evidence={
+            "record_count": len(items),
+            "meaning": (
+                "Registry records describe Gaia's retained source lineage and workflow state; "
+                "they do not certify the originating publisher's claims as true."
+            ),
+        },
+        meta={"schema_version": "1.1.0", "methodology_version": METHODOLOGY_VERSION},
+    )
+
+
+@router.get(
+    "/jurisdictions/{code}/evidence",
+    response_model=EvidenceSourceRegistryEnvelope,
+    summary="Evidence sources retained for one jurisdiction",
+)
+def jurisdiction_evidence_sources(
+    code: str,
+    session: DatabaseSession,
+    publisher: Annotated[str | None, Query(min_length=2, max_length=200)] = None,
+    fiscal_domain: Annotated[str | None, Query(min_length=2, max_length=40)] = None,
+) -> EvidenceSourceRegistryEnvelope:
+    return evidence_source_registry(
+        session,
+        jurisdiction=code,
+        publisher=publisher,
+        fiscal_domain=fiscal_domain,
+    )
+
+
 @router.post(
     "/verify",
     response_model=FiscalArtifactVerificationResponse,
@@ -84,6 +136,7 @@ def verify_fiscal_artifact(
     supported_versions = {
         "gaia-fiscal-proof-manifest-v1",
         "gaia-fiscal-state-manifest-v1",
+        "gaia-fiscal-state-manifest-v2",
     }
     if manifest.manifest_version not in supported_versions:
         raise HTTPException(
