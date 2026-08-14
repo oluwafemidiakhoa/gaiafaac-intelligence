@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 const navigation = [
+  { href: '/events', label: 'Fiscal Events' },
   { href: '/gaia-analyst', label: 'Gaia Analyst' },
   { href: '/fiscal-design', label: 'Fiscal Design Lab' },
   { href: '/fiscal-watch', label: 'Fiscal Watch' },
@@ -9,7 +10,7 @@ const navigation = [
   { href: '/live', label: 'Live data' },
   { href: '/insights', label: 'Insights' },
   { href: '/overview', label: 'Overview' },
-  { href: '/states', label: 'States' },
+  { href: '/states', label: 'Jurisdictions' },
   { href: '/compare', label: 'Compare' },
   { href: '/sources', label: 'Sources' },
   { href: '/methodology', label: 'Methodology' },
@@ -29,9 +30,7 @@ export function SiteHeader() {
           <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md font-mono text-sm font-semibold">
             GF
           </span>
-          <span className="font-semibold tracking-tight">
-            GaiaFAAC Intelligence
-          </span>
+          <span className="font-semibold tracking-tight">GaiaFAAC</span>
         </Link>
         <nav
           className="order-last flex w-full items-center gap-5 overflow-x-auto pt-1 md:order-none md:w-auto md:gap-7 md:pt-0"

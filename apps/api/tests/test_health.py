@@ -41,7 +41,12 @@ def test_openapi_exposes_versioned_health_endpoint() -> None:
         "/api/v1/compare",
         "/api/v1/sources",
         "/api/v1/jurisdictions/{code}/state",
+        "/api/v1/jurisdictions/{code}/evidence",
+        "/api/v1/evidence-sources",
         "/api/v1/proofs/{gaia_id}",
+        "/api/v1/events",
+        "/api/v1/jurisdictions/{code}/events",
+        "/api/v1/certificates/{gaia_id}",
         "/api/v1/fiscal-states/{gaia_id}",
         "/api/v1/verify",
     } <= set(schema["paths"])

@@ -1,21 +1,40 @@
 # Gaia Evidence Integrity
 
-Evidence Integrity is a future deterministic measure of Gaia's evidence quality and
+Evidence Integrity is a deterministic measure of Gaia's evidence quality and
 completeness. It is not a credit rating, fiscal-health score, default probability, or
-assessment of misconduct.
+assessment of misconduct. Phase 2 methodology is `gaia-evidence-integrity-v1`.
 
-Phase 1 provides the inputs and response shape but intentionally does not calculate a
-score. Responses contain:
+The configured component weights are:
+
+| Component              | Weight | Deterministic input                                                                                      |
+| ---------------------- | -----: | -------------------------------------------------------------------------------------------------------- |
+| Source authenticity    |    20% | Share of included claims whose retained source is approved.                                              |
+| Reconciliation         |    20% | Share of applicable claims whose exact gross-minus-deductions calculation reconciles.                    |
+| Human verification     |    20% | Share of included claims with recorded human review.                                                     |
+| Temporal completeness  |    10% | Distinct monthly FAAC periods divided by elapsed months in the state year, capped at 100%.               |
+| Domain completeness    |    15% | The versioned Evidence Coverage result.                                                                  |
+| Cross-source agreement |     5% | 100 with at least two publishers and no conflict; 0 with an unresolved conflict; otherwise insufficient. |
+| Data freshness         |    10% | Mean linear freshness over a 90-day publication window.                                                  |
+
+An overall score is calculated only when source authenticity, human verification,
+and domain completeness are available and the available component weight is at least
+75%. Available weights are renormalized; unavailable components are never converted
+to zero. Component and overall arithmetic use `Decimal`.
+
+Insufficient results remain explicit:
 
 ```json
 {
   "score": null,
   "status": "insufficient_evidence",
-  "methodology_version": "1.0.0"
+  "methodology_version": "gaia-evidence-integrity-v1"
 }
 ```
 
-Phase 2 must publish a versioned methodology for source authenticity,
-reconciliation, human verification, temporal completeness, domain completeness,
-cross-source agreement, and freshness before any score is exposed. Missing component
-evidence must remain insufficient rather than becoming zero.
+An unresolved, explicitly recorded source conflict produces zero only for the
+cross-source-agreement component. It does not silently select either claim.
+
+Fiscal Certificates and jurisdiction pages display the exact result stored on their
+Fiscal State. They do not recalculate old scores. A null score is rendered as
+`insufficient evidence`, never as zero, and the result is never presented as a credit
+rating.

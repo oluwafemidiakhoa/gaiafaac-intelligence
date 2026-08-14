@@ -58,6 +58,22 @@ const proof = {
       payload: {},
     },
     disclaimer: 'This does not prove government data is true.',
+    revisions: [],
+    conflicts: [],
+    history: [
+      {
+        entry_type: 'human_verified' as const,
+        occurred_at: '2026-08-14T10:30:00Z',
+        label: 'Human verification recorded.',
+        evidence_ids: [gaiaId],
+      },
+      {
+        entry_type: 'published' as const,
+        occurred_at: '2026-08-14T10:30:00Z',
+        label: 'Immutable Fiscal Proof published.',
+        evidence_ids: [gaiaId],
+      },
+    ],
   },
   meta: { schema_version: '1.0.0' as const, methodology_version: '1.0.0' },
 }
@@ -84,6 +100,8 @@ describe('LedgerFiscalProofPage', () => {
     expect(
       screen.getByText('This does not prove government data is true.'),
     ).toBeVisible()
+    expect(screen.getByText('Human verification recorded.')).toBeVisible()
+    expect(screen.getByText('Immutable Fiscal Proof published.')).toBeVisible()
     expect(
       screen.getByRole('link', { name: 'Download manifest JSON' }),
     ).toHaveAttribute('href', `/proofs/${gaiaId}/manifest`)

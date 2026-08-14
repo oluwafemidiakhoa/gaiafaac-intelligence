@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { formatNaira } from '@/lib/format'
+import { getFiscalIntelligenceComparison } from '@/lib/fiscal-ledger-api'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = { title: 'Compare states' }
@@ -41,6 +42,12 @@ export default async function ComparePage({
   const compared = data
     ? directory.filter((a) => selected.includes(a.state_slug))
     : []
+  const intelligenceResult =
+    selectionIsValid && compared.length === selected.length
+      ? await getFiscalIntelligenceComparison(
+          compared.map((state) => `NG-${state.state_code}`),
+        )
+      : { data: null, error: null }
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -147,6 +154,59 @@ export default async function ComparePage({
               </CardContent>
             </Card>
           )}
+          {selectionIsValid && intelligenceResult.data ? (
+            <Card className="mt-8">
+              <CardHeader>
+                <CardTitle>Fiscal State intelligence</CardTitle>
+                <CardDescription>
+                  Deterministic metrics from immutable Fiscal States. Missing
+                  evidence remains unavailable; jurisdictions are not ranked.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <table className="w-full min-w-4xl text-left text-sm">
+                  <thead>
+                    <tr className="border-border border-b">
+                      <th className="py-3 pr-5 font-medium">Jurisdiction</th>
+                      <th className="py-3 pr-5 font-medium">Period</th>
+                      <th className="py-3 pr-5 font-medium">Monthly change</th>
+                      <th className="py-3 pr-5 font-medium">Momentum</th>
+                      <th className="py-3 font-medium">Volatility</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {intelligenceResult.data.data.jurisdictions.map((item) => {
+                      const metric = (key: string) =>
+                        item.metrics.find((entry) => entry.key === key)
+                          ?.value ?? 'Unavailable'
+                      return (
+                        <tr
+                          key={item.fiscal_state_id}
+                          className="border-border border-b last:border-0"
+                        >
+                          <td className="py-4 pr-5 font-medium">
+                            {item.jurisdiction.name}
+                          </td>
+                          <td className="py-4 pr-5 font-mono">
+                            {item.fiscal_period}
+                          </td>
+                          <td className="py-4 pr-5 font-mono">
+                            {metric('faac_month_over_month_change')}
+                          </td>
+                          <td className="py-4 pr-5 font-mono">
+                            {metric('faac_momentum')}
+                          </td>
+                          <td className="py-4 font-mono">
+                            {metric('faac_volatility')}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
+          ) : null}
         </>
       )}
     </div>

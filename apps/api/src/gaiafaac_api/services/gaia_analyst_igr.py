@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.models import State
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystEvidence, GaiaAnalystResponse
 from gaiafaac_api.igr_schemas import PublishedIgrRecord
+from gaiafaac_api.services.fiscal_intelligence import jurisdiction_intelligence
 from gaiafaac_api.services.gaia_analyst import gaia_analyst as gaia_analyst_fa
 from gaiafaac_api.services.published_igr import latest_published_igr, published_igr
 
@@ -364,6 +365,74 @@ def _igr_answer(session: Session, *, question: str, year: int) -> GaiaAnalystRes
 
 
 def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystResponse:
+    tokens = _tokens(question)
+    metric_keys = {
+        "dependence": "faac_dependence",
+        "momentum": "faac_momentum",
+        "volatility": "faac_volatility",
+        "pressure": "debt_service_pressure",
+        "coverage": "faac_published_period_total",
+    }
+    requested_key = next((value for key, value in metric_keys.items() if key in tokens), None)
+    ledger_language = bool(tokens & {"ledger", "evidence", "dependence", "resilience", "pressure"})
+    if requested_key is not None and ledger_language:
+        refs = _state_refs(session, [])
+        states = _match_states(question, refs)
+        if not states:
+            return _response(
+                question=question,
+                year=year,
+                intent="ledger_metric",
+                status="insufficient_data",
+                answer="Name a jurisdiction to inspect its published Fiscal State intelligence.",
+                coverage_label="Jurisdiction required",
+                evidence=[],
+            )
+        intelligence = jurisdiction_intelligence(session, jurisdiction_code=f"NG-{states[0].code}")
+        if intelligence is None:
+            return _response(
+                question=question,
+                year=year,
+                intent="ledger_metric",
+                status="insufficient_data",
+                answer=f"No published Fiscal State is available for {states[0].name}.",
+                coverage_label="Fiscal State unavailable",
+                evidence=[],
+            )
+        metric = next(item for item in intelligence.data.metrics if item.key == requested_key)
+        available = metric.status == "calculated" and metric.value is not None
+        answer = (
+            f"{metric.label} for {states[0].name} is {metric.value} {metric.unit}."
+            if available
+            else (
+                f"{metric.label} for {states[0].name} cannot be calculated from "
+                f"the current verified evidence. {metric.explanation}"
+            )
+        )
+        return _response(
+            question=question,
+            year=year,
+            intent="ledger_metric",
+            status="answered" if available else "insufficient_data",
+            answer=answer,
+            coverage_label=f"Fiscal State · {intelligence.data.fiscal_period}",
+            evidence=[
+                GaiaAnalystEvidence(
+                    state_name=states[0].name,
+                    state_slug=states[0].slug,
+                    label=metric.label,
+                    value=metric.value or "Unavailable",
+                    metric=metric.key,
+                    reference_path=f"/jurisdictions/NG-{states[0].code}",
+                    reference_label="Open Fiscal State",
+                    evidence_domain="ledger",
+                    period_label=metric.fiscal_period,
+                    gaia_object_id=intelligence.data.fiscal_state_id,
+                    evidence_status=intelligence.data.ledger_status,
+                    relevant_date=intelligence.data.effective_at.date().isoformat(),
+                )
+            ],
+        )
     if _is_igr_question(question):
         return _igr_answer(session, question=question, year=year)
     return gaia_analyst_fa(session, question=question, year=year)

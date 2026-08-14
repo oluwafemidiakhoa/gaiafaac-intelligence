@@ -1,25 +1,82 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from gaiafaac_api.database.enums import EvidenceStatus, FiscalEventSeverity
 from gaiafaac_api.database.session import get_session
+from gaiafaac_api.fiscal_intelligence_schemas import (
+    FiscalComparisonEnvelope,
+    JurisdictionIntelligenceEnvelope,
+)
 from gaiafaac_api.fiscal_ledger_schemas import (
     EvidenceManifestResponse,
+    EvidenceSourceRegistryEnvelope,
     FiscalArtifactVerificationResponse,
+    FiscalCertificateEnvelope,
+    FiscalEventStreamEnvelope,
     FiscalProofEnvelope,
     FiscalStateEnvelope,
 )
 from gaiafaac_api.ledger import canonical_sha256
+from gaiafaac_api.services.fiscal_institutional import fiscal_events, get_fiscal_certificate
+from gaiafaac_api.services.fiscal_intelligence import (
+    compare_jurisdictions,
+    jurisdiction_intelligence,
+)
 from gaiafaac_api.services.fiscal_ledger import (
+    METHODOLOGY_VERSION,
     get_fiscal_proof_by_gaia_id,
     get_fiscal_state_by_id,
     get_jurisdiction_fiscal_state,
 )
+from gaiafaac_api.services.fiscal_trust import evidence_sources
 
 router = APIRouter(tags=["fiscal ledger"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
+
+
+@router.get(
+    "/jurisdictions/{code}/intelligence",
+    response_model=JurisdictionIntelligenceEnvelope,
+    summary="Deterministic derived metrics for a published Fiscal State",
+)
+def jurisdiction_fiscal_intelligence(
+    code: str,
+    session: DatabaseSession,
+    as_of: Annotated[date | datetime | None, Query()] = None,
+) -> JurisdictionIntelligenceEnvelope:
+    try:
+        result = jurisdiction_intelligence(session, jurisdiction_code=code, as_of=as_of)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published Fiscal State exists for this jurisdiction and date.",
+        )
+    return result
+
+
+@router.get(
+    "/intelligence/compare",
+    response_model=FiscalComparisonEnvelope,
+    summary="Compare deterministic Fiscal State intelligence across jurisdictions",
+)
+def fiscal_intelligence_comparison(
+    session: DatabaseSession,
+    jurisdictions: Annotated[list[str], Query(min_length=2, max_length=6)],
+    as_of: Annotated[date | datetime | None, Query()] = None,
+) -> FiscalComparisonEnvelope:
+    try:
+        return compare_jurisdictions(session, jurisdiction_codes=jurisdictions, as_of=as_of)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
 
 
 @router.get(
@@ -30,7 +87,7 @@ DatabaseSession = Annotated[Session, Depends(get_session)]
 def jurisdiction_fiscal_state(
     code: str,
     session: DatabaseSession,
-    as_of: Annotated[datetime | None, Query()] = None,
+    as_of: Annotated[date | datetime | None, Query()] = None,
 ) -> FiscalStateEnvelope:
     try:
         result = get_jurisdiction_fiscal_state(session, jurisdiction_code=code, as_of=as_of)
@@ -73,6 +130,134 @@ def fiscal_proof_by_id(gaia_id: str, session: DatabaseSession) -> FiscalProofEnv
     return result
 
 
+@router.get(
+    "/events",
+    response_model=FiscalEventStreamEnvelope,
+    summary="Deterministic fiscal evidence lifecycle event stream",
+)
+def fiscal_event_stream(
+    session: DatabaseSession,
+    jurisdiction: Annotated[str | None, Query(min_length=2, max_length=16)] = None,
+    event_type: Annotated[str | None, Query(min_length=2, max_length=80)] = None,
+    severity: Annotated[FiscalEventSeverity | None, Query()] = None,
+    evidence_status: Annotated[EvidenceStatus | None, Query()] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+) -> FiscalEventStreamEnvelope:
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="date_from cannot be after date_to.",
+        )
+    return fiscal_events(
+        session,
+        jurisdiction_code=jurisdiction,
+        event_type=event_type,
+        severity=severity,
+        evidence_status=evidence_status,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+    )
+
+
+@router.get(
+    "/jurisdictions/{code}/events",
+    response_model=FiscalEventStreamEnvelope,
+    summary="Fiscal evidence lifecycle events for one jurisdiction",
+)
+def jurisdiction_fiscal_events(
+    code: str,
+    session: DatabaseSession,
+    event_type: Annotated[str | None, Query(min_length=2, max_length=80)] = None,
+    severity: Annotated[FiscalEventSeverity | None, Query()] = None,
+    evidence_status: Annotated[EvidenceStatus | None, Query()] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+) -> FiscalEventStreamEnvelope:
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="date_from cannot be after date_to.",
+        )
+    return fiscal_events(
+        session,
+        jurisdiction_code=code,
+        event_type=event_type,
+        severity=severity,
+        evidence_status=evidence_status,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+    )
+
+
+@router.get(
+    "/certificates/{gaia_id}",
+    response_model=FiscalCertificateEnvelope,
+    summary="Immutable Gaia Fiscal Certificate by ID",
+)
+def fiscal_certificate_by_id(gaia_id: str, session: DatabaseSession) -> FiscalCertificateEnvelope:
+    result = get_fiscal_certificate(session, gaia_id)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fiscal Certificate not found.",
+        )
+    return result
+
+
+@router.get(
+    "/evidence-sources",
+    response_model=EvidenceSourceRegistryEnvelope,
+    summary="Browse the versioned Gaia evidence source registry",
+)
+def evidence_source_registry(
+    session: DatabaseSession,
+    jurisdiction: Annotated[str | None, Query(min_length=2, max_length=16)] = None,
+    publisher: Annotated[str | None, Query(min_length=2, max_length=200)] = None,
+    fiscal_domain: Annotated[str | None, Query(min_length=2, max_length=40)] = None,
+) -> EvidenceSourceRegistryEnvelope:
+    items = evidence_sources(
+        session,
+        jurisdiction_code=jurisdiction,
+        publisher=publisher,
+        fiscal_domain=fiscal_domain,
+    )
+    return EvidenceSourceRegistryEnvelope(
+        data=items,
+        evidence={
+            "record_count": len(items),
+            "meaning": (
+                "Registry records describe Gaia's retained source lineage and workflow state; "
+                "they do not certify the originating publisher's claims as true."
+            ),
+        },
+        meta={"schema_version": "1.1.0", "methodology_version": METHODOLOGY_VERSION},
+    )
+
+
+@router.get(
+    "/jurisdictions/{code}/evidence",
+    response_model=EvidenceSourceRegistryEnvelope,
+    summary="Evidence sources retained for one jurisdiction",
+)
+def jurisdiction_evidence_sources(
+    code: str,
+    session: DatabaseSession,
+    publisher: Annotated[str | None, Query(min_length=2, max_length=200)] = None,
+    fiscal_domain: Annotated[str | None, Query(min_length=2, max_length=40)] = None,
+) -> EvidenceSourceRegistryEnvelope:
+    return evidence_source_registry(
+        session,
+        jurisdiction=code,
+        publisher=publisher,
+        fiscal_domain=fiscal_domain,
+    )
+
+
 @router.post(
     "/verify",
     response_model=FiscalArtifactVerificationResponse,
@@ -84,6 +269,8 @@ def verify_fiscal_artifact(
     supported_versions = {
         "gaia-fiscal-proof-manifest-v1",
         "gaia-fiscal-state-manifest-v1",
+        "gaia-fiscal-state-manifest-v2",
+        "gaia-fiscal-certificate-manifest-v1",
     }
     if manifest.manifest_version not in supported_versions:
         raise HTTPException(

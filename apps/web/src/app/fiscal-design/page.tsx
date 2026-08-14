@@ -26,6 +26,11 @@ interface FiscalDesignPageProps {
     faacShock?: string
     igrShock?: string
     reserveShare?: string
+    debtChange?: string
+    debtServiceChange?: string
+    expenditureChange?: string
+    capitalSpendingChange?: string
+    inflationAssumption?: string
     objective?: string
   }>
 }
@@ -53,9 +58,32 @@ export default async function FiscalDesignPage({
   const faacShock = bounded(query.faacShock, -20, -100, 100)
   const igrShock = bounded(query.igrShock, 0, -100, 100)
   const reserveShare = bounded(query.reserveShare, 10, 0, 100)
+  const expanded = {
+    debtChange: bounded(query.debtChange, 0, -100, 100),
+    debtServiceChange: bounded(query.debtServiceChange, 0, -100, 100),
+    expenditureChange: bounded(query.expenditureChange, 0, -100, 100),
+    capitalSpendingChange: bounded(query.capitalSpendingChange, 0, -100, 100),
+    inflationAssumption: bounded(query.inflationAssumption, 0, -99, 100),
+  }
+  const hasExpandedInputs = [
+    query.debtChange,
+    query.debtServiceChange,
+    query.expenditureChange,
+    query.capitalSpendingChange,
+    query.inflationAssumption,
+  ].some((value) => value !== undefined)
   const objective = (query.objective ?? '').trim().slice(0, 240)
   const result = state
-    ? await getFiscalDesign(state, year, faacShock, igrShock, reserveShare)
+    ? hasExpandedInputs
+      ? await getFiscalDesign(
+          state,
+          year,
+          faacShock,
+          igrShock,
+          reserveShare,
+          expanded,
+        )
+      : await getFiscalDesign(state, year, faacShock, igrShock, reserveShare)
     : { data: null, error: null }
   const latestComparableYear = result.data?.latest_comparable_year ?? null
   const comparableYearParams =
@@ -77,16 +105,17 @@ export default async function FiscalDesignPage({
   const comparableYearHref = comparableYearParams
     ? `/fiscal-design?${comparableYearParams.toString()}`
     : null
-  const briefParams = result.data
-    ? new URLSearchParams({
-        state,
-        year: String(year),
-        faacShock: String(faacShock),
-        igrShock: String(igrShock),
-        reserveShare: String(reserveShare),
-        fingerprint: fiscalDesignBriefFingerprint(result.data, objective),
-      })
-    : null
+  const briefParams =
+    result.data && !hasExpandedInputs
+      ? new URLSearchParams({
+          state,
+          year: String(year),
+          faacShock: String(faacShock),
+          igrShock: String(igrShock),
+          reserveShare: String(reserveShare),
+          fingerprint: fiscalDesignBriefFingerprint(result.data, objective),
+        })
+      : null
   if (briefParams && objective) {
     briefParams.set('objective', objective)
   }
@@ -122,6 +151,42 @@ export default async function FiscalDesignPage({
                 required
               />
             </label>
+            {[
+              ['Debt change %', 'debtChange', expanded.debtChange],
+              [
+                'Debt-service change %',
+                'debtServiceChange',
+                expanded.debtServiceChange,
+              ],
+              [
+                'Expenditure change %',
+                'expenditureChange',
+                expanded.expenditureChange,
+              ],
+              [
+                'Capital spending change %',
+                'capitalSpendingChange',
+                expanded.capitalSpendingChange,
+              ],
+              [
+                'Inflation assumption %',
+                'inflationAssumption',
+                expanded.inflationAssumption,
+              ],
+            ].map(([label, name, value]) => (
+              <label key={String(name)} className="text-sm font-medium">
+                {label}
+                <input
+                  name={String(name)}
+                  type="number"
+                  min={name === 'inflationAssumption' ? -99 : -100}
+                  max="100"
+                  step="0.1"
+                  defaultValue={Number(value)}
+                  className="border-input bg-background mt-2 h-10 w-full rounded-md border px-3 text-sm"
+                />
+              </label>
+            ))}
             <label className="text-sm font-medium">
               Year
               <input
@@ -226,6 +291,11 @@ export default async function FiscalDesignPage({
             <span className="text-muted-foreground text-sm">
               {result.data.coverage_label}
             </span>
+            {result.data.scenario_gaia_id ? (
+              <span className="text-muted-foreground font-mono text-xs">
+                {result.data.scenario_gaia_id}
+              </span>
+            ) : null}
           </div>
 
           {briefHref ? (
@@ -239,6 +309,19 @@ export default async function FiscalDesignPage({
                 </Link>
               </Button>
             </div>
+          ) : null}
+
+          {hasExpandedInputs && result.data.unsupported_dimensions?.length ? (
+            <Card className="mt-6 border-dashed">
+              <CardHeader>
+                <CardTitle>Recorded but not calculated</CardTitle>
+                <CardDescription>
+                  {result.data.unsupported_dimensions.join(', ')} require
+                  verified comparable evidence that is not present. These
+                  assumptions remain explicit and no value is inferred.
+                </CardDescription>
+              </CardHeader>
+            </Card>
           ) : null}
 
           {comparableYearHref && latestComparableYear !== null ? (

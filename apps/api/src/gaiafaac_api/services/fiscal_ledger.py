@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime, time
+from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from urllib.parse import urlsplit
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import exists, select
+from sqlalchemy.orm import Session, aliased
 
-from gaiafaac_api.database.enums import EvidenceStatus, SourceStatus, VerificationStatus
+from gaiafaac_api.database.enums import (
+    EvidenceStatus,
+    FiscalEventSeverity,
+    SourceStatus,
+    VerificationStatus,
+)
 from gaiafaac_api.database.ledger_models import (
     EvidenceManifest,
     EvidenceVerification,
@@ -18,6 +23,7 @@ from gaiafaac_api.database.ledger_models import (
 )
 from gaiafaac_api.database.models import ReportingPeriod, SourceDocument, State, StateAllocation
 from gaiafaac_api.fiscal_ledger_schemas import (
+    EvidenceConflictResponse,
     EvidenceManifestResponse,
     FiscalProofData,
     FiscalProofEnvelope,
@@ -33,16 +39,32 @@ from gaiafaac_api.fiscal_ledger_schemas import (
 from gaiafaac_api.ledger import (
     CANONICALIZATION_VERSION,
     GaiaObjectType,
+    calculate_evidence_coverage,
+    calculate_evidence_integrity,
     canonical_sha256,
     canonicalize,
     fiscal_state_id,
     gaia_object_id,
 )
+from gaiafaac_api.ledger.intelligence import (
+    DEFAULT_INTELLIGENCE_CONFIG,
+    classify_faac_monthly_change,
+)
+from gaiafaac_api.services.fiscal_institutional import evidence_history, publish_fiscal_event
+from gaiafaac_api.services.fiscal_trust import (
+    claim_revisions,
+    conflicts_for_claims,
+    create_claim_revision,
+    register_evidence_source,
+)
 
-SCHEMA_VERSION = "1.0.0"
-METHODOLOGY_VERSION = "1.0.0"
+PROOF_SCHEMA_VERSION = "1.0.0"
+STATE_SCHEMA_VERSION = "1.1.0"
+PROOF_METHODOLOGY_VERSION = "1.0.0"
+STATE_METHODOLOGY_VERSION = "1.1.0"
+METHODOLOGY_VERSION = STATE_METHODOLOGY_VERSION
 PROOF_MANIFEST_VERSION = "gaia-fiscal-proof-manifest-v1"
-STATE_MANIFEST_VERSION = "gaia-fiscal-state-manifest-v1"
+STATE_MANIFEST_VERSION = "gaia-fiscal-state-manifest-v2"
 FISCAL_DOMAINS = (
     "faac",
     "igr",
@@ -118,7 +140,7 @@ def publish_faac_claim_proof(
     session: Session,
     *,
     allocation_id: uuid.UUID,
-    methodology_version: str = METHODOLOGY_VERSION,
+    methodology_version: str = PROOF_METHODOLOGY_VERSION,
     extraction_method: str = "governed_pipeline",
 ) -> FiscalProof:
     """Materialize an immutable proof from an already-published FAAC allocation."""
@@ -224,7 +246,7 @@ def publish_faac_claim_proof(
     payload = canonicalize(
         {
             "gaia_id": gaia_id,
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": PROOF_SCHEMA_VERSION,
             "object_type": "faac",
             "jurisdiction": {
                 "country": "NG",
@@ -270,7 +292,7 @@ def publish_faac_claim_proof(
         id=uuid.uuid4(),
         subject_gaia_id=gaia_id,
         manifest_version=PROOF_MANIFEST_VERSION,
-        schema_version=SCHEMA_VERSION,
+        schema_version=PROOF_SCHEMA_VERSION,
         canonicalization_version=CANONICALIZATION_VERSION,
         hash_algorithm="sha256",
         payload_sha256=payload_hash,
@@ -279,7 +301,7 @@ def publish_faac_claim_proof(
     proof = FiscalProof(
         gaia_id=gaia_id,
         manifest_id=manifest.id,
-        schema_version=SCHEMA_VERSION,
+        schema_version=PROOF_SCHEMA_VERSION,
         methodology_version=methodology_version,
         integrity_hash=payload_hash,
         previous_proof_gaia_id=previous_claim.gaia_id if previous_claim else None,
@@ -287,6 +309,116 @@ def publish_faac_claim_proof(
     )
     session.add_all([claim, verification, manifest, proof])
     session.flush()
+    prior_month_claim = session.scalar(
+        select(FiscalClaim)
+        .where(
+            FiscalClaim.state_id == state.id,
+            FiscalClaim.object_type == "faac",
+            FiscalClaim.metric == "faac_net_allocation",
+            FiscalClaim.effective_at < effective_at,
+        )
+        .order_by(FiscalClaim.effective_at.desc(), FiscalClaim.published_at.desc())
+        .limit(1)
+    )
+    if (
+        prior_month_claim is not None
+        and prior_month_claim.evidence_status is EvidenceStatus.VERIFIED
+        and evidence_status is EvidenceStatus.VERIFIED
+        and prior_month_claim.unit == claim.unit
+        and prior_month_claim.currency == claim.currency
+    ):
+        classification = classify_faac_monthly_change(
+            previous_period=prior_month_claim.fiscal_period,
+            previous_value=prior_month_claim.value_text,
+            current_period=claim.fiscal_period,
+            current_value=claim.value_text,
+        )
+        if classification is not None:
+            publish_fiscal_event(
+                session,
+                state_id=state.id,
+                event_type=str(classification["event_type"]),
+                severity=FiscalEventSeverity.MATERIAL,
+                effective_at=effective_at,
+                detected_at=published_at,
+                evidence_status=EvidenceStatus.VERIFIED,
+                evidence_ids=[prior_month_claim.gaia_id, claim.gaia_id],
+                calculation={
+                    key: value
+                    for key, value in classification.items()
+                    if key not in {"event_type", "explanation"}
+                },
+                explanation=str(classification["explanation"]),
+                methodology_version=(DEFAULT_INTELLIGENCE_CONFIG.event_methodology_version),
+            )
+    register_evidence_source(
+        session,
+        source=source,
+        state=state,
+        fiscal_domain="faac",
+        verification_status=evidence_status,
+        reporting_cadence="monthly",
+    )
+    publish_fiscal_event(
+        session,
+        state_id=state.id,
+        event_type="new_source_detected",
+        severity=FiscalEventSeverity.INFORMATIONAL,
+        effective_at=effective_at,
+        detected_at=published_at,
+        evidence_status=evidence_status,
+        evidence_ids=[gaia_id, source.sha256],
+        explanation="A source document entered the published Gaia fiscal evidence ledger.",
+    )
+    if previous_claim is not None:
+        revision = create_claim_revision(
+            session,
+            previous_claim=previous_claim,
+            revised_claim=claim,
+            source_revision=source.supersedes_document_id == previous_claim.source_document_id,
+            detected_at=published_at,
+        )
+        if revision.source_revision:
+            publish_fiscal_event(
+                session,
+                state_id=state.id,
+                event_type="source_revised",
+                severity=(
+                    FiscalEventSeverity.MATERIAL
+                    if revision.material_change
+                    else FiscalEventSeverity.NOTABLE
+                ),
+                effective_at=effective_at,
+                detected_at=published_at,
+                evidence_status=evidence_status,
+                evidence_ids=[previous_claim.gaia_id, claim.gaia_id],
+                calculation={
+                    "value_delta": revision.value_delta_text,
+                    "value_change_percent": revision.value_change_percent_text,
+                    "material_change": revision.material_change,
+                },
+                explanation="A revised source document produced a new immutable fiscal claim.",
+            )
+        publish_fiscal_event(
+            session,
+            state_id=state.id,
+            event_type="claim_superseded",
+            severity=(
+                FiscalEventSeverity.MATERIAL
+                if revision.material_change
+                else FiscalEventSeverity.NOTABLE
+            ),
+            effective_at=effective_at,
+            detected_at=published_at,
+            evidence_status=evidence_status,
+            evidence_ids=[previous_claim.gaia_id, claim.gaia_id],
+            calculation={
+                "value_delta": revision.value_delta_text,
+                "value_change_percent": revision.value_change_percent_text,
+                "material_change": revision.material_change,
+            },
+            explanation="A previous fiscal claim was superseded; both versions remain retained.",
+        )
     return proof
 
 
@@ -352,8 +484,14 @@ def get_fiscal_proof_by_gaia_id(session: Session, gaia_id: str) -> FiscalProofEn
                 "This proof establishes the integrity and recorded provenance of Gaia's artifact. "
                 "It does not independently prove that the originating government data is true."
             ),
+            revisions=claim_revisions(session, claim.gaia_id),
+            conflicts=conflicts_for_claims(session, [claim.gaia_id]),
+            history=evidence_history(session, claim.gaia_id),
         ),
-        meta=LedgerMeta(methodology_version=proof.methodology_version),
+        meta=LedgerMeta(
+            schema_version=proof.schema_version,
+            methodology_version=proof.methodology_version,
+        ),
     )
 
 
@@ -364,7 +502,7 @@ def publish_fiscal_state(
     effective_at: datetime,
     fiscal_period: str,
     claim_gaia_ids: list[str],
-    methodology_version: str = METHODOLOGY_VERSION,
+    methodology_version: str = STATE_METHODOLOGY_VERSION,
 ) -> FiscalState:
     canonical_code = jurisdiction_code.strip().upper()
     state_code = canonical_code.removeprefix("NG-")
@@ -419,6 +557,15 @@ def publish_fiscal_state(
                 else EvidenceStatus.PARTIAL.value
             )
 
+    conflicts = conflicts_for_claims(session, [claim.gaia_id for claim in claims])
+    unresolved_conflicts = [
+        conflict for conflict in conflicts if conflict.status.value == "unresolved"
+    ]
+    conflicting_domains = {conflict.object_type for conflict in unresolved_conflicts}
+    for domain_name in conflicting_domains:
+        if domain_name in domains:
+            domains[domain_name]["status"] = EvidenceStatus.CONFLICTING.value
+
     sources = []
     seen_sources: set[str] = set()
     for claim in claims:
@@ -441,17 +588,41 @@ def publish_fiscal_state(
 
     previous = session.scalar(
         select(FiscalState)
-        .where(FiscalState.state_id == state.id, FiscalState.effective_at <= effective_at)
+        .where(FiscalState.state_id == state.id, FiscalState.effective_at < effective_at)
         .order_by(FiscalState.effective_at.desc(), FiscalState.created_at.desc())
         .limit(1)
     )
-    ledger_status = EvidenceStatus.PARTIAL if claims else EvidenceStatus.UNAVAILABLE
+    coverage = calculate_evidence_coverage(domains)
+    verifications = list(
+        session.scalars(
+            select(EvidenceVerification).where(
+                EvidenceVerification.claim_gaia_id.in_([claim.gaia_id for claim in claims])
+            )
+        )
+    )
+    evidence_integrity = calculate_evidence_integrity(
+        claims=claims,
+        verifications=verifications,
+        domains=domains,
+        coverage=coverage,
+        sources=sources,
+        unresolved_conflict_count=len(unresolved_conflicts),
+        effective_at=effective_at,
+    )
+    ledger_status = (
+        EvidenceStatus.CONFLICTING
+        if unresolved_conflicts
+        else (EvidenceStatus.PARTIAL if claims else EvidenceStatus.UNAVAILABLE)
+    )
     state_seed = {
         "jurisdiction": canonical_code,
         "effective_at": effective_at,
         "fiscal_period": fiscal_period,
         "domains": domains,
         "sources": sources,
+        "evidence_coverage": coverage,
+        "evidence_integrity": evidence_integrity,
+        "conflicts": [conflict.model_dump(mode="json") for conflict in conflicts],
         "previous_state_id": previous.fiscal_state_id if previous else None,
         "methodology_version": methodology_version,
     }
@@ -467,21 +638,15 @@ def publish_fiscal_state(
     payload = canonicalize(
         {
             "fiscal_state_id": state_gaia_id,
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": STATE_SCHEMA_VERSION,
             "jurisdiction": {"country": "NG", "code": canonical_code, "name": state.name},
             "effective_at": effective_at,
             "fiscal_period": fiscal_period,
             "ledger_status": ledger_status,
-            "evidence_coverage": {
-                "score": None,
-                "status": "insufficient_evidence",
-            },
+            "evidence_coverage": coverage,
             "domains": domains,
-            "evidence_integrity": {
-                "score": None,
-                "status": "insufficient_evidence",
-                "methodology_version": methodology_version,
-            },
+            "evidence_integrity": evidence_integrity,
+            "conflicts": [conflict.model_dump(mode="json") for conflict in conflicts],
             "events": [],
             "sources": sources,
             "previous_state_id": previous.fiscal_state_id if previous else None,
@@ -494,7 +659,7 @@ def publish_fiscal_state(
         id=uuid.uuid4(),
         subject_gaia_id=state_gaia_id,
         manifest_version=STATE_MANIFEST_VERSION,
-        schema_version=SCHEMA_VERSION,
+        schema_version=STATE_SCHEMA_VERSION,
         canonicalization_version=CANONICALIZATION_VERSION,
         hash_algorithm="sha256",
         payload_sha256=payload_hash,
@@ -506,21 +671,34 @@ def publish_fiscal_state(
         effective_at=effective_at,
         fiscal_period=fiscal_period,
         ledger_status=ledger_status,
-        evidence_coverage=None,
-        evidence_coverage_status="insufficient_evidence",
+        evidence_coverage=Decimal(str(coverage["score"])),
+        evidence_coverage_status=str(coverage["status"]),
         domains=domains,
-        evidence_integrity=payload["evidence_integrity"],
+        evidence_integrity=evidence_integrity,
         events=[],
         sources=sources,
         manifest_id=manifest.id,
         integrity_hash=payload_hash,
-        schema_version=SCHEMA_VERSION,
+        schema_version=STATE_SCHEMA_VERSION,
         methodology_version=methodology_version,
         previous_state_id=previous.fiscal_state_id if previous else None,
         published_at=effective_at,
     )
     session.add_all([manifest, fiscal_state])
     session.flush()
+    publish_fiscal_event(
+        session,
+        state_id=state.id,
+        event_type="fiscal_state_changed",
+        severity=FiscalEventSeverity.INFORMATIONAL,
+        effective_at=effective_at,
+        detected_at=effective_at,
+        evidence_status=ledger_status,
+        evidence_ids=[state_gaia_id, *[claim.gaia_id for claim in claims]],
+        fiscal_state_id=state_gaia_id,
+        calculation={"previous_state_id": previous.fiscal_state_id if previous else None},
+        explanation="A new immutable Fiscal State was published from retained evidence.",
+    )
     return fiscal_state
 
 
@@ -530,21 +708,24 @@ def publish_current_fiscal_state(
     state_id: uuid.UUID,
     effective_at: datetime,
     fiscal_period: str,
-    methodology_version: str = METHODOLOGY_VERSION,
+    methodology_version: str = STATE_METHODOLOGY_VERSION,
 ) -> FiscalState:
     state = session.get(State, state_id)
     if state is None:
         raise LookupError("Jurisdiction does not exist.")
-    superseded_ids = select(FiscalClaim.supersedes_gaia_id).where(
-        FiscalClaim.supersedes_gaia_id.is_not(None)
-    )
+    superseding_claim = aliased(FiscalClaim)
     claim_ids = list(
         session.scalars(
             select(FiscalClaim.gaia_id)
             .where(
                 FiscalClaim.state_id == state_id,
                 FiscalClaim.published_at <= effective_at,
-                FiscalClaim.gaia_id.not_in(superseded_ids),
+                ~exists(
+                    select(1).where(
+                        superseding_claim.supersedes_gaia_id == FiscalClaim.gaia_id,
+                        superseding_claim.published_at <= effective_at,
+                    )
+                ),
             )
             .order_by(FiscalClaim.object_type, FiscalClaim.fiscal_period, FiscalClaim.gaia_id)
         )
@@ -564,6 +745,9 @@ def _fiscal_state_envelope(session: Session, fiscal_state: FiscalState) -> Fisca
     manifest = session.get(EvidenceManifest, fiscal_state.manifest_id)
     if state is None or manifest is None:
         raise RuntimeError("Fiscal State lineage is incomplete.")
+    stored_conflicts = manifest.payload.get("conflicts", [])
+    if not isinstance(stored_conflicts, list):
+        raise RuntimeError("Fiscal State conflict evidence is malformed.")
     return FiscalStateEnvelope(
         data=FiscalStateData(
             fiscal_state_id=fiscal_state.fiscal_state_id,
@@ -584,13 +768,21 @@ def _fiscal_state_envelope(session: Session, fiscal_state: FiscalState) -> Fisca
             previous_state_id=fiscal_state.previous_state_id,
             published_at=fiscal_state.published_at,
         ),
-        evidence=FiscalStateEvidence(manifest=_manifest_response(manifest)),
-        meta=LedgerMeta(methodology_version=fiscal_state.methodology_version),
+        evidence=FiscalStateEvidence(
+            manifest=_manifest_response(manifest),
+            conflicts=[
+                EvidenceConflictResponse.model_validate(conflict) for conflict in stored_conflicts
+            ],
+        ),
+        meta=LedgerMeta(
+            schema_version=fiscal_state.schema_version,
+            methodology_version=fiscal_state.methodology_version,
+        ),
     )
 
 
 def get_jurisdiction_fiscal_state(
-    session: Session, *, jurisdiction_code: str, as_of: datetime | None = None
+    session: Session, *, jurisdiction_code: str, as_of: date | datetime | None = None
 ) -> FiscalStateEnvelope | None:
     state_code = jurisdiction_code.strip().upper().removeprefix("NG-")
     state = session.scalar(select(State).where(State.code == state_code))
@@ -598,9 +790,13 @@ def get_jurisdiction_fiscal_state(
         return None
     query = select(FiscalState).where(FiscalState.state_id == state.id)
     if as_of is not None:
-        if as_of.tzinfo is None or as_of.utcoffset() is None:
-            raise ValueError("as_of must include a timezone.")
-        query = query.where(FiscalState.effective_at <= as_of.astimezone(UTC))
+        if isinstance(as_of, datetime):
+            if as_of.tzinfo is None or as_of.utcoffset() is None:
+                raise ValueError("Datetime as_of values must include a timezone.")
+            cutoff = as_of.astimezone(UTC)
+        else:
+            cutoff = datetime.combine(as_of, time.max, tzinfo=UTC)
+        query = query.where(FiscalState.effective_at <= cutoff)
     fiscal_state = session.scalar(
         query.order_by(FiscalState.effective_at.desc(), FiscalState.created_at.desc()).limit(1)
     )

@@ -9,11 +9,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'GaiaFAAC Intelligence',
-    template: '%s | GaiaFAAC Intelligence',
+    default: 'GaiaFAAC',
+    template: '%s | GaiaFAAC',
   },
   description:
-    'Independent, source-grounded intelligence for Nigerian public revenue.',
+    'The verifiable fiscal ledger for Nigeria: sourced, reconciled, versioned public-finance evidence.',
 }
 
 export default function RootLayout({
@@ -22,7 +22,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+    >
       <body className="bg-background text-foreground min-h-screen font-sans antialiased">
         <SiteHeader />
         <main>{children}</main>

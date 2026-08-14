@@ -1,16 +1,16 @@
 # Implementation plan
 
-## Current scope: Fiscal Ledger Foundation
+## Current scope: Fiscal Ledger Trust Layer
 
-An explicit Phase 1 product directive extends the completed milestone sequence with
-durable fiscal-evidence infrastructure. Existing Milestone 4–5 interfaces remain in
-place and are not rewritten.
+Phase 2 extends the completed ledger foundation with deterministic evidence quality,
+coverage, and durable change history. Existing interfaces remain in place and are not
+rewritten.
 
-This slice adds canonical Gaia IDs, evidence statuses, immutable Fiscal Claims,
-manifests, Fiscal Proofs and Fiscal States, read/verify APIs, browser verification,
-proof detail pages, migrations, and documentation. Evidence Integrity scoring,
-coverage methodology, conflicts, automatic backfill, certificates, events, MCP, and
-indexes remain later phases.
+This slice adds Evidence Integrity, Evidence Coverage, source-registry records, claim
+revisions, supersession, explicit conflicts, inclusive date-based historical reads,
+migrations, tests, and documentation. Jurisdiction UX, evidence timelines, events,
+certificates, homepage repositioning, expanded simulation, indexes, and MCP remain
+later phases.
 
 ## Previous scope: Milestone 4
 
@@ -62,3 +62,13 @@ are not implemented in this milestone.
   browser interaction.
 - Runtime API responses are validated before rendering.
 - Format, lint, type, unit-test, production-build, and Docker configuration checks pass.
+
+## Fiscal Ledger evolution
+
+- Phase 1 — foundation: complete.
+- Phase 2 — trust layer: complete on the stacked trust-layer branch.
+- Phase 3 — institutional UX: jurisdiction Fiscal State pages, enhanced proof detail,
+  evidence history, lifecycle event stream, immutable certificates, and homepage
+  positioning are implemented without pulling in Phase 4 fiscal classification.
+- Phase 4 — intelligence: pending.
+- Phases 5–7 — distribution, expanded evidence, and indexes: pending.

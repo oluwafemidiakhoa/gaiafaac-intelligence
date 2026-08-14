@@ -15,6 +15,7 @@ from gaiafaac_api.fiscal_design_schemas import (
     FiscalDesignMetric,
     FiscalDesignResponse,
 )
+from gaiafaac_api.ledger import GaiaObjectType, canonical_sha256, gaia_object_id
 from gaiafaac_api.services.decision_packet import decision_packet
 
 _HUNDRED = Decimal("100")
@@ -83,6 +84,11 @@ def fiscal_design(
     faac_shock_pct: Decimal = Decimal("-20"),
     igr_shock_pct: Decimal = Decimal("0"),
     reserve_share_pct: Decimal = Decimal("10"),
+    debt_change_pct: Decimal = Decimal("0"),
+    debt_service_change_pct: Decimal = Decimal("0"),
+    expenditure_change_pct: Decimal = Decimal("0"),
+    capital_spending_change_pct: Decimal = Decimal("0"),
+    inflation_assumption_pct: Decimal = Decimal("0"),
 ) -> FiscalDesignResponse | None:
     packet = decision_packet(session, state_slug=state_slug, year=year)
     if packet is None:
@@ -231,6 +237,68 @@ def fiscal_design(
         "Explore hypothetical fiscal-resilience scenarios using governed FAAC and IGR evidence."
     )
 
+    unsupported_dimensions = [
+        "debt",
+        "debt_service",
+        "expenditure",
+        "capital_spending",
+        "inflation_adjustment",
+    ]
+    extended_values = {
+        "debt_change_pct": debt_change_pct,
+        "debt_service_change_pct": debt_service_change_pct,
+        "expenditure_change_pct": expenditure_change_pct,
+        "capital_spending_change_pct": capital_spending_change_pct,
+        "inflation_assumption_pct": inflation_assumption_pct,
+    }
+    extended_labels = {
+        "debt_change_pct": "Debt change",
+        "debt_service_change_pct": "Debt-service change",
+        "expenditure_change_pct": "Expenditure change",
+        "capital_spending_change_pct": "Capital spending change",
+        "inflation_assumption_pct": "Inflation assumption",
+    }
+    extended_assumptions = [
+        f"{extended_labels[name]}: {_pct(value)}%."
+        for name, value in extended_values.items()
+        if value != 0
+    ]
+    candidates = [faac_candidate, igr_candidate, blended_candidate]
+    if extended_assumptions:
+        candidates.append(
+            FiscalDesignCandidate(
+                key="expanded_fiscal_position",
+                title="Expanded fiscal-position scenario",
+                purpose=(
+                    "Record debt, debt-service, expenditure, capital-spending, and inflation "
+                    "assumptions without inventing unavailable baselines."
+                ),
+                status="insufficient_data",
+                metrics=[],
+                note=(
+                    "These assumptions are retained but not calculated because the current "
+                    "Fiscal State lacks verified, comparable evidence for the required domains."
+                ),
+            )
+        )
+    scenario_hash = canonical_sha256(
+        {
+            "jurisdiction": f"NG-{packet.state_code.upper()}",
+            "year": year,
+            "assumptions": {key: _pct(value) for key, value in extended_values.items()},
+            "faac_shock_pct": _pct(faac_shock_pct),
+            "igr_shock_pct": _pct(igr_shock_pct),
+            "reserve_share_pct": _pct(reserve_share_pct),
+            "evidence_sha256": sorted(item.source_sha256 for item in evidence),
+        }
+    )
+    scenario_gaia_id = gaia_object_id(
+        GaiaObjectType.SCENARIO,
+        jurisdiction=f"NG-{packet.state_code.upper()}",
+        fiscal_period=str(year),
+        integrity_hash=scenario_hash,
+    )
+
     return FiscalDesignResponse(
         state_name=packet.state_name,
         state_slug=packet.state_slug,
@@ -245,15 +313,23 @@ def fiscal_design(
         faac_shock_pct=_pct(faac_shock_pct),
         igr_shock_pct=_pct(igr_shock_pct),
         reserve_share_pct=_pct(reserve_share_pct),
+        debt_change_pct=_pct(debt_change_pct),
+        debt_service_change_pct=_pct(debt_service_change_pct),
+        expenditure_change_pct=_pct(expenditure_change_pct),
+        capital_spending_change_pct=_pct(capital_spending_change_pct),
+        inflation_assumption_pct=_pct(inflation_assumption_pct),
+        scenario_gaia_id=scenario_gaia_id,
+        unsupported_dimensions=unsupported_dimensions,
         assumptions=[
             f"FAAC scenario change: {_pct(faac_shock_pct)}%.",
             f"IGR scenario change: {_pct(igr_shock_pct)}%.",
             f"Illustrative IGR buffer share: {_pct(reserve_share_pct)}%.",
             "No missing periods are inferred, annualized, or substituted from another year.",
             "All scenario arithmetic uses deterministic Decimal math over governed evidence.",
+            *extended_assumptions,
         ],
         evidence=evidence,
-        candidates=[faac_candidate, igr_candidate, blended_candidate],
+        candidates=candidates,
         disclaimer=(
             "Gaia Fiscal Design Lab produces hypothetical, evidence-grounded scenario outputs for "
             "research and planning. It is not a forecast, investment recommendation, or substitute "

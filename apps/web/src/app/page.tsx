@@ -1,9 +1,12 @@
 import {
   ArrowRight,
   BarChart3,
+  FileCheck2,
   GitCompareArrows,
+  History,
   Map,
   Radio,
+  ShieldCheck,
 } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -18,10 +21,11 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { formatDate, formatNaira } from '@/lib/format'
+import { getFiscalEvents } from '@/lib/fiscal-ledger-api'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
-  title: 'GaiaFAAC Intelligence — verified Nigerian state fiscal intelligence',
+  title: 'GaiaFAAC — The verifiable fiscal ledger for Nigeria',
 }
 export const dynamic = 'force-dynamic'
 
@@ -75,9 +79,44 @@ const audiences = [
   ],
 ]
 
+const ledgerPrinciples = [
+  {
+    icon: FileCheck2,
+    title: 'Evidence',
+    description:
+      'Every published fiscal value traces to a retained source document and SHA-256 fingerprint.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Verification',
+    description:
+      'Portable proof objects and canonical manifests can be recomputed independently.',
+  },
+  {
+    icon: History,
+    title: 'History',
+    description:
+      'Fiscal States and claims are versioned and superseded without silently rewriting prior evidence.',
+  },
+]
+
 export default async function Home() {
-  const result = await getPublishedOverview()
+  const [result, eventResult] = await Promise.all([
+    getPublishedOverview(),
+    getFiscalEvents(),
+  ])
   const data = result.data
+  const latestEvents = eventResult.data?.data.slice(0, 4) ?? []
+  const recentProofIds = Array.from(
+    new Set(
+      latestEvents
+        .flatMap((event) => event.evidence_ids)
+        .filter(
+          (identifier) =>
+            identifier.startsWith('GF-') && !identifier.startsWith('GFC-'),
+        ),
+    ),
+  ).slice(0, 4)
   const ranked = data
     ? [...data.allocations]
         .filter((a) => a.net_allocation)
@@ -91,25 +130,25 @@ export default async function Home() {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 py-20 lg:grid-cols-[1.3fr_0.7fr] lg:px-8 lg:py-28">
           <div className="max-w-3xl">
             <p className="text-primary mb-5 font-mono text-xs font-semibold tracking-[0.18em] uppercase">
-              Source-linked state fiscal intelligence
+              GaiaFAAC · public fiscal evidence infrastructure
             </p>
             <h1 className="text-5xl font-semibold tracking-[-0.045em] text-balance sm:text-6xl lg:text-7xl">
-              Verified fiscal intelligence for every Nigerian state
+              The verifiable fiscal ledger for Nigeria.
             </h1>
             <p className="text-muted-foreground mt-7 max-w-2xl text-lg leading-8 text-pretty">
-              Track allocations, deductions, fiscal momentum and monthly
-              volatility—with government-source evidence behind every number.
+              Verified public-finance evidence for every Nigerian jurisdiction —
+              sourced, reconciled, versioned, and independently verifiable.
               Missing values remain unavailable rather than inferred.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
-                <Link href="/fiscal-pulse">
-                  Explore Fiscal Pulse
+                <Link href="/states">
+                  Explore jurisdictions
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/live">View verified data</Link>
+                <Link href="/fiscal-design/verify">Verify a manifest</Link>
               </Button>
             </div>
           </div>
@@ -143,6 +182,22 @@ export default async function Home() {
               )}
             </CardHeader>
           </Card>
+        </div>
+      </section>
+
+      <section className="border-border/80 border-b">
+        <div className="mx-auto max-w-7xl px-5 py-14 lg:px-8">
+          <div className="grid gap-4 md:grid-cols-3">
+            {ledgerPrinciples.map(({ icon: Icon, title, description }) => (
+              <Card key={title}>
+                <CardHeader>
+                  <Icon className="text-primary size-5" aria-hidden="true" />
+                  <CardTitle className="pt-3">{title}</CardTitle>
+                  <CardDescription>{description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -243,6 +298,81 @@ export default async function Home() {
           </div>
         </section>
       ) : null}
+
+      <section className="border-border/80 border-b">
+        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-16 lg:grid-cols-2 lg:px-8">
+          <div>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+                  Latest fiscal events
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold">Ledger changes</h2>
+              </div>
+              <Link
+                href="/events"
+                className="text-primary text-sm hover:underline"
+              >
+                Full stream
+              </Link>
+            </div>
+            <div className="mt-5 space-y-3">
+              {latestEvents.length ? (
+                latestEvents.map((event) => (
+                  <Card key={event.event_id}>
+                    <CardHeader>
+                      <CardTitle className="font-mono text-sm">
+                        {event.jurisdiction.code} ·{' '}
+                        {formatDate(event.detected_at.slice(0, 10))}
+                      </CardTitle>
+                      <CardDescription>{event.explanation}</CardDescription>
+                    </CardHeader>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No evidence lifecycle events are currently published.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+              Recent verified proofs
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Portable evidence</h2>
+            <div className="mt-5 space-y-3">
+              {recentProofIds.length ? (
+                recentProofIds.map((proofId) => (
+                  <Link
+                    key={proofId}
+                    href={`/proofs/${encodeURIComponent(proofId)}`}
+                    className="border-border hover:border-primary block rounded-lg border p-4 font-mono text-sm break-all transition-colors"
+                  >
+                    {proofId}
+                  </Link>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No proof objects are currently present in the event stream.
+                </p>
+              )}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/sources">Source registry</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/fiscal-design/verify">Verification interface</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <a href="/api/v1/openapi.json">API schema</a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">

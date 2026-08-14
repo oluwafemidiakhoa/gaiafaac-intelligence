@@ -78,6 +78,11 @@ def fiscal_design_endpoint(
     faac_shock_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("-20"),
     igr_shock_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("0"),
     reserve_share_pct: Annotated[Decimal, Query(ge=0, le=100)] = Decimal("10"),
+    debt_change_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("0"),
+    debt_service_change_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("0"),
+    expenditure_change_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("0"),
+    capital_spending_change_pct: Annotated[Decimal, Query(ge=-100, le=100)] = Decimal("0"),
+    inflation_assumption_pct: Annotated[Decimal, Query(ge=-99, le=100)] = Decimal("0"),
 ) -> FiscalDesignResponse:
     result = fiscal_design(
         session,
@@ -86,6 +91,11 @@ def fiscal_design_endpoint(
         faac_shock_pct=faac_shock_pct,
         igr_shock_pct=igr_shock_pct,
         reserve_share_pct=reserve_share_pct,
+        debt_change_pct=debt_change_pct,
+        debt_service_change_pct=debt_service_change_pct,
+        expenditure_change_pct=expenditure_change_pct,
+        capital_spending_change_pct=capital_spending_change_pct,
+        inflation_assumption_pct=inflation_assumption_pct,
     )
     if result is None:
         raise HTTPException(

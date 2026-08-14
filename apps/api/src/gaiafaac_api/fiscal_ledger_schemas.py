@@ -5,11 +5,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from gaiafaac_api.database.enums import EvidenceStatus
+from gaiafaac_api.database.enums import (
+    EvidenceConflictStatus,
+    EvidenceStatus,
+    FiscalEventSeverity,
+)
 
 
 class LedgerMeta(BaseModel):
-    schema_version: Literal["1.0.0"] = "1.0.0"
+    schema_version: str = "1.0.0"
     methodology_version: str
 
 
@@ -68,6 +72,9 @@ class FiscalProofData(BaseModel):
 class FiscalProofEvidence(BaseModel):
     manifest: EvidenceManifestResponse
     disclaimer: str
+    revisions: list[EvidenceRevisionResponse] = Field(default_factory=list)
+    conflicts: list[EvidenceConflictResponse] = Field(default_factory=list)
+    history: list[EvidenceHistoryEntry] = Field(default_factory=list)
 
 
 class FiscalProofEnvelope(BaseModel):
@@ -94,6 +101,7 @@ class FiscalStateData(BaseModel):
 
 class FiscalStateEvidence(BaseModel):
     manifest: EvidenceManifestResponse
+    conflicts: list[EvidenceConflictResponse] = Field(default_factory=list)
 
 
 class FiscalStateEnvelope(BaseModel):
@@ -112,3 +120,129 @@ class FiscalArtifactVerificationResponse(BaseModel):
     reconciliation_recorded: bool | None
     human_review_recorded: bool | None
     meaning: str
+
+
+class EvidenceRevisionResponse(BaseModel):
+    previous_claim_gaia_id: str
+    revised_claim_gaia_id: str
+    reason: str
+    value_delta: str | None
+    value_change_percent: str | None
+    material_change: bool | None
+    source_revision: bool
+    detected_at: datetime
+    methodology_version: str
+
+
+class EvidenceConflictParticipant(BaseModel):
+    claim_gaia_id: str
+    publisher: str
+    value: str | None
+    unit: str
+    currency: str | None
+    source_sha256: str
+
+
+class EvidenceConflictResponse(BaseModel):
+    conflict_id: str
+    status: EvidenceConflictStatus
+    object_type: str
+    fiscal_period: str
+    metric: str
+    explanation: str
+    detected_at: datetime
+    participants: list[EvidenceConflictParticipant]
+
+
+class EvidenceSourceResponse(BaseModel):
+    source_id: str
+    publisher: str
+    source_type: str
+    jurisdiction: str
+    fiscal_domain: str
+    reporting_cadence: str | None
+    canonical_url: str | None
+    document_url: str | None
+    retrieved_at: datetime | None
+    document_sha256: str
+    source_status: str
+    extraction_status: str
+    verification_status: EvidenceStatus
+    last_checked_at: datetime | None
+    revision_detected: bool
+    supersedes_source_id: str | None
+
+
+class EvidenceSourceRegistryEnvelope(BaseModel):
+    data: list[EvidenceSourceResponse]
+    evidence: dict[str, Any]
+    meta: LedgerMeta
+
+
+class EvidenceHistoryEntry(BaseModel):
+    entry_type: Literal[
+        "source_detected",
+        "human_verified",
+        "published",
+        "source_revised",
+        "claim_superseded",
+    ]
+    occurred_at: datetime
+    label: str
+    evidence_ids: list[str] = Field(default_factory=list)
+
+
+class FiscalEventData(BaseModel):
+    event_id: str
+    jurisdiction: JurisdictionIdentity
+    event_type: str
+    severity: FiscalEventSeverity
+    effective_at: datetime
+    detected_at: datetime
+    evidence_status: EvidenceStatus
+    evidence_ids: list[str]
+    calculation: dict[str, Any]
+    explanation: str
+    fiscal_state_id: str | None
+    methodology_version: str
+
+
+class FiscalEventStreamEvidence(BaseModel):
+    record_count: int
+    meaning: str
+
+
+class FiscalEventStreamEnvelope(BaseModel):
+    data: list[FiscalEventData]
+    evidence: FiscalEventStreamEvidence
+    meta: LedgerMeta
+
+
+class FiscalCertificateData(BaseModel):
+    gaia_id: str
+    jurisdiction: JurisdictionIdentity
+    fiscal_period: str
+    fiscal_state_id: str
+    ledger_status: EvidenceStatus
+    evidence_coverage: str | None
+    evidence_integrity: dict[str, Any]
+    verified_domains: list[str]
+    partial_domains: list[str]
+    unavailable_domains: list[str]
+    proof_gaia_ids: list[str]
+    issued_at: datetime
+
+
+class FiscalCertificateEvidence(BaseModel):
+    manifest: EvidenceManifestResponse
+    disclaimer: str
+
+
+class FiscalCertificateEnvelope(BaseModel):
+    data: FiscalCertificateData
+    evidence: FiscalCertificateEvidence
+    meta: LedgerMeta
+
+
+FiscalProofEvidence.model_rebuild()
+FiscalStateEvidence.model_rebuild()

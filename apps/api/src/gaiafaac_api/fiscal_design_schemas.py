@@ -44,6 +44,13 @@ class FiscalDesignResponse(BaseModel):
     faac_shock_pct: str
     igr_shock_pct: str
     reserve_share_pct: str
+    debt_change_pct: str = "0.00"
+    debt_service_change_pct: str = "0.00"
+    expenditure_change_pct: str = "0.00"
+    capital_spending_change_pct: str = "0.00"
+    inflation_assumption_pct: str = "0.00"
+    scenario_gaia_id: str
+    unsupported_dimensions: list[str]
     assumptions: list[str]
     evidence: list[FiscalDesignEvidence]
     candidates: list[FiscalDesignCandidate]

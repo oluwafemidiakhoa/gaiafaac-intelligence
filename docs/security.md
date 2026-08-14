@@ -1,6 +1,6 @@
 # Fiscal Ledger security
 
-Phase 1 security boundaries:
+Fiscal Ledger security boundaries:
 
 - Public ledger endpoints are read-only except deterministic `/verify`, which does not
   write or fetch remote URLs.
@@ -11,8 +11,18 @@ Phase 1 security boundaries:
 - Browser verification reads local files without uploading them.
 - Source links are evidence references, not instructions for the API to fetch content.
 - Published objects are guarded against update/delete in the application model.
+- Conflict creation and ledger materialization remain service-layer operations; no
+  unauthenticated public mutation route is exposed.
+- Source-registry filters are parameterized and responses omit storage paths,
+  reviewer identity, and internal retrieval configuration.
+- Registry URLs are exposed only when they are absolute HTTP(S) references; the API
+  never fetches them during a read or verification request.
+- Event and certificate endpoints are read-only. Materialization remains inside the
+  governed service layer, and event filters are validated and parameterized.
+- Certificate downloads contain the public canonical manifest only; they do not
+  contain storage paths, reviewer identities, or internal source configuration.
 
-Future ingestion changes must separately review SSRF protections, source URL allowlists,
-file-size limits, rate limiting, conflict authorization, and database-level immutability
-enforcement. Cryptographic integrity must never be presented as proof that source data
-is substantively true.
+Future ingestion changes must separately review source URL allowlists, file-size
+limits, rate limiting, conflict-resolution authorization, and database-level
+immutability enforcement. Cryptographic integrity must never be presented as proof
+that source data is substantively true.

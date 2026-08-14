@@ -23,6 +23,19 @@ class EvidenceStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class EvidenceConflictStatus(StrEnum):
+    UNRESOLVED = "unresolved"
+    RESOLVED = "resolved"
+    DISMISSED = "dismissed"
+
+
+class FiscalEventSeverity(StrEnum):
+    INFORMATIONAL = "informational"
+    NOTABLE = "notable"
+    MATERIAL = "material"
+    CRITICAL = "critical"
+
+
 class SourceStatus(StrEnum):
     PENDING = "pending"
     REGISTERED = "registered"

@@ -93,6 +93,8 @@ def test_fiscal_design_computes_deterministic_complete_year_scenarios(session):
     assert result.annual_igr_available is True
     assert result.latest_comparable_year == 2026
     assert len(result.evidence) == 13
+    assert result.scenario_gaia_id.startswith("GF-SCENARIO-NG-LA-2026-")
+    assert "debt" in result.unsupported_dimensions
 
     by_key = {candidate.key: candidate for candidate in result.candidates}
     faac = by_key["faac_shock"]
@@ -136,3 +138,22 @@ def test_latest_comparable_design_year_falls_back_to_latest_complete_intersectio
 
 def test_fiscal_design_returns_none_for_unknown_state(session):
     assert fiscal_design(session, state_slug="unknown", year=2026) is None
+
+
+def test_expanded_assumptions_are_recorded_but_not_calculated_without_evidence(session):
+    state = _seed_state_evidence(session)
+
+    result = fiscal_design(
+        session,
+        state_slug=state.slug,
+        year=2026,
+        debt_change_pct=Decimal("10"),
+        inflation_assumption_pct=Decimal("7.5"),
+    )
+
+    assert result is not None
+    expanded = next(item for item in result.candidates if item.key == "expanded_fiscal_position")
+    assert expanded.status == "insufficient_data"
+    assert expanded.metrics == []
+    assert "Debt change: 10.00%." in result.assumptions
+    assert "inflation_adjustment" in result.unsupported_dimensions

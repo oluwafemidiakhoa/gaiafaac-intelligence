@@ -264,6 +264,129 @@ export default async function LedgerFiscalProofPage({
         </Card>
       )}
 
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Evidence timeline</CardTitle>
+          <CardDescription>
+            Only lifecycle timestamps retained by Gaia are shown. Missing steps
+            are not inferred.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {proof.evidence.history.length ? (
+            <ol className="border-border space-y-5 border-l pl-5 text-sm">
+              {proof.evidence.history.map((entry) => (
+                <li
+                  key={`${entry.entry_type}-${entry.occurred_at}-${entry.evidence_ids.join('-')}`}
+                  className="relative"
+                >
+                  <span className="bg-primary absolute top-1.5 -left-[1.45rem] size-2 rounded-full" />
+                  <p className="font-medium">{entry.label}</p>
+                  <p className="text-muted-foreground mt-1 font-mono text-xs">
+                    {formatDate(entry.occurred_at.slice(0, 10))} ·{' '}
+                    {entry.entry_type.replaceAll('_', ' ')}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No retained lifecycle timestamps are available.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {proof.evidence.revisions.length ? (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Revision record</CardTitle>
+            <CardDescription>
+              Exact stored deltas between immutable claim versions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <table className="w-full min-w-2xl text-left text-sm">
+              <thead>
+                <tr className="border-border text-muted-foreground border-b">
+                  <th className="py-3 pr-5 font-medium">Detected</th>
+                  <th className="py-3 pr-5 font-medium">Previous</th>
+                  <th className="py-3 pr-5 font-medium">Revised</th>
+                  <th className="py-3 pr-5 font-medium">Value delta</th>
+                  <th className="py-3 font-medium">Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proof.evidence.revisions.map((revision) => (
+                  <tr
+                    key={revision.revised_claim_gaia_id}
+                    className="border-border border-b last:border-0"
+                  >
+                    <td className="py-3 pr-5">
+                      {formatDate(revision.detected_at.slice(0, 10))}
+                    </td>
+                    <td className="py-3 pr-5 font-mono text-xs">
+                      <Link
+                        href={`/proofs/${encodeURIComponent(revision.previous_claim_gaia_id)}`}
+                        className="hover:text-primary"
+                      >
+                        {revision.previous_claim_gaia_id}
+                      </Link>
+                    </td>
+                    <td className="py-3 pr-5 font-mono text-xs">
+                      <Link
+                        href={`/proofs/${encodeURIComponent(revision.revised_claim_gaia_id)}`}
+                        className="hover:text-primary"
+                      >
+                        {revision.revised_claim_gaia_id}
+                      </Link>
+                    </td>
+                    <td className="py-3 pr-5 font-mono">
+                      {revision.value_delta ?? 'Unavailable'}
+                    </td>
+                    <td className="py-3 font-mono">
+                      {revision.value_change_percent
+                        ? `${revision.value_change_percent}%`
+                        : 'Unavailable'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {proof.evidence.conflicts.length ? (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Evidence conflicts</CardTitle>
+            <CardDescription>
+              Conflicting retained claims are disclosed without silently
+              selecting a value.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            {proof.evidence.conflicts.map((conflict) => (
+              <div
+                key={conflict.conflict_id}
+                className="border-border border-b pb-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-mono font-semibold">
+                    {conflict.conflict_id}
+                  </p>
+                  <StatusPill tone="neutral">{conflict.status}</StatusPill>
+                </div>
+                <p className="text-muted-foreground mt-2">
+                  {conflict.explanation}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <p className="text-muted-foreground mt-6 text-xs leading-5">
         {proof.evidence.disclaimer}
       </p>
