@@ -29,6 +29,13 @@ class EvidenceConflictStatus(StrEnum):
     DISMISSED = "dismissed"
 
 
+class FiscalEventSeverity(StrEnum):
+    INFORMATIONAL = "informational"
+    NOTABLE = "notable"
+    MATERIAL = "material"
+    CRITICAL = "critical"
+
+
 class SourceStatus(StrEnum):
     PENDING = "pending"
     REGISTERED = "registered"

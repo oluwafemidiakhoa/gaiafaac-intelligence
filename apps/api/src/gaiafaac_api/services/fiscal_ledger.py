@@ -8,7 +8,12 @@ from urllib.parse import urlsplit
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session, aliased
 
-from gaiafaac_api.database.enums import EvidenceStatus, SourceStatus, VerificationStatus
+from gaiafaac_api.database.enums import (
+    EvidenceStatus,
+    FiscalEventSeverity,
+    SourceStatus,
+    VerificationStatus,
+)
 from gaiafaac_api.database.ledger_models import (
     EvidenceManifest,
     EvidenceVerification,
@@ -41,6 +46,7 @@ from gaiafaac_api.ledger import (
     fiscal_state_id,
     gaia_object_id,
 )
+from gaiafaac_api.services.fiscal_institutional import evidence_history, publish_fiscal_event
 from gaiafaac_api.services.fiscal_trust import (
     claim_revisions,
     conflicts_for_claims,
@@ -307,13 +313,65 @@ def publish_faac_claim_proof(
         verification_status=evidence_status,
         reporting_cadence="monthly",
     )
+    publish_fiscal_event(
+        session,
+        state_id=state.id,
+        event_type="new_source_detected",
+        severity=FiscalEventSeverity.INFORMATIONAL,
+        effective_at=effective_at,
+        detected_at=published_at,
+        evidence_status=evidence_status,
+        evidence_ids=[gaia_id, source.sha256],
+        explanation="A source document entered the published Gaia fiscal evidence ledger.",
+    )
     if previous_claim is not None:
-        create_claim_revision(
+        revision = create_claim_revision(
             session,
             previous_claim=previous_claim,
             revised_claim=claim,
             source_revision=source.supersedes_document_id == previous_claim.source_document_id,
             detected_at=published_at,
+        )
+        if revision.source_revision:
+            publish_fiscal_event(
+                session,
+                state_id=state.id,
+                event_type="source_revised",
+                severity=(
+                    FiscalEventSeverity.MATERIAL
+                    if revision.material_change
+                    else FiscalEventSeverity.NOTABLE
+                ),
+                effective_at=effective_at,
+                detected_at=published_at,
+                evidence_status=evidence_status,
+                evidence_ids=[previous_claim.gaia_id, claim.gaia_id],
+                calculation={
+                    "value_delta": revision.value_delta_text,
+                    "value_change_percent": revision.value_change_percent_text,
+                    "material_change": revision.material_change,
+                },
+                explanation="A revised source document produced a new immutable fiscal claim.",
+            )
+        publish_fiscal_event(
+            session,
+            state_id=state.id,
+            event_type="claim_superseded",
+            severity=(
+                FiscalEventSeverity.MATERIAL
+                if revision.material_change
+                else FiscalEventSeverity.NOTABLE
+            ),
+            effective_at=effective_at,
+            detected_at=published_at,
+            evidence_status=evidence_status,
+            evidence_ids=[previous_claim.gaia_id, claim.gaia_id],
+            calculation={
+                "value_delta": revision.value_delta_text,
+                "value_change_percent": revision.value_change_percent_text,
+                "material_change": revision.material_change,
+            },
+            explanation="A previous fiscal claim was superseded; both versions remain retained.",
         )
     return proof
 
@@ -382,6 +440,7 @@ def get_fiscal_proof_by_gaia_id(session: Session, gaia_id: str) -> FiscalProofEn
             ),
             revisions=claim_revisions(session, claim.gaia_id),
             conflicts=conflicts_for_claims(session, [claim.gaia_id]),
+            history=evidence_history(session, claim.gaia_id),
         ),
         meta=LedgerMeta(
             schema_version=proof.schema_version,
@@ -581,6 +640,19 @@ def publish_fiscal_state(
     )
     session.add_all([manifest, fiscal_state])
     session.flush()
+    publish_fiscal_event(
+        session,
+        state_id=state.id,
+        event_type="fiscal_state_changed",
+        severity=FiscalEventSeverity.INFORMATIONAL,
+        effective_at=effective_at,
+        detected_at=effective_at,
+        evidence_status=ledger_status,
+        evidence_ids=[state_gaia_id, *[claim.gaia_id for claim in claims]],
+        fiscal_state_id=state_gaia_id,
+        calculation={"previous_state_id": previous.fiscal_state_id if previous else None},
+        explanation="A new immutable Fiscal State was published from retained evidence.",
+    )
     return fiscal_state
 
 

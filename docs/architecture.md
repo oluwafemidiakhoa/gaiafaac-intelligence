@@ -117,8 +117,29 @@ states, so historical methodology and results remain reproducible.
   explicit conflict participants, richer source metadata, and inclusive date history.
 - **Reusable foundation:** Phase 1 claims, manifests, proofs, states, canonical hashing,
   and approval integration are extended rather than replaced.
-- **Remaining gaps:** conflict-resolution governance and UI, historical backfill,
-  evidence timelines, events, and certificates remain later work.
+- **Remaining gaps:** conflict-resolution governance, historical backfill, expanded
+  evidence ingestion, and deterministic fiscal classification remain later work.
 - **Primary migration risk:** implying quality where evidence is absent. Component
   scores therefore remain `insufficient_evidence` until their documented inputs exist;
   the migration creates no synthetic registry, revision, conflict, or state records.
+
+## Institutional UX layer
+
+Phase 3 adds two immutable read models without changing Fiscal Proof or Fiscal State
+hash semantics:
+
+```text
+recorded source / revision / conflict / state transition
+  -> deterministic FiscalEvent
+  -> filterable institutional event stream
+
+published FiscalState + its proof IDs
+  -> immutable Fiscal Certificate manifest
+  -> HTML / print / JSON representations
+```
+
+The web application reads these objects through Server Components. Jurisdiction pages
+link every available domain claim to its proof and render absent domains as
+`unavailable`. No public event or certificate mutation endpoint exists. Classification
+of financial movements remains Phase 4 work; Phase 3 emits evidence lifecycle events
+only.

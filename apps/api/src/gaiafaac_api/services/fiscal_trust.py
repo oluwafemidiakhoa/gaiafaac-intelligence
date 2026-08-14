@@ -7,7 +7,11 @@ from decimal import ROUND_HALF_UP, Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from gaiafaac_api.database.enums import EvidenceConflictStatus, EvidenceStatus
+from gaiafaac_api.database.enums import (
+    EvidenceConflictStatus,
+    EvidenceStatus,
+    FiscalEventSeverity,
+)
 from gaiafaac_api.database.ledger_models import (
     ClaimRevision,
     EvidenceConflict,
@@ -23,6 +27,7 @@ from gaiafaac_api.fiscal_ledger_schemas import (
     EvidenceSourceResponse,
 )
 from gaiafaac_api.ledger import canonical_sha256
+from gaiafaac_api.services.fiscal_institutional import publish_fiscal_event
 
 TRUST_METHODOLOGY_VERSION = "1.1.0"
 REVISION_MATERIALITY_PERCENT = Decimal("5.000000")
@@ -223,6 +228,19 @@ def record_evidence_conflict(
         ]
     )
     session.flush()
+    publish_fiscal_event(
+        session,
+        state_id=state_id,
+        event_type="cross_source_conflict",
+        severity=FiscalEventSeverity.MATERIAL,
+        effective_at=max(_utc(claim.effective_at) for claim in claims),
+        detected_at=_utc(detected_at),
+        evidence_status=EvidenceStatus.CONFLICTING,
+        evidence_ids=[conflict_id, *identifiers],
+        explanation=(
+            "Authoritative retained sources report different explicit values for the same claim."
+        ),
+    )
     return conflict
 
 

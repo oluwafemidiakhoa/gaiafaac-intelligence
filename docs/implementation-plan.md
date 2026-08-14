@@ -62,3 +62,13 @@ are not implemented in this milestone.
   browser interaction.
 - Runtime API responses are validated before rendering.
 - Format, lint, type, unit-test, production-build, and Docker configuration checks pass.
+
+## Fiscal Ledger evolution
+
+- Phase 1 — foundation: complete.
+- Phase 2 — trust layer: complete on the stacked trust-layer branch.
+- Phase 3 — institutional UX: jurisdiction Fiscal State pages, enhanced proof detail,
+  evidence history, lifecycle event stream, immutable certificates, and homepage
+  positioning are implemented without pulling in Phase 4 fiscal classification.
+- Phase 4 — intelligence: pending.
+- Phases 5–7 — distribution, expanded evidence, and indexes: pending.

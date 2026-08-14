@@ -20,3 +20,8 @@ domain statuses under `gaia-evidence-coverage-v1`. Evidence Integrity is calcula
 only when its documented minimum evidence exists; missing components remain
 `insufficient_evidence`. New information creates a new Fiscal State; reads support
 exact IDs and inclusive point-in-time `as_of` selection by date or timestamp.
+
+The institutional jurisdiction view is `/jurisdictions/{code}`. It renders the stored
+coverage and integrity results, proof-linked domain claims, source registry, explicit
+missing domains, and separately stored lifecycle events. The page does not recalculate
+or fill any Fiscal State value.

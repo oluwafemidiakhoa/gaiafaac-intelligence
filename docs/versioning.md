@@ -22,3 +22,10 @@ manifest v1 objects.
 
 The initial migration does not backfill IDs because doing so without a reviewed
 publication process could overstate legacy verification.
+
+Phase 3 lifecycle events and certificates use schema and methodology `1.0.0`.
+Certificate manifests use `gaia-fiscal-certificate-manifest-v1` and the unchanged
+`gaia-canonical-json-v1` rules. Events and certificates are immutable application
+records. A certificate ID is content-versioned from its jurisdiction, fiscal period,
+Fiscal State hash, proof IDs, issuance time, and methodology; a later package creates
+a new ID instead of replacing one.

@@ -5,7 +5,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from gaiafaac_api.database.enums import EvidenceConflictStatus, EvidenceStatus
+from gaiafaac_api.database.enums import (
+    EvidenceConflictStatus,
+    EvidenceStatus,
+    FiscalEventSeverity,
+)
 
 
 class LedgerMeta(BaseModel):
@@ -70,6 +74,7 @@ class FiscalProofEvidence(BaseModel):
     disclaimer: str
     revisions: list[EvidenceRevisionResponse] = Field(default_factory=list)
     conflicts: list[EvidenceConflictResponse] = Field(default_factory=list)
+    history: list[EvidenceHistoryEntry] = Field(default_factory=list)
 
 
 class FiscalProofEnvelope(BaseModel):
@@ -171,6 +176,71 @@ class EvidenceSourceResponse(BaseModel):
 class EvidenceSourceRegistryEnvelope(BaseModel):
     data: list[EvidenceSourceResponse]
     evidence: dict[str, Any]
+    meta: LedgerMeta
+
+
+class EvidenceHistoryEntry(BaseModel):
+    entry_type: Literal[
+        "source_detected",
+        "human_verified",
+        "published",
+        "source_revised",
+        "claim_superseded",
+    ]
+    occurred_at: datetime
+    label: str
+    evidence_ids: list[str] = Field(default_factory=list)
+
+
+class FiscalEventData(BaseModel):
+    event_id: str
+    jurisdiction: JurisdictionIdentity
+    event_type: str
+    severity: FiscalEventSeverity
+    effective_at: datetime
+    detected_at: datetime
+    evidence_status: EvidenceStatus
+    evidence_ids: list[str]
+    calculation: dict[str, Any]
+    explanation: str
+    fiscal_state_id: str | None
+    methodology_version: str
+
+
+class FiscalEventStreamEvidence(BaseModel):
+    record_count: int
+    meaning: str
+
+
+class FiscalEventStreamEnvelope(BaseModel):
+    data: list[FiscalEventData]
+    evidence: FiscalEventStreamEvidence
+    meta: LedgerMeta
+
+
+class FiscalCertificateData(BaseModel):
+    gaia_id: str
+    jurisdiction: JurisdictionIdentity
+    fiscal_period: str
+    fiscal_state_id: str
+    ledger_status: EvidenceStatus
+    evidence_coverage: str | None
+    evidence_integrity: dict[str, Any]
+    verified_domains: list[str]
+    partial_domains: list[str]
+    unavailable_domains: list[str]
+    proof_gaia_ids: list[str]
+    issued_at: datetime
+
+
+class FiscalCertificateEvidence(BaseModel):
+    manifest: EvidenceManifestResponse
+    disclaimer: str
+
+
+class FiscalCertificateEnvelope(BaseModel):
+    data: FiscalCertificateData
+    evidence: FiscalCertificateEvidence
     meta: LedgerMeta
 
 

@@ -17,6 +17,10 @@ Fiscal Ledger security boundaries:
   reviewer identity, and internal retrieval configuration.
 - Registry URLs are exposed only when they are absolute HTTP(S) references; the API
   never fetches them during a read or verification request.
+- Event and certificate endpoints are read-only. Materialization remains inside the
+  governed service layer, and event filters are validated and parameterized.
+- Certificate downloads contain the public canonical manifest only; they do not
+  contain storage paths, reviewer identities, or internal source configuration.
 
 Future ingestion changes must separately review source URL allowlists, file-size
 limits, rate limiting, conflict-resolution authorization, and database-level

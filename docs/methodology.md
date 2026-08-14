@@ -62,3 +62,16 @@ A conflict must be explicitly recorded between at least two retained claims for 
 same jurisdiction, domain, period, and metric with different explicit values. Gaia
 preserves every participant and reports the conflict as unresolved. It never chooses
 a value merely because one source was ingested later.
+
+## Evidence lifecycle events
+
+Phase 3 methodology `1.0.0` emits events only when a retained operation occurs:
+source registration, source revision, claim supersession, explicit cross-source
+conflict, or Fiscal State publication. Event IDs are deterministic SHA-256-derived
+identifiers. Revision event calculations reuse the exact stored Decimal delta and
+percentage from the revision record. Severity describes the lifecycle change;
+`material` for a revision means only that the documented 5% revision threshold was
+met. No event template infers cause, corruption, or misconduct.
+
+Fiscal movement classification such as FAAC spikes or debt pressure is intentionally
+deferred to Phase 4.

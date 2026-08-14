@@ -22,6 +22,8 @@ EXPECTED_TABLES = {
     "extraction_runs",
     "forecasts",
     "fiscal_claims",
+    "fiscal_certificates",
+    "fiscal_events",
     "fiscal_proofs",
     "fiscal_states",
     "claim_revisions",

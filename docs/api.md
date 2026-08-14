@@ -8,6 +8,9 @@ GET  /api/v1/jurisdictions/{code}/evidence
 GET  /api/v1/evidence-sources?jurisdiction={code}&publisher={name}&fiscal_domain={domain}
 GET  /api/v1/fiscal-states/{gaia_id}
 GET  /api/v1/proofs/{gaia_id}
+GET  /api/v1/events?jurisdiction=&event_type=&severity=&evidence_status=&date_from=&date_to=
+GET  /api/v1/jurisdictions/{code}/events
+GET  /api/v1/certificates/{gaia_id}
 POST /api/v1/verify
 ```
 
@@ -31,3 +34,9 @@ curl -X POST \
 The response separates `artifact_integrity` from recorded source, reconciliation, and
 human-review states. A mismatch is a normal 200 response with status `mismatch`; an
 unsupported schema is a validation error.
+
+Event date filters are inclusive UTC calendar dates. Event records are capped at 200
+and explain recorded evidence lifecycle changes without asserting causality. Fiscal
+Certificate reads return their linked proof IDs and immutable manifest. Certificate
+creation remains an internal service-layer operation over an existing published
+Fiscal State.

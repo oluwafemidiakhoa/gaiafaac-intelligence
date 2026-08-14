@@ -24,7 +24,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, Mapper, mapped_column
 
 from gaiafaac_api.database.base import Base
-from gaiafaac_api.database.enums import EvidenceConflictStatus, EvidenceStatus
+from gaiafaac_api.database.enums import (
+    EvidenceConflictStatus,
+    EvidenceStatus,
+    FiscalEventSeverity,
+)
 
 
 def _evidence_status(name: str) -> Enum:
@@ -40,6 +44,16 @@ def _evidence_status(name: str) -> Enum:
 def _conflict_status(name: str) -> Enum:
     return Enum(
         EvidenceConflictStatus,
+        name=name,
+        native_enum=False,
+        create_constraint=True,
+        values_callable=lambda members: [member.value for member in members],
+    )
+
+
+def _event_severity(name: str) -> Enum:
+    return Enum(
+        FiscalEventSeverity,
         name=name,
         native_enum=False,
         create_constraint=True,
@@ -330,6 +344,69 @@ class EvidenceConflictClaim(Base):
     )
 
 
+class FiscalEvent(Base):
+    """An immutable, deterministic record of a fiscal evidence lifecycle change."""
+
+    __tablename__ = "fiscal_events"
+    __table_args__ = (
+        Index("ix_fiscal_events_jurisdiction_effective", "state_id", "effective_at"),
+        Index("ix_fiscal_events_type_severity", "event_type", "severity"),
+    )
+
+    event_id: Mapped[str] = mapped_column(String(120), primary_key=True)
+    state_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("states.state_id", ondelete="RESTRICT"), nullable=False
+    )
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    severity: Mapped[FiscalEventSeverity] = mapped_column(
+        _event_severity("fiscal_event_severity"), nullable=False
+    )
+    effective_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    evidence_status: Mapped[EvidenceStatus] = mapped_column(
+        _evidence_status("fiscal_event_evidence_status"), nullable=False
+    )
+    evidence_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    calculation: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    fiscal_state_id: Mapped[str | None] = mapped_column(
+        ForeignKey("fiscal_states.fiscal_state_id", ondelete="RESTRICT")
+    )
+    methodology_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class FiscalCertificate(Base):
+    """An immutable point-in-time evidence package for a published Fiscal State."""
+
+    __tablename__ = "fiscal_certificates"
+    __table_args__ = (
+        CheckConstraint("length(integrity_hash) = 64", name="ck_fiscal_certificate_hash"),
+        Index("ix_fiscal_certificates_jurisdiction_issued", "state_id", "issued_at"),
+    )
+
+    gaia_id: Mapped[str] = mapped_column(String(120), primary_key=True)
+    state_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("states.state_id", ondelete="RESTRICT"), nullable=False
+    )
+    fiscal_state_id: Mapped[str] = mapped_column(
+        ForeignKey("fiscal_states.fiscal_state_id", ondelete="RESTRICT"), nullable=False
+    )
+    fiscal_period: Mapped[str] = mapped_column(String(32), nullable=False)
+    manifest_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("evidence_manifests.id", ondelete="RESTRICT"), nullable=False, unique=True
+    )
+    integrity_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    methodology_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 def _immutable_published(_mapper: Mapper[Any], _connection: Any, target: Any) -> None:
     if target.published_at is not None:
         raise ValueError(f"Published {target.__class__.__name__} records are immutable.")
@@ -349,6 +426,8 @@ for _model in (
     EvidenceSource,
     ClaimRevision,
     EvidenceConflictClaim,
+    FiscalEvent,
+    FiscalCertificate,
 ):
     event.listen(_model, "before_update", _immutable_evidence)
     event.listen(_model, "before_delete", _immutable_evidence)

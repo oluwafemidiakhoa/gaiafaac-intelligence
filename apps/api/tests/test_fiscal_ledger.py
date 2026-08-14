@@ -7,16 +7,28 @@ from sqlalchemy.orm import Session
 
 from gaiafaac_api.api.v1.routes.fiscal_ledger import (
     evidence_source_registry,
+    fiscal_certificate_by_id,
+    fiscal_event_stream,
     fiscal_proof_by_id,
     fiscal_state_by_id,
     jurisdiction_fiscal_state,
     verify_fiscal_artifact,
 )
-from gaiafaac_api.database.enums import ReportedUnit, SourceStatus, VerificationStatus
+from gaiafaac_api.database.enums import (
+    FiscalEventSeverity,
+    ReportedUnit,
+    SourceStatus,
+    VerificationStatus,
+)
 from gaiafaac_api.database.models import ReportingPeriod, SourceDocument, State, StateAllocation
 from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.fiscal_ledger_schemas import EvidenceManifestResponse
 from gaiafaac_api.ledger import canonical_sha256
+from gaiafaac_api.services.fiscal_institutional import (
+    fiscal_events,
+    get_fiscal_certificate,
+    publish_fiscal_certificate,
+)
 from gaiafaac_api.services.fiscal_ledger import (
     get_fiscal_proof_by_gaia_id,
     get_jurisdiction_fiscal_state,
@@ -263,6 +275,12 @@ def test_revision_and_source_registry_preserve_both_versions(session: Session) -
     assert registry.data[0].revision_detected is False
     assert registry.data[1].revision_detected is True
     assert registry.data[1].supersedes_source_id == registry.data[0].source_id
+    assert [entry.entry_type for entry in original_detail.evidence.history] == [
+        "human_verified",
+        "published",
+        "claim_superseded",
+        "source_revised",
+    ]
 
 
 def test_explicit_conflict_is_retained_without_silently_selecting_a_value(
@@ -329,3 +347,90 @@ def test_date_as_of_query_is_inclusive_and_returns_historical_state(session: Ses
     assert historical is not None
     assert historical.data.fiscal_state_id == first.fiscal_state_id
     assert second.previous_state_id == first.fiscal_state_id
+
+
+def test_lifecycle_events_are_deterministic_filterable_and_non_causal(
+    session: Session,
+) -> None:
+    state, allocation = _published_allocation(session)
+    original = publish_faac_claim_proof(session, allocation_id=allocation.id)
+    revised_allocation = _revised_allocation(
+        session,
+        state=state,
+        previous_source_id=allocation.source_document_id,
+    )
+    revised = publish_faac_claim_proof(session, allocation_id=revised_allocation.id)
+    publish_fiscal_state(
+        session,
+        jurisdiction_code="NG-LA",
+        effective_at=datetime(2026, 8, 16, 12, 0, tzinfo=UTC),
+        fiscal_period="2026-YTD",
+        claim_gaia_ids=[revised.gaia_id],
+    )
+
+    result = fiscal_events(
+        session,
+        jurisdiction_code="NG-LA",
+        event_type="claim_superseded",
+        severity=FiscalEventSeverity.MATERIAL,
+    )
+    api_result = fiscal_event_stream(
+        session,
+        "NG-LA",
+        "claim_superseded",
+        FiscalEventSeverity.MATERIAL,
+        None,
+        date(2026, 8, 16),
+        date(2026, 8, 16),
+        100,
+    )
+
+    assert result.evidence.record_count == 1
+    event = result.data[0]
+    assert event.event_id.startswith("GFE-NG-LA-20260816-")
+    assert event.evidence_ids == sorted([original.gaia_id, revised.gaia_id])
+    assert event.calculation["value_change_percent"] == "5.799658"
+    assert "caus" not in event.explanation.lower()
+    assert api_result.data[0].event_id == event.event_id
+    assert "do not infer cause" in result.evidence.meaning
+
+
+def test_fiscal_certificate_is_immutable_reproducible_and_links_proofs(
+    session: Session,
+) -> None:
+    _state, allocation = _published_allocation(session)
+    proof = publish_faac_claim_proof(session, allocation_id=allocation.id)
+    fiscal_state = publish_fiscal_state(
+        session,
+        jurisdiction_code="NG-LA",
+        effective_at=datetime(2026, 8, 14, tzinfo=UTC),
+        fiscal_period="2026-YTD",
+        claim_gaia_ids=[proof.gaia_id],
+    )
+    issued_at = datetime(2026, 8, 14, 12, 0, tzinfo=UTC)
+    certificate = publish_fiscal_certificate(
+        session,
+        fiscal_state_id=fiscal_state.fiscal_state_id,
+        fiscal_period="2026H1",
+        issued_at=issued_at,
+    )
+    duplicate = publish_fiscal_certificate(
+        session,
+        fiscal_state_id=fiscal_state.fiscal_state_id,
+        fiscal_period="2026H1",
+        issued_at=issued_at,
+    )
+    detail = get_fiscal_certificate(session, certificate.gaia_id)
+    api_detail = fiscal_certificate_by_id(certificate.gaia_id, session)
+
+    assert duplicate.gaia_id == certificate.gaia_id
+    assert certificate.gaia_id.startswith("GF-CERT-NG-LA-2026H1-")
+    assert detail is not None
+    assert detail.data.proof_gaia_ids == [proof.gaia_id]
+    assert detail.data.verified_domains == ["faac"]
+    assert "debt" in detail.data.unavailable_domains
+    assert detail.data.evidence_integrity["score"] == "74.57"
+    assert canonical_sha256(detail.evidence.manifest.payload) == certificate.integrity_hash
+    assert api_detail.data.gaia_id == certificate.gaia_id
+    verified = verify_fiscal_artifact(detail.evidence.manifest)
+    assert verified.status == "verified"

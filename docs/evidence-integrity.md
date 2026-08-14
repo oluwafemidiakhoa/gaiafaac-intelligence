@@ -33,3 +33,8 @@ Insufficient results remain explicit:
 
 An unresolved, explicitly recorded source conflict produces zero only for the
 cross-source-agreement component. It does not silently select either claim.
+
+Fiscal Certificates and jurisdiction pages display the exact result stored on their
+Fiscal State. They do not recalculate old scores. A null score is rendered as
+`insufficient evidence`, never as zero, and the result is never presented as a credit
+rating.

@@ -150,6 +150,11 @@ export default async function StatePage({
               selected year.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
+              <Button asChild>
+                <Link href={`/jurisdictions/NG-${allocation.state_code}`}>
+                  Open Fiscal State
+                </Link>
+              </Button>
               <Button asChild variant="outline">
                 <Link
                   href={`/fiscal-proof/${allocation.state_slug}/${data.period.revenue_month}`}

@@ -4,15 +4,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from gaiafaac_api.database.enums import EvidenceStatus, FiscalEventSeverity
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.fiscal_ledger_schemas import (
     EvidenceManifestResponse,
     EvidenceSourceRegistryEnvelope,
     FiscalArtifactVerificationResponse,
+    FiscalCertificateEnvelope,
+    FiscalEventStreamEnvelope,
     FiscalProofEnvelope,
     FiscalStateEnvelope,
 )
 from gaiafaac_api.ledger import canonical_sha256
+from gaiafaac_api.services.fiscal_institutional import fiscal_events, get_fiscal_certificate
 from gaiafaac_api.services.fiscal_ledger import (
     METHODOLOGY_VERSION,
     get_fiscal_proof_by_gaia_id,
@@ -77,6 +81,85 @@ def fiscal_proof_by_id(gaia_id: str, session: DatabaseSession) -> FiscalProofEnv
 
 
 @router.get(
+    "/events",
+    response_model=FiscalEventStreamEnvelope,
+    summary="Deterministic fiscal evidence lifecycle event stream",
+)
+def fiscal_event_stream(
+    session: DatabaseSession,
+    jurisdiction: Annotated[str | None, Query(min_length=2, max_length=16)] = None,
+    event_type: Annotated[str | None, Query(min_length=2, max_length=80)] = None,
+    severity: Annotated[FiscalEventSeverity | None, Query()] = None,
+    evidence_status: Annotated[EvidenceStatus | None, Query()] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+) -> FiscalEventStreamEnvelope:
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="date_from cannot be after date_to.",
+        )
+    return fiscal_events(
+        session,
+        jurisdiction_code=jurisdiction,
+        event_type=event_type,
+        severity=severity,
+        evidence_status=evidence_status,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+    )
+
+
+@router.get(
+    "/jurisdictions/{code}/events",
+    response_model=FiscalEventStreamEnvelope,
+    summary="Fiscal evidence lifecycle events for one jurisdiction",
+)
+def jurisdiction_fiscal_events(
+    code: str,
+    session: DatabaseSession,
+    event_type: Annotated[str | None, Query(min_length=2, max_length=80)] = None,
+    severity: Annotated[FiscalEventSeverity | None, Query()] = None,
+    evidence_status: Annotated[EvidenceStatus | None, Query()] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+) -> FiscalEventStreamEnvelope:
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="date_from cannot be after date_to.",
+        )
+    return fiscal_events(
+        session,
+        jurisdiction_code=code,
+        event_type=event_type,
+        severity=severity,
+        evidence_status=evidence_status,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+    )
+
+
+@router.get(
+    "/certificates/{gaia_id}",
+    response_model=FiscalCertificateEnvelope,
+    summary="Immutable Gaia Fiscal Certificate by ID",
+)
+def fiscal_certificate_by_id(gaia_id: str, session: DatabaseSession) -> FiscalCertificateEnvelope:
+    result = get_fiscal_certificate(session, gaia_id)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fiscal Certificate not found.",
+        )
+    return result
+
+
+@router.get(
     "/evidence-sources",
     response_model=EvidenceSourceRegistryEnvelope,
     summary="Browse the versioned Gaia evidence source registry",
@@ -137,6 +220,7 @@ def verify_fiscal_artifact(
         "gaia-fiscal-proof-manifest-v1",
         "gaia-fiscal-state-manifest-v1",
         "gaia-fiscal-state-manifest-v2",
+        "gaia-fiscal-certificate-manifest-v1",
     }
     if manifest.manifest_version not in supported_versions:
         raise HTTPException(
