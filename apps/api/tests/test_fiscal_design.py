@@ -93,7 +93,7 @@ def test_fiscal_design_computes_deterministic_complete_year_scenarios(session):
     assert result.annual_igr_available is True
     assert result.latest_comparable_year == 2026
     assert len(result.evidence) == 13
-    assert result.scenario_gaia_id.startswith("GF-SCENARIO-NG-LA-2026-")
+    assert result.scenario_gaia_id.startswith(f"GF-SCENARIO-NG-{state.code}-2026-")
     assert "debt" in result.unsupported_dimensions
 
     by_key = {candidate.key: candidate for candidate in result.candidates}
