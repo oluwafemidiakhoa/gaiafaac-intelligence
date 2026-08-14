@@ -27,6 +27,10 @@ from gaiafaac_api.database.models import (
 )
 from gaiafaac_api.pipeline.errors import ApprovalError
 from gaiafaac_api.pipeline.validation import validate_import
+from gaiafaac_api.services.fiscal_ledger import (
+    publish_current_fiscal_state,
+    publish_faac_claim_proof,
+)
 
 
 @dataclass(frozen=True)
@@ -193,6 +197,16 @@ def publish_import(
     period.is_published = True
     period.published_at = published_at
     source.source_status = SourceStatus.APPROVED
+    session.flush()
+    for allocation in allocations:
+        publish_faac_claim_proof(session, allocation_id=allocation.id)
+    for state_id in sorted({allocation.state_id for allocation in allocations}, key=str):
+        publish_current_fiscal_state(
+            session,
+            state_id=state_id,
+            effective_at=published_at,
+            fiscal_period=f"{period.revenue_month.year}-YTD",
+        )
     session.add(
         AuditLog(
             actor_user_id=reviewer.id,

@@ -8,8 +8,13 @@ from gaiafaac_api.config import get_settings
 
 EXPECTED_TABLES = {
     "audit_logs",
+    "evidence_manifests",
+    "evidence_verifications",
     "extraction_runs",
     "forecasts",
+    "fiscal_claims",
+    "fiscal_proofs",
+    "fiscal_states",
     "generated_insights",
     "national_distributions",
     "organizations",

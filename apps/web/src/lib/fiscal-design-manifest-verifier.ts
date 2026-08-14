@@ -28,6 +28,13 @@ export type ManifestVerification =
       evidenceCount: number | null
       payload: Record<string, unknown>
       currentEvidenceCheck: CurrentEvidenceCheckRequest | null
+      artifactKind?: 'fiscal-proof'
+      proofVerification?: {
+        sourceVerified: boolean
+        reconciled: boolean | null
+        humanReviewed: boolean
+        published: boolean
+      }
     }
   | {
       status: 'mismatch'
@@ -225,6 +232,146 @@ async function sha256Hex(value: string) {
     .join('')
 }
 
+function canonicalizeProofValue(value: unknown): unknown {
+  if (value === null || typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value)) {
+      throw new TypeError(
+        'Canonical proof numbers must be safe JSON integers; exact decimals use strings.',
+      )
+    }
+    return value
+  }
+  if (typeof value === 'string') {
+    return value.normalize('NFC')
+  }
+  if (Array.isArray(value)) {
+    return value.map(canonicalizeProofValue)
+  }
+  if (isRecord(value)) {
+    const entries = Object.entries(value).map(([key, item]) => [
+      key.normalize('NFC'),
+      item,
+    ]) as Array<[string, unknown]>
+    entries.sort(([left], [right]) => {
+      const leftCodePoints = Array.from(left, (character) =>
+        character.codePointAt(0),
+      )
+      const rightCodePoints = Array.from(right, (character) =>
+        character.codePointAt(0),
+      )
+      const sharedLength = Math.min(
+        leftCodePoints.length,
+        rightCodePoints.length,
+      )
+      for (let index = 0; index < sharedLength; index += 1) {
+        const difference = leftCodePoints[index]! - rightCodePoints[index]!
+        if (difference !== 0) {
+          return difference
+        }
+      }
+      return leftCodePoints.length - rightCodePoints.length
+    })
+    if (entries.some(([key], index) => key === entries[index - 1]?.[0])) {
+      throw new TypeError('Duplicate key after Unicode normalization.')
+    }
+    return Object.fromEntries(
+      entries.map(([key, item]) => [key, canonicalizeProofValue(item)]),
+    )
+  }
+  throw new TypeError('Unsupported value in canonical proof payload.')
+}
+
+async function verifyFiscalProofManifest(
+  parsed: Record<string, unknown>,
+): Promise<ManifestVerification> {
+  if (parsed.schema_version !== '1.0.0') {
+    return {
+      status: 'invalid',
+      message: 'Unsupported Fiscal Proof schema version.',
+    }
+  }
+  if (parsed.canonicalization_version !== 'gaia-canonical-json-v1') {
+    return {
+      status: 'invalid',
+      message: 'Unsupported Fiscal Proof canonicalization version.',
+    }
+  }
+  if (parsed.hash_algorithm !== 'sha256') {
+    return {
+      status: 'invalid',
+      message: 'Unsupported Fiscal Proof hash algorithm.',
+    }
+  }
+  const fingerprint =
+    typeof parsed.payload_sha256 === 'string'
+      ? parsed.payload_sha256.toLowerCase()
+      : ''
+  if (!/^[a-f0-9]{64}$/.test(fingerprint)) {
+    return {
+      status: 'invalid',
+      message: 'The proof payload hash must be a 64-character SHA-256 value.',
+    }
+  }
+  if (!isRecord(parsed.payload)) {
+    return {
+      status: 'invalid',
+      message: 'The Fiscal Proof payload is missing.',
+    }
+  }
+
+  let canonicalPayload: string
+  try {
+    canonicalPayload = JSON.stringify(canonicalizeProofValue(parsed.payload))
+  } catch {
+    return {
+      status: 'invalid',
+      message: 'The Fiscal Proof payload is not canonicalizable.',
+    }
+  }
+  const computedFingerprint = await sha256Hex(canonicalPayload)
+  if (computedFingerprint !== fingerprint) {
+    return { status: 'mismatch', fingerprint, computedFingerprint }
+  }
+
+  const jurisdiction = isRecord(parsed.payload.jurisdiction)
+    ? parsed.payload.jurisdiction
+    : null
+  const verification = isRecord(parsed.payload.verification)
+    ? parsed.payload.verification
+    : {}
+  const fiscalPeriod =
+    typeof parsed.payload.fiscal_period === 'string'
+      ? parsed.payload.fiscal_period
+      : ''
+  const parsedYear = Number(fiscalPeriod.slice(0, 4))
+
+  return {
+    status: 'verified',
+    fingerprint,
+    stateName:
+      jurisdiction && typeof jurisdiction.name === 'string'
+        ? jurisdiction.name
+        : null,
+    year: Number.isInteger(parsedYear) ? parsedYear : null,
+    evidenceCount: 1,
+    payload: parsed.payload,
+    currentEvidenceCheck: null,
+    artifactKind: 'fiscal-proof',
+    proofVerification: {
+      sourceVerified: verification.source_verified === true,
+      reconciled:
+        typeof verification.reconciled === 'boolean'
+          ? verification.reconciled
+          : null,
+      humanReviewed: verification.human_reviewed === true,
+      published: verification.published === true,
+    },
+  }
+}
+
 export async function verifyFiscalDesignEvidenceManifestText(
   manifestText: string,
 ): Promise<ManifestVerification> {
@@ -237,6 +384,10 @@ export async function verifyFiscalDesignEvidenceManifestText(
 
   if (!isRecord(parsed)) {
     return { status: 'invalid', message: 'The manifest must be a JSON object.' }
+  }
+
+  if (parsed.manifest_version === 'gaia-fiscal-proof-manifest-v1') {
+    return verifyFiscalProofManifest(parsed)
   }
 
   if (parsed.manifest_version !== 'gaia-fiscal-design-evidence-manifest-v1') {

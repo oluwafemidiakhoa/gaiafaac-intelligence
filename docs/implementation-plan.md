@@ -1,6 +1,18 @@
 # Implementation plan
 
-## Current scope: Milestone 4
+## Current scope: Fiscal Ledger Foundation
+
+An explicit Phase 1 product directive extends the completed milestone sequence with
+durable fiscal-evidence infrastructure. Existing Milestone 4–5 interfaces remain in
+place and are not rewritten.
+
+This slice adds canonical Gaia IDs, evidence statuses, immutable Fiscal Claims,
+manifests, Fiscal Proofs and Fiscal States, read/verify APIs, browser verification,
+proof detail pages, migrations, and documentation. Evidence Integrity scoring,
+coverage methodology, conflicts, automatic backfill, certificates, events, MCP, and
+indexes remain later phases.
+
+## Previous scope: Milestone 4
 
 Milestone 4 establishes:
 
