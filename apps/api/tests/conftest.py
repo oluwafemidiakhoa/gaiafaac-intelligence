@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from gaiafaac_api.database import commercial_models, igr_models, models  # noqa: F401
+from gaiafaac_api.database import commercial_models, igr_models, ledger_models, models  # noqa: F401
 from gaiafaac_api.database.base import Base
 
 

@@ -6,15 +6,15 @@ import { Button } from '@/components/ui/button'
 
 import { ManifestVerifier } from './manifest-verifier'
 
-export const metadata: Metadata = { title: 'Verify Fiscal Design Manifest' }
+export const metadata: Metadata = { title: 'Gaia Fiscal Proof Verification' }
 
 export default function FiscalDesignManifestVerifierPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
-        eyebrow="Gaia Fiscal Design Lab"
-        title="Verify an evidence manifest"
-        description="Independently check whether a portable Fiscal Design evidence manifest still matches its embedded SHA-256 fingerprint. Verification runs in your browser and does not upload the manifest."
+        eyebrow="Gaia Fiscal Proof"
+        title="Verify a fiscal artifact"
+        description="Independently recompute the SHA-256 integrity hash for a Gaia Fiscal Proof or Fiscal Design evidence manifest. Verification runs in your browser and does not upload the artifact."
       />
 
       <div className="mt-6">

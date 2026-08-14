@@ -10,6 +10,19 @@ class VerificationStatus(StrEnum):
     SUPERSEDED = "superseded"
 
 
+class EvidenceStatus(StrEnum):
+    UNAVAILABLE = "unavailable"
+    DETECTED = "detected"
+    PENDING_EXTRACTION = "pending_extraction"
+    EXTRACTED = "extracted"
+    PENDING_VERIFICATION = "pending_verification"
+    VERIFIED = "verified"
+    PARTIAL = "partial"
+    CONFLICTING = "conflicting"
+    SUPERSEDED = "superseded"
+    REJECTED = "rejected"
+
+
 class SourceStatus(StrEnum):
     PENDING = "pending"
     REGISTERED = "registered"

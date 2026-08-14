@@ -1,0 +1,134 @@
+from datetime import datetime
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from gaiafaac_api.database.session import get_session
+from gaiafaac_api.fiscal_ledger_schemas import (
+    EvidenceManifestResponse,
+    FiscalArtifactVerificationResponse,
+    FiscalProofEnvelope,
+    FiscalStateEnvelope,
+)
+from gaiafaac_api.ledger import canonical_sha256
+from gaiafaac_api.services.fiscal_ledger import (
+    get_fiscal_proof_by_gaia_id,
+    get_fiscal_state_by_id,
+    get_jurisdiction_fiscal_state,
+)
+
+router = APIRouter(tags=["fiscal ledger"])
+DatabaseSession = Annotated[Session, Depends(get_session)]
+
+
+@router.get(
+    "/jurisdictions/{code}/state",
+    response_model=FiscalStateEnvelope,
+    summary="Latest published Fiscal State for a jurisdiction",
+)
+def jurisdiction_fiscal_state(
+    code: str,
+    session: DatabaseSession,
+    as_of: Annotated[datetime | None, Query()] = None,
+) -> FiscalStateEnvelope:
+    try:
+        result = get_jurisdiction_fiscal_state(session, jurisdiction_code=code, as_of=as_of)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published Fiscal State exists for this jurisdiction and date.",
+        )
+    return result
+
+
+@router.get(
+    "/fiscal-states/{gaia_id}",
+    response_model=FiscalStateEnvelope,
+    summary="Published Fiscal State by immutable Gaia ID",
+)
+def fiscal_state_by_id(gaia_id: str, session: DatabaseSession) -> FiscalStateEnvelope:
+    result = get_fiscal_state_by_id(session, fiscal_state_gaia_id=gaia_id)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fiscal State not found.",
+        )
+    return result
+
+
+@router.get(
+    "/proofs/{gaia_id}",
+    response_model=FiscalProofEnvelope,
+    summary="Portable Fiscal Proof by immutable Gaia ID",
+)
+def fiscal_proof_by_id(gaia_id: str, session: DatabaseSession) -> FiscalProofEnvelope:
+    result = get_fiscal_proof_by_gaia_id(session, gaia_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fiscal Proof not found.")
+    return result
+
+
+@router.post(
+    "/verify",
+    response_model=FiscalArtifactVerificationResponse,
+    summary="Recompute a Gaia Fiscal Proof or Fiscal State manifest hash",
+)
+def verify_fiscal_artifact(
+    manifest: EvidenceManifestResponse,
+) -> FiscalArtifactVerificationResponse:
+    supported_versions = {
+        "gaia-fiscal-proof-manifest-v1",
+        "gaia-fiscal-state-manifest-v1",
+    }
+    if manifest.manifest_version not in supported_versions:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unsupported Gaia fiscal manifest version.",
+        )
+    if manifest.canonicalization_version != "gaia-canonical-json-v1":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unsupported canonicalization version.",
+        )
+
+    try:
+        computed = canonical_sha256(manifest.payload)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    verified = computed == manifest.payload_sha256.lower()
+    recorded = manifest.payload.get("verification")
+    verification = recorded if isinstance(recorded, dict) else {}
+    return FiscalArtifactVerificationResponse(
+        status="verified" if verified else "mismatch",
+        artifact_integrity="verified" if verified else "failed",
+        embedded_sha256=manifest.payload_sha256.lower(),
+        computed_sha256=computed,
+        manifest_version=manifest.manifest_version,
+        source_provenance_recorded=(
+            verification.get("source_verified")
+            if isinstance(verification.get("source_verified"), bool)
+            else None
+        ),
+        reconciliation_recorded=(
+            verification.get("reconciled")
+            if isinstance(verification.get("reconciled"), bool)
+            else None
+        ),
+        human_review_recorded=(
+            verification.get("human_reviewed")
+            if isinstance(verification.get("human_reviewed"), bool)
+            else None
+        ),
+        meaning=(
+            "This result verifies artifact integrity only. Recorded provenance, reconciliation, "
+            "and review states do not independently prove the originating government claim."
+        ),
+    )

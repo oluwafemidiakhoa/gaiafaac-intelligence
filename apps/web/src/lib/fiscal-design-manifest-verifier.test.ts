@@ -107,6 +107,120 @@ describe('verifyFiscalDesignEvidenceManifestText', () => {
       message: 'Unsupported or missing Gaia evidence manifest version.',
     })
   })
+
+  it('verifies a canonical Gaia Fiscal Proof manifest without changing legacy semantics', async () => {
+    const payload = {
+      verification: {
+        source_verified: true,
+        reconciled: true,
+        human_reviewed: true,
+        published: true,
+      },
+      jurisdiction: { name: 'Lagos State', code: 'NG-LA', country: 'NG' },
+      fiscal_period: '2026-06',
+    }
+    const canonical = JSON.stringify({
+      fiscal_period: '2026-06',
+      jurisdiction: { code: 'NG-LA', country: 'NG', name: 'Lagos State' },
+      verification: {
+        human_reviewed: true,
+        published: true,
+        reconciled: true,
+        source_verified: true,
+      },
+    })
+    const digest = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(canonical),
+    )
+    const payloadSha256 = Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+    const manifest = {
+      manifest_version: 'gaia-fiscal-proof-manifest-v1',
+      schema_version: '1.0.0',
+      canonicalization_version: 'gaia-canonical-json-v1',
+      hash_algorithm: 'sha256',
+      payload_sha256: payloadSha256,
+      payload,
+    }
+
+    const result = await verifyFiscalDesignEvidenceManifestText(
+      JSON.stringify(manifest),
+    )
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'verified',
+        fingerprint: payloadSha256,
+        artifactKind: 'fiscal-proof',
+        stateName: 'Lagos State',
+        year: 2026,
+        proofVerification: {
+          sourceVerified: true,
+          reconciled: true,
+          humanReviewed: true,
+          published: true,
+        },
+      }),
+    )
+
+    manifest.payload.fiscal_period = '2026-07'
+    await expect(
+      verifyFiscalDesignEvidenceManifestText(JSON.stringify(manifest)),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        status: 'mismatch',
+        fingerprint: payloadSha256,
+      }),
+    )
+  })
+
+  it('uses Python-compatible Unicode ordering and rejects fractional JSON numbers', async () => {
+    const payload = {
+      '\u{1F600}': 'emoji',
+      '\uE000': 'private-use',
+      label: 'e\u0301',
+      count: 1,
+    }
+    const canonical = JSON.stringify({
+      count: 1,
+      label: '\u00E9',
+      '\uE000': 'private-use',
+      '\u{1F600}': 'emoji',
+    })
+    const digest = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(canonical),
+    )
+    const payloadSha256 = Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+    const manifest = {
+      manifest_version: 'gaia-fiscal-proof-manifest-v1',
+      schema_version: '1.0.0',
+      canonicalization_version: 'gaia-canonical-json-v1',
+      hash_algorithm: 'sha256',
+      payload_sha256: payloadSha256,
+      payload,
+    }
+
+    await expect(
+      verifyFiscalDesignEvidenceManifestText(JSON.stringify(manifest)),
+    ).resolves.toEqual(expect.objectContaining({ status: 'verified' }))
+
+    await expect(
+      verifyFiscalDesignEvidenceManifestText(
+        JSON.stringify({
+          ...manifest,
+          payload: { value: 1.5 },
+        }),
+      ),
+    ).resolves.toEqual({
+      status: 'invalid',
+      message: 'The Fiscal Proof payload is not canonicalizable.',
+    })
+  })
 })
 
 describe('summarizeFiscalDesignPayloadChanges', () => {

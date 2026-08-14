@@ -154,8 +154,8 @@ export function ManifestVerifier() {
         <CardHeader>
           <CardTitle>Verify evidence manifest</CardTitle>
           <CardDescription>
-            Choose a downloaded JSON manifest, or paste its contents below.
-            Verification happens in your browser.
+            Choose a downloaded Gaia Fiscal Proof or Fiscal Design JSON
+            manifest, or paste its contents below.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -239,7 +239,11 @@ export function ManifestVerifier() {
             <div>
               <div className="flex flex-wrap items-center gap-3">
                 <StatusPill tone="success">Artifact intact</StatusPill>
-                <p className="font-semibold">Verified manifest</p>
+                <p className="font-semibold">
+                  {verification.artifactKind === 'fiscal-proof'
+                    ? 'Verified Fiscal Proof manifest'
+                    : 'Verified manifest'}
+                </p>
               </div>
               <p className="text-muted-foreground mt-2 text-sm leading-6">
                 The embedded payload matches the manifest fingerprint.
@@ -273,6 +277,58 @@ export function ManifestVerifier() {
               <p className="text-muted-foreground mt-5 font-mono text-xs break-all">
                 SHA-256 {verification.fingerprint}
               </p>
+
+              {verification.proofVerification ? (
+                <div className="mt-5 border-t pt-5">
+                  <p className="text-sm font-semibold">Verification chain</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="bg-muted/40 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Artifact integrity
+                      </p>
+                      <p className="mt-1 font-semibold">Verified</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Source provenance
+                      </p>
+                      <p className="mt-1 font-semibold">
+                        {verification.proofVerification.sourceVerified
+                          ? 'Recorded as verified'
+                          : 'Not verified'}
+                      </p>
+                    </div>
+                    <div className="bg-muted/40 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Reconciliation
+                      </p>
+                      <p className="mt-1 font-semibold">
+                        {verification.proofVerification.reconciled === null
+                          ? 'Not applicable'
+                          : verification.proofVerification.reconciled
+                            ? 'Recorded as reconciled'
+                            : 'Not reconciled'}
+                      </p>
+                    </div>
+                    <div className="bg-muted/40 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Human review
+                      </p>
+                      <p className="mt-1 font-semibold">
+                        {verification.proofVerification.humanReviewed
+                          ? 'Recorded as reviewed'
+                          : 'Not reviewed'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground mt-3 text-xs leading-5">
+                    The cryptographic check proves the artifact has not changed.
+                    Provenance, reconciliation, and review labels reproduce
+                    Gaia&apos;s recorded workflow states; they do not prove that
+                    the originating government claim is true.
+                  </p>
+                </div>
+              ) : null}
 
               {verification.currentEvidenceCheck ? (
                 <div className="mt-5 border-t pt-5">

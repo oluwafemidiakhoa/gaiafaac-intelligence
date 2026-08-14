@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -43,5 +45,42 @@ describe('ManifestVerifier', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Verify manifest' }))
 
     expect(await screen.findByText('Invalid manifest')).toBeVisible()
+  })
+
+  it('separates proof integrity from recorded verification workflow states', async () => {
+    const payload = {
+      fiscal_period: '2026-06',
+      jurisdiction: { code: 'NG-LA', country: 'NG', name: 'Lagos State' },
+      verification: {
+        human_reviewed: true,
+        published: true,
+        reconciled: null,
+        source_verified: true,
+      },
+    }
+    const manifest = {
+      manifest_version: 'gaia-fiscal-proof-manifest-v1',
+      schema_version: '1.0.0',
+      canonicalization_version: 'gaia-canonical-json-v1',
+      hash_algorithm: 'sha256',
+      payload_sha256: createHash('sha256')
+        .update(JSON.stringify(payload))
+        .digest('hex'),
+      payload,
+    }
+    render(<ManifestVerifier />)
+
+    fireEvent.change(screen.getByLabelText('Manifest JSON'), {
+      target: { value: JSON.stringify(manifest) },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify manifest' }))
+
+    expect(
+      await screen.findByText('Verified Fiscal Proof manifest'),
+    ).toBeVisible()
+    expect(screen.getByText('Recorded as verified')).toBeVisible()
+    expect(screen.getByText('Not applicable')).toBeVisible()
+    expect(screen.getByText('Recorded as reviewed')).toBeVisible()
+    expect(screen.getByText(/do not prove/)).toBeVisible()
   })
 })

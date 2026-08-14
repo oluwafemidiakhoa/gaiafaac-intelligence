@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.enums import UserRole
+from gaiafaac_api.database.ledger_models import FiscalProof, FiscalState
 from gaiafaac_api.database.models import StateAllocation, User
 from gaiafaac_api.database.seeds import NIGERIAN_STATES, seed_states
 from gaiafaac_api.pipeline.approval import approve_import, publish_import
@@ -74,6 +75,8 @@ def test_full_publish_lifecycle_serves_real_data(session: Session, tmp_path: Pat
 
     allocations = list(session.scalars(select(StateAllocation)))
     assert all(a.is_published is True and a.is_demo is False for a in allocations)
+    assert len(list(session.scalars(select(FiscalProof)))) == 37
+    assert len(list(session.scalars(select(FiscalState)))) == 37
 
     period = latest_published_period(session)
     assert period is not None
