@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 
 import { StatusPill } from '@/components/status-pill'
 import { Button } from '@/components/ui/button'
@@ -40,13 +40,42 @@ const changeCategoryLabels: Record<string, string> = {
 
 export function ManifestVerifier() {
   const [manifestText, setManifestText] = useState('')
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null)
   const [verification, setVerification] = useState<ManifestVerification | null>(
     null,
   )
+  const [isReadingFile, setIsReadingFile] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [currentEvidence, setCurrentEvidence] =
     useState<CurrentEvidenceResult | null>(null)
   const [isCheckingCurrent, setIsCheckingCurrent] = useState(false)
+
+  function clearResults() {
+    setVerification(null)
+    setCurrentEvidence(null)
+  }
+
+  async function loadManifestFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    setSelectedFileName(file.name)
+    setManifestText('')
+    clearResults()
+    setIsReadingFile(true)
+    try {
+      setManifestText(await file.text())
+    } catch {
+      setVerification({
+        status: 'invalid',
+        message: 'The selected manifest file could not be read.',
+      })
+    } finally {
+      setIsReadingFile(false)
+    }
+  }
 
   async function verify() {
     setIsVerifying(true)
@@ -123,30 +152,66 @@ export function ManifestVerifier() {
     <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
       <Card>
         <CardHeader>
-          <CardTitle>Paste evidence manifest</CardTitle>
+          <CardTitle>Verify evidence manifest</CardTitle>
           <CardDescription>
-            Verification happens in your browser. Gaia recomputes SHA-256 over
-            the embedded canonical payload and compares it with the manifest
-            fingerprint.
+            Choose a downloaded JSON manifest, or paste its contents below.
+            Verification happens in your browser.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="bg-muted/30 rounded-lg border border-dashed p-4">
+            <label htmlFor="manifest-file" className="text-sm font-semibold">
+              Select downloaded manifest
+            </label>
+            <input
+              id="manifest-file"
+              type="file"
+              accept=".json,application/json"
+              onChange={loadManifestFile}
+              disabled={isReadingFile || isVerifying}
+              aria-describedby="manifest-file-help"
+              className="text-muted-foreground file:bg-primary file:text-primary-foreground mt-3 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
+            />
+            <p
+              id="manifest-file-help"
+              className="text-muted-foreground mt-2 text-xs leading-5"
+            >
+              {isReadingFile
+                ? 'Reading manifest…'
+                : selectedFileName
+                  ? `Selected: ${selectedFileName}`
+                  : 'JSON files are read locally and are not uploaded.'}
+            </p>
+          </div>
+
+          <div className="my-5 flex items-center gap-3" aria-hidden="true">
+            <span className="bg-border h-px flex-1" />
+            <span className="text-muted-foreground text-xs font-medium uppercase">
+              Or paste manually
+            </span>
+            <span className="bg-border h-px flex-1" />
+          </div>
+
+          <label htmlFor="manifest-text" className="text-sm font-semibold">
+            Manifest JSON
+          </label>
           <textarea
+            id="manifest-text"
             value={manifestText}
             onChange={(event) => {
               setManifestText(event.target.value)
-              setVerification(null)
-              setCurrentEvidence(null)
+              setSelectedFileName(null)
+              clearResults()
             }}
             placeholder='{"manifest_version":"gaia-fiscal-design-evidence-manifest-v1",...}'
-            className="border-input bg-background min-h-80 w-full rounded-md border p-3 font-mono text-xs leading-5"
+            className="border-input bg-background mt-2 min-h-80 w-full rounded-md border p-3 font-mono text-xs leading-5"
             spellCheck={false}
           />
           <div className="mt-4">
             <Button
               type="button"
               onClick={verify}
-              disabled={!manifestText.trim() || isVerifying}
+              disabled={!manifestText.trim() || isReadingFile || isVerifying}
             >
               {isVerifying ? 'Verifying…' : 'Verify manifest'}
             </Button>
@@ -165,7 +230,8 @@ export function ManifestVerifier() {
         <CardContent>
           {!verification ? (
             <p className="text-muted-foreground text-sm leading-6">
-              Paste a Gaia Fiscal Design evidence manifest and run verification.
+              Select or paste a Gaia Fiscal Design evidence manifest and run
+              verification.
             </p>
           ) : null}
 
