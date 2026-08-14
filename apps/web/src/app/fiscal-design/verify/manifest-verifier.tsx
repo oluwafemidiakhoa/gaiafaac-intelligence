@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { StatusPill } from '@/components/status-pill'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -27,6 +28,15 @@ type CurrentEvidenceResult =
       current_payload: Record<string, unknown>
     }
   | { status: 'error'; message: string }
+
+const changeCategoryLabels: Record<string, string> = {
+  coverage: 'Coverage',
+  evidence: 'Evidence provenance',
+  assumptions: 'Assumptions',
+  scenario: 'Scenario outputs',
+  objective: 'Research objective',
+  other: 'Design version / other',
+}
 
 export function ManifestVerifier() {
   const [manifestText, setManifestText] = useState('')
@@ -97,6 +107,17 @@ export function ManifestVerifier() {
           currentEvidence.current_payload,
         )
       : []
+  const changeGroups = changeDetails.reduce<Record<string, string[]>>(
+    (groups, change) => {
+      groups[change.category] = [
+        ...(groups[change.category] ?? []),
+        change.detail,
+      ]
+      return groups
+    },
+    {},
+  )
+  const affectedCategoryCount = Object.keys(changeGroups).length
 
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
@@ -150,26 +171,35 @@ export function ManifestVerifier() {
 
           {verification?.status === 'verified' ? (
             <div>
-              <p className="font-semibold">Verified manifest</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <StatusPill tone="success">Artifact intact</StatusPill>
+                <p className="font-semibold">Verified manifest</p>
+              </div>
               <p className="text-muted-foreground mt-2 text-sm leading-6">
                 The embedded payload matches the manifest fingerprint.
               </p>
-              <dl className="mt-5 space-y-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">State</dt>
-                  <dd className="font-medium">
+              <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-3 lg:grid-cols-1">
+                <div className="bg-muted/40 rounded-md border p-3">
+                  <dt className="text-muted-foreground text-xs tracking-wide uppercase">
+                    State
+                  </dt>
+                  <dd className="mt-1 font-medium">
                     {verification.stateName ?? 'Not supplied'}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-muted-foreground">Year</dt>
-                  <dd className="font-medium">
+                <div className="bg-muted/40 rounded-md border p-3">
+                  <dt className="text-muted-foreground text-xs tracking-wide uppercase">
+                    Year
+                  </dt>
+                  <dd className="mt-1 font-medium">
                     {verification.year ?? 'Not supplied'}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-muted-foreground">Evidence records</dt>
-                  <dd className="font-medium">
+                <div className="bg-muted/40 rounded-md border p-3">
+                  <dt className="text-muted-foreground text-xs tracking-wide uppercase">
+                    Evidence records
+                  </dt>
+                  <dd className="mt-1 font-medium">
                     {verification.evidenceCount ?? 'Not supplied'}
                   </dd>
                 </div>
@@ -200,43 +230,153 @@ export function ManifestVerifier() {
               ) : null}
 
               {currentEvidence?.status === 'current' ? (
-                <div className="mt-5 rounded-md border p-4">
-                  <p className="font-semibold">Current governed evidence</p>
-                  <p className="text-muted-foreground mt-2 text-sm leading-6">
-                    This manifest fingerprint still matches Gaia&apos;s current
-                    governed Fiscal Design response for this scenario.
-                  </p>
-                  <p className="text-muted-foreground mt-2 text-xs">
+                <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">Current governed evidence</p>
+                      <p className="text-muted-foreground mt-1 text-sm leading-6">
+                        This artifact still matches Gaia&apos;s current governed
+                        Fiscal Design response.
+                      </p>
+                    </div>
+                    <StatusPill tone="success">Current</StatusPill>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Artifact integrity
+                      </p>
+                      <p className="mt-1 font-semibold">Verified</p>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Evidence freshness
+                      </p>
+                      <p className="mt-1 font-semibold">Current</p>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Detected changes
+                      </p>
+                      <p className="mt-1 font-semibold">0</p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground mt-4 text-xs leading-5">
+                    {currentEvidence.state_name} · {currentEvidence.year} ·{' '}
                     {currentEvidence.coverage_label}
                   </p>
                 </div>
               ) : null}
 
               {currentEvidence?.status === 'superseded' ? (
-                <div className="mt-5 rounded-md border p-4">
-                  <p className="font-semibold">Superseded manifest</p>
-                  <p className="text-muted-foreground mt-2 text-sm leading-6">
-                    The artifact is internally intact, but Gaia&apos;s current
-                    governed response now produces a different fingerprint.
-                  </p>
-                  <p className="text-muted-foreground mt-3 font-mono text-xs break-all">
-                    Current SHA-256 {currentEvidence.current_fingerprint}
-                  </p>
-                  <div className="mt-4 border-t pt-4">
-                    <p className="text-sm font-semibold">What changed</p>
+                <div className="mt-5 rounded-lg border border-amber-300 bg-amber-50/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">Superseded manifest</p>
+                      <p className="text-muted-foreground mt-1 text-sm leading-6">
+                        The artifact is internally intact, but Gaia&apos;s
+                        current governed response now produces a different
+                        fingerprint.
+                      </p>
+                    </div>
+                    <StatusPill tone="demo">Superseded</StatusPill>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Artifact integrity
+                      </p>
+                      <p className="mt-1 font-semibold">Verified</p>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Evidence freshness
+                      </p>
+                      <p className="mt-1 font-semibold">Superseded</p>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Detected changes
+                      </p>
+                      <p className="mt-1 font-semibold">
+                        {changeDetails.length}
+                      </p>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Categories affected
+                      </p>
+                      <p className="mt-1 font-semibold">
+                        {affectedCategoryCount}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Manifest SHA-256
+                      </p>
+                      <p className="mt-1 font-mono text-xs break-all">
+                        {currentEvidence.manifest_fingerprint}
+                      </p>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-3">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Current SHA-256
+                      </p>
+                      <p className="mt-1 font-mono text-xs break-all">
+                        {currentEvidence.current_fingerprint}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 border-t border-amber-200 pt-5">
+                    <div className="flex flex-wrap items-end justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold">What changed</p>
+                        <p className="text-muted-foreground mt-1 text-xs leading-5">
+                          Differences are grouped by governed dimension so you
+                          can see why the fingerprint moved.
+                        </p>
+                      </div>
+                      {changeDetails.length ? (
+                        <span className="text-muted-foreground text-xs">
+                          {changeDetails.length} change
+                          {changeDetails.length === 1 ? '' : 's'}
+                        </span>
+                      ) : null}
+                    </div>
                     {changeDetails.length ? (
-                      <ul className="text-muted-foreground mt-2 space-y-2 text-sm leading-6">
-                        {changeDetails.map((change, index) => (
-                          <li key={`${change.category}-${index}`}>
-                            <span className="font-medium capitalize">
-                              {change.category}:
-                            </span>{' '}
-                            {change.detail}
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="mt-4 space-y-3">
+                        {Object.entries(changeGroups).map(
+                          ([category, details]) => (
+                            <div
+                              key={category}
+                              className="bg-background/80 rounded-md border p-3"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="text-sm font-semibold">
+                                  {changeCategoryLabels[category] ?? category}
+                                </p>
+                                <span className="bg-muted rounded-full px-2 py-1 text-xs font-medium">
+                                  {details.length}
+                                </span>
+                              </div>
+                              <ul className="text-muted-foreground mt-2 space-y-2 text-sm leading-6">
+                                {details.map((detail, index) => (
+                                  <li key={`${category}-${index}`}>
+                                    • {detail}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ),
+                        )}
+                      </div>
                     ) : (
-                      <p className="text-muted-foreground mt-2 text-sm leading-6">
+                      <p className="text-muted-foreground mt-3 text-sm leading-6">
                         The canonical payload changed, but no supported
                         difference category was detected.
                       </p>
@@ -258,7 +398,8 @@ export function ManifestVerifier() {
 
           {verification?.status === 'mismatch' ? (
             <div>
-              <p className="font-semibold">Fingerprint mismatch</p>
+              <StatusPill tone="demo">Integrity failed</StatusPill>
+              <p className="mt-3 font-semibold">Fingerprint mismatch</p>
               <p className="text-muted-foreground mt-2 text-sm leading-6">
                 The payload does not match the fingerprint embedded in this
                 manifest. Treat the artifact as changed or corrupted.
@@ -274,7 +415,8 @@ export function ManifestVerifier() {
 
           {verification?.status === 'invalid' ? (
             <div>
-              <p className="font-semibold">Invalid manifest</p>
+              <StatusPill>Invalid artifact</StatusPill>
+              <p className="mt-3 font-semibold">Invalid manifest</p>
               <p className="text-muted-foreground mt-2 text-sm leading-6">
                 {verification.message}
               </p>
