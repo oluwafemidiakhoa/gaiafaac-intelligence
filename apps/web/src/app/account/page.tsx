@@ -64,7 +64,9 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true)
 
   async function load() {
-    const response = await fetch('/api/customer/account/me', { cache: 'no-store' })
+    const response = await fetch('/api/customer/account/me', {
+      cache: 'no-store',
+    })
     if (response.status === 401) {
       const plan = searchParams.get('plan')
       window.location.href = plan
@@ -80,10 +82,14 @@ export default function AccountPage() {
     const nextProfile = (await response.json()) as Profile
     setProfile(nextProfile)
     if (nextProfile.membership_role !== 'member') {
-      const membersResponse = await fetch('/api/customer/account/team/members', {
-        cache: 'no-store',
-      })
-      if (membersResponse.ok) setMembers((await membersResponse.json()) as Member[])
+      const membersResponse = await fetch(
+        '/api/customer/account/team/members',
+        {
+          cache: 'no-store',
+        },
+      )
+      if (membersResponse.ok)
+        setMembers((await membersResponse.json()) as Member[])
     }
     if (nextProfile.api_access) {
       const keysResponse = await fetch('/api/customer/account/api-keys', {
@@ -116,7 +122,9 @@ export default function AccountPage() {
 
   async function manageBilling() {
     setMessage('')
-    const response = await fetch('/api/customer/billing/portal', { method: 'POST' })
+    const response = await fetch('/api/customer/billing/portal', {
+      method: 'POST',
+    })
     if (!response.ok) {
       setMessage(await errorMessage(response))
       return
@@ -196,12 +204,18 @@ export default function AccountPage() {
   }
 
   if (loading) {
-    return <div className="mx-auto max-w-7xl px-5 py-16 text-sm">Loading account…</div>
+    return (
+      <div className="mx-auto max-w-7xl px-5 py-16 text-sm">
+        Loading account…
+      </div>
+    )
   }
   if (!profile) {
     return (
       <div className="mx-auto max-w-7xl px-5 py-16">
-        <p className="text-destructive text-sm font-medium">{message || 'Account unavailable.'}</p>
+        <p className="text-destructive text-sm font-medium">
+          {message || 'Account unavailable.'}
+        </p>
       </div>
     )
   }
@@ -216,7 +230,9 @@ export default function AccountPage() {
           <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
             Customer workspace
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight">{profile.organization_name}</h1>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+            {profile.organization_name}
+          </h1>
           <p className="text-muted-foreground mt-2 text-sm">
             {profile.full_name} · {profile.email}
           </p>
@@ -227,7 +243,9 @@ export default function AccountPage() {
       </div>
 
       {message ? (
-        <p className="border-border bg-muted/30 mt-6 rounded-md border p-3 text-sm">{message}</p>
+        <p className="border-border bg-muted/30 mt-6 rounded-md border p-3 text-sm">
+          {message}
+        </p>
       ) : null}
 
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
@@ -237,7 +255,9 @@ export default function AccountPage() {
             <CardDescription>Current organization entitlement</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold capitalize">{profile.plan_code}</p>
+            <p className="text-2xl font-semibold capitalize">
+              {profile.plan_code}
+            </p>
             <p className="text-muted-foreground mt-2 text-sm">
               {profile.subscription_status ?? 'No paid subscription'}
             </p>
@@ -267,9 +287,16 @@ export default function AccountPage() {
             <CardDescription>Entitlements enforced by the API</CardDescription>
           </CardHeader>
           <CardContent className="text-sm">
-            <p>Historical access: {profile.historical_access ? 'Enabled' : 'Free tier only'}</p>
-            <p className="mt-2">Downloads: {profile.downloads ? 'Enabled' : 'Not included'}</p>
-            <p className="mt-2">API: {profile.api_access ? 'Enabled' : 'Not included'}</p>
+            <p>
+              Historical access:{' '}
+              {profile.historical_access ? 'Enabled' : 'Free tier only'}
+            </p>
+            <p className="mt-2">
+              Downloads: {profile.downloads ? 'Enabled' : 'Not included'}
+            </p>
+            <p className="mt-2">
+              API: {profile.api_access ? 'Enabled' : 'Not included'}
+            </p>
           </CardContent>
         </Card>
 
@@ -290,7 +317,8 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle>Self-service exports</CardTitle>
             <CardDescription>
-              Download a published month with source fingerprint preserved in the export.
+              Download a published month with source fingerprint preserved in
+              the export.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -307,11 +335,20 @@ export default function AccountPage() {
             >
               <label className="grid gap-2 text-sm font-medium">
                 Published month
-                <input className={inputClass} type="month" name="month" required />
+                <input
+                  className={inputClass}
+                  type="month"
+                  name="month"
+                  required
+                />
               </label>
               <label className="grid gap-2 text-sm font-medium">
                 Format
-                <select className={inputClass} name="format" defaultValue="xlsx">
+                <select
+                  className={inputClass}
+                  name="format"
+                  defaultValue="xlsx"
+                >
                   <option value="xlsx">Excel workbook</option>
                   <option value="csv">CSV</option>
                 </select>
@@ -327,13 +364,24 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle>Team administration</CardTitle>
             <CardDescription>
-              Invite members by email and remove non-owner members from this organization.
+              Invite members by email and remove non-owner members from this
+              organization.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={invite} className="grid gap-3 md:grid-cols-4">
-              <input className={inputClass} name="full_name" placeholder="Full name" />
-              <input className={inputClass} name="email" type="email" placeholder="Work email" required />
+              <input
+                className={inputClass}
+                name="full_name"
+                placeholder="Full name"
+              />
+              <input
+                className={inputClass}
+                name="email"
+                type="email"
+                placeholder="Work email"
+                required
+              />
               <select className={inputClass} name="role" defaultValue="member">
                 <option value="member">Member</option>
                 <option value="admin">Administrator</option>
@@ -348,10 +396,17 @@ export default function AccountPage() {
                 >
                   <div>
                     <p className="font-medium">{member.full_name}</p>
-                    <p className="text-muted-foreground">{member.email} · {member.role}</p>
+                    <p className="text-muted-foreground">
+                      {member.email} · {member.role}
+                    </p>
                   </div>
-                  {member.user_id !== profile.user_id && member.role !== 'owner' ? (
-                    <Button variant="outline" size="sm" onClick={() => removeMember(member.user_id)}>
+                  {member.user_id !== profile.user_id &&
+                  member.role !== 'owner' ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeMember(member.user_id)}
+                    >
                       Remove
                     </Button>
                   ) : null}
@@ -367,21 +422,34 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle>API keys</CardTitle>
             <CardDescription>
-              Create keys for published historical endpoints. Plaintext keys are shown once.
+              Create keys for published historical endpoints. Plaintext keys are
+              shown once.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={createKey} className="flex flex-wrap items-end gap-3">
+            <form
+              onSubmit={createKey}
+              className="flex flex-wrap items-end gap-3"
+            >
               <label className="grid gap-2 text-sm font-medium">
                 Key name
-                <input className={inputClass} name="name" placeholder="Production" required />
+                <input
+                  className={inputClass}
+                  name="name"
+                  placeholder="Production"
+                  required
+                />
               </label>
               <Button type="submit">Create API key</Button>
             </form>
             {revealedKey ? (
               <div className="border-primary/30 bg-primary/5 mt-5 rounded-md border p-4">
-                <p className="text-sm font-medium">Copy this key now. It will not be shown again.</p>
-                <code className="mt-2 block break-all text-xs">{revealedKey}</code>
+                <p className="text-sm font-medium">
+                  Copy this key now. It will not be shown again.
+                </p>
+                <code className="mt-2 block text-xs break-all">
+                  {revealedKey}
+                </code>
               </div>
             ) : null}
             <div className="mt-6 space-y-3">
@@ -392,14 +460,22 @@ export default function AccountPage() {
                 >
                   <div>
                     <p className="font-medium">{key.name}</p>
-                    <p className="text-muted-foreground font-mono text-xs">{key.key_prefix}…</p>
+                    <p className="text-muted-foreground font-mono text-xs">
+                      {key.key_prefix}…
+                    </p>
                   </div>
                   {!key.revoked_at ? (
-                    <Button variant="outline" size="sm" onClick={() => revokeKey(key.id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => revokeKey(key.id)}
+                    >
                       Revoke
                     </Button>
                   ) : (
-                    <span className="text-muted-foreground text-xs">Revoked</span>
+                    <span className="text-muted-foreground text-xs">
+                      Revoked
+                    </span>
                   )}
                 </div>
               ))}
