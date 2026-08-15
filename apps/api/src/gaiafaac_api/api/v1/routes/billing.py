@@ -44,7 +44,9 @@ def _price_id(settings, plan_code: str) -> str:
     }
     value = prices.get(plan_code, "")
     if not value:
-        raise HTTPException(status_code=503, detail=f"Billing price for {plan_code} is not configured.")
+        raise HTTPException(
+            status_code=503, detail=f"Billing price for {plan_code} is not configured."
+        )
     return value
 
 
@@ -152,7 +154,9 @@ def create_checkout(
         allow_promotion_codes=True,
     )
     if not checkout.url:
-        raise HTTPException(status_code=502, detail="Billing provider did not return a checkout URL.")
+        raise HTTPException(
+            status_code=502, detail="Billing provider did not return a checkout URL."
+        )
     return RedirectResponse(url=checkout.url)
 
 
