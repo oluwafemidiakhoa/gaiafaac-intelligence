@@ -18,11 +18,11 @@ from gaiafaac_api.pipeline.importer import ImportRequest
 from gaiafaac_api.services.published_data import get_published_overview, latest_published_period
 
 
-def _reviewer(session: Session) -> User:
+def _user(session: Session, role: UserRole) -> User:
     user = User(
         email=f"{uuid.uuid4()}@example.test",
-        full_name="Reviewer",
-        role=UserRole.REVIEWER,
+        full_name=role.value.title(),
+        role=role,
         is_active=True,
     )
     session.add(user)
@@ -66,10 +66,11 @@ def _import(
 
 def test_full_publish_lifecycle_serves_real_data(session: Session, tmp_path: Path) -> None:
     result = _import(session, tmp_path)
-    reviewer = _reviewer(session)
+    reviewer = _user(session, UserRole.REVIEWER)
+    publisher = _user(session, UserRole.ADMINISTRATOR)
     approve_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
 
-    published = publish_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
+    published = publish_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=publisher.id)
     assert published.published is True
     assert published.allocations_approved == 37
 
@@ -86,20 +87,36 @@ def test_full_publish_lifecycle_serves_real_data(session: Session, tmp_path: Pat
     assert overview.covered_states == 37
     assert overview.source.source_organization == "OAGF"
     assert overview.total_net == "33300.00"  # 37 states x 900.00
-    # a published response carries source attribution, not the DEMO label
     assert not hasattr(overview, "data_label")
 
 
 def test_cannot_publish_before_human_verification(session: Session, tmp_path: Path) -> None:
     result = _import(session, tmp_path)
-    reviewer = _reviewer(session)
+    publisher = _user(session, UserRole.ADMINISTRATOR)
     with pytest.raises(ApprovalError, match="human-verified"):
+        publish_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=publisher.id)
+
+
+def test_reviewer_cannot_publish(session: Session, tmp_path: Path) -> None:
+    result = _import(session, tmp_path)
+    reviewer = _user(session, UserRole.REVIEWER)
+    approve_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
+    with pytest.raises(ApprovalError, match="administrator"):
         publish_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
+
+
+def test_same_administrator_cannot_review_and_publish(session: Session, tmp_path: Path) -> None:
+    result = _import(session, tmp_path)
+    administrator = _user(session, UserRole.ADMINISTRATOR)
+    approve_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=administrator.id)
+    with pytest.raises(ApprovalError, match="reviewer cannot publish"):
+        publish_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=administrator.id)
 
 
 def test_demo_data_can_never_be_published(session: Session, tmp_path: Path) -> None:
     result = _import(session, tmp_path, is_demo=True, label="DEMO Jan 2026")
-    reviewer = _reviewer(session)
+    reviewer = _user(session, UserRole.REVIEWER)
+    publisher = _user(session, UserRole.ADMINISTRATOR)
     approve_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
     with pytest.raises(ApprovalError, match="Demo data can never be published"):
-        publish_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
+        publish_import(session, run_id=uuid.UUID(result.run_id), reviewer_id=publisher.id)
