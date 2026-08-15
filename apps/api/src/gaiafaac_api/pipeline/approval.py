@@ -68,7 +68,11 @@ def _approval_context(
 
 
 def approve_import(
-    session: Session, *, run_id: uuid.UUID, reviewer_id: uuid.UUID
+    session: Session,
+    *,
+    run_id: uuid.UUID,
+    reviewer_id: uuid.UUID,
+    note: str | None = None,
 ) -> ApprovalResult:
     """Human-verify a clean import without publishing it."""
     run, source, period, reviewer, allocations = _approval_context(session, run_id, reviewer_id)
@@ -125,6 +129,7 @@ def approve_import(
                 "reporting_period_id": str(period.id),
                 "source_document_id": str(source.id),
                 "allocations_approved": len(allocations),
+                "review_note": note.strip() if note and note.strip() else None,
                 "published": False,
             },
         )
