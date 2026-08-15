@@ -1,13 +1,16 @@
 import {
   AlertTriangle,
+  ArrowRight,
   CheckCircle2,
   Clock3,
   ShieldCheck,
 } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { PageHeader } from '@/components/page-header'
 import { StatusPill } from '@/components/status-pill'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -159,20 +162,28 @@ export default async function PendingReviewPage() {
                   </dl>
 
                   <div className="border-border mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                    <p className="text-muted-foreground text-xs">
-                      Queued{' '}
-                      {item.created_at
-                        ? new Intl.DateTimeFormat('en-NG', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                            timeZone: 'UTC',
-                          }).format(new Date(item.created_at))
-                        : 'time unavailable'}
-                      {item.created_at ? ' UTC' : ''}
-                    </p>
-                    <p className="text-muted-foreground font-mono text-xs break-all">
-                      Run {item.run_id}
-                    </p>
+                    <div>
+                      <p className="text-muted-foreground text-xs">
+                        Queued{' '}
+                        {item.created_at
+                          ? new Intl.DateTimeFormat('en-NG', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                              timeZone: 'UTC',
+                            }).format(new Date(item.created_at))
+                          : 'time unavailable'}
+                        {item.created_at ? ' UTC' : ''}
+                      </p>
+                      <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
+                        Run {item.run_id}
+                      </p>
+                    </div>
+                    <Button asChild size="sm">
+                      <Link href={`/review/pending/${item.run_id}`}>
+                        Open review packet
+                        <ArrowRight className="size-4" aria-hidden="true" />
+                      </Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
