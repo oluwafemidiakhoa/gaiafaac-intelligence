@@ -14,21 +14,24 @@ EXPECTED_TABLES = {
     "api_keys",
     "api_requests",
     "audit_logs",
-    "evidence_manifests",
+    "claim_revisions",
+    "customer_sessions",
     "evidence_conflict_claims",
     "evidence_conflicts",
+    "evidence_manifests",
     "evidence_sources",
     "evidence_verifications",
     "extraction_runs",
-    "forecasts",
-    "fiscal_claims",
     "fiscal_certificates",
+    "fiscal_claims",
     "fiscal_events",
     "fiscal_proofs",
     "fiscal_states",
-    "claim_revisions",
+    "forecasts",
     "generated_insights",
     "national_distributions",
+    "organization_invites",
+    "organization_memberships",
     "organizations",
     "pilot_leads",
     "reporting_periods",
@@ -44,7 +47,7 @@ EXPECTED_TABLES = {
 }
 
 
-def test_metadata_defines_all_milestone_2_tables() -> None:
+def test_metadata_defines_all_current_tables() -> None:
     assert set(Base.metadata.tables) == EXPECTED_TABLES
 
 
