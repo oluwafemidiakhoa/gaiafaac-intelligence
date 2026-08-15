@@ -20,7 +20,7 @@ const pilots = [
     icon: FileSpreadsheet,
     audience: 'Journalists, researchers, analysts, and independent consultants',
     outcome:
-      'Evaluate reviewed historical data, structured exports, and one customized state comparison.',
+      'Evaluate published historical GaiaFAAC evidence for an agreed set of months and jurisdictions, with source lineage preserved.',
   },
   {
     name: 'Team Pilot',
@@ -28,7 +28,7 @@ const pilots = [
     audience:
       'Newsrooms, consultancies, NGOs, universities, and research teams',
     outcome:
-      'Test a shared monthly intelligence workflow with onboarding, reports, and priority support.',
+      'Evaluate reviewed historical evidence in an agreed internal research workflow with manual commercial support.',
   },
   {
     name: 'API Evaluation',
@@ -36,7 +36,7 @@ const pilots = [
     audience:
       'Data teams, fintechs, research platforms, and institutional users',
     outcome:
-      'Evaluate controlled access to published historical endpoints with an entitled API key.',
+      'Evaluate entitled access to published month and allocation endpoints with a manually issued GaiaFAAC API key.',
   },
 ]
 
@@ -46,7 +46,7 @@ export default function PilotPage() {
       <PageHeader
         eyebrow="Commercial pilot"
         title="Evaluate GaiaFAAC with your real research workflow"
-        description="Paid access is currently provisioned manually so we can confirm data coverage, delivery requirements, and appropriate licensing before payment. The latest verified month remains free to inspect."
+        description="Paid access is manually provisioned so we can verify that the requested published evidence and delivery method are actually available before payment. The latest verified month remains free to inspect."
       />
 
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
@@ -82,29 +82,30 @@ export default function PilotPage() {
               <span className="text-foreground font-medium">
                 1. Coverage check.
               </span>{' '}
-              We confirm which months, jurisdictions, exports, and source
-              documents are available.
+              We confirm which published months, jurisdictions, and retained
+              source documents are actually available.
             </li>
             <li>
               <span className="text-foreground font-medium">
-                2. Pilot scope.
+                2. Delivery check.
               </span>{' '}
-              We agree on users, delivery format, support, permitted use, and
-              the evaluation period.
+              We confirm whether your requested format can be delivered during
+              the pilot. No self-service export capability is implied.
             </li>
             <li>
               <span className="text-foreground font-medium">
-                3. Written offer.
+                3. Written scope.
               </span>{' '}
-              You receive the exact deliverables, limitations, price, and
-              licensing terms before paying.
+              We agree the users, permitted use, evidence scope, support, price,
+              and limitations before payment.
             </li>
             <li>
               <span className="text-foreground font-medium">
                 4. Provisioning.
               </span>{' '}
-              Approved data, reports, or API access are delivered and onboarding
-              is scheduled.
+              Approved evidence or API access is provisioned manually. API
+              customers receive an entitled key for the implemented published
+              data endpoints.
             </li>
           </ol>
         </section>
@@ -114,8 +115,8 @@ export default function PilotPage() {
           <ul className="text-muted-foreground mt-4 space-y-3 text-sm leading-6">
             <li>Identify the states and reporting periods you need.</li>
             <li>
-              State whether you require CSV, XLSX, JSON, a written report, or
-              API access.
+              Tell us your preferred delivery format. We will confirm support
+              before including it in an offer.
             </li>
             <li>
               Explain whether the output is for internal research, publication,
@@ -123,8 +124,8 @@ export default function PilotPage() {
             </li>
             <li>Provide the number of intended users.</li>
             <li>
-              Do not send payment until coverage and delivery have been
-              confirmed in writing.
+              Do not send payment until coverage, permitted use, and delivery
+              have been confirmed in writing.
             </li>
           </ul>
         </section>
@@ -142,8 +143,9 @@ export default function PilotPage() {
             Tell us what you need
           </h2>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
-            Your request is stored securely for commercial follow-up. We use it
-            only to evaluate coverage, scope, licensing, and pricing.
+            Your request is stored securely for commercial follow-up. A request
+            is not a purchase and does not guarantee a feature or data period;
+            we confirm the available scope first.
           </p>
         </div>
         <div className="mt-8 max-w-4xl">
@@ -154,9 +156,8 @@ export default function PilotPage() {
       <p className="text-muted-foreground mt-10 text-sm leading-6">
         GaiaFAAC is an independent research platform, not a government service.
         Public-source facts remain attributable to their original publishers.
-        Commercial access covers reviewed compilation, structured delivery,
-        analysis, support, and controlled access—not ownership of public
-        records.
+        Commercial access covers reviewed compilation, structured access,
+        support, and controlled API use—not ownership of public records.
       </p>
     </div>
   )
