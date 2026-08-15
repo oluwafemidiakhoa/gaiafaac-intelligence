@@ -6,22 +6,22 @@ import { formatDate } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
 const primaryNavigation = [
-  { href: '/overview', label: 'Overview' },
   { href: '/live', label: 'Live data' },
   { href: '/states', label: 'Jurisdictions' },
   { href: '/fiscal-pulse', label: 'Fiscal Pulse' },
-  { href: '/insights', label: 'Insights' },
   { href: '/sources', label: 'Sources' },
-  { href: '/methodology', label: 'Methodology' },
 ]
 
-const researchNavigation = [
+const moreNavigation = [
+  { href: '/overview', label: 'Overview' },
+  { href: '/insights', label: 'Insights' },
   { href: '/events', label: 'Fiscal Events' },
+  { href: '/compare', label: 'Compare jurisdictions' },
   { href: '/gaia-analyst', label: 'Gaia Analyst' },
   { href: '/fiscal-design', label: 'Fiscal Design Lab' },
   { href: '/fiscal-watch', label: 'Fiscal Watch' },
   { href: '/decision-packets', label: 'Decision Packets' },
-  { href: '/compare', label: 'Compare jurisdictions' },
+  { href: '/methodology', label: 'Methodology' },
   { href: '/pricing', label: 'Pricing' },
 ]
 
@@ -74,7 +74,7 @@ export async function SiteHeader() {
         </Link>
 
         <nav
-          className="ml-auto hidden items-center gap-5 lg:flex"
+          className="ml-auto hidden items-center gap-6 lg:flex"
           aria-label="Primary navigation"
         >
           {primaryNavigation.map((item) => (
@@ -88,11 +88,11 @@ export async function SiteHeader() {
           ))}
           <details className="relative">
             <summary className="text-muted-foreground hover:text-foreground flex cursor-pointer list-none items-center gap-1 whitespace-nowrap text-sm transition-colors [&::-webkit-details-marker]:hidden">
-              Research tools
+              More
               <ChevronDown className="size-3.5" aria-hidden="true" />
             </summary>
             <div className="border-border bg-background absolute right-0 z-50 mt-3 w-64 rounded-lg border p-2 shadow-lg">
-              {researchNavigation.map((item) => (
+              {moreNavigation.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -116,7 +116,7 @@ export async function SiteHeader() {
           </summary>
           <div className="border-border bg-background absolute right-0 z-50 mt-3 w-72 rounded-lg border p-3 shadow-lg">
             <nav className="grid gap-1" aria-label="Mobile navigation">
-              {[...primaryNavigation, ...researchNavigation].map((item) => (
+              {[...primaryNavigation, ...moreNavigation].map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
