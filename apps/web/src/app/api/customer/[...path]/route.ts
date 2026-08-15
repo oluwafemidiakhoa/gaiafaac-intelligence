@@ -29,7 +29,10 @@ async function proxy(
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
   const method = request.method
-  const body = method === 'GET' || method === 'HEAD' ? undefined : await request.arrayBuffer()
+  const body =
+    method === 'GET' || method === 'HEAD'
+      ? undefined
+      : await request.arrayBuffer()
   const response = await fetch(target, {
     method,
     headers,
@@ -47,7 +50,10 @@ async function proxy(
       token: string
       expires_at: string
     }
-    const outgoing = NextResponse.json({ ok: true, expires_at: payload.expires_at })
+    const outgoing = NextResponse.json({
+      ok: true,
+      expires_at: payload.expires_at,
+    })
     outgoing.cookies.set(SESSION_COOKIE, payload.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -59,7 +65,9 @@ async function proxy(
   }
 
   if (relativePath === 'account/logout') {
-    const outgoing = new NextResponse(null, { status: response.ok ? 204 : response.status })
+    const outgoing = new NextResponse(null, {
+      status: response.ok ? 204 : response.status,
+    })
     outgoing.cookies.set(SESSION_COOKIE, '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -73,7 +81,8 @@ async function proxy(
   const responseHeaders = new Headers()
   const outgoingContentType = response.headers.get('content-type')
   const disposition = response.headers.get('content-disposition')
-  if (outgoingContentType) responseHeaders.set('Content-Type', outgoingContentType)
+  if (outgoingContentType)
+    responseHeaders.set('Content-Type', outgoingContentType)
   if (disposition) responseHeaders.set('Content-Disposition', disposition)
   return new NextResponse(await response.arrayBuffer(), {
     status: response.status,
