@@ -69,8 +69,8 @@ export default async function SourcesPage() {
                   {formatDate(latestSource?.revenue_month ?? null)}
                 </p>
                 <p className="text-muted-foreground mt-2 text-sm">
-                  {latestSource?.covered_states} / {latestSource?.expected_states}{' '}
-                  jurisdictions covered
+                  {latestSource?.covered_states} /{' '}
+                  {latestSource?.expected_states} jurisdictions covered
                 </p>
                 {!latestCoverageComplete ? (
                   <p className="mt-3 text-sm font-medium">
