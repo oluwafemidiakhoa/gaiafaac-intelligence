@@ -94,12 +94,19 @@ def create_invite(
     return row, raw
 
 
+def _expired(value: datetime) -> bool:
+    now = datetime.now(UTC)
+    if value.tzinfo is None:
+        now = now.replace(tzinfo=None)
+    return value <= now
+
+
 def invite_by_token(session: Session, raw: str) -> OrganizationInvite | None:
     digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
     invite = session.scalar(
         select(OrganizationInvite).where(OrganizationInvite.token_hash == digest)
     )
-    if invite is None or invite.accepted_at is not None or invite.expires_at <= datetime.now(UTC):
+    if invite is None or invite.accepted_at is not None or _expired(invite.expires_at):
         return None
     return invite
 
