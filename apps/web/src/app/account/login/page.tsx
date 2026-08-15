@@ -29,13 +29,17 @@ export default function AccountLoginPage() {
       }),
     })
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as { detail?: string }
+      const body = (await response.json().catch(() => ({}))) as {
+        detail?: string
+      }
       setError(body.detail ?? 'Unable to sign in.')
       setSubmitting(false)
       return
     }
     const plan = searchParams.get('plan')
-    window.location.href = plan ? `/account?plan=${encodeURIComponent(plan)}` : '/account'
+    window.location.href = plan
+      ? `/account?plan=${encodeURIComponent(plan)}`
+      : '/account'
   }
 
   return (
@@ -43,7 +47,9 @@ export default function AccountLoginPage() {
       <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
         Customer account
       </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Sign in to GaiaFAAC</h1>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+        Sign in to GaiaFAAC
+      </h1>
       <p className="text-muted-foreground mt-3 text-sm leading-6">
         Manage your subscription, exports, API keys, and organization members.
       </p>
@@ -54,16 +60,26 @@ export default function AccountLoginPage() {
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Password
-          <input className={inputClass} name="password" type="password" required />
+          <input
+            className={inputClass}
+            name="password"
+            type="password"
+            required
+          />
         </label>
         <Button type="submit" disabled={submitting}>
           {submitting ? 'Signing in…' : 'Sign in'}
         </Button>
-        {error ? <p className="text-destructive text-sm font-medium">{error}</p> : null}
+        {error ? (
+          <p className="text-destructive text-sm font-medium">{error}</p>
+        ) : null}
       </form>
       <p className="text-muted-foreground mt-6 text-sm">
         New to GaiaFAAC?{' '}
-        <Link className="text-foreground font-medium hover:underline" href="/account/signup">
+        <Link
+          className="text-foreground font-medium hover:underline"
+          href="/account/signup"
+        >
           Create an account
         </Link>
       </p>
