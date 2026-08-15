@@ -14,8 +14,8 @@ from sqlalchemy import select
 
 from gaiafaac_api.account_schemas import (
     AccountProfile,
-    ApiKeyCreateRequest,
     ApiKeyCreated,
+    ApiKeyCreateRequest,
     ApiKeyItem,
     InviteAcceptedRequest,
     InviteItem,
@@ -314,7 +314,10 @@ def accept_invite(payload: InviteAcceptedRequest, session: DatabaseSession) -> S
         if not verify_password(payload.password, user.password_hash):
             raise HTTPException(
                 status_code=409,
-                detail="This email already has an account. Enter its current password to accept the invitation.",
+                detail=(
+                    "This email already has an account. Enter its current password "
+                    "to accept the invitation."
+                ),
             )
         if user.organization_id not in {None, invite.organization_id}:
             raise HTTPException(
