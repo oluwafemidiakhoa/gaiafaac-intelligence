@@ -7,8 +7,7 @@ from gaiafaac_api.database.enums import PlanCode
 
 @dataclass(frozen=True)
 class Entitlements:
-    """What a plan grants. Basic official-source access (the latest verified month) is
-    always free and is never represented here — it is not gated by any plan."""
+    """What a plan grants. Basic official-source access remains free."""
 
     label: str
     price_usd_monthly: int
@@ -16,6 +15,7 @@ class Entitlements:
     downloads: bool
     api_access: bool
     api_rate_limit_per_day: int
+    max_users: int
 
 
 PLAN_ENTITLEMENTS: dict[PlanCode, Entitlements] = {
@@ -26,6 +26,7 @@ PLAN_ENTITLEMENTS: dict[PlanCode, Entitlements] = {
         downloads=False,
         api_access=False,
         api_rate_limit_per_day=0,
+        max_users=1,
     ),
     PlanCode.ANALYST: Entitlements(
         label="Analyst",
@@ -34,6 +35,7 @@ PLAN_ENTITLEMENTS: dict[PlanCode, Entitlements] = {
         downloads=True,
         api_access=False,
         api_rate_limit_per_day=0,
+        max_users=1,
     ),
     PlanCode.TEAM: Entitlements(
         label="Team",
@@ -42,6 +44,7 @@ PLAN_ENTITLEMENTS: dict[PlanCode, Entitlements] = {
         downloads=True,
         api_access=False,
         api_rate_limit_per_day=0,
+        max_users=10,
     ),
     PlanCode.API: Entitlements(
         label="API",
@@ -50,6 +53,7 @@ PLAN_ENTITLEMENTS: dict[PlanCode, Entitlements] = {
         downloads=True,
         api_access=True,
         api_rate_limit_per_day=5000,
+        max_users=10,
     ),
 }
 
