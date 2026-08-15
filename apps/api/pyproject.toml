@@ -10,9 +10,11 @@ requires-python = ">=3.12"
 dependencies = [
   "alembic>=1.17,<2",
   "fastapi>=0.116,<1",
+  "openpyxl>=3.1,<4",
   "pydantic-settings>=2.10,<3",
   "psycopg[binary]>=3.2,<4",
   "sqlalchemy>=2.0,<3",
+  "stripe>=14.4,<15",
   "uvicorn[standard]>=0.35,<1",
 ]
 
@@ -27,7 +29,6 @@ dev = [
   "ruff>=0.12,<1",
 ]
 extraction = [
-  "openpyxl>=3.1,<4",
   "pdfplumber>=0.11,<0.12",
 ]
 

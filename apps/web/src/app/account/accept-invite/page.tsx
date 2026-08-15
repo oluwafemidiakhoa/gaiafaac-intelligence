@@ -1,0 +1,77 @@
+'use client'
+
+import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+
+import { Button } from '@/components/ui/button'
+
+const inputClass =
+  'border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-10 w-full rounded-md border px-3 text-sm outline-none focus-visible:ring-[3px]'
+
+export default function AcceptInvitePage() {
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token') ?? ''
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSubmitting(true)
+    setError('')
+    const data = new FormData(event.currentTarget)
+    const response = await fetch('/api/customer/account/team/accept-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token,
+        full_name: data.get('full_name'),
+        password: data.get('password'),
+      }),
+    })
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { detail?: string }
+      setError(body.detail ?? 'Unable to accept invitation.')
+      setSubmitting(false)
+      return
+    }
+    window.location.href = '/account'
+  }
+
+  return (
+    <div className="mx-auto max-w-md px-5 py-16">
+      <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+        Team invitation
+      </p>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Join a GaiaFAAC organization</h1>
+      {!token ? (
+        <p className="text-destructive mt-6 text-sm font-medium">This invitation link is incomplete.</p>
+      ) : (
+        <form onSubmit={submit} className="mt-8 grid gap-5">
+          <label className="grid gap-2 text-sm font-medium">
+            Full name
+            <input className={inputClass} name="full_name" required minLength={2} />
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            Password
+            <input
+              className={inputClass}
+              name="password"
+              type="password"
+              required
+              minLength={12}
+              autoComplete="current-password"
+            />
+            <span className="text-muted-foreground text-xs">
+              New accounts: choose at least 12 characters. Existing accounts: enter your current password.
+            </span>
+          </label>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? 'Joining…' : 'Accept invitation'}
+          </Button>
+          {error ? <p className="text-destructive text-sm font-medium">{error}</p> : null}
+        </form>
+      )}
+    </div>
+  )
+}
