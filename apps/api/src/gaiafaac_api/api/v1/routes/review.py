@@ -77,7 +77,12 @@ def approve_review(
             detail="Reviewer attestation is required before approval.",
         )
     try:
-        result = approve_import(session, run_id=run_id, reviewer_id=request.reviewer_id)
+        result = approve_import(
+            session,
+            run_id=run_id,
+            reviewer_id=request.reviewer_id,
+            note=request.note,
+        )
     except ApprovalError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     return ReviewActionResponse(
