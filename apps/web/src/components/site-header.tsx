@@ -81,13 +81,13 @@ export async function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-muted-foreground hover:text-foreground whitespace-nowrap text-sm transition-colors"
+              className="text-muted-foreground hover:text-foreground text-sm whitespace-nowrap transition-colors"
             >
               {item.label}
             </Link>
           ))}
           <details className="relative">
-            <summary className="text-muted-foreground hover:text-foreground flex cursor-pointer list-none items-center gap-1 whitespace-nowrap text-sm transition-colors [&::-webkit-details-marker]:hidden">
+            <summary className="text-muted-foreground hover:text-foreground flex cursor-pointer list-none items-center gap-1 text-sm whitespace-nowrap transition-colors [&::-webkit-details-marker]:hidden">
               More
               <ChevronDown className="size-3.5" aria-hidden="true" />
             </summary>

@@ -139,7 +139,9 @@ def get_review_packet(session: Session, run_id: uuid.UUID) -> ReviewPacket | Non
             ReviewAllocationItem(
                 state_name=state.name,
                 state_code=state.code,
-                gross_total=str(allocation.gross_total) if allocation.gross_total is not None else None,
+                gross_total=str(allocation.gross_total)
+                if allocation.gross_total is not None
+                else None,
                 total_deductions=(
                     str(allocation.total_deductions)
                     if allocation.total_deductions is not None
