@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
@@ -10,8 +9,11 @@ import { Button } from '@/components/ui/button'
 const inputClass =
   'border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-10 w-full rounded-md border px-3 text-sm outline-none focus-visible:ring-[3px]'
 
+function requestedPlan() {
+  return new URLSearchParams(window.location.search).get('plan')
+}
+
 export default function AccountLoginPage() {
-  const searchParams = useSearchParams()
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -36,7 +38,7 @@ export default function AccountLoginPage() {
       setSubmitting(false)
       return
     }
-    const plan = searchParams.get('plan')
+    const plan = requestedPlan()
     window.location.assign(
       plan ? `/account?plan=${encodeURIComponent(plan)}` : '/account',
     )
