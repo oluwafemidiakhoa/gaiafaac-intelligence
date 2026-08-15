@@ -30,7 +30,9 @@ export default function AcceptInvitePage() {
       }),
     })
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as { detail?: string }
+      const body = (await response.json().catch(() => ({}))) as {
+        detail?: string
+      }
       setError(body.detail ?? 'Unable to accept invitation.')
       setSubmitting(false)
       return
@@ -43,14 +45,23 @@ export default function AcceptInvitePage() {
       <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
         Team invitation
       </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Join a GaiaFAAC organization</h1>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+        Join a GaiaFAAC organization
+      </h1>
       {!token ? (
-        <p className="text-destructive mt-6 text-sm font-medium">This invitation link is incomplete.</p>
+        <p className="text-destructive mt-6 text-sm font-medium">
+          This invitation link is incomplete.
+        </p>
       ) : (
         <form onSubmit={submit} className="mt-8 grid gap-5">
           <label className="grid gap-2 text-sm font-medium">
             Full name
-            <input className={inputClass} name="full_name" required minLength={2} />
+            <input
+              className={inputClass}
+              name="full_name"
+              required
+              minLength={2}
+            />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             Password
@@ -63,13 +74,16 @@ export default function AcceptInvitePage() {
               autoComplete="current-password"
             />
             <span className="text-muted-foreground text-xs">
-              New accounts: choose at least 12 characters. Existing accounts: enter your current password.
+              New accounts: choose at least 12 characters. Existing accounts:
+              enter your current password.
             </span>
           </label>
           <Button type="submit" disabled={submitting}>
             {submitting ? 'Joining…' : 'Accept invitation'}
           </Button>
-          {error ? <p className="text-destructive text-sm font-medium">{error}</p> : null}
+          {error ? (
+            <p className="text-destructive text-sm font-medium">{error}</p>
+          ) : null}
         </form>
       )}
     </div>
