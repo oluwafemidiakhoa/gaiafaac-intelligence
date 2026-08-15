@@ -6,8 +6,9 @@ import smtplib
 import uuid
 from datetime import UTC, date, datetime
 from email.message import EmailMessage
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Header, HTTPException, Response, status
 from openpyxl import Workbook
 from sqlalchemy import select
 
@@ -84,7 +85,9 @@ def _require_entitlement(session: DatabaseSession, user: User, attribute: str):
         raise HTTPException(status_code=403, detail="No customer organization is attached.")
     _code, entitlements, _subscription = current_plan(session, user.organization_id)
     if not getattr(entitlements, attribute):
-        raise HTTPException(status_code=403, detail="Your current plan does not include this feature.")
+        raise HTTPException(
+            status_code=403, detail="Your current plan does not include this feature."
+        )
     return entitlements
 
 
@@ -129,7 +132,11 @@ def register(payload: RegisterRequest, session: DatabaseSession) -> SessionRespo
 @router.post("/login", response_model=SessionResponse)
 def login(payload: LoginRequest, session: DatabaseSession) -> SessionResponse:
     user = session.scalar(select(User).where(User.email == normalized_email(payload.email)))
-    if user is None or not user.is_active or not verify_password(payload.password, user.password_hash):
+    if (
+        user is None
+        or not user.is_active
+        or not verify_password(payload.password, user.password_hash)
+    ):
         raise HTTPException(status_code=401, detail="Invalid email or password.")
     membership = membership_for(session, user)
     if membership is None:
@@ -141,9 +148,8 @@ def login(payload: LoginRequest, session: DatabaseSession) -> SessionResponse:
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
     session: DatabaseSession,
-    authorization: str | None = None,
+    authorization: Annotated[str | None, Header()] = None,
 ) -> Response:
-    # The web tier also clears its HttpOnly cookie. Revocation is best effort here.
     if authorization:
         scheme, _, token = authorization.partition(" ")
         if scheme.lower() == "bearer" and token:
@@ -168,7 +174,12 @@ def team_members(session: DatabaseSession, user: CurrentCustomer) -> list[Member
         .order_by(User.full_name)
     ).all()
     return [
-        MemberItem(user_id=member.id, full_name=member.full_name, email=member.email, role=membership.role)
+        MemberItem(
+            user_id=member.id,
+            full_name=member.full_name,
+            email=member.email,
+            role=membership.role,
+        )
         for membership, member in rows
     ]
 
@@ -188,7 +199,13 @@ def team_invites(session: DatabaseSession, user: CurrentCustomer) -> list[Invite
         .order_by(OrganizationInvite.created_at.desc())
     ).all()
     return [
-        InviteItem(id=row.id, email=row.email, full_name=row.full_name, role=row.role, expires_at=row.expires_at)
+        InviteItem(
+            id=row.id,
+            email=row.email,
+            full_name=row.full_name,
+            role=row.role,
+            expires_at=row.expires_at,
+        )
         for row in rows
     ]
 
@@ -204,7 +221,9 @@ def invite_member(
         raise HTTPException(status_code=409, detail="Organization is not configured.")
     _plan, entitlements, _subscription = current_plan(session, user.organization_id)
     if entitlements.max_users <= 1:
-        raise HTTPException(status_code=403, detail="Upgrade to a team-capable plan to invite members.")
+        raise HTTPException(
+            status_code=403, detail="Upgrade to a team-capable plan to invite members."
+        )
 
     email = normalized_email(payload.email)
     existing = session.scalar(
@@ -219,7 +238,10 @@ def invite_member(
             OrganizationInvite.expires_at > datetime.now(UTC),
         )
     ).all()
-    if organization_member_count(session, user.organization_id) + len(live_invites) >= entitlements.max_users:
+    if (
+        organization_member_count(session, user.organization_id) + len(live_invites)
+        >= entitlements.max_users
+    ):
         raise HTTPException(status_code=409, detail="Your plan's member limit has been reached.")
 
     settings = get_settings()
@@ -254,7 +276,9 @@ def invite_member(
     except Exception as error:  # noqa: BLE001
         session.delete(invite)
         session.commit()
-        raise HTTPException(status_code=502, detail="Invitation email could not be sent.") from error
+        raise HTTPException(
+            status_code=502, detail="Invitation email could not be sent."
+        ) from error
 
     return InviteItem(
         id=invite.id,
@@ -293,7 +317,9 @@ def accept_invite(payload: InviteAcceptedRequest, session: DatabaseSession) -> S
                 detail="This email already has an account. Enter its current password to accept the invitation.",
             )
         if user.organization_id not in {None, invite.organization_id}:
-            raise HTTPException(status_code=409, detail="This account already belongs to another organization.")
+            raise HTTPException(
+                status_code=409, detail="This account already belongs to another organization."
+            )
         user.organization_id = invite.organization_id
         user.full_name = payload.full_name.strip()
 
