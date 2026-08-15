@@ -108,7 +108,6 @@ export default function AccountPage() {
     // Initial account hydration is intentionally asynchronous and updates local UI state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function checkout(planCode: string) {
