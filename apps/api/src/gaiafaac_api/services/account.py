@@ -39,7 +39,9 @@ def active_subscription(session: Session, organization_id) -> Subscription | Non
     )
 
 
-def current_plan(session: Session, organization_id) -> tuple[str, Entitlements, Subscription | None]:
+def current_plan(
+    session: Session, organization_id
+) -> tuple[str, Entitlements, Subscription | None]:
     subscription = active_subscription(session, organization_id)
     code = subscription.plan_code if subscription is not None else PlanCode.FREE.value
     return code, entitlements_for(code), subscription
