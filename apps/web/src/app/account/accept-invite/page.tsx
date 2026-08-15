@@ -37,7 +37,7 @@ export default function AcceptInvitePage() {
       setSubmitting(false)
       return
     }
-    window.location.href = '/account'
+    window.location.assign('/account')
   }
 
   return (
