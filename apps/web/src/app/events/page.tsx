@@ -146,7 +146,8 @@ export default async function FiscalEventsPage({
               </Button>
               {hasFilters ? (
                 <span className="text-muted-foreground text-xs">
-                  {activeFilterCount} active {activeFilterCount === 1 ? 'filter' : 'filters'}
+                  {activeFilterCount} active{' '}
+                  {activeFilterCount === 1 ? 'filter' : 'filters'}
                 </span>
               ) : null}
             </div>
