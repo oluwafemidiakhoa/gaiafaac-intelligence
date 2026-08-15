@@ -69,9 +69,11 @@ export default function AccountPage() {
     })
     if (response.status === 401) {
       const plan = searchParams.get('plan')
-      window.location.href = plan
-        ? `/account/login?plan=${encodeURIComponent(plan)}`
-        : '/account/login'
+      window.location.assign(
+        plan
+          ? `/account/login?plan=${encodeURIComponent(plan)}`
+          : '/account/login',
+      )
       return
     }
     if (!response.ok) {
@@ -101,6 +103,8 @@ export default function AccountPage() {
   }
 
   useEffect(() => {
+    // Initial account hydration is intentionally asynchronous and updates local UI state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -117,7 +121,7 @@ export default function AccountPage() {
       return
     }
     const body = (await response.json()) as { url: string }
-    window.location.href = body.url
+    window.location.assign(body.url)
   }
 
   async function manageBilling() {
@@ -130,7 +134,7 @@ export default function AccountPage() {
       return
     }
     const body = (await response.json()) as { url: string }
-    window.location.href = body.url
+    window.location.assign(body.url)
   }
 
   async function invite(event: FormEvent<HTMLFormElement>) {
@@ -200,7 +204,7 @@ export default function AccountPage() {
 
   async function logout() {
     await fetch('/api/customer/account/logout', { method: 'POST' })
-    window.location.href = '/'
+    window.location.assign('/')
   }
 
   if (loading) {
@@ -330,7 +334,9 @@ export default function AccountPage() {
                 const month = String(data.get('month') ?? '')
                 if (!month) return
                 const format = String(data.get('format') ?? 'csv')
-                window.location.href = `/api/customer/account/exports/allocations.${format}?month=${month}-01`
+                window.location.assign(
+                  `/api/customer/account/exports/allocations.${format}?month=${month}-01`,
+                )
               }}
             >
               <label className="grid gap-2 text-sm font-medium">
