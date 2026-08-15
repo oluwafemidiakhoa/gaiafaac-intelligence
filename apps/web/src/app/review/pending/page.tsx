@@ -61,7 +61,7 @@ export default async function PendingReviewPage() {
         <Card>
           <CardHeader>
             <AlertTriangle
-              className="text-amber-700 size-5"
+              className="size-5 text-amber-700"
               aria-hidden="true"
             />
             <CardTitle className="pt-3 text-2xl">{blocked}</CardTitle>
@@ -70,18 +70,21 @@ export default async function PendingReviewPage() {
         </Card>
       </div>
 
-      <Card className="mt-6 bg-muted/30">
+      <Card className="bg-muted/30 mt-6">
         <CardHeader>
           <div className="flex items-start gap-3">
-            <ShieldCheck className="text-primary mt-0.5 size-5" aria-hidden="true" />
+            <ShieldCheck
+              className="text-primary mt-0.5 size-5"
+              aria-hidden="true"
+            />
             <div>
               <CardTitle>Review protocol</CardTitle>
               <CardDescription className="mt-2 max-w-3xl leading-6">
-                Confirm the reporting period and official source, verify complete
-                37-jurisdiction coverage, investigate every validation finding,
-                and approve only when the evidence agrees with the retained
-                source. Approval and publication remain separate controlled
-                actions.
+                Confirm the reporting period and official source, verify
+                complete 37-jurisdiction coverage, investigate every validation
+                finding, and approve only when the evidence agrees with the
+                retained source. Approval and publication remain separate
+                controlled actions.
               </CardDescription>
             </div>
           </div>

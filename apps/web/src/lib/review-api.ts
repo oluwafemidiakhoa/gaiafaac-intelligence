@@ -126,7 +126,10 @@ export async function getReviewPacket(
             : 'The review packet is unavailable.',
       }
     }
-    return { data: reviewPacketSchema.parse(await response.json()), error: null }
+    return {
+      data: reviewPacketSchema.parse(await response.json()),
+      error: null,
+    }
   } catch {
     return { data: null, error: 'The review packet is unavailable.' }
   }
@@ -141,21 +144,31 @@ export async function approveReview(
     return { data: null, error: 'Reviewer identity is not configured.' }
   }
   try {
-    const response = await fetch(`${apiBaseUrl()}/api/v1/review/${runId}/approve`, {
-      method: 'POST',
-      headers: adminHeaders(),
-      body: JSON.stringify({ reviewer_id: reviewerId, attestation: true, note }),
-    })
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/review/${runId}/approve`,
+      {
+        method: 'POST',
+        headers: adminHeaders(),
+        body: JSON.stringify({
+          reviewer_id: reviewerId,
+          attestation: true,
+          note,
+        }),
+      },
+    )
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null
+      const payload = (await response.json().catch(() => null)) as {
+        detail?: string
+      } | null
       return {
         data: null,
         error: payload?.detail ?? 'Approval failed.',
       }
     }
-    return { data: reviewActionSchema.parse(await response.json()), error: null }
+    return {
+      data: reviewActionSchema.parse(await response.json()),
+      error: null,
+    }
   } catch {
     return { data: null, error: 'Approval failed.' }
   }
@@ -170,18 +183,24 @@ export async function rejectReview(
     return { data: null, error: 'Reviewer identity is not configured.' }
   }
   try {
-    const response = await fetch(`${apiBaseUrl()}/api/v1/review/${runId}/reject`, {
-      method: 'POST',
-      headers: adminHeaders(),
-      body: JSON.stringify({ reviewer_id: reviewerId, reason }),
-    })
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/review/${runId}/reject`,
+      {
+        method: 'POST',
+        headers: adminHeaders(),
+        body: JSON.stringify({ reviewer_id: reviewerId, reason }),
+      },
+    )
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null
+      const payload = (await response.json().catch(() => null)) as {
+        detail?: string
+      } | null
       return { data: null, error: payload?.detail ?? 'Rejection failed.' }
     }
-    return { data: reviewActionSchema.parse(await response.json()), error: null }
+    return {
+      data: reviewActionSchema.parse(await response.json()),
+      error: null,
+    }
   } catch {
     return { data: null, error: 'Rejection failed.' }
   }

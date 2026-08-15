@@ -15,11 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { formatDate, humanize } from '@/lib/format'
-import {
-  approveReview,
-  getReviewPacket,
-  rejectReview,
-} from '@/lib/review-api'
+import { approveReview, getReviewPacket, rejectReview } from '@/lib/review-api'
 
 export const metadata: Metadata = { title: 'Accountant review packet' }
 export const dynamic = 'force-dynamic'
@@ -87,7 +83,9 @@ export default async function ReviewPacketPage({
           description="Only real, unpublished evidence can be opened in the accountant review workspace."
         />
         <div className="mt-8">
-          <DataUnavailable message={result.error ?? 'Review packet unavailable.'} />
+          <DataUnavailable
+            message={result.error ?? 'Review packet unavailable.'}
+          />
         </div>
         <Button asChild variant="outline" className="mt-5">
           <Link href="/review/pending">Back to review queue</Link>
@@ -110,7 +108,10 @@ export default async function ReviewPacketPage({
       {query.error ? (
         <Card className="mt-6 border-amber-300 bg-amber-50">
           <CardContent className="flex items-start gap-3 pt-6 text-amber-950">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <AlertTriangle
+              className="mt-0.5 size-5 shrink-0"
+              aria-hidden="true"
+            />
             <p className="text-sm font-medium">{query.error}</p>
           </CardContent>
         </Card>
@@ -127,14 +128,18 @@ export default async function ReviewPacketPage({
                   {packet.source.original_filename}
                 </CardDescription>
               </div>
-              <StatusPill tone="neutral">Version {packet.source.document_version}</StatusPill>
+              <StatusPill tone="neutral">
+                Version {packet.source.document_version}
+              </StatusPill>
             </div>
           </CardHeader>
           <CardContent>
             <dl className="grid gap-5 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-muted-foreground">Reporting period</dt>
-                <dd className="mt-1 font-medium">{formatDate(packet.revenue_month)}</dd>
+                <dd className="mt-1 font-medium">
+                  {formatDate(packet.revenue_month)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Publication date</dt>
@@ -161,7 +166,8 @@ export default async function ReviewPacketPage({
               </a>
             ) : (
               <p className="text-muted-foreground mt-5 text-sm">
-                No external source URL was retained. Verify against the controlled source archive before approval.
+                No external source URL was retained. Verify against the
+                controlled source archive before approval.
               </p>
             )}
           </CardContent>
@@ -172,7 +178,8 @@ export default async function ReviewPacketPage({
             <ShieldCheck className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">Control status</CardTitle>
             <CardDescription>
-              Approval is enabled only for complete evidence with no blocking validation findings.
+              Approval is enabled only for complete evidence with no blocking
+              validation findings.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -206,7 +213,9 @@ export default async function ReviewPacketPage({
             <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
               Extracted evidence
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">Jurisdiction reconciliation</h2>
+            <h2 className="mt-2 text-2xl font-semibold">
+              Jurisdiction reconciliation
+            </h2>
           </div>
           <StatusPill tone={complete ? 'success' : 'neutral'}>
             {complete ? 'Complete coverage' : 'Incomplete coverage'}
@@ -237,7 +246,10 @@ export default async function ReviewPacketPage({
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs">
-                    {rawAmount(allocation.gross_total, allocation.reported_unit)}
+                    {rawAmount(
+                      allocation.gross_total,
+                      allocation.reported_unit,
+                    )}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs">
                     {rawAmount(
@@ -246,7 +258,10 @@ export default async function ReviewPacketPage({
                     )}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs font-semibold">
-                    {rawAmount(allocation.net_allocation, allocation.reported_unit)}
+                    {rawAmount(
+                      allocation.net_allocation,
+                      allocation.reported_unit,
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs">
                     {humanize(allocation.verification_status)}
@@ -265,7 +280,9 @@ export default async function ReviewPacketPage({
         <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
           Validation record
         </p>
-        <h2 className="mt-2 text-2xl font-semibold">Findings requiring review</h2>
+        <h2 className="mt-2 text-2xl font-semibold">
+          Findings requiring review
+        </h2>
         {packet.findings.length ? (
           <div className="mt-5 space-y-3">
             {packet.findings.map((finding, index) => (
@@ -301,7 +318,9 @@ export default async function ReviewPacketPage({
           <CardHeader>
             <CardTitle>Approve evidence</CardTitle>
             <CardDescription>
-              Record human verification only after reconciling the extracted values against the official source. This action does not publish the report.
+              Record human verification only after reconciling the extracted
+              values against the official source. This action does not publish
+              the report.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -323,7 +342,10 @@ export default async function ReviewPacketPage({
                   disabled={!canApprove}
                 />
                 <span>
-                  I attest that I reviewed the retained source, checked the reporting period and jurisdiction coverage, investigated validation findings, and found the extracted evidence suitable for human verification.
+                  I attest that I reviewed the retained source, checked the
+                  reporting period and jurisdiction coverage, investigated
+                  validation findings, and found the extracted evidence suitable
+                  for human verification.
                 </span>
               </label>
               <Button type="submit" disabled={!canApprove}>
@@ -331,7 +353,8 @@ export default async function ReviewPacketPage({
               </Button>
               {!canApprove ? (
                 <p className="text-muted-foreground text-xs leading-5">
-                  Approval is disabled until coverage is complete and all blocking findings are resolved.
+                  Approval is disabled until coverage is complete and all
+                  blocking findings are resolved.
                 </p>
               ) : null}
             </form>
@@ -342,7 +365,9 @@ export default async function ReviewPacketPage({
           <CardHeader>
             <CardTitle>Reject evidence</CardTitle>
             <CardDescription>
-              Reject when the source, extraction, reconciliation, or validation evidence is not acceptable. The rejected records and reason remain in the audit trail.
+              Reject when the source, extraction, reconciliation, or validation
+              evidence is not acceptable. The rejected records and reason remain
+              in the audit trail.
             </CardDescription>
           </CardHeader>
           <CardContent>
