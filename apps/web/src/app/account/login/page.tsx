@@ -37,9 +37,9 @@ export default function AccountLoginPage() {
       return
     }
     const plan = searchParams.get('plan')
-    window.location.href = plan
-      ? `/account?plan=${encodeURIComponent(plan)}`
-      : '/account'
+    window.location.assign(
+      plan ? `/account?plan=${encodeURIComponent(plan)}` : '/account',
+    )
   }
 
   return (
