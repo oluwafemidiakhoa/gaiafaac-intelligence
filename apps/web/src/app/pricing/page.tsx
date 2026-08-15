@@ -176,7 +176,9 @@ export default function PricingPage() {
         <Card>
           <CardHeader>
             <ShieldCheck className="text-primary size-5" aria-hidden="true" />
-            <CardTitle className="pt-3">What the paid value actually is</CardTitle>
+            <CardTitle className="pt-3">
+              What the paid value actually is
+            </CardTitle>
             <CardDescription>
               Public-source facts remain attributable to their original
               publishers. GaiaFAAC charges for the governed evidence workflow
@@ -249,8 +251,8 @@ export default function PricingPage() {
           coverage, permitted use, delivery requirements, and support needs.
         </p>
         <p>
-          GaiaFAAC is an independent research platform, not a government service.
-          Paid access does not transfer ownership of public records.
+          GaiaFAAC is an independent research platform, not a government
+          service. Paid access does not transfer ownership of public records.
         </p>
       </div>
     </div>
