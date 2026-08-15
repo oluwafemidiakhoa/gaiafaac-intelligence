@@ -1,6 +1,5 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
@@ -54,8 +53,11 @@ async function errorMessage(response: Response) {
   return body.detail ?? body.error ?? 'Request failed.'
 }
 
+function requestedPlan() {
+  return new URLSearchParams(window.location.search).get('plan')
+}
+
 export default function AccountPage() {
-  const searchParams = useSearchParams()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [keys, setKeys] = useState<ApiKeyItem[]>([])
@@ -68,7 +70,7 @@ export default function AccountPage() {
       cache: 'no-store',
     })
     if (response.status === 401) {
-      const plan = searchParams.get('plan')
+      const plan = requestedPlan()
       window.location.assign(
         plan
           ? `/account/login?plan=${encodeURIComponent(plan)}`
@@ -224,7 +226,6 @@ export default function AccountPage() {
     )
   }
 
-  const requestedPlan = searchParams.get('plan')
   const canAdmin = profile.membership_role !== 'member'
 
   return (
@@ -274,7 +275,7 @@ export default function AccountPage() {
                 {['analyst', 'team', 'api'].map((plan) => (
                   <Button
                     key={plan}
-                    variant={requestedPlan === plan ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => checkout(plan)}
                   >
                     Start {plan}
