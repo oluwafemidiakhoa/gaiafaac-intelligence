@@ -41,9 +41,7 @@ def create_customer_session(session: Session, user: User) -> tuple[CustomerSessi
 def authenticate_customer_session(session: Session, raw: str) -> User | None:
     if not raw or not raw.startswith("gfs_"):
         return None
-    row = session.scalar(
-        select(CustomerSession).where(CustomerSession.token_hash == _digest(raw))
-    )
+    row = session.scalar(select(CustomerSession).where(CustomerSession.token_hash == _digest(raw)))
     if row is None or _expired(row.expires_at):
         return None
     user = session.get(User, row.user_id)
@@ -55,9 +53,7 @@ def authenticate_customer_session(session: Session, raw: str) -> User | None:
 
 
 def revoke_customer_session(session: Session, raw: str) -> None:
-    row = session.scalar(
-        select(CustomerSession).where(CustomerSession.token_hash == _digest(raw))
-    )
+    row = session.scalar(select(CustomerSession).where(CustomerSession.token_hash == _digest(raw)))
     if row is not None:
         session.delete(row)
         session.commit()
