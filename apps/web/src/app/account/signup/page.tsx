@@ -31,13 +31,17 @@ export default function AccountSignupPage() {
       }),
     })
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as { detail?: string }
+      const body = (await response.json().catch(() => ({}))) as {
+        detail?: string
+      }
       setError(body.detail ?? 'Unable to create your account.')
       setSubmitting(false)
       return
     }
     const plan = searchParams.get('plan')
-    window.location.href = plan ? `/account?plan=${encodeURIComponent(plan)}` : '/account'
+    window.location.href = plan
+      ? `/account?plan=${encodeURIComponent(plan)}`
+      : '/account'
   }
 
   return (
@@ -45,14 +49,22 @@ export default function AccountSignupPage() {
       <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
         Self-service access
       </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Create your GaiaFAAC account</h1>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+        Create your GaiaFAAC account
+      </h1>
       <p className="text-muted-foreground mt-3 text-sm leading-6">
-        Start on the free public tier, then activate Analyst, Team, or API access from your account.
+        Start on the free public tier, then activate Analyst, Team, or API
+        access from your account.
       </p>
       <form onSubmit={submit} className="mt-8 grid gap-5">
         <label className="grid gap-2 text-sm font-medium">
           Full name
-          <input className={inputClass} name="full_name" required minLength={2} />
+          <input
+            className={inputClass}
+            name="full_name"
+            required
+            minLength={2}
+          />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Work email
@@ -60,7 +72,12 @@ export default function AccountSignupPage() {
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Organization
-          <input className={inputClass} name="organization_name" required minLength={2} />
+          <input
+            className={inputClass}
+            name="organization_name"
+            required
+            minLength={2}
+          />
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Password
@@ -72,16 +89,23 @@ export default function AccountSignupPage() {
             minLength={12}
             autoComplete="new-password"
           />
-          <span className="text-muted-foreground text-xs">Use at least 12 characters.</span>
+          <span className="text-muted-foreground text-xs">
+            Use at least 12 characters.
+          </span>
         </label>
         <Button type="submit" disabled={submitting}>
           {submitting ? 'Creating account…' : 'Create account'}
         </Button>
-        {error ? <p className="text-destructive text-sm font-medium">{error}</p> : null}
+        {error ? (
+          <p className="text-destructive text-sm font-medium">{error}</p>
+        ) : null}
       </form>
       <p className="text-muted-foreground mt-6 text-sm">
         Already have an account?{' '}
-        <Link className="text-foreground font-medium hover:underline" href="/account/login">
+        <Link
+          className="text-foreground font-medium hover:underline"
+          href="/account/login"
+        >
           Sign in
         </Link>
       </p>
