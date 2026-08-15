@@ -176,8 +176,12 @@ def reject_import(
 def publish_import(
     session: Session, *, run_id: uuid.UUID, reviewer_id: uuid.UUID
 ) -> ApprovalResult:
-    """Publish a human-verified real import so it becomes public. Demo can never publish."""
-    run, source, period, reviewer, allocations = _approval_context(session, run_id, reviewer_id)
+    """Publish human-verified evidence under a four-eyes administrator control."""
+    run, source, period, publisher, allocations = _approval_context(session, run_id, reviewer_id)
+    if publisher.role is not UserRole.ADMINISTRATOR:
+        raise ApprovalError("Publishing requires an active administrator")
+    if any(allocation.reviewed_by == publisher.id for allocation in allocations):
+        raise ApprovalError("The human reviewer cannot publish the same import")
     if period.is_demo or source.is_demo:
         raise ApprovalError("Demo data can never be published")
     if period.verification_status is not VerificationStatus.HUMAN_VERIFIED:
@@ -209,11 +213,15 @@ def publish_import(
         )
     session.add(
         AuditLog(
-            actor_user_id=reviewer.id,
+            actor_user_id=publisher.id,
             action="import.published",
             entity_type="reporting_period",
             entity_id=period.id,
-            payload={"allocations_published": len(allocations), "published": True},
+            payload={
+                "allocations_published": len(allocations),
+                "published": True,
+                "separation_of_duties": True,
+            },
         )
     )
     session.commit()
