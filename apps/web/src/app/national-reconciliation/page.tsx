@@ -41,10 +41,17 @@ function ReconciliationCard({
             <CardTitle className="mt-2">{title}</CardTitle>
           </div>
           {good ? (
-            <CheckCircle2 className="size-5 text-emerald-600" aria-hidden="true" />
+            <CheckCircle2
+              className="size-5 text-emerald-600"
+              aria-hidden="true"
+            />
           ) : (
             <AlertTriangle
-              className={conflicted ? 'text-destructive size-5' : 'text-muted-foreground size-5'}
+              className={
+                conflicted
+                  ? 'text-destructive size-5'
+                  : 'text-muted-foreground size-5'
+              }
               aria-hidden="true"
             />
           )}
@@ -52,7 +59,7 @@ function ReconciliationCard({
       </CardHeader>
       <CardContent>
         <div className="mb-5">
-          <StatusPill tone={good ? 'success' : conflicted ? 'danger' : 'neutral'}>
+          <StatusPill tone={good ? 'success' : 'neutral'}>
             {reconciliation.status.toUpperCase()}
           </StatusPill>
         </div>
@@ -64,7 +71,9 @@ function ReconciliationCard({
             </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Derived comparison total</dt>
+            <dt className="text-muted-foreground">
+              Derived comparison total
+            </dt>
             <dd className="mt-1 font-mono font-semibold">
               {valueLabel(reconciliation.derived_total)}
             </dd>
@@ -115,7 +124,7 @@ export default async function NationalReconciliationPage() {
     )
   }
 
-  const values = [
+  const values: Array<[string, string | null]> = [
     ['Total distributable', data.net_distributable_amount.value],
     ['Federal Government', data.federal_amount.value],
     ['States aggregate', data.states_amount.value],
@@ -136,7 +145,9 @@ export default async function NationalReconciliationPage() {
         <StatusPill tone="success">
           {data.covered_jurisdictions}/{data.expected_jurisdictions} JURISDICTIONS
         </StatusPill>
-        <StatusPill tone="neutral">{data.states_scope.replaceAll('_', ' ')}</StatusPill>
+        <StatusPill tone="neutral">
+          {data.states_scope.replaceAll('_', ' ')}
+        </StatusPill>
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -166,7 +177,10 @@ export default async function NationalReconciliationPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <FileCheck2 className="text-primary size-5" aria-hidden="true" />
+              <FileCheck2
+                className="text-primary size-5"
+                aria-hidden="true"
+              />
               <CardTitle>National source evidence</CardTitle>
             </div>
           </CardHeader>
@@ -174,23 +188,33 @@ export default async function NationalReconciliationPage() {
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-muted-foreground">Source organization</dt>
-                <dd className="mt-1 font-medium">{data.source.source_organization}</dd>
+                <dd className="mt-1 font-medium">
+                  {data.source.source_organization}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Revenue month</dt>
-                <dd className="mt-1 font-medium">{formatDate(data.revenue_month)}</dd>
+                <dd className="mt-1 font-medium">
+                  {formatDate(data.revenue_month)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Source document</dt>
-                <dd className="mt-1 font-medium">{data.source.original_filename}</dd>
+                <dd className="mt-1 font-medium">
+                  {data.source.original_filename}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Document version</dt>
-                <dd className="mt-1 font-medium">{data.source.document_version}</dd>
+                <dd className="mt-1 font-medium">
+                  {data.source.document_version}
+                </dd>
               </div>
               <div className="sm:col-span-2">
                 <dt className="text-muted-foreground">SHA-256</dt>
-                <dd className="mt-2 font-mono text-xs break-all">{data.source.sha256}</dd>
+                <dd className="mt-2 font-mono text-xs break-all">
+                  {data.source.sha256}
+                </dd>
               </div>
             </dl>
           </CardContent>
