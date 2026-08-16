@@ -70,3 +70,7 @@ All records on the declared basis must have published net allocations. Incomplet
 ## Publication integrity
 
 A reporting period may now carry multiple official source documents. The public state-allocation overview resolves its source from the published `StateAllocation.source_document_id` values rather than selecting an arbitrary period-level source. This prevents the national communique fingerprint from being incorrectly shown as the jurisdiction-table source.
+
+## Release gate
+
+National reconciliation changes are not merged until repository formatting, API lint and tests, web lint and type checks, web tests, and the production web build all pass on the current pull-request head.
