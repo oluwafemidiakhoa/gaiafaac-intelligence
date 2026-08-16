@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { getPublishedAnalytics } from '@/lib/analytics-api'
+import { getNationalDistributionHistory } from '@/lib/national-distribution-api'
 import { getPublishedOverview } from '@/lib/published-api'
 import { publishedOverview } from '@/test/published-fixtures'
 
@@ -9,6 +10,9 @@ import Home from './page'
 
 vi.mock('@/lib/analytics-api', () => ({
   getPublishedAnalytics: vi.fn(),
+}))
+vi.mock('@/lib/national-distribution-api', () => ({
+  getNationalDistributionHistory: vi.fn(),
 }))
 vi.mock('@/lib/published-api', () => ({
   getPublishedOverview: vi.fn(),
@@ -23,6 +27,10 @@ describe('Home', () => {
     vi.mocked(getPublishedAnalytics).mockResolvedValue({
       data: null,
       error: 'Analytics are unavailable.',
+    })
+    vi.mocked(getNationalDistributionHistory).mockResolvedValue({
+      data: [],
+      error: null,
     })
 
     render(await Home())
@@ -59,6 +67,10 @@ describe('Home', () => {
     vi.mocked(getPublishedAnalytics).mockResolvedValue({
       data: null,
       error: 'Analytics are unavailable.',
+    })
+    vi.mocked(getNationalDistributionHistory).mockResolvedValue({
+      data: [],
+      error: null,
     })
 
     render(await Home())
