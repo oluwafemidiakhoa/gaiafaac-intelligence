@@ -181,7 +181,11 @@ export default async function Home() {
       </section>
 
       {data ? (
-        <ResearchCommandCenter overview={data} analytics={analytics} />
+        <ResearchCommandCenter
+          overview={data}
+          analytics={analytics}
+          analyticsError={analyticsResult.error}
+        />
       ) : (
         <section className="border-border/80 border-b">
           <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
