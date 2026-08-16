@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from gaiafaac_api.database.enums import VerificationStatus
 from gaiafaac_api.database.models import ReportingPeriod, State, StateAllocation
 from gaiafaac_api.published_analytics_schemas import (
     MonthMover,
@@ -13,18 +14,36 @@ from gaiafaac_api.published_analytics_schemas import (
     TrendPoint,
 )
 
+EXPECTED_STATE_COUNT = 37
+
 
 def _money(value: Decimal) -> str:
     return format(value, ".2f")
 
 
 def _published_periods(session: Session) -> list[ReportingPeriod]:
+    """Return only complete, human-verified jurisdiction publications."""
+    complete_period_ids = (
+        select(StateAllocation.reporting_period_id)
+        .where(
+            StateAllocation.is_published.is_(True),
+            StateAllocation.is_demo.is_(False),
+            StateAllocation.net_allocation.is_not(None),
+            StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
+        )
+        .group_by(StateAllocation.reporting_period_id)
+        .having(
+            func.count(func.distinct(StateAllocation.state_id)) == EXPECTED_STATE_COUNT
+        )
+    )
     return list(
         session.scalars(
             select(ReportingPeriod)
             .where(
                 ReportingPeriod.is_published.is_(True),
                 ReportingPeriod.is_demo.is_(False),
+                ReportingPeriod.verification_status == VerificationStatus.HUMAN_VERIFIED,
+                ReportingPeriod.id.in_(complete_period_ids),
             )
             .order_by(ReportingPeriod.revenue_month)
         )
@@ -40,13 +59,15 @@ def _allocations(session: Session, period: ReportingPeriod) -> list[tuple[StateA
                 StateAllocation.reporting_period_id == period.id,
                 StateAllocation.is_published.is_(True),
                 StateAllocation.is_demo.is_(False),
+                StateAllocation.net_allocation.is_not(None),
+                StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
             )
         ).tuples()
     )
 
 
 def published_analytics(session: Session) -> PublishedAnalytics:
-    """Real analytics computed only from human-verified, published, non-demo records."""
+    """Real analytics computed only from complete governed publication records."""
     periods = _published_periods(session)
     if not periods:
         return PublishedAnalytics(
@@ -55,7 +76,7 @@ def published_analytics(session: Session) -> PublishedAnalytics:
             latest_period_label=None,
             top_states=[],
             biggest_movers=[],
-            note="No verified month is published yet.",
+            note="No complete human-verified month is published yet.",
         )
 
     trend: list[TrendPoint] = []
@@ -77,8 +98,8 @@ def published_analytics(session: Session) -> PublishedAnalytics:
     latest = periods[-1]
     latest_rows = _allocations(session, latest)
     ranked = sorted(
-        (r for r in latest_rows if r[0].net_allocation is not None),
-        key=lambda r: r[0].net_allocation,
+        (row for row in latest_rows if row[0].net_allocation is not None),
+        key=lambda row: row[0].net_allocation,
         reverse=True,
     )
     top_states = [
@@ -117,7 +138,7 @@ def published_analytics(session: Session) -> PublishedAnalytics:
                     pct_change=round(pct, 2),
                 )
             )
-        movers = sorted(candidates, key=lambda m: abs(m.pct_change), reverse=True)[:10]
+        movers = sorted(candidates, key=lambda mover: abs(mover.pct_change), reverse=True)[:10]
 
     return PublishedAnalytics(
         months_published=len(periods),
@@ -126,7 +147,7 @@ def published_analytics(session: Session) -> PublishedAnalytics:
         top_states=top_states,
         biggest_movers=movers,
         note=(
-            "Computed from published, human-verified records only. Movers compare the two "
-            "most recent published months, which may not be calendar-consecutive."
+            "Computed from complete published, human-verified records only. Movers compare "
+            "the two most recent eligible published months, which may not be calendar-consecutive."
         ),
     )
