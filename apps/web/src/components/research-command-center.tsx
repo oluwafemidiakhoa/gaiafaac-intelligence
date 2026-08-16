@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import type { PublishedAnalytics } from '@/lib/analytics-api'
 import { formatNaira } from '@/lib/format'
+import type { NationalDistribution } from '@/lib/national-distribution-api'
 import type { PublishedOverview } from '@/lib/published-api'
 
 function shortNaira(value: string | null) {
@@ -30,14 +31,22 @@ function percentageChange(current: number, previous: number | null) {
   return ((current - previous) / previous) * 100
 }
 
+function reconciliationTone(status: string) {
+  if (status === 'reconciled') return 'text-emerald-700 dark:text-emerald-300'
+  if (status === 'conflicted') return 'text-red-700 dark:text-red-300'
+  return 'text-amber-700 dark:text-amber-300'
+}
+
 export function ResearchCommandCenter({
   overview,
   analytics,
   analyticsError = null,
+  nationalHistory = [],
 }: {
   overview: PublishedOverview
   analytics: PublishedAnalytics | null
   analyticsError?: string | null
+  nationalHistory?: NationalDistribution[]
 }) {
   const ranked = [...overview.allocations]
     .filter((item) => item.net_allocation)
@@ -51,6 +60,9 @@ export function ResearchCommandCenter({
   const maxTrend = Math.max(...trend.map((item) => Number(item.total_net)), 1)
   const hasTrendHistory = trend.length > 1
   const trendUnavailable = analytics === null && analyticsError !== null
+  const reconciliationByMonth = new Map(
+    nationalHistory.map((item) => [item.revenue_month, item]),
+  )
 
   return (
     <section className="border-border/80 border-b">
@@ -175,60 +187,114 @@ export function ResearchCommandCenter({
             <div>
               <p className="font-semibold">Published national trend</p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Monthly state net allocations across available published periods
+                Jurisdiction ledger totals with official national reconciliation
+                evidence where a governed communiqué is published
               </p>
             </div>
             <Link
-              href="/fiscal-pulse"
+              href="/national-reconciliation"
               className="text-primary text-sm font-medium hover:underline"
             >
-              Open Fiscal Pulse →
+              Open National Reconciliation →
             </Link>
           </div>
 
           {hasTrendHistory ? (
-            <div
-              className="mt-7 flex h-64 items-end gap-2 overflow-x-auto pb-2"
-              aria-label="Published national allocation trend"
-            >
-              {trend.map((point, index) => {
-                const value = Number(point.total_net)
-                const previous =
-                  index > 0 ? Number(trend[index - 1].total_net) : null
-                const change = percentageChange(value, previous)
-                const height = Math.max((value / maxTrend) * 100, 6)
-                return (
-                  <div
-                    key={point.revenue_month}
-                    className="group flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-2"
-                    title={`${point.reporting_label}: ${formatNaira(point.total_net)}`}
-                  >
-                    <div className="min-h-10 text-center">
-                      <span className="block font-mono text-[0.68rem] font-semibold">
-                        {shortNaira(point.total_net)}
-                      </span>
-                      {change !== null ? (
-                        <span className="text-muted-foreground mt-0.5 block font-mono text-[0.62rem]">
-                          {change >= 0 ? '+' : ''}
-                          {change.toFixed(1)}%
-                        </span>
-                      ) : null}
-                    </div>
+            <>
+              <div
+                className="mt-7 flex h-64 items-end gap-2 overflow-x-auto pb-2"
+                aria-label="Published national allocation trend"
+              >
+                {trend.map((point, index) => {
+                  const value = Number(point.total_net)
+                  const previous =
+                    index > 0 ? Number(trend[index - 1].total_net) : null
+                  const change = percentageChange(value, previous)
+                  const height = Math.max((value / maxTrend) * 100, 6)
+                  return (
                     <div
-                      className="bg-primary/80 hover:bg-primary w-full max-w-14 rounded-t-md transition-colors"
-                      style={{ height: `${height}%` }}
-                      aria-hidden="true"
-                    />
-                    <span className="text-muted-foreground text-[0.65rem] whitespace-nowrap">
-                      {new Intl.DateTimeFormat('en-NG', {
-                        month: 'short',
-                        timeZone: 'UTC',
-                      }).format(new Date(`${point.revenue_month}T00:00:00Z`))}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+                      key={point.revenue_month}
+                      className="group flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-2"
+                      title={`${point.reporting_label}: ${formatNaira(point.total_net)}`}
+                    >
+                      <div className="min-h-10 text-center">
+                        <span className="block font-mono text-[0.68rem] font-semibold">
+                          {shortNaira(point.total_net)}
+                        </span>
+                        {change !== null ? (
+                          <span className="text-muted-foreground mt-0.5 block font-mono text-[0.62rem]">
+                            {change >= 0 ? '+' : ''}
+                            {change.toFixed(1)}%
+                          </span>
+                        ) : null}
+                      </div>
+                      <div
+                        className="bg-primary/80 hover:bg-primary w-full max-w-14 rounded-t-md transition-colors"
+                        style={{ height: `${height}%` }}
+                        aria-hidden="true"
+                      />
+                      <span className="text-muted-foreground text-[0.65rem] whitespace-nowrap">
+                        {new Intl.DateTimeFormat('en-NG', {
+                          month: 'short',
+                          timeZone: 'UTC',
+                        }).format(new Date(`${point.revenue_month}T00:00:00Z`))}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="border-border mt-5 overflow-x-auto border-t pt-5">
+                <div className="flex min-w-max gap-3">
+                  {trend.map((point) => {
+                    const evidence = reconciliationByMonth.get(
+                      point.revenue_month,
+                    )
+                    const reconciliation =
+                      evidence?.jurisdiction_reconciliation ?? null
+                    return (
+                      <div
+                        key={`reconciliation-${point.revenue_month}`}
+                        className="border-border bg-muted/20 w-40 rounded-lg border p-3"
+                      >
+                        <p className="text-muted-foreground text-[0.65rem] uppercase">
+                          {new Intl.DateTimeFormat('en-NG', {
+                            month: 'short',
+                            year: 'numeric',
+                            timeZone: 'UTC',
+                          }).format(
+                            new Date(`${point.revenue_month}T00:00:00Z`),
+                          )}
+                        </p>
+                        {reconciliation ? (
+                          <>
+                            <p
+                              className={`mt-2 text-xs font-semibold uppercase ${reconciliationTone(
+                                reconciliation.status,
+                              )}`}
+                            >
+                              {reconciliation.status}
+                            </p>
+                            <p className="mt-2 font-mono text-xs">
+                              Official:{' '}
+                              {shortNaira(reconciliation.observed_total)}
+                            </p>
+                            <p className="text-muted-foreground mt-1 font-mono text-[0.68rem]">
+                              Variance: {shortNaira(reconciliation.variance)}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-muted-foreground mt-2 text-xs leading-5">
+                            No governed national communiqué published for this
+                            month.
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
           ) : (
             <div className="border-border bg-muted/20 mt-7 rounded-lg border border-dashed p-6 sm:p-8">
               <p className="font-medium">

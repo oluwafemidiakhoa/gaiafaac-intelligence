@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/card'
 import { getPublishedAnalytics } from '@/lib/analytics-api'
 import { formatDate, formatNaira } from '@/lib/format'
+import { getNationalDistributionHistory } from '@/lib/national-distribution-api'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
@@ -62,10 +63,12 @@ function compactNaira(value: string | null) {
 }
 
 export default async function Home() {
-  const [overviewResult, analyticsResult] = await Promise.all([
-    getPublishedOverview(),
-    getPublishedAnalytics(),
-  ])
+  const [overviewResult, analyticsResult, nationalHistoryResult] =
+    await Promise.all([
+      getPublishedOverview(),
+      getPublishedAnalytics(),
+      getNationalDistributionHistory(12),
+    ])
   const data = overviewResult.data
   const analytics = analyticsResult.data
 
@@ -185,6 +188,7 @@ export default async function Home() {
           overview={data}
           analytics={analytics}
           analyticsError={analyticsResult.error}
+          nationalHistory={nationalHistoryResult.data ?? []}
         />
       ) : (
         <section className="border-border/80 border-b">
