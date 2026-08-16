@@ -25,6 +25,11 @@ function shortNaira(value: string | null) {
   return formatNaira(value)
 }
 
+function percentageChange(current: number, previous: number | null) {
+  if (previous === null || previous === 0) return null
+  return ((current - previous) / previous) * 100
+}
+
 export function ResearchCommandCenter({
   overview,
   analytics,
@@ -183,21 +188,32 @@ export function ResearchCommandCenter({
 
           {hasTrendHistory ? (
             <div
-              className="mt-7 flex h-48 items-end gap-2 overflow-x-auto pb-2"
+              className="mt-7 flex h-64 items-end gap-2 overflow-x-auto pb-2"
               aria-label="Published national allocation trend"
             >
-              {trend.map((point) => {
+              {trend.map((point, index) => {
                 const value = Number(point.total_net)
+                const previous =
+                  index > 0 ? Number(trend[index - 1].total_net) : null
+                const change = percentageChange(value, previous)
                 const height = Math.max((value / maxTrend) * 100, 6)
                 return (
                   <div
                     key={point.revenue_month}
-                    className="group flex h-full min-w-12 flex-1 flex-col items-center justify-end gap-2"
+                    className="group flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-2"
                     title={`${point.reporting_label}: ${formatNaira(point.total_net)}`}
                   >
-                    <span className="text-muted-foreground hidden text-[0.65rem] group-hover:block">
-                      {shortNaira(point.total_net)}
-                    </span>
+                    <div className="min-h-10 text-center">
+                      <span className="block font-mono text-[0.68rem] font-semibold">
+                        {shortNaira(point.total_net)}
+                      </span>
+                      {change !== null ? (
+                        <span className="text-muted-foreground mt-0.5 block font-mono text-[0.62rem]">
+                          {change >= 0 ? '+' : ''}
+                          {change.toFixed(1)}%
+                        </span>
+                      ) : null}
+                    </div>
                     <div
                       className="bg-primary/80 hover:bg-primary w-full max-w-14 rounded-t-md transition-colors"
                       style={{ height: `${height}%` }}
