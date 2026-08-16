@@ -7,7 +7,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.enums import (
@@ -35,6 +35,7 @@ from gaiafaac_api.pipeline.validation import Finding
 from gaiafaac_api.services.source_documents import register_source_document
 
 DERIVATION_TREATMENTS = {"separate", "included_in_states", "not_reported"}
+STATES_SCOPES = {"states_only_36", "states_plus_fct_37"}
 _BLOCKING = {ValidationSeverity.ERROR, ValidationSeverity.CRITICAL}
 _UNIT_QUANTA = {
     ReportedUnit.NAIRA: Decimal("1"),
@@ -110,30 +111,36 @@ def _decimal_places(original: str | None) -> int | None:
     match = re.fullmatch(r"[+-]?(?:\d+(?:\.(\d+))?|\.([0-9]+))", text)
     if match is None:
         return None
-    decimals = match.group(1) or match.group(2) or ""
-    return len(decimals)
+    return len(match.group(1) or match.group(2) or "")
 
 
 def _source_precision_tolerance(originals: list[str | None], unit: ReportedUnit) -> Decimal:
-    """Half of the least precise reported quantum, never below one kobo.
-
-    National communiques frequently round the headline total more coarsely than the
-    component values. Treating a rounded billion-naira headline as exact to one kobo
-    creates false conflicts. This tolerance is derived only from the source's displayed
-    precision; it does not invent or smooth a financial value.
-    """
+    """Return half the least precise displayed quantum, never below one kobo."""
     base = _UNIT_QUANTA.get(unit)
     if base is None:
         return Decimal("0.01")
-    quanta: list[Decimal] = []
-    for original in originals:
-        places = _decimal_places(original)
-        if places is None:
-            continue
-        quanta.append(base / (Decimal(10) ** places))
+    quanta = [
+        base / (Decimal(10) ** places)
+        for original in originals
+        if (places := _decimal_places(original)) is not None
+    ]
     if not quanta:
         return Decimal("0.01")
     return max(Decimal("0.01"), max(quanta) / Decimal("2"))
+
+
+def _configuration(
+    run: ExtractionRun,
+) -> tuple[str, str, dict[str, str | None]]:
+    configuration = run.configuration or {}
+    treatment = str(configuration.get("derivation_treatment") or "")
+    states_scope = str(configuration.get("states_scope") or "")
+    originals = configuration.get("original_values") or {}
+    if not isinstance(originals, dict):
+        originals = {}
+    return treatment, states_scope, {
+        str(key): None if value is None else str(value) for key, value in originals.items()
+    }
 
 
 def _component_reconciliation(
@@ -144,12 +151,12 @@ def _component_reconciliation(
 ) -> ComponentReconciliation:
     if derivation_treatment not in DERIVATION_TREATMENTS:
         return ComponentReconciliation(
-            status="conflicted",
-            component_total=None,
-            variance=None,
-            tolerance=None,
-            derivation_treatment=derivation_treatment,
-            note="The derivation treatment is invalid, so additive reconciliation is blocked.",
+            "conflicted",
+            None,
+            None,
+            None,
+            derivation_treatment,
+            "The derivation treatment is invalid, so additive reconciliation is blocked.",
         )
     required = (
         distribution.net_distributable_amount,
@@ -159,21 +166,21 @@ def _component_reconciliation(
     )
     if any(value is None for value in required):
         return ComponentReconciliation(
-            status="unavailable",
-            component_total=None,
-            variance=None,
-            tolerance=None,
-            derivation_treatment=derivation_treatment,
-            note="Required national distribution values are unavailable.",
+            "unavailable",
+            None,
+            None,
+            None,
+            derivation_treatment,
+            "Required national distribution values are unavailable.",
         )
     if derivation_treatment == "not_reported":
         return ComponentReconciliation(
-            status="unavailable",
-            component_total=None,
-            variance=None,
-            tolerance=None,
-            derivation_treatment=derivation_treatment,
-            note="The source does not report a derivation treatment that supports additive reconciliation.",
+            "unavailable",
+            None,
+            None,
+            None,
+            derivation_treatment,
+            "The source does not report derivation semantics that support additive reconciliation.",
         )
 
     component_total = (
@@ -190,40 +197,31 @@ def _component_reconciliation(
     if derivation_treatment == "separate":
         if distribution.derivation_amount is None:
             return ComponentReconciliation(
-                status="unavailable",
-                component_total=None,
-                variance=None,
-                tolerance=None,
-                derivation_treatment=derivation_treatment,
-                note="Derivation is marked as separate but no derivation amount is reported.",
+                "unavailable",
+                None,
+                None,
+                None,
+                derivation_treatment,
+                "Derivation is marked separate but no derivation amount is reported.",
             )
         component_total += distribution.derivation_amount
         compared_originals.append(originals.get("derivation_amount"))
 
     tolerance = _source_precision_tolerance(compared_originals, distribution.reported_unit)
     variance = component_total - distribution.net_distributable_amount
-    status = "reconciled" if abs(variance) <= tolerance else "conflicted"
+    reconciled = abs(variance) <= tolerance
     return ComponentReconciliation(
-        status=status,
-        component_total=component_total,
-        variance=variance,
-        tolerance=tolerance,
-        derivation_treatment=derivation_treatment,
-        note=(
-            "The observed national components reconcile within the source-derived reporting precision."
-            if status == "reconciled"
-            else "The observed national components do not reconcile within the source-derived reporting precision."
+        "reconciled" if reconciled else "conflicted",
+        component_total,
+        variance,
+        tolerance,
+        derivation_treatment,
+        (
+            "The observed national components reconcile within source-derived reporting precision."
+            if reconciled
+            else "The observed national components do not reconcile within source-derived reporting precision."
         ),
     )
-
-
-def _configuration(run: ExtractionRun) -> tuple[str, dict[str, str | None]]:
-    configuration = run.configuration or {}
-    treatment = str(configuration.get("derivation_treatment") or "")
-    originals = configuration.get("original_values") or {}
-    if not isinstance(originals, dict):
-        originals = {}
-    return treatment, {str(key): None if value is None else str(value) for key, value in originals.items()}
 
 
 def validate_national_distribution(
@@ -243,7 +241,7 @@ def validate_national_distribution(
         raise ValueError("National distribution source lineage is invalid")
 
     session.execute(delete(ValidationResult).where(ValidationResult.extraction_run_id == run.id))
-    treatment, originals = _configuration(run)
+    treatment, states_scope, originals = _configuration(run)
     findings: list[Finding] = []
 
     if distribution.reported_unit is ReportedUnit.UNSPECIFIED:
@@ -261,6 +259,15 @@ def validate_national_distribution(
                 ValidationSeverity.ERROR,
                 "Derivation treatment must be separate, included_in_states, or not_reported.",
                 details={"derivation_treatment": treatment},
+            )
+        )
+    if states_scope not in STATES_SCOPES:
+        findings.append(
+            Finding(
+                "NATIONAL_STATES_SCOPE_REQUIRED",
+                ValidationSeverity.ERROR,
+                "Declare whether the official states aggregate covers 36 states or 36 states plus FCT.",
+                details={"states_scope": states_scope or None},
             )
         )
 
@@ -281,15 +288,14 @@ def validate_national_distribution(
                 )
             )
 
-    all_values = {
+    for field_name, value in {
         **required_values,
         "gross_amount": distribution.gross_amount,
         "deductions_amount": distribution.deductions_amount,
         "vat_amount": distribution.vat_amount,
         "statutory_amount": distribution.statutory_amount,
         "derivation_amount": distribution.derivation_amount,
-    }
-    for field_name, value in all_values.items():
+    }.items():
         if value is not None and value < 0:
             findings.append(
                 Finding(
@@ -310,7 +316,7 @@ def validate_national_distribution(
             Finding(
                 "NATIONAL_COMPONENT_TOTAL_MISMATCH",
                 ValidationSeverity.ERROR,
-                "National distribution components do not reconcile with the reported distributable total.",
+                "National components do not reconcile with the reported distributable total.",
                 details={
                     "component_total": str(reconciliation.component_total),
                     "net_distributable_amount": str(distribution.net_distributable_amount),
@@ -335,7 +341,7 @@ def validate_national_distribution(
         and distribution.deductions_amount is not None
         and distribution.net_distributable_amount is not None
     ):
-        gross_tolerance = _source_precision_tolerance(
+        tolerance = _source_precision_tolerance(
             [
                 originals.get("gross_amount"),
                 originals.get("deductions_amount"),
@@ -343,19 +349,19 @@ def validate_national_distribution(
             ],
             distribution.reported_unit,
         )
-        gross_variance = (
+        variance = (
             distribution.gross_amount
             - distribution.deductions_amount
             - distribution.net_distributable_amount
         )
-        if abs(gross_variance) > gross_tolerance:
+        if abs(variance) > tolerance:
             findings.append(
                 Finding(
                     "NATIONAL_GROSS_DEDUCTIONS_NET_MISMATCH",
                     ValidationSeverity.ERROR,
                     "National gross amount minus deductions does not reconcile with the distributable total.",
-                    details={"variance": str(gross_variance)},
-                    tolerance=gross_tolerance,
+                    details={"variance": str(variance)},
+                    tolerance=tolerance,
                 )
             )
 
@@ -426,10 +432,12 @@ def import_national_distribution(
         if source.reporting_period_id not in (None, period.id):
             raise ImportContractError("Source document is already attached to another reporting period")
         if session.scalar(
-            select(StateAllocation.id).where(StateAllocation.source_document_id == source.id).limit(1)
+            select(StateAllocation.id)
+            .where(StateAllocation.source_document_id == source.id)
+            .limit(1)
         ):
             raise ImportContractError(
-                "Use a distinct official national-distribution source document; a state-allocation source cannot be reused for this controlled import"
+                "Use a distinct national source document; a jurisdiction-allocation source cannot be reused."
             )
         source.reporting_period_id = period.id
         if session.scalar(
@@ -511,12 +519,12 @@ def import_national_distribution(
         session.commit()
         blocking = sum(result.severity in _BLOCKING for result in results)
         return NationalDistributionResult(
-            distribution_id=str(distribution.id),
-            run_id=str(run.id),
-            reporting_period_id=str(period.id),
-            finding_count=len(results),
-            blocking_finding_count=blocking,
-            published=False,
+            str(distribution.id),
+            str(run.id),
+            str(period.id),
+            len(results),
+            blocking,
+            False,
         )
     except Exception:
         session.rollback()
@@ -554,7 +562,11 @@ def _review_context(
 
 
 def approve_national_distribution(
-    session: Session, *, run_id: uuid.UUID, reviewer_id: uuid.UUID, note: str | None = None
+    session: Session,
+    *,
+    run_id: uuid.UUID,
+    reviewer_id: uuid.UUID,
+    note: str | None = None,
 ) -> NationalDistributionResult:
     run, distribution, source, period, reviewer = _review_context(session, run_id, reviewer_id)
     if (
@@ -586,6 +598,7 @@ def approve_national_distribution(
             payload={
                 "reporting_period_id": str(period.id),
                 "source_document_id": str(source.id),
+                "states_scope": (run.configuration or {}).get("states_scope"),
                 "review_note": note.strip() if note and note.strip() else None,
                 "published": False,
             },
@@ -639,6 +652,7 @@ def publish_national_distribution(
             payload={
                 "reporting_period_id": str(period.id),
                 "source_document_id": str(source.id),
+                "states_scope": (run.configuration or {}).get("states_scope"),
                 "separation_of_duties": True,
                 "published": True,
             },
@@ -653,7 +667,9 @@ def publish_national_distribution(
 def reconciliation_for_distribution(
     distribution: NationalDistribution, run: ExtractionRun
 ) -> ComponentReconciliation:
-    treatment, originals = _configuration(run)
+    treatment, _states_scope, originals = _configuration(run)
     return _component_reconciliation(
-        distribution, derivation_treatment=treatment, originals=originals
+        distribution,
+        derivation_treatment=treatment,
+        originals=originals,
     )
