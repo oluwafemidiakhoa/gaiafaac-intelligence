@@ -172,8 +172,8 @@ export default function PricingPage() {
             </CardTitle>
             <CardDescription>
               Public-source facts remain attributable to their original
-              publishers. GaiaFAAC charges for the governed evidence layer around
-              those facts.
+              publishers. GaiaFAAC charges for the governed evidence layer
+              around those facts.
             </CardDescription>
           </CardHeader>
           <CardContent>
