@@ -105,7 +105,7 @@ export default function PricingPage() {
             aria-hidden="true"
           />
           <div>
-            <p className="font-medium">Founding self-service pricing</p>
+            <p className="font-medium">Founding pricing</p>
             <p className="text-muted-foreground mt-1 max-w-4xl text-sm leading-6">
               These monthly prices match GaiaFAAC&apos;s current billing and
               entitlement system. As the ledger expands into additional governed
