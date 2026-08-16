@@ -11,7 +11,8 @@ export function ThemeToggle() {
     const stored = window.localStorage.getItem('gaiafaac-theme')
     const nextDark =
       stored === 'dark' ||
-      (stored === null && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      (stored === null &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.classList.toggle('dark', nextDark)
     setDark(nextDark)
     setReady(true)

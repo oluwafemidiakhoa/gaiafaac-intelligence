@@ -1,4 +1,10 @@
-import { BarChart3, Download, FileCheck2, GitCompareArrows, ShieldCheck } from 'lucide-react'
+import {
+  BarChart3,
+  Download,
+  FileCheck2,
+  GitCompareArrows,
+  ShieldCheck,
+} from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
@@ -14,7 +20,8 @@ function shortNaira(value: string | null) {
     return `₦${(amount / 1_000_000_000_000).toFixed(2)}T`
   if (Math.abs(amount) >= 1_000_000_000)
     return `₦${(amount / 1_000_000_000).toFixed(2)}B`
-  if (Math.abs(amount) >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
+  if (Math.abs(amount) >= 1_000_000)
+    return `₦${(amount / 1_000_000).toFixed(1)}M`
   return formatNaira(value)
 }
 
@@ -48,8 +55,9 @@ export function ResearchCommandCenter({
               Investigate the ledger, not just the headline number.
             </h2>
             <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-6">
-              Rankings and trends below are derived only from published, human-reviewed
-              records. Every research path remains linked to source evidence.
+              Rankings and trends below are derived only from published,
+              human-reviewed records. Every research path remains linked to
+              source evidence.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -98,7 +106,9 @@ export function ResearchCommandCenter({
                     <div className="bg-muted mt-2 h-2 overflow-hidden rounded-full">
                       <div
                         className="bg-primary h-full rounded-full transition-[width] duration-700"
-                        style={{ width: `${Math.max((value / maxAllocation) * 100, 2)}%` }}
+                        style={{
+                          width: `${Math.max((value / maxAllocation) * 100, 2)}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -126,7 +136,9 @@ export function ResearchCommandCenter({
               </div>
               <div className="border-border flex items-center justify-between border-b pb-4">
                 <dt className="text-muted-foreground">Source organization</dt>
-                <dd className="font-medium">{overview.source.source_organization}</dd>
+                <dd className="font-medium">
+                  {overview.source.source_organization}
+                </dd>
               </div>
               <div className="border-border border-b pb-4">
                 <dt className="text-muted-foreground">Source SHA-256</dt>
@@ -155,10 +167,14 @@ export function ResearchCommandCenter({
               <div>
                 <p className="font-semibold">Published national trend</p>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Monthly state net allocations across available published periods
+                  Monthly state net allocations across available published
+                  periods
                 </p>
               </div>
-              <Link href="/fiscal-pulse" className="text-primary text-sm font-medium hover:underline">
+              <Link
+                href="/fiscal-pulse"
+                className="text-primary text-sm font-medium hover:underline"
+              >
                 Open Fiscal Pulse →
               </Link>
             </div>
@@ -175,11 +191,15 @@ export function ResearchCommandCenter({
                     <span className="text-muted-foreground hidden text-[0.65rem] group-hover:block">
                       {shortNaira(point.total_net)}
                     </span>
-                    <div className="bg-primary/80 hover:bg-primary w-full max-w-14 rounded-t-md transition-colors" style={{ height: `${height}%` }} />
+                    <div
+                      className="bg-primary/80 hover:bg-primary w-full max-w-14 rounded-t-md transition-colors"
+                      style={{ height: `${height}%` }}
+                    />
                     <span className="text-muted-foreground text-[0.65rem] whitespace-nowrap">
-                      {new Intl.DateTimeFormat('en-NG', { month: 'short', timeZone: 'UTC' }).format(
-                        new Date(`${point.revenue_month}T00:00:00Z`),
-                      )}
+                      {new Intl.DateTimeFormat('en-NG', {
+                        month: 'short',
+                        timeZone: 'UTC',
+                      }).format(new Date(`${point.revenue_month}T00:00:00Z`))}
                     </span>
                   </div>
                 )
