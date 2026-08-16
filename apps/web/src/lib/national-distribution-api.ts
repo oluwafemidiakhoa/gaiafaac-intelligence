@@ -82,3 +82,24 @@ export async function getLatestNationalDistribution(): Promise<{
     return { data: null, error: 'National reconciliation is unavailable.' }
   }
 }
+
+export async function getNationalDistributionHistory(limit = 12): Promise<{
+  data: NationalDistribution[] | null
+  error: string | null
+}> {
+  try {
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/published/national-distribution/history?limit=${limit}`,
+      { next: { revalidate: 300 } },
+    )
+    if (!response.ok) {
+      return { data: null, error: 'National reconciliation history is unavailable.' }
+    }
+    return {
+      data: z.array(nationalDistributionSchema).parse(await response.json()),
+      error: null,
+    }
+  } catch {
+    return { data: null, error: 'National reconciliation history is unavailable.' }
+  }
+}
