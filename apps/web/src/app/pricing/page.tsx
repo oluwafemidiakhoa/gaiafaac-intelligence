@@ -37,7 +37,8 @@ const plans = [
   {
     name: 'Analyst',
     price: '$49',
-    tagline: 'For individual researchers who need governed historical evidence.',
+    tagline:
+      'For individual researchers who need governed historical evidence.',
     features: [
       'Published historical FAAC access',
       'Self-service CSV and XLSX exports',
@@ -51,7 +52,8 @@ const plans = [
   {
     name: 'Team',
     price: '$199',
-    tagline: 'For research, policy and advisory teams working from one evidence base.',
+    tagline:
+      'For research, policy and advisory teams working from one evidence base.',
     features: [
       'Everything in Analyst',
       'Up to 10 organization members',
@@ -65,7 +67,8 @@ const plans = [
   {
     name: 'API',
     price: '$299',
-    tagline: 'For products and analysts that need governed data programmatically.',
+    tagline:
+      'For products and analysts that need governed data programmatically.',
     features: [
       'Everything in Team',
       'Self-service API key creation and revocation',
@@ -164,7 +167,9 @@ export default function PricingPage() {
         <Card>
           <CardHeader>
             <ShieldCheck className="text-primary size-5" aria-hidden="true" />
-            <CardTitle className="pt-3">What customers are paying for</CardTitle>
+            <CardTitle className="pt-3">
+              What customers are paying for
+            </CardTitle>
             <CardDescription>
               Public-source facts remain attributable to their original
               publishers. GaiaFAAC charges for the governed evidence layer around
