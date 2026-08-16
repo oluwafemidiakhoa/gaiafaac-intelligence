@@ -19,7 +19,7 @@ const onePeriod: PublishedAnalytics = {
   latest_period_label: 'January 2024',
   top_states: [],
   biggest_movers: [],
-  note: 'Computed from published, human-verified records only.',
+  note: 'Computed from complete published, human-verified records only.',
 }
 
 const twoPeriods: PublishedAnalytics = {
@@ -38,14 +38,18 @@ const twoPeriods: PublishedAnalytics = {
 }
 
 describe('ResearchCommandCenter', () => {
-  it('shows a governed empty state when analytics are unavailable', () => {
+  it('shows an outage state when governed analytics cannot be read', () => {
     render(
-      <ResearchCommandCenter overview={publishedOverview} analytics={null} />,
+      <ResearchCommandCenter
+        overview={publishedOverview}
+        analytics={null}
+        analyticsError="Analytics are unavailable."
+      />,
     )
 
-    expect(screen.getByText('Insufficient published history')).toBeVisible()
+    expect(screen.getByText('Trend data unavailable')).toBeVisible()
     expect(
-      screen.getByText(/No trend periods are currently available/i),
+      screen.getByText(/will not substitute placeholder trend values/i),
     ).toBeVisible()
     expect(
       screen.queryByLabelText('Published national allocation trend'),
@@ -66,7 +70,9 @@ describe('ResearchCommandCenter', () => {
       <ResearchCommandCenter overview={publishedOverview} analytics={twoPeriods} />,
     )
 
-    expect(screen.getByLabelText('Published national allocation trend')).toBeVisible()
+    expect(
+      screen.getByLabelText('Published national allocation trend'),
+    ).toBeVisible()
     expect(
       screen.queryByText('Insufficient published history'),
     ).not.toBeInTheDocument()
