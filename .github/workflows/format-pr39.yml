@@ -1,0 +1,33 @@
+name: Format PR39
+
+on:
+  push:
+    branches:
+      - feat/research-command-center
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/research-command-center
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Apply repository formatting
+        run: npx prettier --write apps/web/src/app/page.tsx apps/web/src/components/research-command-center.tsx apps/web/src/components/theme-toggle.tsx
+      - name: Commit formatted files and remove temporary workflow
+        run: |
+          rm .github/workflows/format-pr39.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/src/app/page.tsx apps/web/src/components/research-command-center.tsx apps/web/src/components/theme-toggle.tsx .github/workflows/format-pr39.yml
+          git commit -m "Format research command center"
+          git push origin HEAD:feat/research-command-center
