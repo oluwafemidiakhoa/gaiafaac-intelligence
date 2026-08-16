@@ -60,8 +60,8 @@ export function ResearchCommandCenter({
             </h2>
             <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-6">
               Rankings and trends below are derived only from published,
-              human-reviewed records. Every research path remains linked to
-              source evidence.
+              governed records. Every research path remains linked to source
+              evidence.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -192,7 +192,7 @@ export function ResearchCommandCenter({
                 return (
                   <div
                     key={point.revenue_month}
-                    className="group flex min-w-12 flex-1 flex-col items-center justify-end gap-2"
+                    className="group flex h-full min-w-12 flex-1 flex-col items-center justify-end gap-2"
                     title={`${point.reporting_label}: ${formatNaira(point.total_net)}`}
                   >
                     <span className="text-muted-foreground hidden text-[0.65rem] group-hover:block">
