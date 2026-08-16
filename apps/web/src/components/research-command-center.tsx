@@ -288,10 +288,10 @@ export function ResearchCommandCenter({
                       months yet
                     </p>
                     <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
-                      The bars above are still valid published jurisdiction-ledger
-                      totals. National communiqué values appear here only after
-                      their independent evidence has passed GaiaFAAC review and
-                      publication controls.
+                      The bars above are still valid published
+                      jurisdiction-ledger totals. National communiqué values
+                      appear here only after their independent evidence has
+                      passed GaiaFAAC review and publication controls.
                     </p>
                   </div>
                 ) : (
