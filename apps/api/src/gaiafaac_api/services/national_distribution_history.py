@@ -26,8 +26,7 @@ def recent_published_national_distributions(
                 ReportingPeriod.is_demo.is_(False),
                 NationalDistribution.is_published.is_(True),
                 NationalDistribution.is_demo.is_(False),
-                NationalDistribution.verification_status
-                == VerificationStatus.HUMAN_VERIFIED,
+                NationalDistribution.verification_status == VerificationStatus.HUMAN_VERIFIED,
             )
             .order_by(ReportingPeriod.revenue_month.desc())
             .limit(bounded_limit)
