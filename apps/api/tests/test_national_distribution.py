@@ -48,6 +48,8 @@ def _period_with_jurisdictions(session: Session) -> ReportingPeriod:
         is_demo=False,
         is_published=True,
     )
+    session.add(period)
+    session.flush()
     source = SourceDocument(
         reporting_period_id=period.id,
         source_organization="OAGF",
@@ -57,9 +59,6 @@ def _period_with_jurisdictions(session: Session) -> ReportingPeriod:
         mime_type="application/pdf",
         is_demo=False,
     )
-    session.add(period)
-    session.flush()
-    source.reporting_period_id = period.id
     session.add(source)
     session.flush()
     states = list(session.scalars(select(State).order_by(State.name)))
@@ -72,7 +71,9 @@ def _period_with_jurisdictions(session: Session) -> ReportingPeriod:
                 net_allocation=(
                     Decimal("838208000000.00") if index == 0 else Decimal("0.00")
                 ),
-                net_allocation_original=("838208000000.00" if index == 0 else "0.00"),
+                net_allocation_original=(
+                    "838208000000.00" if index == 0 else "0.00"
+                ),
                 reported_unit=ReportedUnit.NAIRA,
                 verification_status=VerificationStatus.HUMAN_VERIFIED,
                 is_demo=False,
@@ -108,11 +109,21 @@ def _import_national(
             federal_amount="923.438",
             states_amount="838.208",
             local_governments_amount="591.390",
-            derivation_amount=("197.610" if derivation_treatment != "not_reported" else None),
+            derivation_amount=(
+                "197.610" if derivation_treatment != "not_reported" else None
+            ),
             derivation_treatment=derivation_treatment,
             publication_date=date(2026, 7, 1),
             source_url="https://example.test/official-communique",
         ),
+    )
+
+
+def _declare_scope(session: Session, run_id: str) -> None:
+    declare_national_states_scope(
+        session,
+        run_id=uuid.UUID(run_id),
+        states_scope="states_plus_fct_37",
     )
 
 
@@ -122,12 +133,8 @@ def test_rounded_headline_reconciles_using_source_precision(
     period = _period_with_jurisdictions(session)
     result = _import_national(session, tmp_path, period)
 
-    assert result.blocking_finding_count == 0
-    declare_national_states_scope(
-        session,
-        run_id=uuid.UUID(result.run_id),
-        states_scope="states_plus_fct_37",
-    )
+    assert result.blocking_finding_count == 1
+    _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     publisher = _user(session, UserRole.ADMINISTRATOR)
     approve_national_distribution(
@@ -154,7 +161,8 @@ def test_material_component_mismatch_blocks_human_approval(
 ) -> None:
     period = _period_with_jurisdictions(session)
     result = _import_national(session, tmp_path, period, net="2500")
-    assert result.blocking_finding_count == 1
+    assert result.blocking_finding_count == 2
+    _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     with pytest.raises(ApprovalError, match="blocking validation"):
         approve_national_distribution(
@@ -172,12 +180,8 @@ def test_unknown_derivation_semantics_stays_explicitly_unavailable(
         period,
         derivation_treatment="not_reported",
     )
-    assert result.blocking_finding_count == 0
-    declare_national_states_scope(
-        session,
-        run_id=uuid.UUID(result.run_id),
-        states_scope="states_plus_fct_37",
-    )
+    assert result.blocking_finding_count == 1
+    _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     publisher = _user(session, UserRole.ADMINISTRATOR)
     approve_national_distribution(
@@ -198,11 +202,7 @@ def test_four_eyes_blocks_same_administrator_from_review_and_publish(
 ) -> None:
     period = _period_with_jurisdictions(session)
     result = _import_national(session, tmp_path, period)
-    declare_national_states_scope(
-        session,
-        run_id=uuid.UUID(result.run_id),
-        states_scope="states_plus_fct_37",
-    )
+    _declare_scope(session, result.run_id)
     administrator = _user(session, UserRole.ADMINISTRATOR)
     approve_national_distribution(
         session,
@@ -214,4 +214,16 @@ def test_four_eyes_blocks_same_administrator_from_review_and_publish(
             session,
             run_id=uuid.UUID(result.run_id),
             reviewer_id=administrator.id,
+        )
+
+
+def test_scope_must_be_declared_before_approval(session: Session, tmp_path: Path) -> None:
+    period = _period_with_jurisdictions(session)
+    result = _import_national(session, tmp_path, period)
+    reviewer = _user(session, UserRole.REVIEWER)
+    with pytest.raises(ApprovalError, match="blocking validation"):
+        approve_national_distribution(
+            session,
+            run_id=uuid.UUID(result.run_id),
+            reviewer_id=reviewer.id,
         )
