@@ -5,6 +5,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from gaiafaac_api.database.enums import VerificationStatus
 from gaiafaac_api.database.models import (
     ReportingPeriod,
     SourceDocument,
@@ -32,19 +33,31 @@ def _sum(values: list[Decimal | None]) -> str | None:
     return _money(sum((value for value in values if value is not None), Decimal("0")))
 
 
-def _published_state_source(session: Session, period: ReportingPeriod) -> SourceDocument | None:
-    """Resolve the unique source that backs published jurisdiction allocations.
+def _eligible_period_ids():
+    return (
+        select(StateAllocation.reporting_period_id)
+        .where(
+            StateAllocation.is_published.is_(True),
+            StateAllocation.is_demo.is_(False),
+            StateAllocation.net_allocation.is_not(None),
+            StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
+        )
+        .group_by(StateAllocation.reporting_period_id)
+        .having(
+            func.count(func.distinct(StateAllocation.state_id)) == EXPECTED_STATE_COUNT
+        )
+    )
 
-    A reporting period can now carry more than one official document, including a
-    separate national-distribution communique. The state overview must never select
-    an arbitrary period-level source and accidentally attach the wrong fingerprint.
-    """
+
+def _published_state_source(session: Session, period: ReportingPeriod) -> SourceDocument | None:
+    """Resolve the unique source that backs published jurisdiction allocations."""
     source_ids = set(
         session.scalars(
             select(StateAllocation.source_document_id).where(
                 StateAllocation.reporting_period_id == period.id,
                 StateAllocation.is_published.is_(True),
                 StateAllocation.is_demo.is_(False),
+                StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
             )
         )
     )
@@ -54,19 +67,30 @@ def _published_state_source(session: Session, period: ReportingPeriod) -> Source
 
 
 def latest_published_period(session: Session) -> ReportingPeriod | None:
+    """Return the latest complete governed jurisdiction publication."""
     return session.scalar(
         select(ReportingPeriod)
-        .where(ReportingPeriod.is_published.is_(True), ReportingPeriod.is_demo.is_(False))
+        .where(
+            ReportingPeriod.is_published.is_(True),
+            ReportingPeriod.is_demo.is_(False),
+            ReportingPeriod.verification_status == VerificationStatus.HUMAN_VERIFIED,
+            ReportingPeriod.id.in_(_eligible_period_ids()),
+        )
         .order_by(ReportingPeriod.revenue_month.desc())
         .limit(1)
     )
 
 
 def published_sources(session: Session) -> list[PublishedSourceItem]:
-    """One jurisdiction-allocation source record per published month, newest first."""
+    """One governed jurisdiction-allocation source per eligible published month."""
     periods = session.scalars(
         select(ReportingPeriod)
-        .where(ReportingPeriod.is_published.is_(True), ReportingPeriod.is_demo.is_(False))
+        .where(
+            ReportingPeriod.is_published.is_(True),
+            ReportingPeriod.is_demo.is_(False),
+            ReportingPeriod.verification_status == VerificationStatus.HUMAN_VERIFIED,
+            ReportingPeriod.id.in_(_eligible_period_ids()),
+        )
         .order_by(ReportingPeriod.revenue_month.desc())
     )
     items: list[PublishedSourceItem] = []
@@ -82,6 +106,8 @@ def published_sources(session: Session) -> list[PublishedSourceItem]:
                     StateAllocation.reporting_period_id == period.id,
                     StateAllocation.is_published.is_(True),
                     StateAllocation.is_demo.is_(False),
+                    StateAllocation.net_allocation.is_not(None),
+                    StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
                 )
             )
             or 0
@@ -105,6 +131,12 @@ def published_sources(session: Session) -> list[PublishedSourceItem]:
 def get_published_overview(
     session: Session, period: ReportingPeriod
 ) -> PublishedOverviewResponse | None:
+    if (
+        not period.is_published
+        or period.is_demo
+        or period.verification_status is not VerificationStatus.HUMAN_VERIFIED
+    ):
+        return None
     rows = list(
         session.execute(
             select(StateAllocation, State)
@@ -113,10 +145,14 @@ def get_published_overview(
                 StateAllocation.reporting_period_id == period.id,
                 StateAllocation.is_published.is_(True),
                 StateAllocation.is_demo.is_(False),
+                StateAllocation.net_allocation.is_not(None),
+                StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
             )
             .order_by(State.name)
         ).tuples()
     )
+    if len(rows) != EXPECTED_STATE_COUNT or len({state.id for _allocation, state in rows}) != EXPECTED_STATE_COUNT:
+        return None
     source = _published_state_source(session, period)
     if source is None:
         return None
