@@ -29,7 +29,7 @@ def _publish_one_month(session):
     )
     session.add(source)
     session.flush()
-    state = session.scalars(select(State).limit(1)).first()
+    states = session.scalars(select(State)).all()
     period = ReportingPeriod(
         revenue_month=date(2024, 1, 1),
         reporting_label="OAGF Jan 2024",
@@ -39,17 +39,18 @@ def _publish_one_month(session):
     session.add(period)
     session.flush()
     source.reporting_period_id = period.id
-    session.add(
-        StateAllocation(
-            reporting_period_id=period.id,
-            state_id=state.id,
-            source_document_id=source.id,
-            net_allocation=Decimal("900"),
-            reported_unit=ReportedUnit.NAIRA,
-            is_demo=False,
-            is_published=True,
+    for index, state in enumerate(states, start=1):
+        session.add(
+            StateAllocation(
+                reporting_period_id=period.id,
+                state_id=state.id,
+                source_document_id=source.id,
+                net_allocation=Decimal(900 + index),
+                reported_unit=ReportedUnit.NAIRA,
+                is_demo=False,
+                is_published=True,
+            )
         )
-    )
     session.flush()
 
 
@@ -98,5 +99,6 @@ def test_api_plan_serves_data(session):
         assert response.status_code == 200
         assert len(response.json()) == 1
         assert response.json()[0]["reporting_label"] == "OAGF Jan 2024"
+        assert response.json()[0]["covered_states"] == 37
     finally:
         app.dependency_overrides.clear()
