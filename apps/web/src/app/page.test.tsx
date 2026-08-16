@@ -59,55 +59,52 @@ describe('Home', () => {
     expect(screen.getByText('Version-aware')).toBeVisible()
   })
 
-  it(
-    'summarizes missing national evidence without rendering repetitive month cards',
-    async () => {
-      vi.mocked(getPublishedOverview).mockResolvedValue({
-        data: publishedOverview,
-        error: null,
-      })
-      vi.mocked(getPublishedAnalytics).mockResolvedValue({
-        data: {
-          months_published: 2,
-          national_trend: [
-            {
-              revenue_month: '2026-05-01',
-              reporting_label: 'May 2026',
-              total_net: '800000000000.00',
-              covered_states: 37,
-            },
-            {
-              revenue_month: '2026-06-01',
-              reporting_label: 'June 2026',
-              total_net: '879000000000.00',
-              covered_states: 37,
-            },
-          ],
-          latest_period_label: 'June 2026',
-          top_states: [],
-          biggest_movers: [],
-          note: 'Published records only.',
-        },
-        error: null,
-      })
-      vi.mocked(getNationalDistributionHistory).mockResolvedValue({
-        data: [],
-        error: null,
-      })
+  it('summarizes missing national evidence without rendering repetitive month cards', async () => {
+    vi.mocked(getPublishedOverview).mockResolvedValue({
+      data: publishedOverview,
+      error: null,
+    })
+    vi.mocked(getPublishedAnalytics).mockResolvedValue({
+      data: {
+        months_published: 2,
+        national_trend: [
+          {
+            revenue_month: '2026-05-01',
+            reporting_label: 'May 2026',
+            total_net: '800000000000.00',
+            covered_states: 37,
+          },
+          {
+            revenue_month: '2026-06-01',
+            reporting_label: 'June 2026',
+            total_net: '879000000000.00',
+            covered_states: 37,
+          },
+        ],
+        latest_period_label: 'June 2026',
+        top_states: [],
+        biggest_movers: [],
+        note: 'Published records only.',
+      },
+      error: null,
+    })
+    vi.mocked(getNationalDistributionHistory).mockResolvedValue({
+      data: [],
+      error: null,
+    })
 
-      render(await Home())
+    render(await Home())
 
-      expect(
-        screen.getByText(/No governed national comparison is published/i),
-      ).toBeVisible()
-      expect(screen.getByText('2 awaiting evidence')).toBeVisible()
-      expect(
-        screen.queryByText(
-          /No governed national communiqué published for this month/i,
-        ),
-      ).not.toBeInTheDocument()
-    },
-  )
+    expect(
+      screen.getByText(/No governed national comparison is published/i),
+    ).toBeVisible()
+    expect(screen.getByText('2 awaiting evidence')).toBeVisible()
+    expect(
+      screen.queryByText(
+        /No governed national communiqué published for this month/i,
+      ),
+    ).not.toBeInTheDocument()
+  })
 
   it('fails closed to an awaiting-publication state, inventing no totals', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
