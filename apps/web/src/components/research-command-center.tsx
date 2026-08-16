@@ -261,8 +261,8 @@ export function ResearchCommandCenter({
                       National reconciliation evidence
                     </p>
                     <p className="text-muted-foreground mt-1 text-xs">
-                      {reconciliationEvidence.length}/{trend.length} trend months
-                      have independently published national evidence.
+                      {reconciliationEvidence.length}/{trend.length} trend
+                      months have independently published national evidence.
                     </p>
                   </div>
                   <span className="bg-muted rounded-full px-3 py-1 font-mono text-xs">
@@ -277,8 +277,8 @@ export function ResearchCommandCenter({
                     </p>
                     <p className="text-muted-foreground mt-2 text-sm leading-6">
                       The trend remains a governed jurisdiction-ledger series.
-                      GaiaFAAC will not infer official national comparison values
-                      while the reconciliation service is unavailable.
+                      GaiaFAAC will not infer official national comparison
+                      values while the reconciliation service is unavailable.
                     </p>
                   </div>
                 ) : reconciliationEvidence.length === 0 ? (
