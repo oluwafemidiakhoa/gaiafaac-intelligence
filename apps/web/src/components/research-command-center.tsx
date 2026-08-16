@@ -28,9 +28,11 @@ function shortNaira(value: string | null) {
 export function ResearchCommandCenter({
   overview,
   analytics,
+  analyticsError = null,
 }: {
   overview: PublishedOverview
   analytics: PublishedAnalytics | null
+  analyticsError?: string | null
 }) {
   const ranked = [...overview.allocations]
     .filter((item) => item.net_allocation)
@@ -43,6 +45,7 @@ export function ResearchCommandCenter({
   const trend = analytics?.national_trend.slice(-12) ?? []
   const maxTrend = Math.max(...trend.map((item) => Number(item.total_net)), 1)
   const hasTrendHistory = trend.length > 1
+  const trendUnavailable = analytics === null && analyticsError !== null
 
   return (
     <section className="border-border/80 border-b">
@@ -212,10 +215,19 @@ export function ResearchCommandCenter({
             </div>
           ) : (
             <div className="border-border bg-muted/20 mt-7 rounded-lg border border-dashed p-6 sm:p-8">
-              <p className="font-medium">Insufficient published history</p>
+              <p className="font-medium">
+                {trendUnavailable
+                  ? 'Trend data unavailable'
+                  : 'Insufficient published history'}
+              </p>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-                GaiaFAAC needs at least two governed published periods before it
-                draws a trend. {trend.length === 1 ? 'One period is currently available.' : 'No trend periods are currently available.'}
+                {trendUnavailable
+                  ? 'The governed analytics service could not be read. GaiaFAAC will not substitute placeholder trend values.'
+                  : `GaiaFAAC needs at least two governed published periods before it draws a trend. ${
+                      trend.length === 1
+                        ? 'One period is currently available.'
+                        : 'No trend periods are currently available.'
+                    }`}
               </p>
             </div>
           )}
