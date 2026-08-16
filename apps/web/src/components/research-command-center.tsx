@@ -28,9 +28,11 @@ function shortNaira(value: string | null) {
 export function ResearchCommandCenter({
   overview,
   analytics,
+  analyticsError = null,
 }: {
   overview: PublishedOverview
   analytics: PublishedAnalytics | null
+  analyticsError?: string | null
 }) {
   const ranked = [...overview.allocations]
     .filter((item) => item.net_allocation)
@@ -42,6 +44,8 @@ export function ResearchCommandCenter({
   )
   const trend = analytics?.national_trend.slice(-12) ?? []
   const maxTrend = Math.max(...trend.map((item) => Number(item.total_net)), 1)
+  const hasTrendHistory = trend.length > 1
+  const trendUnavailable = analytics === null && analyticsError !== null
 
   return (
     <section className="border-border/80 border-b">
@@ -161,24 +165,27 @@ export function ResearchCommandCenter({
           </div>
         </div>
 
-        {trend.length > 1 ? (
-          <div className="border-border bg-card mt-5 rounded-xl border p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="font-semibold">Published national trend</p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Monthly state net allocations across available published
-                  periods
-                </p>
-              </div>
-              <Link
-                href="/fiscal-pulse"
-                className="text-primary text-sm font-medium hover:underline"
-              >
-                Open Fiscal Pulse →
-              </Link>
+        <div className="border-border bg-card mt-5 rounded-xl border p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="font-semibold">Published national trend</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Monthly state net allocations across available published periods
+              </p>
             </div>
-            <div className="mt-7 flex h-48 items-end gap-2 overflow-x-auto pb-2">
+            <Link
+              href="/fiscal-pulse"
+              className="text-primary text-sm font-medium hover:underline"
+            >
+              Open Fiscal Pulse →
+            </Link>
+          </div>
+
+          {hasTrendHistory ? (
+            <div
+              className="mt-7 flex h-48 items-end gap-2 overflow-x-auto pb-2"
+              aria-label="Published national allocation trend"
+            >
               {trend.map((point) => {
                 const value = Number(point.total_net)
                 const height = Math.max((value / maxTrend) * 100, 6)
@@ -194,6 +201,7 @@ export function ResearchCommandCenter({
                     <div
                       className="bg-primary/80 hover:bg-primary w-full max-w-14 rounded-t-md transition-colors"
                       style={{ height: `${height}%` }}
+                      aria-hidden="true"
                     />
                     <span className="text-muted-foreground text-[0.65rem] whitespace-nowrap">
                       {new Intl.DateTimeFormat('en-NG', {
@@ -205,8 +213,25 @@ export function ResearchCommandCenter({
                 )
               })}
             </div>
-          </div>
-        ) : null}
+          ) : (
+            <div className="border-border bg-muted/20 mt-7 rounded-lg border border-dashed p-6 sm:p-8">
+              <p className="font-medium">
+                {trendUnavailable
+                  ? 'Trend data unavailable'
+                  : 'Insufficient published history'}
+              </p>
+              <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+                {trendUnavailable
+                  ? 'The governed analytics service could not be read. GaiaFAAC will not substitute placeholder trend values.'
+                  : `GaiaFAAC needs at least two governed published periods before it draws a trend. ${
+                      trend.length === 1
+                        ? 'One period is currently available.'
+                        : 'No trend periods are currently available.'
+                    }`}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )
