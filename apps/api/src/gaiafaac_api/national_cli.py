@@ -112,10 +112,7 @@ def main() -> None:
             declare_national_states_scope(
                 session, run_id=args.run_id, states_scope=args.states_scope
             )
-            print(
-                f"National states scope declared: run={args.run_id}, "
-                f"scope={args.states_scope}."
-            )
+            print(f"National states scope declared: run={args.run_id}, scope={args.states_scope}.")
         elif args.command == "approve":
             result = approve_national_distribution(
                 session,

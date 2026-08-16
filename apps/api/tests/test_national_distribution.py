@@ -68,12 +68,8 @@ def _period_with_jurisdictions(session: Session) -> ReportingPeriod:
                 reporting_period_id=period.id,
                 state_id=state.id,
                 source_document_id=source.id,
-                net_allocation=(
-                    Decimal("838208000000.00") if index == 0 else Decimal("0.00")
-                ),
-                net_allocation_original=(
-                    "838208000000.00" if index == 0 else "0.00"
-                ),
+                net_allocation=(Decimal("838208000000.00") if index == 0 else Decimal("0.00")),
+                net_allocation_original=("838208000000.00" if index == 0 else "0.00"),
                 reported_unit=ReportedUnit.NAIRA,
                 verification_status=VerificationStatus.HUMAN_VERIFIED,
                 is_demo=False,
@@ -109,9 +105,7 @@ def _import_national(
             federal_amount="923.438",
             states_amount="838.208",
             local_governments_amount="591.390",
-            derivation_amount=(
-                "197.610" if derivation_treatment != "not_reported" else None
-            ),
+            derivation_amount=("197.610" if derivation_treatment != "not_reported" else None),
             derivation_treatment=derivation_treatment,
             publication_date=date(2026, 7, 1),
             source_url="https://example.test/official-communique",
@@ -137,9 +131,7 @@ def test_rounded_headline_reconciles_using_source_precision(
     _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     publisher = _user(session, UserRole.ADMINISTRATOR)
-    approve_national_distribution(
-        session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id
-    )
+    approve_national_distribution(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
     publish_national_distribution(
         session, run_id=uuid.UUID(result.run_id), reviewer_id=publisher.id
     )
@@ -184,9 +176,7 @@ def test_unknown_derivation_semantics_stays_explicitly_unavailable(
     _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     publisher = _user(session, UserRole.ADMINISTRATOR)
-    approve_national_distribution(
-        session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id
-    )
+    approve_national_distribution(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
     publish_national_distribution(
         session, run_id=uuid.UUID(result.run_id), reviewer_id=publisher.id
     )

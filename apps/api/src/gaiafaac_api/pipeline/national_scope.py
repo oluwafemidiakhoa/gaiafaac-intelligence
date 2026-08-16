@@ -24,9 +24,7 @@ def declare_national_states_scope(
     """
     scope = states_scope.strip().casefold()
     if scope not in STATES_SCOPES:
-        raise ImportContractError(
-            "states_scope must be states_only_36 or states_plus_fct_37"
-        )
+        raise ImportContractError("states_scope must be states_only_36 or states_plus_fct_37")
     run = session.get(ExtractionRun, run_id)
     if run is None:
         raise ImportContractError("Extraction run does not exist")

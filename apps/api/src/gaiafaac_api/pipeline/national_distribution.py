@@ -138,9 +138,11 @@ def _configuration(
     originals = configuration.get("original_values") or {}
     if not isinstance(originals, dict):
         originals = {}
-    return treatment, states_scope, {
-        str(key): None if value is None else str(value) for key, value in originals.items()
-    }
+    return (
+        treatment,
+        states_scope,
+        {str(key): None if value is None else str(value) for key, value in originals.items()},
+    )
 
 
 def _component_reconciliation(
@@ -224,9 +226,7 @@ def _component_reconciliation(
     )
 
 
-def validate_national_distribution(
-    session: Session, run: ExtractionRun
-) -> list[ValidationResult]:
+def validate_national_distribution(session: Session, run: ExtractionRun) -> list[ValidationResult]:
     configuration = run.configuration or {}
     if configuration.get("scope") != "national_distribution":
         raise ValueError("Extraction run is not a national-distribution run")
@@ -400,7 +400,9 @@ def import_national_distribution(
         if period is None:
             raise ImportContractError("Reporting period does not exist")
         if period.is_demo:
-            raise ImportContractError("National distribution evidence cannot attach to a demo period")
+            raise ImportContractError(
+                "National distribution evidence cannot attach to a demo period"
+            )
         if not request.source_organization.strip():
             raise ImportContractError("Source organization is required")
         if not request.document_version.strip():
@@ -430,7 +432,9 @@ def import_national_distribution(
             commit=False,
         )
         if source.reporting_period_id not in (None, period.id):
-            raise ImportContractError("Source document is already attached to another reporting period")
+            raise ImportContractError(
+                "Source document is already attached to another reporting period"
+            )
         if session.scalar(
             select(StateAllocation.id)
             .where(StateAllocation.source_document_id == source.id)
@@ -448,14 +452,10 @@ def import_national_distribution(
         ):
             raise ImportContractError("This national distribution source is already imported")
 
-        net = _required_money(
-            request.net_distributable_amount, unit, "net_distributable_amount"
-        )
+        net = _required_money(request.net_distributable_amount, unit, "net_distributable_amount")
         federal = _required_money(request.federal_amount, unit, "federal_amount")
         states = _required_money(request.states_amount, unit, "states_amount")
-        lgas = _required_money(
-            request.local_governments_amount, unit, "local_governments_amount"
-        )
+        lgas = _required_money(request.local_governments_amount, unit, "local_governments_amount")
         derivation = _optional_money(request.derivation_amount, unit)
         gross = _optional_money(request.gross_amount, unit)
         deductions = _optional_money(request.deductions_amount, unit)
@@ -633,7 +633,9 @@ def publish_national_distribution(
     if period.is_demo or source.is_demo or distribution.is_demo:
         raise ApprovalError("Demo data can never be published")
     if not period.is_published:
-        raise ApprovalError("Publish the governed jurisdiction period before its national distribution")
+        raise ApprovalError(
+            "Publish the governed jurisdiction period before its national distribution"
+        )
     if distribution.verification_status is not VerificationStatus.HUMAN_VERIFIED:
         raise ApprovalError("Only human-verified national evidence can be published")
     if distribution.is_published:
@@ -659,9 +661,7 @@ def publish_national_distribution(
         )
     )
     session.commit()
-    return NationalDistributionResult(
-        str(distribution.id), str(run.id), str(period.id), 0, 0, True
-    )
+    return NationalDistributionResult(str(distribution.id), str(run.id), str(period.id), 0, 0, True)
 
 
 def reconciliation_for_distribution(

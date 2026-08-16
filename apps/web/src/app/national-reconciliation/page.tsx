@@ -71,9 +71,7 @@ function ReconciliationCard({
             </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">
-              Derived comparison total
-            </dt>
+            <dt className="text-muted-foreground">Derived comparison total</dt>
             <dd className="mt-1 font-mono font-semibold">
               {valueLabel(reconciliation.derived_total)}
             </dd>
@@ -143,7 +141,8 @@ export default async function NationalReconciliationPage() {
       <div className="mt-8 flex flex-wrap gap-2">
         <StatusPill tone="success">HUMAN VERIFIED</StatusPill>
         <StatusPill tone="success">
-          {data.covered_jurisdictions}/{data.expected_jurisdictions} JURISDICTIONS
+          {data.covered_jurisdictions}/{data.expected_jurisdictions}{' '}
+          JURISDICTIONS
         </StatusPill>
         <StatusPill tone="neutral">
           {data.states_scope.replaceAll('_', ' ')}
@@ -177,10 +176,7 @@ export default async function NationalReconciliationPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <FileCheck2
-                className="text-primary size-5"
-                aria-hidden="true"
-              />
+              <FileCheck2 className="text-primary size-5" aria-hidden="true" />
               <CardTitle>National source evidence</CardTitle>
             </div>
           </CardHeader>
@@ -234,7 +230,9 @@ export default async function NationalReconciliationPage() {
                 <dd className="mt-1 font-mono">{data.derivation_treatment}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">States comparison scope</dt>
+                <dt className="text-muted-foreground">
+                  States comparison scope
+                </dt>
                 <dd className="mt-1 font-mono">{data.states_scope}</dd>
               </div>
               <div>

@@ -46,10 +46,9 @@ def _run_for_distribution(
     )
     for run in runs:
         configuration = run.configuration or {}
-        if (
-            configuration.get("scope") == "national_distribution"
-            and str(configuration.get("distribution_id")) == str(distribution.id)
-        ):
+        if configuration.get("scope") == "national_distribution" and str(
+            configuration.get("distribution_id")
+        ) == str(distribution.id):
             return run
     return None
 
@@ -61,10 +60,11 @@ def _config(run: ExtractionRun) -> tuple[str, str, dict[str, str | None]]:
     originals = configuration.get("original_values") or {}
     if not isinstance(originals, dict):
         originals = {}
-    return treatment, scope, {
-        str(key): None if value is None else str(value)
-        for key, value in originals.items()
-    }
+    return (
+        treatment,
+        scope,
+        {str(key): None if value is None else str(value) for key, value in originals.items()},
+    )
 
 
 def _decimal_places(original: str | None) -> int | None:
@@ -95,9 +95,9 @@ def _states_tolerance(
         "million_naira": Decimal("1000000"),
         "billion_naira": Decimal("1000000000"),
     }
-    quantum = multipliers.get(
-        distribution.reported_unit.value, Decimal("0.01")
-    ) / (Decimal(10) ** places)
+    quantum = multipliers.get(distribution.reported_unit.value, Decimal("0.01")) / (
+        Decimal(10) ** places
+    )
     return max(Decimal("0.01"), quantum / Decimal("2"))
 
 
@@ -143,11 +143,7 @@ def _jurisdiction_reconciliation(
             ),
             covered,
         )
-    basis = (
-        "36 states excluding FCT"
-        if states_scope == "states_only_36"
-        else "36 states plus FCT"
-    )
+    basis = "36 states excluding FCT" if states_scope == "states_only_36" else "36 states plus FCT"
     if len(selected) != expected or any(row.net_allocation is None for row in selected):
         return (
             NationalReconciliation(
