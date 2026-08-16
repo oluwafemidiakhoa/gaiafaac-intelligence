@@ -222,9 +222,9 @@ export default function PricingPage() {
           entitlements are handled through the GaiaFAAC customer account.
         </p>
         <p>
-          GaiaFAAC is an independent research platform, not a government service.
-          Paid access does not transfer ownership of public records or imply
-          endorsement by the original publisher.
+          GaiaFAAC is an independent research platform, not a government
+          service. Paid access does not transfer ownership of public records or
+          imply endorsement by the original publisher.
         </p>
       </div>
     </div>
