@@ -271,7 +271,9 @@ export function ResearchCommandCenter({
                         {reconciliation ? (
                           <>
                             <p
-                              className={`mt-2 text-xs font-semibold uppercase ${reconciliationTone(reconciliation.status)}`}
+                              className={`mt-2 text-xs font-semibold uppercase ${reconciliationTone(
+                                reconciliation.status,
+                              )}`}
                             >
                               {reconciliation.status}
                             </p>
