@@ -189,6 +189,7 @@ export default async function Home() {
           analytics={analytics}
           analyticsError={analyticsResult.error}
           nationalHistory={nationalHistoryResult.data ?? []}
+          nationalHistoryError={nationalHistoryResult.error}
         />
       ) : (
         <section className="border-border/80 border-b">

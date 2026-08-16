@@ -42,11 +42,13 @@ export function ResearchCommandCenter({
   analytics,
   analyticsError = null,
   nationalHistory = [],
+  nationalHistoryError = null,
 }: {
   overview: PublishedOverview
   analytics: PublishedAnalytics | null
   analyticsError?: string | null
   nationalHistory?: NationalDistribution[]
+  nationalHistoryError?: string | null
 }) {
   const ranked = [...overview.allocations]
     .filter((item) => item.net_allocation)
@@ -62,6 +64,14 @@ export function ResearchCommandCenter({
   const trendUnavailable = analytics === null && analyticsError !== null
   const reconciliationByMonth = new Map(
     nationalHistory.map((item) => [item.revenue_month, item]),
+  )
+  const reconciliationEvidence = trend.flatMap((point) => {
+    const evidence = reconciliationByMonth.get(point.revenue_month)
+    return evidence ? [{ point, evidence }] : []
+  })
+  const missingReconciliationMonths = Math.max(
+    trend.length - reconciliationEvidence.length,
+    0,
   )
 
   return (
@@ -244,30 +254,66 @@ export function ResearchCommandCenter({
                 })}
               </div>
 
-              <div className="border-border mt-5 overflow-x-auto border-t pt-5">
-                <div className="flex min-w-max gap-3">
-                  {trend.map((point) => {
-                    const evidence = reconciliationByMonth.get(
-                      point.revenue_month,
-                    )
-                    const reconciliation =
-                      evidence?.jurisdiction_reconciliation ?? null
-                    return (
-                      <div
-                        key={`reconciliation-${point.revenue_month}`}
-                        className="border-border bg-muted/20 w-40 rounded-lg border p-3"
-                      >
-                        <p className="text-muted-foreground text-[0.65rem] uppercase">
-                          {new Intl.DateTimeFormat('en-NG', {
-                            month: 'short',
-                            year: 'numeric',
-                            timeZone: 'UTC',
-                          }).format(
-                            new Date(`${point.revenue_month}T00:00:00Z`),
-                          )}
-                        </p>
-                        {reconciliation ? (
-                          <>
+              <div className="border-border mt-5 border-t pt-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      National reconciliation evidence
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {reconciliationEvidence.length}/{trend.length} trend
+                      months have independently published national evidence.
+                    </p>
+                  </div>
+                  <span className="bg-muted rounded-full px-3 py-1 font-mono text-xs">
+                    {missingReconciliationMonths} awaiting evidence
+                  </span>
+                </div>
+
+                {nationalHistoryError ? (
+                  <div className="border-border bg-muted/20 mt-4 rounded-lg border border-dashed p-5">
+                    <p className="font-medium">
+                      National reconciliation history unavailable
+                    </p>
+                    <p className="text-muted-foreground mt-2 text-sm leading-6">
+                      The trend remains a governed jurisdiction-ledger series.
+                      GaiaFAAC will not infer official national comparison
+                      values while the reconciliation service is unavailable.
+                    </p>
+                  </div>
+                ) : reconciliationEvidence.length === 0 ? (
+                  <div className="border-border bg-muted/20 mt-4 rounded-lg border border-dashed p-5">
+                    <p className="font-medium">
+                      No governed national comparison is published for these
+                      months yet
+                    </p>
+                    <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
+                      The bars above are still valid published
+                      jurisdiction-ledger totals. National communiqué values
+                      appear here only after their independent evidence has
+                      passed GaiaFAAC review and publication controls.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      {reconciliationEvidence.map(({ point, evidence }) => {
+                        const reconciliation =
+                          evidence.jurisdiction_reconciliation
+                        return (
+                          <div
+                            key={`reconciliation-${point.revenue_month}`}
+                            className="border-border bg-muted/20 rounded-lg border p-3"
+                          >
+                            <p className="text-muted-foreground text-[0.65rem] uppercase">
+                              {new Intl.DateTimeFormat('en-NG', {
+                                month: 'short',
+                                year: 'numeric',
+                                timeZone: 'UTC',
+                              }).format(
+                                new Date(`${point.revenue_month}T00:00:00Z`),
+                              )}
+                            </p>
                             <p
                               className={`mt-2 text-xs font-semibold uppercase ${reconciliationTone(
                                 reconciliation.status,
@@ -282,17 +328,19 @@ export function ResearchCommandCenter({
                             <p className="text-muted-foreground mt-1 font-mono text-[0.68rem]">
                               Variance: {shortNaira(reconciliation.variance)}
                             </p>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground mt-2 text-xs leading-5">
-                            No governed national communiqué published for this
-                            month.
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {missingReconciliationMonths > 0 ? (
+                      <p className="text-muted-foreground mt-3 text-xs leading-5">
+                        {missingReconciliationMonths} additional trend months do
+                        not yet have governed national comparison evidence. No
+                        replacement values are inferred.
+                      </p>
+                    ) : null}
+                  </>
+                )}
               </div>
             </>
           ) : (
