@@ -32,6 +32,27 @@ def _sum(values: list[Decimal | None]) -> str | None:
     return _money(sum((value for value in values if value is not None), Decimal("0")))
 
 
+def _published_state_source(session: Session, period: ReportingPeriod) -> SourceDocument | None:
+    """Resolve the unique source that backs published jurisdiction allocations.
+
+    A reporting period can now carry more than one official document, including a
+    separate national-distribution communique. The state overview must never select
+    an arbitrary period-level source and accidentally attach the wrong fingerprint.
+    """
+    source_ids = set(
+        session.scalars(
+            select(StateAllocation.source_document_id).where(
+                StateAllocation.reporting_period_id == period.id,
+                StateAllocation.is_published.is_(True),
+                StateAllocation.is_demo.is_(False),
+            )
+        )
+    )
+    if len(source_ids) != 1:
+        return None
+    return session.get(SourceDocument, next(iter(source_ids)))
+
+
 def latest_published_period(session: Session) -> ReportingPeriod | None:
     return session.scalar(
         select(ReportingPeriod)
@@ -42,7 +63,7 @@ def latest_published_period(session: Session) -> ReportingPeriod | None:
 
 
 def published_sources(session: Session) -> list[PublishedSourceItem]:
-    """One source-document record per published month, newest first."""
+    """One jurisdiction-allocation source record per published month, newest first."""
     periods = session.scalars(
         select(ReportingPeriod)
         .where(ReportingPeriod.is_published.is_(True), ReportingPeriod.is_demo.is_(False))
@@ -50,9 +71,7 @@ def published_sources(session: Session) -> list[PublishedSourceItem]:
     )
     items: list[PublishedSourceItem] = []
     for period in periods:
-        source = session.scalar(
-            select(SourceDocument).where(SourceDocument.reporting_period_id == period.id)
-        )
+        source = _published_state_source(session, period)
         if source is None:
             continue
         covered = (
@@ -98,9 +117,7 @@ def get_published_overview(
             .order_by(State.name)
         ).tuples()
     )
-    source = session.scalar(
-        select(SourceDocument).where(SourceDocument.reporting_period_id == period.id)
-    )
+    source = _published_state_source(session, period)
     if source is None:
         return None
     return PublishedOverviewResponse(
