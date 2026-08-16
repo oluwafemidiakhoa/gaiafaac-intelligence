@@ -1,6 +1,7 @@
 import { ChevronDown, Menu } from 'lucide-react'
 import Link from 'next/link'
 
+import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
@@ -56,7 +57,7 @@ export async function SiteHeader() {
         </div>
       </div>
 
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-6 px-5 py-3 lg:px-8">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-5 px-5 py-3 lg:px-8">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-3"
@@ -105,9 +106,15 @@ export async function SiteHeader() {
           </details>
         </nav>
 
-        <Button asChild size="sm" className="hidden lg:inline-flex">
-          <Link href="/pilot">Pilot access</Link>
-        </Button>
+        <div className="hidden items-center gap-2 lg:flex">
+          <Button asChild size="sm" variant="outline">
+            <Link href="/account#exports">Export data</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/account">Account</Link>
+          </Button>
+          <ThemeToggle />
+        </div>
 
         <details className="relative ml-auto lg:hidden">
           <summary className="border-border hover:bg-muted flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
@@ -126,12 +133,21 @@ export async function SiteHeader() {
                 </Link>
               ))}
               <Link
-                href="/pilot"
+                href="/account#exports"
+                className="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors"
+              >
+                Export data
+              </Link>
+              <Link
+                href="/account"
                 className="bg-primary text-primary-foreground mt-2 rounded-md px-3 py-2 text-center text-sm font-medium"
               >
-                Pilot access
+                Account
               </Link>
             </nav>
+            <div className="border-border mt-3 flex justify-end border-t pt-3">
+              <ThemeToggle />
+            </div>
           </div>
         </details>
       </div>
