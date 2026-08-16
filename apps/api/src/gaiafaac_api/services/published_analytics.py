@@ -5,7 +5,6 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from gaiafaac_api.database.enums import VerificationStatus
 from gaiafaac_api.database.models import ReportingPeriod, State, StateAllocation
 from gaiafaac_api.published_analytics_schemas import (
     MonthMover,
@@ -22,14 +21,13 @@ def _money(value: Decimal) -> str:
 
 
 def _published_periods(session: Session) -> list[ReportingPeriod]:
-    """Return only complete, human-verified jurisdiction publications."""
+    """Return complete published jurisdiction periods, including legacy releases."""
     complete_period_ids = (
         select(StateAllocation.reporting_period_id)
         .where(
             StateAllocation.is_published.is_(True),
             StateAllocation.is_demo.is_(False),
             StateAllocation.net_allocation.is_not(None),
-            StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
         )
         .group_by(StateAllocation.reporting_period_id)
         .having(func.count(func.distinct(StateAllocation.state_id)) == EXPECTED_STATE_COUNT)
@@ -40,7 +38,6 @@ def _published_periods(session: Session) -> list[ReportingPeriod]:
             .where(
                 ReportingPeriod.is_published.is_(True),
                 ReportingPeriod.is_demo.is_(False),
-                ReportingPeriod.verification_status == VerificationStatus.HUMAN_VERIFIED,
                 ReportingPeriod.id.in_(complete_period_ids),
             )
             .order_by(ReportingPeriod.revenue_month)
@@ -58,14 +55,13 @@ def _allocations(session: Session, period: ReportingPeriod) -> list[tuple[StateA
                 StateAllocation.is_published.is_(True),
                 StateAllocation.is_demo.is_(False),
                 StateAllocation.net_allocation.is_not(None),
-                StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
             )
         ).tuples()
     )
 
 
 def published_analytics(session: Session) -> PublishedAnalytics:
-    """Real analytics computed only from complete governed publication records."""
+    """Analytics over complete public releases without inventing missing values."""
     periods = _published_periods(session)
     if not periods:
         return PublishedAnalytics(
@@ -74,7 +70,7 @@ def published_analytics(session: Session) -> PublishedAnalytics:
             latest_period_label=None,
             top_states=[],
             biggest_movers=[],
-            note="No complete human-verified month is published yet.",
+            note="No complete published month is available yet.",
         )
 
     trend: list[TrendPoint] = []
@@ -145,7 +141,7 @@ def published_analytics(session: Session) -> PublishedAnalytics:
         top_states=top_states,
         biggest_movers=movers,
         note=(
-            "Computed from complete published, human-verified records only. Movers compare "
-            "the two most recent eligible published months, which may not be calendar-consecutive."
+            "Computed from complete published, non-demo records only. Current publication "
+            "controls require explicit human review; legacy published records remain readable."
         ),
     )
