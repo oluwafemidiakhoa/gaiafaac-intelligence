@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.enums import VerificationStatus
@@ -31,7 +31,8 @@ def _money(value: Decimal | None) -> str | None:
 
 def _observed(value: Decimal | None) -> NationalObservedValue:
     return NationalObservedValue(
-        value=_money(value), evidence_class="observed" if value is not None else "missing"
+        value=_money(value),
+        evidence_class="observed" if value is not None else "missing",
     )
 
 
@@ -61,7 +62,8 @@ def _config(run: ExtractionRun) -> tuple[str, str, dict[str, str | None]]:
     if not isinstance(originals, dict):
         originals = {}
     return treatment, scope, {
-        str(key): None if value is None else str(value) for key, value in originals.items()
+        str(key): None if value is None else str(value)
+        for key, value in originals.items()
     }
 
 
@@ -69,8 +71,7 @@ def _decimal_places(original: str | None) -> int | None:
     if original is None:
         return None
     cleaned = str(original).strip().replace(",", "").replace("₦", "")
-    lowered = cleaned.casefold()
-    if lowered.startswith("ngn"):
+    if cleaned.casefold().startswith("ngn"):
         cleaned = cleaned[3:].strip()
     if cleaned.casefold().endswith("ngn"):
         cleaned = cleaned[:-3].strip()
@@ -94,9 +95,9 @@ def _states_tolerance(
         "million_naira": Decimal("1000000"),
         "billion_naira": Decimal("1000000000"),
     }
-    quantum = multipliers.get(distribution.reported_unit.value, Decimal("0.01")) / (
-        Decimal(10) ** places
-    )
+    quantum = multipliers.get(
+        distribution.reported_unit.value, Decimal("0.01")
+    ) / (Decimal(10) ** places)
     return max(Decimal("0.01"), quantum / Decimal("2"))
 
 
@@ -119,6 +120,12 @@ def _jurisdiction_reconciliation(
         ).tuples()
     )
     covered = len(rows)
+    expected = 36 if states_scope == "states_only_36" else EXPECTED_JURISDICTIONS
+    selected = [
+        allocation
+        for allocation, state in rows
+        if states_scope == "states_plus_fct_37" or not state.is_fct
+    ]
     if states_scope not in {"states_only_36", "states_plus_fct_37"}:
         return (
             NationalReconciliation(
@@ -130,18 +137,17 @@ def _jurisdiction_reconciliation(
                 evidence_class="missing",
                 basis="National states aggregate vs jurisdiction ledger",
                 note=(
-                    "The national source has no declared states scope. GaiaFAAC will not guess "
-                    "whether the reported states amount includes the FCT."
+                    "The national source has no declared states scope. GaiaFAAC will not "
+                    "guess whether the reported states amount includes the FCT."
                 ),
             ),
             covered,
         )
-    expected = 36 if states_scope == "states_only_36" else EXPECTED_JURISDICTIONS
-    selected = [
-        allocation
-        for allocation, state in rows
-        if states_scope == "states_plus_fct_37" or not state.is_fct
-    ]
+    basis = (
+        "36 states excluding FCT"
+        if states_scope == "states_only_36"
+        else "36 states plus FCT"
+    )
     if len(selected) != expected or any(row.net_allocation is None for row in selected):
         return (
             NationalReconciliation(
@@ -151,14 +157,10 @@ def _jurisdiction_reconciliation(
                 variance=None,
                 tolerance=None,
                 evidence_class="missing",
-                basis=(
-                    "36 states excluding FCT"
-                    if states_scope == "states_only_36"
-                    else "36 states plus FCT"
-                ),
+                basis=basis,
                 note=(
-                    f"Jurisdiction reconciliation requires {expected}/{expected} published net "
-                    "allocations on the declared basis."
+                    f"Jurisdiction reconciliation requires {expected}/{expected} published "
+                    "net allocations on the declared basis."
                 ),
             ),
             covered,
@@ -172,12 +174,15 @@ def _jurisdiction_reconciliation(
                 variance=None,
                 tolerance=None,
                 evidence_class="missing",
-                basis="National states aggregate vs jurisdiction ledger",
+                basis=basis,
                 note="The national source does not contain a states aggregate.",
             ),
             covered,
         )
-    ledger_total = sum((row.net_allocation for row in selected if row.net_allocation is not None), Decimal("0"))
+    ledger_total = sum(
+        (row.net_allocation for row in selected if row.net_allocation is not None),
+        Decimal("0"),
+    )
     tolerance = _states_tolerance(distribution, originals)
     variance = ledger_total - distribution.states_amount
     status = "reconciled" if abs(variance) <= tolerance else "conflicted"
@@ -189,14 +194,10 @@ def _jurisdiction_reconciliation(
             variance=_money(variance),
             tolerance=_money(tolerance),
             evidence_class="derived" if status == "reconciled" else "conflicted",
-            basis=(
-                "36 states excluding FCT"
-                if states_scope == "states_only_36"
-                else "36 states plus FCT"
-            ),
+            basis=basis,
             note=(
-                "The official states aggregate reconciles with the published jurisdiction ledger "
-                "within the source-derived reporting precision."
+                "The official states aggregate reconciles with the published jurisdiction "
+                "ledger within source-derived reporting precision."
                 if status == "reconciled"
                 else "The official states aggregate conflicts with the published jurisdiction ledger."
             ),
@@ -311,4 +312,6 @@ def latest_published_national_distribution(
         .order_by(ReportingPeriod.revenue_month.desc())
         .limit(1)
     )
-    return published_national_distribution(session, period) if period is not None else None
+    if period is None:
+        return None
+    return published_national_distribution(session, period)
