@@ -195,7 +195,8 @@ def _jurisdiction_reconciliation(
                 "The official states aggregate reconciles with the published jurisdiction "
                 "ledger within source-derived reporting precision."
                 if status == "reconciled"
-                else "The official states aggregate conflicts with the published jurisdiction ledger."
+                else "The official states aggregate conflicts with the published "
+                "jurisdiction ledger."
             ),
         ),
         covered,
