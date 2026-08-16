@@ -32,8 +32,7 @@ function percentageChange(current: number, previous: number | null) {
 }
 
 function reconciliationTone(status: string) {
-  if (status === 'reconciled')
-    return 'text-emerald-700 dark:text-emerald-300'
+  if (status === 'reconciled') return 'text-emerald-700 dark:text-emerald-300'
   if (status === 'conflicted') return 'text-red-700 dark:text-red-300'
   return 'text-amber-700 dark:text-amber-300'
 }
@@ -238,9 +237,7 @@ export function ResearchCommandCenter({
                         {new Intl.DateTimeFormat('en-NG', {
                           month: 'short',
                           timeZone: 'UTC',
-                        }).format(
-                          new Date(`${point.revenue_month}T00:00:00Z`),
-                        )}
+                        }).format(new Date(`${point.revenue_month}T00:00:00Z`))}
                       </span>
                     </div>
                   )
