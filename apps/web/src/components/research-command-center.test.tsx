@@ -64,7 +64,7 @@ describe('ResearchCommandCenter', () => {
     expect(screen.getByText(/One period is currently available/i)).toBeVisible()
   })
 
-  it('renders the trend once at least two governed periods exist', () => {
+  it('renders values and month-over-month change with the governed trend', () => {
     render(
       <ResearchCommandCenter
         overview={publishedOverview}
@@ -80,5 +80,8 @@ describe('ResearchCommandCenter', () => {
     ).not.toBeInTheDocument()
     expect(screen.getByText('Jan')).toBeVisible()
     expect(screen.getByText('Feb')).toBeVisible()
+    expect(screen.getByText('₦5,400.00')).toBeVisible()
+    expect(screen.getByText('₦6,200.00')).toBeVisible()
+    expect(screen.getByText('+14.8%')).toBeVisible()
   })
 })
