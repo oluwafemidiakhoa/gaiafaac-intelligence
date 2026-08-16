@@ -221,7 +221,8 @@ def _component_reconciliation(
         (
             "The observed national components reconcile within source-derived reporting precision."
             if reconciled
-            else "The observed national components do not reconcile within source-derived reporting precision."
+            else "The observed national components do not reconcile within "
+            "source-derived reporting precision."
         ),
     )
 
@@ -266,7 +267,8 @@ def validate_national_distribution(session: Session, run: ExtractionRun) -> list
             Finding(
                 "NATIONAL_STATES_SCOPE_REQUIRED",
                 ValidationSeverity.ERROR,
-                "Declare whether the official states aggregate covers 36 states or 36 states plus FCT.",
+                "Declare whether the official states aggregate covers 36 states or "
+                "36 states plus FCT.",
                 details={"states_scope": states_scope or None},
             )
         )
@@ -359,7 +361,8 @@ def validate_national_distribution(session: Session, run: ExtractionRun) -> list
                 Finding(
                     "NATIONAL_GROSS_DEDUCTIONS_NET_MISMATCH",
                     ValidationSeverity.ERROR,
-                    "National gross amount minus deductions does not reconcile with the distributable total.",
+                    "National gross amount minus deductions does not reconcile with "
+                    "the distributable total.",
                     details={"variance": str(variance)},
                     tolerance=tolerance,
                 )
@@ -441,7 +444,8 @@ def import_national_distribution(
             .limit(1)
         ):
             raise ImportContractError(
-                "Use a distinct national source document; a jurisdiction-allocation source cannot be reused."
+                "Use a distinct national source document; a jurisdiction-allocation "
+                "source cannot be reused."
             )
         source.reporting_period_id = period.id
         if session.scalar(
