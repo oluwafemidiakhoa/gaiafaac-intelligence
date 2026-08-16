@@ -93,13 +93,19 @@ export async function getNationalDistributionHistory(limit = 12): Promise<{
       { next: { revalidate: 300 } },
     )
     if (!response.ok) {
-      return { data: null, error: 'National reconciliation history is unavailable.' }
+      return {
+        data: null,
+        error: 'National reconciliation history is unavailable.',
+      }
     }
     return {
       data: z.array(nationalDistributionSchema).parse(await response.json()),
       error: null,
     }
   } catch {
-    return { data: null, error: 'National reconciliation history is unavailable.' }
+    return {
+      data: null,
+      error: 'National reconciliation history is unavailable.',
+    }
   }
 }
