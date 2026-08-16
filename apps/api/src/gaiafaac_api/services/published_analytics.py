@@ -32,9 +32,7 @@ def _published_periods(session: Session) -> list[ReportingPeriod]:
             StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
         )
         .group_by(StateAllocation.reporting_period_id)
-        .having(
-            func.count(func.distinct(StateAllocation.state_id)) == EXPECTED_STATE_COUNT
-        )
+        .having(func.count(func.distinct(StateAllocation.state_id)) == EXPECTED_STATE_COUNT)
     )
     return list(
         session.scalars(

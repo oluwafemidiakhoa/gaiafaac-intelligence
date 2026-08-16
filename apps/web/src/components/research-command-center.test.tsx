@@ -19,7 +19,7 @@ const onePeriod: PublishedAnalytics = {
   latest_period_label: 'January 2024',
   top_states: [],
   biggest_movers: [],
-  note: 'Computed from complete published, human-verified records only.',
+  note: 'Computed from published, human-verified records only.',
 }
 
 const twoPeriods: PublishedAnalytics = {
@@ -38,18 +38,14 @@ const twoPeriods: PublishedAnalytics = {
 }
 
 describe('ResearchCommandCenter', () => {
-  it('shows an outage state when governed analytics cannot be read', () => {
+  it('shows a governed empty state when analytics are unavailable', () => {
     render(
-      <ResearchCommandCenter
-        overview={publishedOverview}
-        analytics={null}
-        analyticsError="Analytics are unavailable."
-      />,
+      <ResearchCommandCenter overview={publishedOverview} analytics={null} />,
     )
 
-    expect(screen.getByText('Trend data unavailable')).toBeVisible()
+    expect(screen.getByText('Insufficient published history')).toBeVisible()
     expect(
-      screen.getByText(/will not substitute placeholder trend values/i),
+      screen.getByText(/No trend periods are currently available/i),
     ).toBeVisible()
     expect(
       screen.queryByLabelText('Published national allocation trend'),
@@ -58,7 +54,10 @@ describe('ResearchCommandCenter', () => {
 
   it('does not draw a trend from only one published period', () => {
     render(
-      <ResearchCommandCenter overview={publishedOverview} analytics={onePeriod} />,
+      <ResearchCommandCenter
+        overview={publishedOverview}
+        analytics={onePeriod}
+      />,
     )
 
     expect(screen.getByText('Insufficient published history')).toBeVisible()
@@ -67,7 +66,10 @@ describe('ResearchCommandCenter', () => {
 
   it('renders the trend once at least two governed periods exist', () => {
     render(
-      <ResearchCommandCenter overview={publishedOverview} analytics={twoPeriods} />,
+      <ResearchCommandCenter
+        overview={publishedOverview}
+        analytics={twoPeriods}
+      />,
     )
 
     expect(

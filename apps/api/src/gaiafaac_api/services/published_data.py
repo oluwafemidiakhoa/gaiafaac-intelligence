@@ -43,9 +43,7 @@ def _eligible_period_ids():
             StateAllocation.verification_status == VerificationStatus.HUMAN_VERIFIED,
         )
         .group_by(StateAllocation.reporting_period_id)
-        .having(
-            func.count(func.distinct(StateAllocation.state_id)) == EXPECTED_STATE_COUNT
-        )
+        .having(func.count(func.distinct(StateAllocation.state_id)) == EXPECTED_STATE_COUNT)
     )
 
 
@@ -151,7 +149,10 @@ def get_published_overview(
             .order_by(State.name)
         ).tuples()
     )
-    if len(rows) != EXPECTED_STATE_COUNT or len({state.id for _allocation, state in rows}) != EXPECTED_STATE_COUNT:
+    if (
+        len(rows) != EXPECTED_STATE_COUNT
+        or len({state.id for _allocation, state in rows}) != EXPECTED_STATE_COUNT
+    ):
         return None
     source = _published_state_source(session, period)
     if source is None:
