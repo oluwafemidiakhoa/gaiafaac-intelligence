@@ -1,54 +1,54 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { getPublishedAnalytics } from '@/lib/analytics-api'
 import { getPublishedOverview } from '@/lib/published-api'
-import { getFiscalEvents } from '@/lib/fiscal-ledger-api'
 import { publishedOverview } from '@/test/published-fixtures'
 
 import Home from './page'
 
+vi.mock('@/lib/analytics-api', () => ({
+  getPublishedAnalytics: vi.fn(),
+}))
 vi.mock('@/lib/published-api', () => ({
   getPublishedOverview: vi.fn(),
 }))
-vi.mock('@/lib/fiscal-ledger-api', () => ({
-  getFiscalEvents: vi.fn(),
-}))
 
 describe('Home', () => {
-  it('leads with fiscal intelligence and links to verified data', async () => {
+  it('leads with evidence-grade fiscal intelligence and governed research actions', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
       error: null,
     })
-    vi.mocked(getFiscalEvents).mockResolvedValue({
-      data: {
-        data: [],
-        evidence: { record_count: 0, meaning: 'Lifecycle only.' },
-        meta: { schema_version: '1.0.0', methodology_version: '1.0.0' },
-      },
-      error: null,
+    vi.mocked(getPublishedAnalytics).mockResolvedValue({
+      data: null,
+      error: 'Analytics are unavailable.',
     })
+
     render(await Home())
 
     expect(
       screen.getByRole('heading', {
-        name: /The verifiable fiscal ledger for Nigeria/i,
+        name: /Nigeria’s fiscal numbers, with the evidence attached/i,
       }),
     ).toBeInTheDocument()
-    // Real total shown; no demo labelling anywhere on the live-first homepage.
     expect(screen.getAllByText('₦5,400.00').length).toBeGreaterThan(0)
     expect(screen.queryByText(/DEMO DATA/i)).not.toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Explore jurisdictions/i }),
-    ).toHaveAttribute('href', '/states')
+      screen.getByRole('link', { name: /Open research workspace/i }),
+    ).toHaveAttribute('href', '/live')
     expect(
-      screen.getAllByRole('link', {
-        name: /Verify a manifest|Verification interface/i,
-      })[0],
+      screen.getByRole('link', { name: /Inspect the evidence/i }),
+    ).toHaveAttribute('href', '/sources')
+    expect(
+      screen.getByRole('link', { name: /Export CSV \/ XLSX/i }),
+    ).toHaveAttribute('href', '/account#exports')
+    expect(
+      screen.getAllByRole('link', { name: /Verify a manifest/i })[0],
     ).toHaveAttribute('href', '/fiscal-design/verify')
-    expect(screen.getByText('Evidence')).toBeVisible()
-    expect(screen.getByText('Verification')).toBeVisible()
-    expect(screen.getByText('History')).toBeVisible()
+    expect(screen.getByText('Source-backed')).toBeVisible()
+    expect(screen.getByText('Human-reviewed')).toBeVisible()
+    expect(screen.getByText('Version-aware')).toBeVisible()
   })
 
   it('fails closed to an awaiting-publication state, inventing no totals', async () => {
@@ -56,13 +56,20 @@ describe('Home', () => {
       data: null,
       error: 'No published FAAC data is available yet.',
     })
-    vi.mocked(getFiscalEvents).mockResolvedValue({
+    vi.mocked(getPublishedAnalytics).mockResolvedValue({
       data: null,
-      error: 'Ledger events unavailable.',
+      error: 'Analytics are unavailable.',
     })
+
     render(await Home())
 
-    expect(screen.getByText(/Verified data coming online/i)).toBeInTheDocument()
+    expect(screen.getByText(/Awaiting publication/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /Research workspace unavailable/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/does not synthesize replacement values/i),
+    ).toBeInTheDocument()
     expect(screen.queryByText('₦5,400.00')).not.toBeInTheDocument()
     expect(screen.queryByText('₦0.00')).not.toBeInTheDocument()
   })

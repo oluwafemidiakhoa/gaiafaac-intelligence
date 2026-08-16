@@ -1,4 +1,4 @@
-import { Check, Clock3, ShieldCheck } from 'lucide-react'
+import { Check, ShieldCheck, Sparkles } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -16,85 +16,77 @@ import {
 export const metadata: Metadata = {
   title: 'Pricing',
   description:
-    'Commercial access to reviewed GaiaFAAC historical evidence and controlled API delivery.',
+    'Self-service access to reviewed GaiaFAAC historical evidence, exports, team workflows and API delivery.',
 }
 
 const plans = [
   {
     name: 'Free',
     price: '$0',
-    tagline: 'Verify the latest public evidence before you buy anything.',
-    availableNow: true,
+    tagline: 'Verify the latest governed public evidence.',
     features: [
       'Latest verified FAAC month',
       'All 36 states and the FCT',
-      'State pages, comparisons, and public Fiscal Pulse',
-      'Published source registry with SHA-256 fingerprints',
+      'Public comparisons and Fiscal Pulse',
+      'Source registry and SHA-256 fingerprints',
     ],
     cta: 'Explore live data',
     href: '/live',
     featured: false,
   },
   {
-    name: 'Analyst Pilot',
+    name: 'Analyst',
     price: '$49',
-    tagline: 'For an individual researcher who needs published history.',
-    availableNow: true,
+    tagline:
+      'For individual researchers who need governed historical evidence.',
     features: [
-      'Manually provisioned access to published historical periods',
-      'Source-linked evidence for the agreed research scope',
-      'State comparison and published intelligence support',
-      'Manual onboarding and delivery during the pilot',
+      'Published historical FAAC access',
+      'Self-service CSV and XLSX exports',
+      'Source-linked evidence and proof objects',
+      'Single-user research workspace',
     ],
-    cta: 'Request analyst pilot',
-    href: '/pilot?plan=analyst#request-form',
+    cta: 'Start Analyst',
+    href: '/account/signup?plan=analyst',
     featured: true,
   },
   {
-    name: 'Team Pilot',
+    name: 'Team',
     price: '$199',
-    tagline: 'For an organization evaluating GaiaFAAC in a real workflow.',
-    availableNow: true,
+    tagline:
+      'For research, policy and advisory teams working from one evidence base.',
     features: [
-      'Reviewed historical evidence for an agreed organizational scope',
-      'Coverage and permitted use confirmed before payment',
-      'Shared delivery for an internal research workflow',
-      'Direct commercial support during the pilot',
+      'Everything in Analyst',
+      'Up to 10 organization members',
+      'Self-service invitations and team administration',
+      'Shared governed evidence workflow',
     ],
-    cta: 'Discuss a team pilot',
-    href: '/pilot?plan=team#request-form',
+    cta: 'Start Team',
+    href: '/account/signup?plan=team',
     featured: false,
   },
   {
-    name: 'API Pilot',
+    name: 'API',
     price: '$299',
-    tagline: 'Controlled programmatic access to published GaiaFAAC records.',
-    availableNow: true,
+    tagline:
+      'For products and analysts that need governed data programmatically.',
     features: [
-      'Manually issued GaiaFAAC API key',
-      'Published month index through /api/v1/data/months',
-      'Published allocations through /api/v1/data/allocations',
+      'Everything in Team',
+      'Self-service API key creation and revocation',
+      'Published months and allocation endpoints',
       '5,000 authenticated requests per rolling 24 hours',
     ],
-    cta: 'Request API evaluation',
-    href: '/pilot?plan=api#request-form',
+    cta: 'Start API',
+    href: '/account/signup?plan=api',
     featured: false,
   },
 ]
 
 const paidValue = [
-  'Reviewed compilation of published fiscal evidence',
-  'Document provenance and retained source fingerprints',
-  'Historical structuring for an agreed research scope',
-  'Controlled programmatic access where the API plan applies',
-  'Commercial scoping, permitted-use agreement, and onboarding',
-]
-
-const notYetSelfService = [
-  'Automated checkout or recurring card billing',
-  'Customer login and subscription management',
-  'Self-service licensed CSV or XLSX download portal',
-  'Self-service team-member administration',
+  'Human-reviewed publication workflow',
+  'Document provenance and retained SHA-256 fingerprints',
+  'Historical evidence structured for research use',
+  'Deterministic fiscal proof and reconciliation controls',
+  'Licensed exports or API delivery according to plan',
 ]
 
 export default function PricingPage() {
@@ -102,22 +94,23 @@ export default function PricingPage() {
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
         eyebrow="Pricing"
-        title="Pay for verified access and workflow, not public records"
-        description="GaiaFAAC keeps the latest verified public evidence open. Paid pilots cover reviewed historical delivery, commercial support, and controlled API access that are already operational today."
+        title="Pay for governed evidence infrastructure, not public records"
+        description="The latest verified public evidence stays open. Paid plans unlock historical access, governed exports, team workflows and programmatic delivery through the self-service account system."
       />
 
       <div className="border-primary/20 bg-primary/5 mt-8 rounded-lg border p-5">
         <div className="flex items-start gap-3">
-          <Clock3
+          <Sparkles
             className="text-primary mt-0.5 size-5 shrink-0"
             aria-hidden="true"
           />
           <div>
-            <p className="font-medium">Paid access is manually provisioned</p>
+            <p className="font-medium">Founding pricing</p>
             <p className="text-muted-foreground mt-1 max-w-4xl text-sm leading-6">
-              We confirm the required months, jurisdictions, permitted use, and
-              delivery method before taking payment. The prices below are pilot
-              starting points, not automatic subscriptions.
+              These monthly prices match GaiaFAAC&apos;s current billing and
+              entitlement system. As the ledger expands into additional governed
+              source families, new institutional and higher-volume API tiers can
+              be introduced without changing what existing plans promise today.
             </p>
           </div>
         </div>
@@ -131,9 +124,7 @@ export default function PricingPage() {
           >
             <CardHeader>
               <div className="mb-3">
-                <StatusPill tone={plan.availableNow ? 'success' : 'neutral'}>
-                  {plan.availableNow ? 'Available now' : 'Planned'}
-                </StatusPill>
+                <StatusPill tone="success">Available now</StatusPill>
               </div>
               <CardTitle className="flex items-baseline justify-between gap-3">
                 <span>{plan.name}</span>
@@ -177,11 +168,11 @@ export default function PricingPage() {
           <CardHeader>
             <ShieldCheck className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">
-              What the paid value actually is
+              What customers are paying for
             </CardTitle>
             <CardDescription>
               Public-source facts remain attributable to their original
-              publishers. GaiaFAAC charges for the governed evidence workflow
+              publishers. GaiaFAAC charges for the governed evidence layer
               around those facts.
             </CardDescription>
           </CardHeader>
@@ -202,57 +193,38 @@ export default function PricingPage() {
 
         <Card className="bg-muted/30">
           <CardHeader>
-            <CardTitle>Current product boundaries</CardTitle>
+            <CardTitle>Institutional and redistribution use</CardTitle>
             <CardDescription>
-              We do not represent unfinished self-service functionality as an
-              available paid feature.
+              Large internal deployments, redistribution, white-label delivery,
+              custom onboarding and substantially higher API volume should be
+              separately licensed rather than bundled into the $299 plan.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="text-muted-foreground space-y-3 text-sm">
-              {notYetSelfService.map((item) => (
-                <li key={item}>• {item}</li>
-              ))}
-            </ul>
-            <p className="text-muted-foreground mt-5 text-sm leading-6">
-              These workflows remain manual during the commercial pilot. API
-              access is the exception: entitled keys, published historical
-              endpoints, request recording, and rate limits are already
-              implemented.
+            <p className="text-muted-foreground text-sm leading-6">
+              Start with the Team or API plan to evaluate the product. For wider
+              organizational or downstream commercial use, request an
+              institutional scope so permitted use, support and pricing can be
+              agreed explicitly.
             </p>
+            <Button asChild variant="outline" className="mt-5">
+              <Link href="/pilot?plan=team#request-form">
+                Request institutional scope
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      <div className="border-border mt-12 rounded-xl border p-6 sm:p-8">
-        <div className="max-w-3xl">
-          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
-            Institutional scope
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-            Need a larger internal research or licensing arrangement?
-          </h2>
-          <p className="text-muted-foreground mt-3 text-sm leading-6">
-            Start with the Team Pilot. We will confirm the evidence coverage,
-            intended users, permitted use, delivery method, and price in writing
-            before any payment is requested.
-          </p>
-          <Button asChild className="mt-5">
-            <Link href="/pilot?plan=team#request-form">
-              Request institutional scope
-            </Link>
-          </Button>
-        </div>
-      </div>
-
       <div className="text-muted-foreground mt-10 max-w-4xl space-y-2 text-sm leading-6">
         <p>
-          Pilot prices are starting points in USD and may change with historical
-          coverage, permitted use, delivery requirements, and support needs.
+          Monthly prices are in USD. Checkout, billing management and plan
+          entitlements are handled through the GaiaFAAC customer account.
         </p>
         <p>
           GaiaFAAC is an independent research platform, not a government
-          service. Paid access does not transfer ownership of public records.
+          service. Paid access does not transfer ownership of public records or
+          imply endorsement by the original publisher.
         </p>
       </div>
     </div>
