@@ -70,4 +70,6 @@ def test_pending_returns_queue_with_admin_key(session, tmp_path, admin_key):
     body = response.json()
     assert len(body) == 1
     assert body[0]["reporting_label"] == "OAGF Jan 2024"
-    assert "900" not in response.text  # no figures
+    assert "gross_total" not in body[0]
+    assert "total_deductions" not in body[0]
+    assert "net_allocation" not in body[0]
