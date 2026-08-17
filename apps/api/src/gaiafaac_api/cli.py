@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import uuid
 from datetime import date
 from pathlib import Path
@@ -130,6 +131,25 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--months-back", type=int, default=3)
     collect.add_argument("--dry-run", action="store_true")
 
+    oagf_sync = commands.add_parser(
+        "sync-oagf-publications",
+        help="Discover and archive official OAGF publications (never publishes)",
+    )
+    oagf_sync.add_argument("--dry-run", action="store_true")
+    oagf_sync.add_argument("--category", help="OAGF publication-category slug")
+    oagf_sync.add_argument("--since", type=_date, help="Publisher listing date lower bound")
+    oagf_sync.add_argument(
+        "--download-only",
+        action="store_true",
+        help="Archive sources without extraction (the only PR1 write mode)",
+    )
+    oagf_sync.add_argument(
+        "--extract",
+        action="store_true",
+        help="Reserved for PR2; PR1 fails closed when supplied",
+    )
+    oagf_sync.add_argument("--limit", type=int)
+
     api_key = commands.add_parser("create-api-key", help="Issue an API key for an organization")
     api_key.add_argument("--org-slug", required=True)
     api_key.add_argument("--org-name")
@@ -140,6 +160,24 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    if args.command == "sync-oagf-publications" and args.dry_run:
+        from gaiafaac_api.pipeline.oagf.sync import SyncOptions, run_oagf_sync
+
+        summary = run_oagf_sync(
+            None,
+            options=SyncOptions(
+                dry_run=True,
+                category=args.category,
+                since=args.since,
+                download_only=args.download_only,
+                extract=args.extract,
+                limit=args.limit,
+            ),
+        )
+        print(json.dumps(summary.__dict__, indent=2, default=str, sort_keys=True))
+        if summary.errors:
+            raise SystemExit(2)
+        return
     session_factory = create_session_factory(create_database_engine())
     with session_factory() as session:
         if args.command == "seed-states":
@@ -322,6 +360,20 @@ def main() -> None:
                 f"queued={len(summary.queued)}, skipped={len(summary.skipped)}, "
                 f"errors={len(summary.errors)}."
             )
+        elif args.command == "sync-oagf-publications":
+            from gaiafaac_api.pipeline.oagf.sync import SyncOptions, run_oagf_sync
+
+            summary = run_oagf_sync(
+                session,
+                options=SyncOptions(
+                    category=args.category,
+                    since=args.since,
+                    download_only=args.download_only,
+                    extract=args.extract,
+                    limit=args.limit,
+                ),
+            )
+            print(json.dumps(summary.__dict__, indent=2, default=str, sort_keys=True))
         elif args.command == "create-api-key":
             from gaiafaac_api.database.models import Organization
             from gaiafaac_api.services.api_keys import generate_api_key

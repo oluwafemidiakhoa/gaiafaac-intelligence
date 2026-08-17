@@ -29,10 +29,10 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/oagf/*
 reports/*
 !reports/.gitkeep
 
 # Local browser-automation snapshots and ad-hoc debug screenshots (never commit)
 .playwright-mcp/
 /*.png
-
