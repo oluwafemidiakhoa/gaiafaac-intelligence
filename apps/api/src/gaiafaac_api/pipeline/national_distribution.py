@@ -36,6 +36,13 @@ from gaiafaac_api.services.source_documents import register_source_document
 
 DERIVATION_TREATMENTS = {"separate", "included_in_states", "not_reported"}
 STATES_SCOPES = {"states_only_36", "states_plus_fct_37"}
+NATIONAL_SOURCE_TYPES = {
+    "canonical_national_evidence",
+    "official_national_summary_evidence",
+    "official_government_press_release",
+}
+NATIONAL_SOURCE_AUTHORITIES = {"canonical", "official_secondary", "contextual"}
+CANONICAL_SOURCE_STATUSES = {"available", "missing", "superseded", "conflicted"}
 _BLOCKING = {ValidationSeverity.ERROR, ValidationSeverity.CRITICAL}
 _UNIT_QUANTA = {
     ReportedUnit.NAIRA: Decimal("1"),
@@ -64,6 +71,9 @@ class NationalDistributionImportRequest:
     publication_date: date | None = None
     source_url: str | None = None
     document_version: str = "1"
+    source_type: str = "canonical_national_evidence"
+    source_authority: str = "canonical"
+    canonical_source_status: str = "available"
 
 
 @dataclass(frozen=True)
@@ -265,10 +275,10 @@ def validate_national_distribution(session: Session, run: ExtractionRun) -> list
     if states_scope not in STATES_SCOPES:
         findings.append(
             Finding(
-                "NATIONAL_STATES_SCOPE_REQUIRED",
-                ValidationSeverity.ERROR,
-                "Declare whether the official states aggregate covers 36 states or "
-                "36 states plus FCT.",
+                "NATIONAL_STATES_SCOPE_UNAVAILABLE",
+                ValidationSeverity.WARNING,
+                "The source does not establish whether the official states aggregate covers "
+                "36 states or 36 states plus FCT. Jurisdiction reconciliation remains unavailable.",
                 details={"states_scope": states_scope or None},
             )
         )
@@ -415,6 +425,23 @@ def import_national_distribution(
             raise ImportContractError(
                 "Derivation treatment must be separate, included_in_states, or not_reported"
             )
+        source_type = request.source_type.strip().casefold()
+        if source_type not in NATIONAL_SOURCE_TYPES:
+            raise ImportContractError("Unsupported national source type")
+        source_authority = request.source_authority.strip().casefold()
+        if source_authority not in NATIONAL_SOURCE_AUTHORITIES:
+            raise ImportContractError("Unsupported national source authority")
+        canonical_source_status = request.canonical_source_status.strip().casefold()
+        if canonical_source_status not in CANONICAL_SOURCE_STATUSES:
+            raise ImportContractError("Unsupported canonical source status")
+        if source_authority == "canonical" and canonical_source_status != "available":
+            raise ImportContractError(
+                "Canonical national evidence must report canonical_source_status=available"
+            )
+        if source_authority != "canonical" and canonical_source_status == "available":
+            raise ImportContractError(
+                "Non-canonical national evidence cannot claim the canonical source is available"
+            )
         try:
             unit = parse_reported_unit(request.reported_unit)
         except MonetaryParseError as error:
@@ -507,13 +534,16 @@ def import_national_distribution(
             source_document_id=source.id,
             status=ExtractionStatus.RUNNING,
             extractor_name="controlled_national_distribution",
-            extractor_version="1",
+            extractor_version="2",
             started_at=datetime.now(UTC),
             records_extracted=1,
             configuration={
                 "scope": "national_distribution",
                 "distribution_id": str(distribution.id),
                 "derivation_treatment": treatment,
+                "source_type": source_type,
+                "source_authority": source_authority,
+                "canonical_source_status": canonical_source_status,
                 "original_values": originals,
             },
         )
@@ -593,6 +623,7 @@ def approve_national_distribution(
     source.source_status = SourceStatus.APPROVED
     source.processing_status = ProcessingStatus.COMPLETED
     run.status = ExtractionStatus.COMPLETED
+    configuration = run.configuration or {}
     session.add(
         AuditLog(
             actor_user_id=reviewer.id,
@@ -602,7 +633,10 @@ def approve_national_distribution(
             payload={
                 "reporting_period_id": str(period.id),
                 "source_document_id": str(source.id),
-                "states_scope": (run.configuration or {}).get("states_scope"),
+                "states_scope": configuration.get("states_scope"),
+                "source_type": configuration.get("source_type"),
+                "source_authority": configuration.get("source_authority"),
+                "canonical_source_status": configuration.get("canonical_source_status"),
                 "review_note": note.strip() if note and note.strip() else None,
                 "published": False,
             },
@@ -649,6 +683,7 @@ def publish_national_distribution(
 
     distribution.is_published = True
     distribution.published_at = datetime.now(UTC)
+    configuration = run.configuration or {}
     session.add(
         AuditLog(
             actor_user_id=publisher.id,
@@ -658,7 +693,10 @@ def publish_national_distribution(
             payload={
                 "reporting_period_id": str(period.id),
                 "source_document_id": str(source.id),
-                "states_scope": (run.configuration or {}).get("states_scope"),
+                "states_scope": configuration.get("states_scope"),
+                "source_type": configuration.get("source_type"),
+                "source_authority": configuration.get("source_authority"),
+                "canonical_source_status": configuration.get("canonical_source_status"),
                 "separation_of_duties": True,
                 "published": True,
             },
