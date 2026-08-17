@@ -153,6 +153,7 @@ export default async function NationalReconciliationPage() {
     ['Local governments', data.local_governments_amount.value],
     ['13% derivation', data.derivation_amount.value],
   ]
+  const disbursementMonth = data.disbursement_month ?? data.revenue_month
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -240,9 +241,21 @@ export default async function NationalReconciliationPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Revenue month</dt>
+                <dt className="text-muted-foreground">
+                  Revenue / allocation period
+                </dt>
                 <dd className="mt-1 font-medium">
-                  {formatDate(data.revenue_month)}
+                  {data.allocation_period_month
+                    ? formatDate(data.allocation_period_month)
+                    : 'Unavailable'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">
+                  FAAC disbursement month
+                </dt>
+                <dd className="mt-1 font-medium">
+                  {formatDate(disbursementMonth)}
                 </dd>
               </div>
               <div>

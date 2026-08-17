@@ -45,6 +45,8 @@ class PublishedNationalDistribution(BaseModel):
     reporting_period_id: str
     reporting_label: str
     revenue_month: date
+    disbursement_month: date
+    allocation_period_month: date | None
     published_at: datetime | None
     verification_status: str
     reported_unit: str

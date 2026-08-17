@@ -20,6 +20,8 @@ export const nationalDistributionSchema = z.object({
   reporting_period_id: z.string(),
   reporting_label: z.string(),
   revenue_month: z.iso.date(),
+  disbursement_month: z.iso.date().nullable().optional(),
+  allocation_period_month: z.iso.date().nullable().optional(),
   published_at: z.string().nullable(),
   verification_status: z.string(),
   reported_unit: z.string(),

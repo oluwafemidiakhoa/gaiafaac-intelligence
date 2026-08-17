@@ -278,6 +278,8 @@ def published_national_distribution(
         reporting_period_id=str(period.id),
         reporting_label=period.reporting_label,
         revenue_month=period.revenue_month,
+        disbursement_month=period.disbursement_month or period.revenue_month,
+        allocation_period_month=period.allocation_period_month,
         published_at=distribution.published_at,
         verification_status=distribution.verification_status.value,
         reported_unit=distribution.reported_unit.value,
