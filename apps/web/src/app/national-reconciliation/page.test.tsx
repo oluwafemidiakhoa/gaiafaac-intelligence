@@ -31,7 +31,8 @@ const distribution: NationalDistribution = {
   covered_jurisdictions: 37,
   expected_jurisdictions: 37,
   source: {
-    source_organization: 'Federal Ministry of Information and National Orientation',
+    source_organization:
+      'Federal Ministry of Information and National Orientation',
     source_url: 'https://example.test/national',
     original_filename: 'faac-may-2026-national.html',
     sha256: 'a'.repeat(64),
@@ -40,13 +41,34 @@ const distribution: NationalDistribution = {
     source_type: 'official_government_press_release',
     source_authority: 'official_secondary',
   },
-  net_distributable_amount: { value: '2300000000000.00', evidence_class: 'observed' },
-  federal_amount: { value: '818680000000.00', evidence_class: 'observed' },
-  states_amount: { value: '759141000000.00', evidence_class: 'observed' },
-  local_governments_amount: { value: '534277000000.00', evidence_class: 'observed' },
-  derivation_amount: { value: '188132000000.00', evidence_class: 'observed' },
-  vat_amount: { value: '688785000000.00', evidence_class: 'observed' },
-  statutory_amount: { value: '1611000000000.00', evidence_class: 'observed' },
+  net_distributable_amount: {
+    value: '2300000000000.00',
+    evidence_class: 'observed',
+  },
+  federal_amount: {
+    value: '818680000000.00',
+    evidence_class: 'observed',
+  },
+  states_amount: {
+    value: '759141000000.00',
+    evidence_class: 'observed',
+  },
+  local_governments_amount: {
+    value: '534277000000.00',
+    evidence_class: 'observed',
+  },
+  derivation_amount: {
+    value: '188132000000.00',
+    evidence_class: 'observed',
+  },
+  vat_amount: {
+    value: '688785000000.00',
+    evidence_class: 'observed',
+  },
+  statutory_amount: {
+    value: '1611000000000.00',
+    evidence_class: 'observed',
+  },
   component_reconciliation: {
     status: 'reconciled',
     observed_total: '2300000000000.00',
@@ -84,21 +106,24 @@ describe('NationalReconciliationPage', () => {
     expect(screen.getByText('1 Jun 2026')).toBeVisible()
   })
 
-  it('does not infer an allocation period when the API does not provide one', async () => {
-    vi.mocked(getLatestNationalDistribution).mockResolvedValue({
-      data: {
-        ...distribution,
-        disbursement_month: undefined,
-        allocation_period_month: null,
-      },
-      error: null,
-    })
+  it(
+    'does not infer an allocation period when the API does not provide one',
+    async () => {
+      vi.mocked(getLatestNationalDistribution).mockResolvedValue({
+        data: {
+          ...distribution,
+          disbursement_month: undefined,
+          allocation_period_month: null,
+        },
+        error: null,
+      })
 
-    render(await NationalReconciliationPage())
+      render(await NationalReconciliationPage())
 
-    expect(screen.getByText('Revenue / allocation period')).toBeVisible()
-    expect(screen.getByText('Unavailable')).toBeVisible()
-    expect(screen.getByText('FAAC disbursement month')).toBeVisible()
-    expect(screen.getByText('1 Jun 2026')).toBeVisible()
-  })
+      expect(screen.getByText('Revenue / allocation period')).toBeVisible()
+      expect(screen.getByText('Unavailable')).toBeVisible()
+      expect(screen.getByText('FAAC disbursement month')).toBeVisible()
+      expect(screen.getByText('1 Jun 2026')).toBeVisible()
+    },
+  )
 })
