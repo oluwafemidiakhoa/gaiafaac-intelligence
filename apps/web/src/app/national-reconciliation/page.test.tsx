@@ -118,8 +118,8 @@ describe('NationalReconciliationPage', () => {
 
     render(await NationalReconciliationPage())
 
-    expect(screen.getByText('Revenue / allocation period')).toBeVisible()
-    expect(screen.getByText('Unavailable')).toBeVisible()
+    const allocationPeriodLabel = screen.getByText('Revenue / allocation period')
+    expect(allocationPeriodLabel.nextElementSibling).toHaveTextContent('Unavailable')
     expect(screen.getByText('FAAC disbursement month')).toBeVisible()
     expect(screen.getByText('1 Jun 2026')).toBeVisible()
   })
