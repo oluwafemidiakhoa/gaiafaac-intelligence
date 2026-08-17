@@ -37,9 +37,13 @@ function reconciliationTone(status: string) {
   return 'text-amber-700 dark:text-amber-300'
 }
 
-function nationalSourceLabel(sourceType: NationalDistribution['source']['source_type']) {
-  if (sourceType === 'canonical_national_evidence') return 'Canonical national evidence'
-  if (sourceType === 'official_national_summary_evidence') return 'Official national summary'
+function nationalSourceLabel(
+  sourceType: NationalDistribution['source']['source_type'],
+) {
+  if (sourceType === 'canonical_national_evidence')
+    return 'Canonical national evidence'
+  if (sourceType === 'official_national_summary_evidence')
+    return 'Official national summary'
   return 'Official government press release'
 }
 
@@ -304,7 +308,8 @@ export function ResearchCommandCenter({
                   <>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       {reconciliationEvidence.map(({ point, evidence }) => {
-                        const jurisdiction = evidence.jurisdiction_reconciliation
+                        const jurisdiction =
+                          evidence.jurisdiction_reconciliation
                         const component = evidence.component_reconciliation
                         return (
                           <div
@@ -324,18 +329,26 @@ export function ResearchCommandCenter({
                               {nationalSourceLabel(evidence.source.source_type)}
                             </p>
                             <p className="text-muted-foreground mt-1 text-[0.62rem] uppercase">
-                              Canonical source: {evidence.canonical_source_status}
+                              Canonical source:{' '}
+                              {evidence.canonical_source_status}
                             </p>
                             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.65rem] font-semibold uppercase">
-                              <span className={reconciliationTone(component.status)}>
+                              <span
+                                className={reconciliationTone(component.status)}
+                              >
                                 Components: {component.status}
                               </span>
-                              <span className={reconciliationTone(jurisdiction.status)}>
+                              <span
+                                className={reconciliationTone(
+                                  jurisdiction.status,
+                                )}
+                              >
                                 Jurisdictions: {jurisdiction.status}
                               </span>
                             </div>
                             <p className="mt-2 font-mono text-xs">
-                              Official: {shortNaira(jurisdiction.observed_total)}
+                              Official:{' '}
+                              {shortNaira(jurisdiction.observed_total)}
                             </p>
                             <p className="text-muted-foreground mt-1 font-mono text-[0.68rem]">
                               Variance: {shortNaira(jurisdiction.variance)}

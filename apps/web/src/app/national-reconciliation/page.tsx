@@ -21,9 +21,13 @@ function valueLabel(value: string | null) {
   return value ? formatNaira(value) : 'Unavailable'
 }
 
-function sourceTypeLabel(sourceType: NationalDistribution['source']['source_type']) {
-  if (sourceType === 'canonical_national_evidence') return 'Canonical national evidence'
-  if (sourceType === 'official_national_summary_evidence') return 'Official national summary'
+function sourceTypeLabel(
+  sourceType: NationalDistribution['source']['source_type'],
+) {
+  if (sourceType === 'canonical_national_evidence')
+    return 'Canonical national evidence'
+  if (sourceType === 'official_national_summary_evidence')
+    return 'Official national summary'
   return 'Official government press release'
 }
 
@@ -164,7 +168,8 @@ export default async function NationalReconciliationPage() {
           {sourceAuthorityLabel(data.source.source_authority).toUpperCase()}
         </StatusPill>
         <StatusPill tone="neutral">
-          CANONICAL SOURCE {canonicalStatusLabel(data.canonical_source_status).toUpperCase()}
+          CANONICAL SOURCE{' '}
+          {canonicalStatusLabel(data.canonical_source_status).toUpperCase()}
         </StatusPill>
         <StatusPill tone="success">
           {data.covered_jurisdictions}/{data.expected_jurisdictions}{' '}
@@ -227,7 +232,9 @@ export default async function NationalReconciliationPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Canonical source status</dt>
+                <dt className="text-muted-foreground">
+                  Canonical source status
+                </dt>
                 <dd className="mt-1 font-medium capitalize">
                   {canonicalStatusLabel(data.canonical_source_status)}
                 </dd>
