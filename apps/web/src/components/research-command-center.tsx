@@ -37,6 +37,12 @@ function reconciliationTone(status: string) {
   return 'text-amber-700 dark:text-amber-300'
 }
 
+function nationalSourceLabel(sourceType: NationalDistribution['source']['source_type']) {
+  if (sourceType === 'canonical_national_evidence') return 'Canonical national evidence'
+  if (sourceType === 'official_national_summary_evidence') return 'Official national summary'
+  return 'Official government press release'
+}
+
 export function ResearchCommandCenter({
   overview,
   analytics,
@@ -197,8 +203,8 @@ export function ResearchCommandCenter({
             <div>
               <p className="font-semibold">Published national trend</p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Jurisdiction ledger totals with official national reconciliation
-                evidence where a governed communiqué is published
+                Jurisdiction ledger totals with independently governed national
+                evidence where a distinct national source is published
               </p>
             </div>
             <Link
@@ -289,17 +295,17 @@ export function ResearchCommandCenter({
                     </p>
                     <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
                       The bars above are still valid published
-                      jurisdiction-ledger totals. National communiqué values
-                      appear here only after their independent evidence has
-                      passed GaiaFAAC review and publication controls.
+                      jurisdiction-ledger totals. Distinct national-source
+                      values appear here only after their evidence has passed
+                      GaiaFAAC review and publication controls.
                     </p>
                   </div>
                 ) : (
                   <>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       {reconciliationEvidence.map(({ point, evidence }) => {
-                        const reconciliation =
-                          evidence.jurisdiction_reconciliation
+                        const jurisdiction = evidence.jurisdiction_reconciliation
+                        const component = evidence.component_reconciliation
                         return (
                           <div
                             key={`reconciliation-${point.revenue_month}`}
@@ -314,19 +320,25 @@ export function ResearchCommandCenter({
                                 new Date(`${point.revenue_month}T00:00:00Z`),
                               )}
                             </p>
-                            <p
-                              className={`mt-2 text-xs font-semibold uppercase ${reconciliationTone(
-                                reconciliation.status,
-                              )}`}
-                            >
-                              {reconciliation.status}
+                            <p className="mt-2 text-[0.65rem] font-medium">
+                              {nationalSourceLabel(evidence.source.source_type)}
                             </p>
+                            <p className="text-muted-foreground mt-1 text-[0.62rem] uppercase">
+                              Canonical source: {evidence.canonical_source_status}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.65rem] font-semibold uppercase">
+                              <span className={reconciliationTone(component.status)}>
+                                Components: {component.status}
+                              </span>
+                              <span className={reconciliationTone(jurisdiction.status)}>
+                                Jurisdictions: {jurisdiction.status}
+                              </span>
+                            </div>
                             <p className="mt-2 font-mono text-xs">
-                              Official:{' '}
-                              {shortNaira(reconciliation.observed_total)}
+                              Official: {shortNaira(jurisdiction.observed_total)}
                             </p>
                             <p className="text-muted-foreground mt-1 font-mono text-[0.68rem]">
-                              Variance: {shortNaira(reconciliation.variance)}
+                              Variance: {shortNaira(jurisdiction.variance)}
                             </p>
                           </div>
                         )
