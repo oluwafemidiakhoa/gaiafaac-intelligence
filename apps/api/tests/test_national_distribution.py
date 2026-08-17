@@ -16,7 +16,7 @@ from gaiafaac_api.database.models import (
     User,
 )
 from gaiafaac_api.database.seeds import seed_states
-from gaiafaac_api.pipeline.errors import ApprovalError
+from gaiafaac_api.pipeline.errors import ApprovalError, ImportContractError
 from gaiafaac_api.pipeline.national_distribution import (
     NationalDistributionImportRequest,
     approve_national_distribution,
@@ -93,6 +93,9 @@ def _import_national(
     *,
     net: str = "2551",
     derivation_treatment: str = "separate",
+    source_type: str = "canonical_national_evidence",
+    source_authority: str = "canonical",
+    canonical_source_status: str = "available",
 ):
     return import_national_distribution(
         session,
@@ -109,6 +112,9 @@ def _import_national(
             derivation_treatment=derivation_treatment,
             publication_date=date(2026, 7, 1),
             source_url="https://example.test/official-communique",
+            source_type=source_type,
+            source_authority=source_authority,
+            canonical_source_status=canonical_source_status,
         ),
     )
 
@@ -127,7 +133,7 @@ def test_rounded_headline_reconciles_using_source_precision(
     period = _period_with_jurisdictions(session)
     result = _import_national(session, tmp_path, period)
 
-    assert result.blocking_finding_count == 1
+    assert result.blocking_finding_count == 0
     _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     publisher = _user(session, UserRole.ADMINISTRATOR)
@@ -146,6 +152,9 @@ def test_rounded_headline_reconciles_using_source_precision(
     assert published.jurisdiction_reconciliation.derived_total == "838208000000.00"
     assert published.source.sha256
     assert published.source.source_organization == "Federal Ministry of Finance"
+    assert published.source.source_type == "canonical_national_evidence"
+    assert published.source.source_authority == "canonical"
+    assert published.canonical_source_status == "available"
 
 
 def test_material_component_mismatch_blocks_human_approval(
@@ -153,7 +162,7 @@ def test_material_component_mismatch_blocks_human_approval(
 ) -> None:
     period = _period_with_jurisdictions(session)
     result = _import_national(session, tmp_path, period, net="2500")
-    assert result.blocking_finding_count == 2
+    assert result.blocking_finding_count == 1
     _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     with pytest.raises(ApprovalError, match="blocking validation"):
@@ -172,7 +181,7 @@ def test_unknown_derivation_semantics_stays_explicitly_unavailable(
         period,
         derivation_treatment="not_reported",
     )
-    assert result.blocking_finding_count == 1
+    assert result.blocking_finding_count == 0
     _declare_scope(session, result.run_id)
     reviewer = _user(session, UserRole.REVIEWER)
     publisher = _user(session, UserRole.ADMINISTRATOR)
@@ -207,13 +216,66 @@ def test_four_eyes_blocks_same_administrator_from_review_and_publish(
         )
 
 
-def test_scope_must_be_declared_before_approval(session: Session, tmp_path: Path) -> None:
+def test_unknown_states_scope_allows_partial_national_evidence(
+    session: Session, tmp_path: Path
+) -> None:
     period = _period_with_jurisdictions(session)
     result = _import_national(session, tmp_path, period)
+    assert result.blocking_finding_count == 0
+
     reviewer = _user(session, UserRole.REVIEWER)
-    with pytest.raises(ApprovalError, match="blocking validation"):
-        approve_national_distribution(
+    publisher = _user(session, UserRole.ADMINISTRATOR)
+    approve_national_distribution(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
+    publish_national_distribution(
+        session, run_id=uuid.UUID(result.run_id), reviewer_id=publisher.id
+    )
+
+    published = published_national_distribution(session, period)
+    assert published is not None
+    assert published.states_scope == "not_declared"
+    assert published.component_reconciliation.status == "reconciled"
+    assert published.jurisdiction_reconciliation.status == "unavailable"
+    assert "does not establish" in published.jurisdiction_reconciliation.note
+
+
+def test_official_secondary_evidence_never_claims_canonical_source(
+    session: Session, tmp_path: Path
+) -> None:
+    period = _period_with_jurisdictions(session)
+    result = _import_national(
+        session,
+        tmp_path,
+        period,
+        source_type="official_government_press_release",
+        source_authority="official_secondary",
+        canonical_source_status="missing",
+    )
+    reviewer = _user(session, UserRole.REVIEWER)
+    publisher = _user(session, UserRole.ADMINISTRATOR)
+    approve_national_distribution(session, run_id=uuid.UUID(result.run_id), reviewer_id=reviewer.id)
+    publish_national_distribution(
+        session, run_id=uuid.UUID(result.run_id), reviewer_id=publisher.id
+    )
+
+    published = published_national_distribution(session, period)
+    assert published is not None
+    assert published.source.source_type == "official_government_press_release"
+    assert published.source.source_authority == "official_secondary"
+    assert published.canonical_source_status == "missing"
+    assert published.component_reconciliation.status == "reconciled"
+    assert published.jurisdiction_reconciliation.status == "unavailable"
+
+
+def test_noncanonical_evidence_cannot_claim_canonical_source_available(
+    session: Session, tmp_path: Path
+) -> None:
+    period = _period_with_jurisdictions(session)
+    with pytest.raises(ImportContractError, match="cannot claim"):
+        _import_national(
             session,
-            run_id=uuid.UUID(result.run_id),
-            reviewer_id=reviewer.id,
+            tmp_path,
+            period,
+            source_type="official_government_press_release",
+            source_authority="official_secondary",
+            canonical_source_status="available",
         )
