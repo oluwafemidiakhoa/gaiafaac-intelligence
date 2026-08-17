@@ -49,10 +49,32 @@ def build_parser() -> argparse.ArgumentParser:
     import_command.add_argument("--publication-date", type=_date)
     import_command.add_argument("--source-url")
     import_command.add_argument("--document-version", default="1")
+    import_command.add_argument(
+        "--source-type",
+        choices=[
+            "canonical_national_evidence",
+            "official_national_summary_evidence",
+            "official_government_press_release",
+        ],
+        default="canonical_national_evidence",
+    )
+    import_command.add_argument(
+        "--source-authority",
+        choices=["canonical", "official_secondary", "contextual"],
+        default="canonical",
+    )
+    import_command.add_argument(
+        "--canonical-source-status",
+        choices=["available", "missing", "superseded", "conflicted"],
+        default="available",
+    )
 
     scope = commands.add_parser(
         "declare-states-scope",
-        help="Declare whether the official states aggregate includes the FCT",
+        help=(
+            "Declare whether the official states aggregate includes the FCT when the "
+            "source explicitly establishes that scope"
+        ),
     )
     scope.add_argument("run_id", type=uuid.UUID)
     scope.add_argument(
@@ -101,6 +123,9 @@ def main() -> None:
                     publication_date=args.publication_date,
                     source_url=args.source_url,
                     document_version=args.document_version,
+                    source_type=args.source_type,
+                    source_authority=args.source_authority,
+                    canonical_source_status=args.canonical_source_status,
                 ),
             )
             print(

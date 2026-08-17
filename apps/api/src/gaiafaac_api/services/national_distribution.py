@@ -53,16 +53,24 @@ def _run_for_distribution(
     return None
 
 
-def _config(run: ExtractionRun) -> tuple[str, str, dict[str, str | None]]:
+def _config(
+    run: ExtractionRun,
+) -> tuple[str, str, str, str, str, dict[str, str | None]]:
     configuration = run.configuration or {}
     treatment = str(configuration.get("derivation_treatment") or "not_reported")
     scope = str(configuration.get("states_scope") or "not_declared")
+    source_type = str(configuration.get("source_type") or "canonical_national_evidence")
+    source_authority = str(configuration.get("source_authority") or "canonical")
+    canonical_source_status = str(configuration.get("canonical_source_status") or "available")
     originals = configuration.get("original_values") or {}
     if not isinstance(originals, dict):
         originals = {}
     return (
         treatment,
         scope,
+        source_type,
+        source_authority,
+        canonical_source_status,
         {str(key): None if value is None else str(value) for key, value in originals.items()},
     )
 
@@ -137,8 +145,8 @@ def _jurisdiction_reconciliation(
                 evidence_class="missing",
                 basis="National states aggregate vs jurisdiction ledger",
                 note=(
-                    "The national source has no declared states scope. GaiaFAAC will not "
-                    "guess whether the reported states amount includes the FCT."
+                    "The national source does not establish whether the reported states amount "
+                    "includes the FCT, so GaiaFAAC does not infer a jurisdiction comparison."
                 ),
             ),
             covered,
@@ -231,7 +239,14 @@ def published_national_distribution(
     run = _run_for_distribution(session, distribution)
     if source is None or run is None or source.is_demo:
         return None
-    treatment, states_scope, originals = _config(run)
+    (
+        treatment,
+        states_scope,
+        source_type,
+        source_authority,
+        canonical_source_status,
+        originals,
+    ) = _config(run)
     component = reconciliation_for_distribution(distribution, run)
     jurisdiction, covered = _jurisdiction_reconciliation(
         session,
@@ -268,6 +283,7 @@ def published_national_distribution(
         reported_unit=distribution.reported_unit.value,
         derivation_treatment=treatment,
         states_scope=states_scope,
+        canonical_source_status=canonical_source_status,
         covered_jurisdictions=covered,
         expected_jurisdictions=EXPECTED_JURISDICTIONS,
         source=NationalSource(
@@ -277,6 +293,8 @@ def published_national_distribution(
             sha256=source.sha256,
             publication_date=source.publication_date,
             document_version=source.document_version,
+            source_type=source_type,
+            source_authority=source_authority,
         ),
         net_distributable_amount=_observed(distribution.net_distributable_amount),
         federal_amount=_observed(distribution.federal_amount),

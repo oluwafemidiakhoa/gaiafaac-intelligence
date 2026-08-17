@@ -25,6 +25,9 @@ export const nationalDistributionSchema = z.object({
   reported_unit: z.string(),
   derivation_treatment: z.string(),
   states_scope: z.string(),
+  canonical_source_status: z
+    .enum(['available', 'missing', 'superseded', 'conflicted'])
+    .default('available'),
   covered_jurisdictions: z.number().int(),
   expected_jurisdictions: z.number().int(),
   source: z.object({
@@ -34,6 +37,16 @@ export const nationalDistributionSchema = z.object({
     sha256: z.string().length(64),
     publication_date: z.iso.date().nullable(),
     document_version: z.string(),
+    source_type: z
+      .enum([
+        'canonical_national_evidence',
+        'official_national_summary_evidence',
+        'official_government_press_release',
+      ])
+      .default('canonical_national_evidence'),
+    source_authority: z
+      .enum(['canonical', 'official_secondary', 'contextual'])
+      .default('canonical'),
   }),
   net_distributable_amount: observedValue,
   federal_amount: observedValue,

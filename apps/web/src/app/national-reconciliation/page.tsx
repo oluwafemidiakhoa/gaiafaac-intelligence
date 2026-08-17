@@ -21,6 +21,30 @@ function valueLabel(value: string | null) {
   return value ? formatNaira(value) : 'Unavailable'
 }
 
+function sourceTypeLabel(
+  sourceType: NationalDistribution['source']['source_type'],
+) {
+  if (sourceType === 'canonical_national_evidence')
+    return 'Canonical national evidence'
+  if (sourceType === 'official_national_summary_evidence')
+    return 'Official national summary'
+  return 'Official government press release'
+}
+
+function sourceAuthorityLabel(
+  authority: NationalDistribution['source']['source_authority'],
+) {
+  if (authority === 'canonical') return 'Canonical'
+  if (authority === 'official_secondary') return 'Official secondary'
+  return 'Contextual'
+}
+
+function canonicalStatusLabel(
+  status: NationalDistribution['canonical_source_status'],
+) {
+  return status.replaceAll('_', ' ')
+}
+
 function ReconciliationCard({
   title,
   reconciliation,
@@ -107,7 +131,7 @@ export default async function NationalReconciliationPage() {
         <PageHeader
           eyebrow="National reconciliation"
           title="Awaiting governed national evidence"
-          description="GaiaFAAC will publish this workspace only after an official national-distribution source is fingerprinted, validated, human-reviewed and independently published. Missing evidence is not replaced with estimates."
+          description="GaiaFAAC will publish this workspace only after a distinct national-distribution source is fingerprinted, validated, human-reviewed and independently published. Missing evidence is not replaced with estimates."
         />
         <Card className="mt-8 max-w-3xl">
           <CardHeader>
@@ -134,12 +158,19 @@ export default async function NationalReconciliationPage() {
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
         eyebrow="National reconciliation"
-        title="One national claim. Two independent evidence paths."
-        description="GaiaFAAC compares the official recipient breakdown with the reported national total, then checks the official states aggregate against the separately published jurisdiction ledger on an explicitly declared scope."
+        title="One national claim. Independent evidence paths."
+        description="GaiaFAAC separately records source authority, checks national recipient arithmetic, and reconciles the states aggregate against the jurisdiction ledger only when the source explicitly establishes the comparison scope."
       />
 
       <div className="mt-8 flex flex-wrap gap-2">
         <StatusPill tone="success">HUMAN VERIFIED</StatusPill>
+        <StatusPill tone="neutral">
+          {sourceAuthorityLabel(data.source.source_authority).toUpperCase()}
+        </StatusPill>
+        <StatusPill tone="neutral">
+          CANONICAL SOURCE{' '}
+          {canonicalStatusLabel(data.canonical_source_status).toUpperCase()}
+        </StatusPill>
         <StatusPill tone="success">
           {data.covered_jurisdictions}/{data.expected_jurisdictions}{' '}
           JURISDICTIONS
@@ -163,7 +194,7 @@ export default async function NationalReconciliationPage() {
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <ReconciliationCard
-          title="Recipient arithmetic"
+          title="National component arithmetic"
           reconciliation={data.component_reconciliation}
         />
         <ReconciliationCard
@@ -189,6 +220,26 @@ export default async function NationalReconciliationPage() {
                 </dd>
               </div>
               <div>
+                <dt className="text-muted-foreground">Evidence type</dt>
+                <dd className="mt-1 font-medium">
+                  {sourceTypeLabel(data.source.source_type)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Source authority</dt>
+                <dd className="mt-1 font-medium">
+                  {sourceAuthorityLabel(data.source.source_authority)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">
+                  Canonical source status
+                </dt>
+                <dd className="mt-1 font-medium capitalize">
+                  {canonicalStatusLabel(data.canonical_source_status)}
+                </dd>
+              </div>
+              <div>
                 <dt className="text-muted-foreground">Revenue month</dt>
                 <dd className="mt-1 font-medium">
                   {formatDate(data.revenue_month)}
@@ -204,6 +255,14 @@ export default async function NationalReconciliationPage() {
                 <dt className="text-muted-foreground">Document version</dt>
                 <dd className="mt-1 font-medium">
                   {data.source.document_version}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Publication date</dt>
+                <dd className="mt-1 font-medium">
+                  {data.source.publication_date
+                    ? formatDate(data.source.publication_date)
+                    : 'Unavailable'}
                 </dd>
               </div>
               <div className="sm:col-span-2">
@@ -240,6 +299,13 @@ export default async function NationalReconciliationPage() {
                 <dd className="mt-1 font-mono">{data.reported_unit}</dd>
               </div>
             </dl>
+            {data.jurisdiction_reconciliation.status === 'unavailable' ? (
+              <p className="text-muted-foreground mt-5 text-sm leading-6">
+                No 36-state or 36+FCT basis is inferred. Component evidence can
+                remain valid while the cross-source jurisdiction comparison is
+                explicitly unavailable.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>

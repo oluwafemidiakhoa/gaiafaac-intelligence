@@ -5,6 +5,13 @@ from pydantic import BaseModel
 
 EvidenceClass = Literal["observed", "derived", "conflicted", "missing"]
 ReconciliationStatus = Literal["reconciled", "conflicted", "incomplete", "unavailable"]
+NationalSourceType = Literal[
+    "canonical_national_evidence",
+    "official_national_summary_evidence",
+    "official_government_press_release",
+]
+NationalSourceAuthority = Literal["canonical", "official_secondary", "contextual"]
+CanonicalSourceStatus = Literal["available", "missing", "superseded", "conflicted"]
 
 
 class NationalObservedValue(BaseModel):
@@ -19,6 +26,8 @@ class NationalSource(BaseModel):
     sha256: str
     publication_date: date | None
     document_version: str
+    source_type: NationalSourceType
+    source_authority: NationalSourceAuthority
 
 
 class NationalReconciliation(BaseModel):
@@ -41,6 +50,7 @@ class PublishedNationalDistribution(BaseModel):
     reported_unit: str
     derivation_treatment: str
     states_scope: str
+    canonical_source_status: CanonicalSourceStatus
     covered_jurisdictions: int
     expected_jurisdictions: int
     source: NationalSource
