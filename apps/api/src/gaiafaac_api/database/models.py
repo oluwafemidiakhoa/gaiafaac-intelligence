@@ -179,6 +179,92 @@ class SourceDocument(IdMixin, TimestampMixin, Base):
     is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
+class OagfSyncRun(IdMixin, TimestampMixin, Base):
+    """One auditable discovery/archive pass over the official OAGF publication hub."""
+
+    __tablename__ = "oagf_sync_runs"
+
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(24), nullable=False)
+    dry_run: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    hub_url: Mapped[str] = mapped_column(Text, nullable=False)
+    options: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    categories_discovered: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    pages_checked: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    documents_discovered: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    documents_archived: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    duplicates_found: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    revisions_found: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    inaccessible_documents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    errors: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
+
+
+class OagfDiscoveryRecord(IdMixin, TimestampMixin, Base):
+    """A versioned OAGF URL observation linked to immutable archived bytes when available."""
+
+    __tablename__ = "oagf_discovery_records"
+    __table_args__ = (
+        CheckConstraint(
+            "sha256 IS NULL OR length(sha256) = 64",
+            name="ck_oagf_discovery_sha256_length",
+        ),
+        CheckConstraint(
+            "classification_confidence >= 0 AND classification_confidence <= 1",
+            name="ck_oagf_discovery_confidence_range",
+        ),
+        UniqueConstraint(
+            "publication_identity", "version", name="uq_oagf_discovery_identity_version"
+        ),
+        Index("ix_oagf_discovery_category", "category_slug"),
+        Index("ix_oagf_discovery_sha256", "sha256"),
+        Index("ix_oagf_discovery_source_date", "source_publication_date"),
+    )
+
+    first_seen_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("oagf_sync_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    last_seen_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("oagf_sync_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    source_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("source_documents.id", ondelete="RESTRICT")
+    )
+    previous_record_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("oagf_discovery_records.id", ondelete="SET NULL")
+    )
+    source_organization: Mapped[str] = mapped_column(String(200), nullable=False)
+    category_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    category_slug: Mapped[str] = mapped_column(String(120), nullable=False)
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    publication_identity: Mapped[str] = mapped_column(Text, nullable=False)
+    publication_page_url: Mapped[str | None] = mapped_column(Text)
+    document_url: Mapped[str] = mapped_column(Text, nullable=False)
+    discovery_url: Mapped[str] = mapped_column(Text, nullable=False)
+    source_publication_date: Mapped[date | None] = mapped_column(Date)
+    displayed_year: Mapped[str | None] = mapped_column(String(40))
+    displayed_month: Mapped[str | None] = mapped_column(String(40))
+    first_discovered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    retrieved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    original_filename: Mapped[str] = mapped_column(String(500), nullable=False)
+    downloaded_filename: Mapped[str | None] = mapped_column(String(500))
+    content_type: Mapped[str | None] = mapped_column(String(160))
+    byte_length: Mapped[int | None] = mapped_column(Integer)
+    sha256: Mapped[str | None] = mapped_column(String(64))
+    storage_path: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    classification: Mapped[str] = mapped_column(String(120), nullable=False)
+    classification_confidence: Mapped[Decimal] = mapped_column(
+        CONFIDENCE, nullable=False, default=Decimal("1")
+    )
+    classification_method: Mapped[str] = mapped_column(String(80), nullable=False)
+    extraction_status: Mapped[str] = mapped_column(
+        String(40), nullable=False, default="not_requested"
+    )
+
+
 class NationalDistribution(IdMixin, TimestampMixin, PublishableMixin, Base):
     __tablename__ = "national_distributions"
     __table_args__ = (

@@ -23,6 +23,8 @@ EXPECTED_TABLES = {
     "claim_revisions",
     "generated_insights",
     "national_distributions",
+    "oagf_discovery_records",
+    "oagf_sync_runs",
     "organizations",
     "reporting_periods",
     "source_documents",
