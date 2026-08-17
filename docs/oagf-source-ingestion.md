@@ -15,17 +15,17 @@ remain inaccessible. The collector does not substitute secondary sources.
 Read-only inspection of the official hub on 2026-08-16 found nine exposed categories and sixteen
 listing pages:
 
-| Hub category | Slug | Pages | Publication records |
-| --- | --- | ---: | ---: |
-| AGF's Speech | `agfs-speech` | 1 | 0 |
-| FAAC Report | `faac-report` | 7 | 84 |
-| Funds Releases to MDAs | `funds-releases-to-mdas` | 1 | 0 |
-| GIFMIS Reports | `gifmis-reports` | 1 | 0 |
-| IPPIS Reports | `ippis-reports` | 1 | 0 |
-| IPSAS Reports | `ipsas-reports` | 1 | 1 |
-| OAGF Annual Reports | `oagf-annual-reports` | 1 | 5 |
-| OAGF Journals | `oagf-journals` | 1 | 0 |
-| Treasury Circulars | `treasury-circulars` | 2 | 23 |
+| Hub category           | Slug                     | Pages | Publication records |
+| ---------------------- | ------------------------ | ----: | ------------------: |
+| AGF's Speech           | `agfs-speech`            |     1 |                   0 |
+| FAAC Report            | `faac-report`            |     7 |                  84 |
+| Funds Releases to MDAs | `funds-releases-to-mdas` |     1 |                   0 |
+| GIFMIS Reports         | `gifmis-reports`         |     1 |                   0 |
+| IPPIS Reports          | `ippis-reports`          |     1 |                   0 |
+| IPSAS Reports          | `ipsas-reports`          |     1 |                   1 |
+| OAGF Annual Reports    | `oagf-annual-reports`    |     1 |                   5 |
+| OAGF Journals          | `oagf-journals`          |     1 |                   0 |
+| Treasury Circulars     | `treasury-circulars`     |     2 |                  23 |
 
 The 113 records currently link to PDF files. Empty categories are retained in inventory output;
 they are not interpreted as errors or deleted evidence. The WordPress taxonomy also exposes
