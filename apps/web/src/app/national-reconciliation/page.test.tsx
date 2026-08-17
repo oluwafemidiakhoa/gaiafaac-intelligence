@@ -106,24 +106,21 @@ describe('NationalReconciliationPage', () => {
     expect(screen.getByText('1 Jun 2026')).toBeVisible()
   })
 
-  it(
-    'does not infer an allocation period when the API does not provide one',
-    async () => {
-      vi.mocked(getLatestNationalDistribution).mockResolvedValue({
-        data: {
-          ...distribution,
-          disbursement_month: undefined,
-          allocation_period_month: null,
-        },
-        error: null,
-      })
+  it('does not infer an allocation period when the API does not provide one', async () => {
+    vi.mocked(getLatestNationalDistribution).mockResolvedValue({
+      data: {
+        ...distribution,
+        disbursement_month: undefined,
+        allocation_period_month: null,
+      },
+      error: null,
+    })
 
-      render(await NationalReconciliationPage())
+    render(await NationalReconciliationPage())
 
-      expect(screen.getByText('Revenue / allocation period')).toBeVisible()
-      expect(screen.getByText('Unavailable')).toBeVisible()
-      expect(screen.getByText('FAAC disbursement month')).toBeVisible()
-      expect(screen.getByText('1 Jun 2026')).toBeVisible()
-    },
-  )
+    expect(screen.getByText('Revenue / allocation period')).toBeVisible()
+    expect(screen.getByText('Unavailable')).toBeVisible()
+    expect(screen.getByText('FAAC disbursement month')).toBeVisible()
+    expect(screen.getByText('1 Jun 2026')).toBeVisible()
+  })
 })
