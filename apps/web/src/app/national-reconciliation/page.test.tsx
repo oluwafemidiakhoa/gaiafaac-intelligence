@@ -31,7 +31,8 @@ const distribution: NationalDistribution = {
   covered_jurisdictions: 37,
   expected_jurisdictions: 37,
   source: {
-    source_organization: 'Federal Ministry of Information and National Orientation',
+    source_organization:
+      'Federal Ministry of Information and National Orientation',
     source_url: 'https://example.test/national',
     original_filename: 'faac-may-2026-national.html',
     sha256: 'a'.repeat(64),
@@ -105,21 +106,24 @@ describe('NationalReconciliationPage', () => {
     expect(screen.getByText('1 Jun 2026')).toBeVisible()
   })
 
-  it('does not infer an allocation period when the API does not provide one', async () => {
-    vi.mocked(getLatestNationalDistribution).mockResolvedValue({
-      data: {
-        ...distribution,
-        disbursement_month: undefined,
-        allocation_period_month: null,
-      },
-      error: null,
-    })
+  it(
+    'does not infer an allocation period when the API does not provide one',
+    async () => {
+      vi.mocked(getLatestNationalDistribution).mockResolvedValue({
+        data: {
+          ...distribution,
+          disbursement_month: undefined,
+          allocation_period_month: null,
+        },
+        error: null,
+      })
 
-    render(await NationalReconciliationPage())
+      render(await NationalReconciliationPage())
 
-    expect(screen.getByText('Revenue / allocation period')).toBeVisible()
-    expect(screen.getByText('Unavailable')).toBeVisible()
-    expect(screen.getByText('FAAC disbursement month')).toBeVisible()
-    expect(screen.getByText('1 Jun 2026')).toBeVisible()
-  })
+      expect(screen.getByText('Revenue / allocation period')).toBeVisible()
+      expect(screen.getByText('Unavailable')).toBeVisible()
+      expect(screen.getByText('FAAC disbursement month')).toBeVisible()
+      expect(screen.getByText('1 Jun 2026')).toBeVisible()
+    },
+  )
 })
