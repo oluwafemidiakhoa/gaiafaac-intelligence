@@ -109,13 +109,18 @@ function adminHeaders() {
   }
 }
 
-async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<ApiResult<T>> {
+async function getJson<T>(
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<ApiResult<T>> {
   try {
     const response = await fetch(`${apiBaseUrl()}${path}`, {
       cache: 'no-store',
       headers: { 'X-Admin-Key': process.env.ADMIN_KEY ?? '' },
     })
-    if (!response.ok) return { data: null, error: 'The review service is unavailable.' }
+    if (!response.ok) {
+      return { data: null, error: 'The review service is unavailable.' }
+    }
     return { data: schema.parse(await response.json()), error: null }
   } catch {
     return { data: null, error: 'The review service is unavailable.' }
@@ -131,7 +136,10 @@ export function getPendingReviews() {
 }
 
 export function getReviewPacket(runId: string) {
-  return getJson(`/api/v1/review/${encodeURIComponent(runId)}`, reviewPacketSchema)
+  return getJson(
+    `/api/v1/review/${encodeURIComponent(runId)}`,
+    reviewPacketSchema,
+  )
 }
 
 async function postAction(
@@ -145,16 +153,28 @@ async function postAction(
       body: JSON.stringify(body),
     })
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { detail?: string } | null
-      return { data: null, error: payload?.detail ?? 'Review action failed.' }
+      const payload = (await response.json().catch(() => null)) as {
+        detail?: string
+      } | null
+      return {
+        data: null,
+        error: payload?.detail ?? 'Review action failed.',
+      }
     }
-    return { data: reviewActionSchema.parse(await response.json()), error: null }
+    return {
+      data: reviewActionSchema.parse(await response.json()),
+      error: null,
+    }
   } catch {
     return { data: null, error: 'Review action failed.' }
   }
 }
 
-export function approveReview(runId: string, reviewerId: string, note?: string) {
+export function approveReview(
+  runId: string,
+  reviewerId: string,
+  note?: string,
+) {
   return postAction(`/api/v1/review/${encodeURIComponent(runId)}/approve`, {
     reviewer_id: reviewerId,
     attestation: true,
@@ -162,7 +182,11 @@ export function approveReview(runId: string, reviewerId: string, note?: string) 
   })
 }
 
-export function rejectReview(runId: string, reviewerId: string, reason: string) {
+export function rejectReview(
+  runId: string,
+  reviewerId: string,
+  reason: string,
+) {
   return postAction(`/api/v1/review/${encodeURIComponent(runId)}/reject`, {
     reviewer_id: reviewerId,
     reason,
