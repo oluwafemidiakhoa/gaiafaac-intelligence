@@ -24,6 +24,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Format OAGF revision files and emit diff
+        run: |
+          npx prettier --write 'apps/web/src/app/review/oagf-revisions/[caseId]/page.tsx' 'apps/web/src/app/review/oagf-revisions/[caseId]/source/[version]/route.ts' 'apps/web/src/app/review/oagf-revisions/page.tsx' 'apps/web/src/app/review/page.tsx' 'apps/web/src/lib/oagf-revision-api.ts'
+          git diff -- 'apps/web/src/app/review/oagf-revisions/[caseId]/page.tsx' 'apps/web/src/app/review/oagf-revisions/[caseId]/source/[version]/route.ts' 'apps/web/src/app/review/oagf-revisions/page.tsx' 'apps/web/src/app/review/page.tsx' 'apps/web/src/lib/oagf-revision-api.ts'
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
