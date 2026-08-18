@@ -35,7 +35,9 @@ export default async function EvidenceControlPage() {
 
   const oagfBlocked = oagf.filter((item) => item.blocking_count > 0).length
   const oagfApproved = oagf.filter((item) => item.approved).length
-  const nationalBlocked = national.filter((item) => item.blocking_count > 0).length
+  const nationalBlocked = national.filter(
+    (item) => item.blocking_count > 0,
+  ).length
   const nationalApproved = national.filter((item) => item.approved).length
   const serviceError = oagfResult.error ?? nationalResult.error
 
@@ -50,7 +52,10 @@ export default async function EvidenceControlPage() {
       {serviceError ? (
         <Card className="mt-6 border-amber-300 bg-amber-50">
           <CardContent className="flex items-start gap-3 pt-6 text-amber-950">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <AlertTriangle
+              className="mt-0.5 size-5 shrink-0"
+              aria-hidden="true"
+            />
             <p className="text-sm font-medium">
               One or more review services could not be loaded. {serviceError}
             </p>
@@ -96,22 +101,29 @@ export default async function EvidenceControlPage() {
             <ShieldCheck className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">National FAAC evidence</CardTitle>
             <CardDescription>
-              Independent official national distributions and reconciliation evidence.
+              Independent official national distributions and reconciliation
+              evidence.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid gap-4 text-sm sm:grid-cols-3">
               <div>
                 <dt className="text-muted-foreground">Unpublished</dt>
-                <dd className="mt-1 text-2xl font-semibold">{national.length}</dd>
+                <dd className="mt-1 text-2xl font-semibold">
+                  {national.length}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Approved</dt>
-                <dd className="mt-1 text-2xl font-semibold">{nationalApproved}</dd>
+                <dd className="mt-1 text-2xl font-semibold">
+                  {nationalApproved}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Blocking</dt>
-                <dd className="mt-1 text-2xl font-semibold">{nationalBlocked}</dd>
+                <dd className="mt-1 text-2xl font-semibold">
+                  {nationalBlocked}
+                </dd>
               </div>
             </dl>
             <Button asChild className="mt-6">
@@ -130,7 +142,8 @@ export default async function EvidenceControlPage() {
             <Clock3 className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">Automated intake</CardTitle>
             <CardDescription>
-              Scheduled collectors discover and validate evidence before it reaches a human queue.
+              Scheduled collectors discover and validate evidence before it
+              reaches a human queue.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -139,7 +152,8 @@ export default async function EvidenceControlPage() {
             <CheckCircle2 className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">Explicit approval</CardTitle>
             <CardDescription>
-              Reviewer identity is selected from active database users at the moment of review.
+              Reviewer identity is selected from active database users at the
+              moment of review.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -148,7 +162,8 @@ export default async function EvidenceControlPage() {
             <ShieldCheck className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">Four-eyes publication</CardTitle>
             <CardDescription>
-              Publication requires a different active administrator from the person who approved the evidence.
+              Publication requires a different active administrator from the
+              person who approved the evidence.
             </CardDescription>
           </CardHeader>
         </Card>
