@@ -157,7 +157,7 @@ export default async function OagfRevisionPacketPage({
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <StatusPill
-              tone={item.status === 'pending_review' ? 'neutral' : 'warning'}
+              tone={item.status === 'pending_review' ? 'neutral' : 'demo'}
             >
               {item.status.replaceAll('_', ' ')}
             </StatusPill>
