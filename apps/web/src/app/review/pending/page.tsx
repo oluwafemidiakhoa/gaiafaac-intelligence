@@ -88,11 +88,11 @@ export default async function PendingReviewPage() {
             <div>
               <CardTitle>Review protocol</CardTitle>
               <CardDescription className="mt-2 max-w-3xl leading-6">
-                Confirm the official source and reporting period, verify complete
-                37-jurisdiction coverage, investigate validation findings, then
-                record the actual reviewer. Publication is unlocked only after
-                approval and must be performed by a different active
-                administrator.
+                Confirm the official source and reporting period, verify
+                complete 37-jurisdiction coverage, investigate validation
+                findings, then record the actual reviewer. Publication is
+                unlocked only after approval and must be performed by a
+                different active administrator.
               </CardDescription>
             </div>
           </div>
