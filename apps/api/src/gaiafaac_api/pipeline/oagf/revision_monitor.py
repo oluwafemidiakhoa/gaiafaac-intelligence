@@ -32,6 +32,71 @@ def _add_months(anchor: date, delta: int) -> date:
     return date(index // 12, index % 12 + 1, 1)
 
 
+def _same_reporting_hint(left: OagfDiscoveryRecord, right: OagfDiscoveryRecord) -> bool:
+    if left.source_publication_date and right.source_publication_date:
+        if left.source_publication_date == right.source_publication_date:
+            return True
+    return bool(
+        left.displayed_year
+        and left.displayed_month
+        and left.displayed_year == right.displayed_year
+        and left.displayed_month == right.displayed_month
+    )
+
+
+def _link_cross_url_revisions(session: Session) -> int:
+    """Recover revision lineage when OAGF replaces the publication page URL itself."""
+    records = session.scalars(
+        select(OagfDiscoveryRecord)
+        .where(
+            OagfDiscoveryRecord.category_slug == "faac-report",
+            OagfDiscoveryRecord.previous_record_id.is_(None),
+            OagfDiscoveryRecord.sha256.is_not(None),
+        )
+        .order_by(OagfDiscoveryRecord.created_at)
+    ).all()
+    linked = 0
+    for record in records:
+        candidates = session.scalars(
+            select(OagfDiscoveryRecord)
+            .where(
+                OagfDiscoveryRecord.category_slug == "faac-report",
+                OagfDiscoveryRecord.id != record.id,
+                OagfDiscoveryRecord.original_filename == record.original_filename,
+                OagfDiscoveryRecord.sha256.is_not(None),
+                OagfDiscoveryRecord.created_at < record.created_at,
+            )
+            .order_by(OagfDiscoveryRecord.created_at.desc())
+        ).all()
+        previous = next(
+            (
+                candidate
+                for candidate in candidates
+                if candidate.sha256 != record.sha256
+                and _same_reporting_hint(candidate, record)
+            ),
+            None,
+        )
+        if previous is None:
+            continue
+        record.previous_record_id = previous.id
+        record.version = max(record.version, previous.version + 1)
+        previous.status = "superseded"
+        current_source = (
+            session.get(SourceDocument, record.source_document_id)
+            if record.source_document_id
+            else None
+        )
+        if current_source is not None:
+            current_source.document_version = str(record.version)
+            if current_source.supersedes_document_id is None:
+                current_source.supersedes_document_id = previous.source_document_id
+        linked += 1
+    if linked:
+        session.commit()
+    return linked
+
+
 def _create_missing_revision_cases(session: Session, *, detected_at: datetime) -> int:
     records = session.scalars(
         select(OagfDiscoveryRecord)
@@ -101,12 +166,13 @@ def run_revision_monitor(
         storage=storage or DatabaseArchiveStorage(session),
         now=timestamp,
     )
+    cross_url_revisions = _link_cross_url_revisions(session)
     cases_created = _create_missing_revision_cases(session, detected_at=timestamp)
     return RevisionMonitorSummary(
         discovered=sync.discovered,
         archived=sync.archived,
         duplicates=sync.duplicates,
-        revisions_detected=sync.revisions,
+        revisions_detected=sync.revisions + cross_url_revisions,
         revision_cases_created=cases_created,
         inaccessible=sync.inaccessible,
         errors=sync.errors,
