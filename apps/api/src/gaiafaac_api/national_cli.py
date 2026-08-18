@@ -178,9 +178,7 @@ def main() -> None:
             for item in result.quarantined:
                 print(f"QUARANTINED {item['run_id']} | {item['reason']}")
             for item in result.duplicates:
-                print(
-                    f"DUPLICATE {item['candidate_id']} | duplicate_of={item['duplicate_of']}"
-                )
+                print(f"DUPLICATE {item['candidate_id']} | duplicate_of={item['duplicate_of']}")
             for item in result.skipped:
                 print(f"SKIPPED {item['run_id']} | {item['reason']}")
         elif args.command == "import":
