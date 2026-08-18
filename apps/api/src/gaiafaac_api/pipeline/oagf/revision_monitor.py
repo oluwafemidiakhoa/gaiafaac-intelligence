@@ -48,7 +48,7 @@ def _same_reporting_hint(left: OagfDiscoveryRecord, right: OagfDiscoveryRecord) 
 
 
 def _link_cross_url_revisions(session: Session) -> int:
-    """Recover revision lineage when OAGF replaces the publication page URL itself."""
+    """Recover lineage only when OAGF replaced the publication identity/URL itself."""
     records = session.scalars(
         select(OagfDiscoveryRecord)
         .where(
@@ -56,7 +56,7 @@ def _link_cross_url_revisions(session: Session) -> int:
             OagfDiscoveryRecord.previous_record_id.is_(None),
             OagfDiscoveryRecord.sha256.is_not(None),
         )
-        .order_by(OagfDiscoveryRecord.created_at)
+        .order_by(OagfDiscoveryRecord.first_discovered_at)
     ).all()
     linked = 0
     for record in records:
@@ -65,11 +65,12 @@ def _link_cross_url_revisions(session: Session) -> int:
             .where(
                 OagfDiscoveryRecord.category_slug == "faac-report",
                 OagfDiscoveryRecord.id != record.id,
+                OagfDiscoveryRecord.publication_identity != record.publication_identity,
                 OagfDiscoveryRecord.original_filename == record.original_filename,
                 OagfDiscoveryRecord.sha256.is_not(None),
-                OagfDiscoveryRecord.created_at < record.created_at,
+                OagfDiscoveryRecord.first_discovered_at < record.first_discovered_at,
             )
-            .order_by(OagfDiscoveryRecord.created_at.desc())
+            .order_by(OagfDiscoveryRecord.first_discovered_at.desc())
         ).all()
         previous = next(
             (
@@ -107,7 +108,7 @@ def _create_missing_revision_cases(session: Session, *, detected_at: datetime) -
             OagfDiscoveryRecord.previous_record_id.is_not(None),
             OagfDiscoveryRecord.sha256.is_not(None),
         )
-        .order_by(OagfDiscoveryRecord.created_at)
+        .order_by(OagfDiscoveryRecord.first_discovered_at)
     ).all()
     created = 0
     for record in records:
@@ -118,12 +119,22 @@ def _create_missing_revision_cases(session: Session, *, detected_at: datetime) -
         previous = session.get(OagfDiscoveryRecord, record.previous_record_id)
         if previous is None or previous.sha256 is None or previous.sha256 == record.sha256:
             continue
+        # A revision must point backwards in observed time. This rejects accidental cycles.
+        if previous.first_discovered_at >= record.first_discovered_at:
+            continue
         if record.source_document_id is None or previous.source_document_id is None:
             continue
         if session.scalar(
             select(OagfRevisionCase.id).where(
                 OagfRevisionCase.source_document_id == record.source_document_id,
                 OagfRevisionCase.previous_source_document_id == previous.source_document_id,
+            )
+        ):
+            continue
+        if session.scalar(
+            select(OagfRevisionCase.id).where(
+                OagfRevisionCase.source_document_id == previous.source_document_id,
+                OagfRevisionCase.previous_source_document_id == record.source_document_id,
             )
         ):
             continue
