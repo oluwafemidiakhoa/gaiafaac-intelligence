@@ -1,11 +1,22 @@
-import { AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  ShieldCheck,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { PageHeader } from '@/components/page-header'
 import { StatusPill } from '@/components/status-pill'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { formatDate } from '@/lib/format'
 import { getPendingNationalReviews } from '@/lib/national-review-api'
 
@@ -43,7 +54,10 @@ export default async function NationalReviewQueuePage() {
         </Card>
         <Card>
           <CardHeader>
-            <AlertTriangle className="size-5 text-amber-700" aria-hidden="true" />
+            <AlertTriangle
+              className="size-5 text-amber-700"
+              aria-hidden="true"
+            />
             <CardTitle className="pt-3 text-2xl">{blocked}</CardTitle>
             <CardDescription>Packets with blocking findings</CardDescription>
           </CardHeader>
@@ -63,14 +77,21 @@ export default async function NationalReviewQueuePage() {
                   <div>
                     <CardTitle>{item.reporting_label}</CardTitle>
                     <CardDescription className="mt-2">
-                      {item.source_organization} · disbursed {formatDate(item.disbursement_month)}
+                      {item.source_organization} · disbursed{' '}
+                      {formatDate(item.disbursement_month)}
                       {item.allocation_period_month
                         ? ` · revenue ${formatDate(item.allocation_period_month)}`
                         : ''}
                     </CardDescription>
                   </div>
                   <StatusPill
-                    tone={item.blocking_count > 0 ? 'neutral' : item.approved ? 'success' : 'neutral'}
+                    tone={
+                      item.blocking_count > 0
+                        ? 'neutral'
+                        : item.approved
+                          ? 'success'
+                          : 'neutral'
+                    }
                   >
                     {item.blocking_count > 0
                       ? 'Investigation required'
@@ -92,7 +113,9 @@ export default async function NationalReviewQueuePage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Verification</p>
-                    <p className="mt-1 font-medium">{item.verification_status}</p>
+                    <p className="mt-1 font-medium">
+                      {item.verification_status}
+                    </p>
                   </div>
                 </div>
                 <div className="border-border mt-5 flex justify-end border-t pt-4">

@@ -489,7 +489,9 @@ def _find_period(
 
 def _harden_period_semantics(period: ReportingPeriod, claims: ExtractedNationalClaims) -> None:
     if period.revenue_month != claims.disbursement_month:
-        raise NationalEvidenceError("Legacy reporting-period key does not match explicit meeting month")
+        raise NationalEvidenceError(
+            "Legacy reporting-period key does not match explicit meeting month"
+        )
     if period.disbursement_month not in (None, claims.disbursement_month):
         raise NationalEvidenceError("Existing disbursement month conflicts with official source")
     if period.allocation_period_month not in (None, claims.allocation_period_month):
@@ -575,7 +577,9 @@ def _process_candidate(
                 .limit(1)
             )
             candidate.extraction_run_id = run.id if run is not None else None
-            _mark(candidate, status=STATUS_DUPLICATE, reason_code="NATIONAL_SOURCE_ALREADY_IMPORTED")
+            _mark(
+                candidate, status=STATUS_DUPLICATE, reason_code="NATIONAL_SOURCE_ALREADY_IMPORTED"
+            )
             session.commit()
             return None
 

@@ -7,7 +7,13 @@ import { DataUnavailable } from '@/components/data-unavailable'
 import { PageHeader } from '@/components/page-header'
 import { StatusPill } from '@/components/status-pill'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { formatDate, humanize } from '@/lib/format'
 import {
   approveNationalReview,
@@ -53,7 +59,11 @@ export default async function NationalReviewPacketPage({
         `/review/national/${encodeURIComponent(runId)}?error=${encodeURIComponent('Choose a reviewer and complete the attestation.')}`,
       )
     }
-    const action = await approveNationalReview(runId, reviewerId, note || undefined)
+    const action = await approveNationalReview(
+      runId,
+      reviewerId,
+      note || undefined,
+    )
     if (action.error) {
       redirect(
         `/review/national/${encodeURIComponent(runId)}?error=${encodeURIComponent(action.error)}`,
@@ -89,7 +99,9 @@ export default async function NationalReviewPacketPage({
           description="The requested national evidence packet could not be loaded."
         />
         <div className="mt-8">
-          <DataUnavailable message={packetResult.error ?? 'Review packet unavailable.'} />
+          <DataUnavailable
+            message={packetResult.error ?? 'Review packet unavailable.'}
+          />
         </div>
         <Button asChild variant="outline" className="mt-5">
           <Link href="/review/national">Back to national queue</Link>
@@ -112,7 +124,10 @@ export default async function NationalReviewPacketPage({
       {query.error ? (
         <Card className="mt-6 border-amber-300 bg-amber-50">
           <CardContent className="flex items-start gap-3 pt-6 text-amber-950">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <AlertTriangle
+              className="mt-0.5 size-5 shrink-0"
+              aria-hidden="true"
+            />
             <p className="text-sm font-medium">{query.error}</p>
           </CardContent>
         </Card>
@@ -122,29 +137,43 @@ export default async function NationalReviewPacketPage({
         <Card>
           <CardHeader>
             <CardTitle>Official national source</CardTitle>
-            <CardDescription>{packet.source.source_organization}</CardDescription>
+            <CardDescription>
+              {packet.source.source_organization}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-muted-foreground">Disbursement month</dt>
-                <dd className="mt-1 font-medium">{formatDate(packet.disbursement_month)}</dd>
+                <dd className="mt-1 font-medium">
+                  {formatDate(packet.disbursement_month)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Revenue period</dt>
-                <dd className="mt-1 font-medium">{formatDate(packet.allocation_period_month)}</dd>
+                <dd className="mt-1 font-medium">
+                  {formatDate(packet.allocation_period_month)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Authority</dt>
-                <dd className="mt-1 font-medium">{humanize(packet.source.source_authority ?? 'unavailable')}</dd>
+                <dd className="mt-1 font-medium">
+                  {humanize(packet.source.source_authority ?? 'unavailable')}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Canonical source</dt>
-                <dd className="mt-1 font-medium">{humanize(packet.source.canonical_source_status ?? 'unavailable')}</dd>
+                <dd className="mt-1 font-medium">
+                  {humanize(
+                    packet.source.canonical_source_status ?? 'unavailable',
+                  )}
+                </dd>
               </div>
               <div className="sm:col-span-2">
                 <dt className="text-muted-foreground">SHA-256</dt>
-                <dd className="mt-1 font-mono text-xs break-all">{packet.source.sha256}</dd>
+                <dd className="mt-1 font-mono text-xs break-all">
+                  {packet.source.sha256}
+                </dd>
               </div>
             </dl>
             {packet.source.source_url ? (
@@ -169,19 +198,49 @@ export default async function NationalReviewPacketPage({
           </CardHeader>
           <CardContent>
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
-              <div><dt className="text-muted-foreground">Status</dt><dd className="mt-1 font-semibold">{humanize(packet.reconciliation.status)}</dd></div>
-              <div><dt className="text-muted-foreground">Blocking findings</dt><dd className="mt-1 font-semibold">{packet.blocking_count}</dd></div>
-              <div><dt className="text-muted-foreground">Component total</dt><dd className="mt-1 font-mono text-xs">{rawAmount(packet.reconciliation.component_total)}</dd></div>
-              <div><dt className="text-muted-foreground">Variance</dt><dd className="mt-1 font-mono text-xs">{rawAmount(packet.reconciliation.variance)}</dd></div>
-              <div><dt className="text-muted-foreground">Tolerance</dt><dd className="mt-1 font-mono text-xs">{rawAmount(packet.reconciliation.tolerance)}</dd></div>
-              <div><dt className="text-muted-foreground">States scope</dt><dd className="mt-1 font-medium">{humanize(packet.states_scope ?? 'not_declared')}</dd></div>
+              <div>
+                <dt className="text-muted-foreground">Status</dt>
+                <dd className="mt-1 font-semibold">
+                  {humanize(packet.reconciliation.status)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Blocking findings</dt>
+                <dd className="mt-1 font-semibold">{packet.blocking_count}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Component total</dt>
+                <dd className="mt-1 font-mono text-xs">
+                  {rawAmount(packet.reconciliation.component_total)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Variance</dt>
+                <dd className="mt-1 font-mono text-xs">
+                  {rawAmount(packet.reconciliation.variance)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Tolerance</dt>
+                <dd className="mt-1 font-mono text-xs">
+                  {rawAmount(packet.reconciliation.tolerance)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">States scope</dt>
+                <dd className="mt-1 font-medium">
+                  {humanize(packet.states_scope ?? 'not_declared')}
+                </dd>
+              </div>
             </dl>
           </CardContent>
         </Card>
       </div>
 
       <section className="mt-8">
-        <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">Observed claims</p>
+        <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+          Observed claims
+        </p>
         <h2 className="mt-2 text-2xl font-semibold">National distribution</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {[
@@ -194,7 +253,9 @@ export default async function NationalReviewPacketPage({
             <Card key={label}>
               <CardHeader>
                 <CardDescription>{label}</CardDescription>
-                <CardTitle className="font-mono text-base">{rawAmount(value)}</CardTitle>
+                <CardTitle className="font-mono text-base">
+                  {rawAmount(value)}
+                </CardTitle>
               </CardHeader>
             </Card>
           ))}
@@ -208,7 +269,9 @@ export default async function NationalReviewPacketPage({
             {packet.findings.map((finding, index) => (
               <Card key={`${finding.rule_code}-${index}`}>
                 <CardContent className="grid gap-3 pt-6 md:grid-cols-[12rem_1fr_auto]">
-                  <span className="font-mono text-xs font-semibold">{finding.rule_code}</span>
+                  <span className="font-mono text-xs font-semibold">
+                    {finding.rule_code}
+                  </span>
                   <p className="text-sm">{finding.message}</p>
                   <StatusPill tone="neutral">{finding.severity}</StatusPill>
                 </CardContent>
@@ -216,7 +279,11 @@ export default async function NationalReviewPacketPage({
             ))}
           </div>
         ) : (
-          <Card className="mt-5 border-dashed"><CardContent className="pt-6 text-sm">No validation findings.</CardContent></Card>
+          <Card className="mt-5 border-dashed">
+            <CardContent className="pt-6 text-sm">
+              No validation findings.
+            </CardContent>
+          </Card>
         )}
       </section>
 
@@ -224,32 +291,66 @@ export default async function NationalReviewPacketPage({
         <Card>
           <CardHeader>
             <CardTitle>Reviewer approval</CardTitle>
-            <CardDescription>Select the human who actually reviewed this evidence. Reviewer identity is loaded from active database users, not deployment configuration.</CardDescription>
+            <CardDescription>
+              Select the human who actually reviewed this evidence. Reviewer
+              identity is loaded from active database users, not deployment
+              configuration.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {packet.approval ? (
               <div className="space-y-2 text-sm">
                 <StatusPill tone="success">Human verified</StatusPill>
-                <p className="font-medium">Approved by {packet.approval.actor_name ?? packet.approval.actor_user_id ?? 'recorded reviewer'}</p>
+                <p className="font-medium">
+                  Approved by{' '}
+                  {packet.approval.actor_name ??
+                    packet.approval.actor_user_id ??
+                    'recorded reviewer'}
+                </p>
               </div>
             ) : (
               <form action={approveAction} className="space-y-4">
                 <label className="grid gap-1.5 text-sm font-medium">
                   Reviewer
-                  <select name="reviewer_id" required className="border-input bg-background rounded-md border px-3 py-2">
+                  <select
+                    name="reviewer_id"
+                    required
+                    className="border-input bg-background rounded-md border px-3 py-2"
+                  >
                     <option value="">Choose active reviewer</option>
-                    {reviewers.map((actor) => <option key={actor.id} value={actor.id}>{actor.full_name} · {actor.role}</option>)}
+                    {reviewers.map((actor) => (
+                      <option key={actor.id} value={actor.id}>
+                        {actor.full_name} · {actor.role}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="grid gap-1.5 text-sm font-medium">
                   Review note (optional)
-                  <textarea name="note" rows={3} className="border-input bg-background rounded-md border px-3 py-2" />
+                  <textarea
+                    name="note"
+                    rows={3}
+                    className="border-input bg-background rounded-md border px-3 py-2"
+                  />
                 </label>
                 <label className="flex items-start gap-3 text-sm leading-6">
-                  <input type="checkbox" name="attestation" className="mt-1 size-4" disabled={!canApprove} />
-                  <span>I verified the retained official source and the extracted national claims.</span>
+                  <input
+                    type="checkbox"
+                    name="attestation"
+                    className="mt-1 size-4"
+                    disabled={!canApprove}
+                  />
+                  <span>
+                    I verified the retained official source and the extracted
+                    national claims.
+                  </span>
                 </label>
-                <Button type="submit" disabled={!canApprove || reviewers.length === 0}>Approve evidence</Button>
+                <Button
+                  type="submit"
+                  disabled={!canApprove || reviewers.length === 0}
+                >
+                  Approve evidence
+                </Button>
               </form>
             )}
           </CardContent>
@@ -258,28 +359,58 @@ export default async function NationalReviewPacketPage({
         <Card>
           <CardHeader>
             <CardTitle>Administrator publication</CardTitle>
-            <CardDescription>Publication is enabled only after approval. The API enforces that the publisher is a different active administrator from the reviewer.</CardDescription>
+            <CardDescription>
+              Publication is enabled only after approval. The API enforces that
+              the publisher is a different active administrator from the
+              reviewer.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={publishAction} className="space-y-4">
               <label className="grid gap-1.5 text-sm font-medium">
                 Publisher
-                <select name="publisher_id" required className="border-input bg-background rounded-md border px-3 py-2" disabled={!canPublish}>
+                <select
+                  name="publisher_id"
+                  required
+                  className="border-input bg-background rounded-md border px-3 py-2"
+                  disabled={!canPublish}
+                >
                   <option value="">Choose active administrator</option>
-                  {publishers.map((actor) => <option key={actor.id} value={actor.id}>{actor.full_name}</option>)}
+                  {publishers.map((actor) => (
+                    <option key={actor.id} value={actor.id}>
+                      {actor.full_name}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="flex items-start gap-3 text-sm leading-6">
-                <input type="checkbox" name="attestation" className="mt-1 size-4" disabled={!canPublish} />
-                <span>I am publishing previously approved national evidence under four-eyes control.</span>
+                <input
+                  type="checkbox"
+                  name="attestation"
+                  className="mt-1 size-4"
+                  disabled={!canPublish}
+                />
+                <span>
+                  I am publishing previously approved national evidence under
+                  four-eyes control.
+                </span>
               </label>
-              <Button type="submit" disabled={!canPublish || publishers.length === 0}>Publish national record</Button>
+              <Button
+                type="submit"
+                disabled={!canPublish || publishers.length === 0}
+              >
+                Publish national record
+              </Button>
             </form>
           </CardContent>
         </Card>
       </section>
 
-      <div className="mt-8"><Button asChild variant="outline"><Link href="/review/national">Back to national queue</Link></Button></div>
+      <div className="mt-8">
+        <Button asChild variant="outline">
+          <Link href="/review/national">Back to national queue</Link>
+        </Button>
+      </div>
     </div>
   )
 }

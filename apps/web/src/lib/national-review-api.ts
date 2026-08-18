@@ -126,13 +126,17 @@ function adminHeaders() {
   }
 }
 
-async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<ApiResult<T>> {
+async function getJson<T>(
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<ApiResult<T>> {
   try {
     const response = await fetch(`${apiBaseUrl()}${path}`, {
       cache: 'no-store',
       headers: { 'X-Admin-Key': process.env.ADMIN_KEY ?? '' },
     })
-    if (!response.ok) return { data: null, error: 'National review service is unavailable.' }
+    if (!response.ok)
+      return { data: null, error: 'National review service is unavailable.' }
     return { data: schema.parse(await response.json()), error: null }
   } catch {
     return { data: null, error: 'National review service is unavailable.' }
@@ -148,7 +152,10 @@ export function getPendingNationalReviews() {
 }
 
 export function getNationalReviewPacket(runId: string) {
-  return getJson(`/api/v1/review/national/${encodeURIComponent(runId)}`, packetSchema)
+  return getJson(
+    `/api/v1/review/national/${encodeURIComponent(runId)}`,
+    packetSchema,
+  )
 }
 
 async function postAction(
@@ -162,8 +169,13 @@ async function postAction(
       body: JSON.stringify(body),
     })
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { detail?: string } | null
-      return { data: null, error: payload?.detail ?? 'National review action failed.' }
+      const payload = (await response.json().catch(() => null)) as {
+        detail?: string
+      } | null
+      return {
+        data: null,
+        error: payload?.detail ?? 'National review action failed.',
+      }
     }
     return { data: actionSchema.parse(await response.json()), error: null }
   } catch {
@@ -171,17 +183,27 @@ async function postAction(
   }
 }
 
-export function approveNationalReview(runId: string, reviewerId: string, note?: string) {
-  return postAction(`/api/v1/review/national/${encodeURIComponent(runId)}/approve`, {
-    reviewer_id: reviewerId,
-    attestation: true,
-    note,
-  })
+export function approveNationalReview(
+  runId: string,
+  reviewerId: string,
+  note?: string,
+) {
+  return postAction(
+    `/api/v1/review/national/${encodeURIComponent(runId)}/approve`,
+    {
+      reviewer_id: reviewerId,
+      attestation: true,
+      note,
+    },
+  )
 }
 
 export function publishNationalReview(runId: string, publisherId: string) {
-  return postAction(`/api/v1/review/national/${encodeURIComponent(runId)}/publish`, {
-    publisher_id: publisherId,
-    attestation: true,
-  })
+  return postAction(
+    `/api/v1/review/national/${encodeURIComponent(runId)}/publish`,
+    {
+      publisher_id: publisherId,
+      attestation: true,
+    },
+  )
 }
