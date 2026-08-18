@@ -28,6 +28,15 @@ jobs:
         run: |
           npx prettier --write 'apps/web/src/app/review/oagf-revisions/[caseId]/page.tsx' 'apps/web/src/app/review/oagf-revisions/[caseId]/source/[version]/route.ts' 'apps/web/src/app/review/oagf-revisions/page.tsx' 'apps/web/src/app/review/page.tsx' 'apps/web/src/lib/oagf-revision-api.ts'
           git diff -- 'apps/web/src/app/review/oagf-revisions/[caseId]/page.tsx' 'apps/web/src/app/review/oagf-revisions/[caseId]/source/[version]/route.ts' 'apps/web/src/app/review/oagf-revisions/page.tsx' 'apps/web/src/app/review/page.tsx' 'apps/web/src/lib/oagf-revision-api.ts'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-oagf-revision-files
+          path: |
+            apps/web/src/app/review/oagf-revisions/[caseId]/page.tsx
+            apps/web/src/app/review/oagf-revisions/[caseId]/source/[version]/route.ts
+            apps/web/src/app/review/oagf-revisions/page.tsx
+            apps/web/src/app/review/page.tsx
+            apps/web/src/lib/oagf-revision-api.ts
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
