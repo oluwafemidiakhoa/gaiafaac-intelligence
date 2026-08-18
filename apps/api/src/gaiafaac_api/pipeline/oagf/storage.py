@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import json
+import mimetypes
 import re
 import shutil
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path, PurePosixPath
 from typing import Any, Protocol
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from gaiafaac_api.database.oagf_revision_models import OagfArchiveObject
 
 
 @dataclass(frozen=True)
@@ -59,6 +65,106 @@ def sha256_path(path: Path) -> str:
 def safe_slug(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     return slug or "document"
+
+
+class DatabaseArchiveStorage:
+    """Content-addressed durable archive stored in the production database.
+
+    The discovery ledger remains the canonical event manifest; this storage class
+    only retains exact bytes and therefore intentionally has a no-op manifest hook.
+    """
+
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    @staticmethod
+    def _storage_path(checksum: str) -> str:
+        return f"/oagf-db-archive/{checksum}"
+
+    def _archive_bytes(
+        self,
+        *,
+        content: bytes,
+        checksum: str,
+        category_slug: str,
+        document_slug: str,
+        source_date: date,
+        original_filename: str,
+    ) -> ArchivedObject:
+        actual = sha256_bytes(content)
+        if actual != checksum:
+            raise RuntimeError("OAGF archive checksum mismatch")
+        existing = self.session.scalar(
+            select(OagfArchiveObject).where(OagfArchiveObject.sha256 == checksum)
+        )
+        if existing is not None:
+            if existing.byte_length != len(content) or bytes(existing.content) != content:
+                raise RuntimeError("OAGF archive hash collision")
+            return ArchivedObject(
+                self._storage_path(checksum), checksum, existing.byte_length, False
+            )
+
+        content_type = mimetypes.guess_type(original_filename)[0] or "application/octet-stream"
+        archived = OagfArchiveObject(
+            sha256=checksum,
+            content=content,
+            byte_length=len(content),
+            content_type=content_type,
+            original_filename=original_filename,
+            metadata_json={
+                "category_slug": category_slug,
+                "document_slug": document_slug,
+                "source_date": source_date.isoformat(),
+            },
+        )
+        self.session.add(archived)
+        self.session.flush()
+        return ArchivedObject(self._storage_path(checksum), checksum, len(content), True)
+
+    def archive(
+        self,
+        *,
+        content: bytes,
+        category_slug: str,
+        document_slug: str,
+        source_date: date,
+        original_filename: str,
+    ) -> ArchivedObject:
+        return self._archive_bytes(
+            content=content,
+            checksum=sha256_bytes(content),
+            category_slug=category_slug,
+            document_slug=document_slug,
+            source_date=source_date,
+            original_filename=original_filename,
+        )
+
+    def archive_file(
+        self,
+        *,
+        source_path: Path,
+        checksum: str,
+        byte_length: int,
+        category_slug: str,
+        document_slug: str,
+        source_date: date,
+        original_filename: str,
+    ) -> ArchivedObject:
+        if source_path.stat().st_size != byte_length:
+            raise RuntimeError("OAGF archive byte-length mismatch")
+        content = source_path.read_bytes()
+        return self._archive_bytes(
+            content=content,
+            checksum=checksum,
+            category_slug=category_slug,
+            document_slug=document_slug,
+            source_date=source_date,
+            original_filename=original_filename,
+        )
+
+    def append_manifest(self, payload: dict[str, Any]) -> None:
+        # OagfDiscoveryRecord/OagfSyncRun are the durable event manifest in DB mode.
+        return None
 
 
 class LocalArchiveStorage:

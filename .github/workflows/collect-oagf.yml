@@ -1,8 +1,8 @@
 name: Collect OAGF FAAC data
 
-# Daily, governance-preserving collector: checks the rolling 24-month window for
-# newly published OAGF months, imports + validates them, and queues them for
-# human review. It NEVER approves or publishes.
+# Daily, governance-preserving OAGF intake. The first pass queues newly published
+# jurisdiction months; the second pass rechecks official FAAC source bytes for
+# revisions. Neither pass approves, mutates published fiscal data, or publishes.
 on:
   schedule:
     - cron: '0 6 * * *' # daily 06:00 UTC
@@ -22,7 +22,7 @@ jobs:
           python-version: '3.12'
       - name: Install the API package (with PDF/Excel extraction extras)
         run: python -m pip install -e "apps/api[extraction]"
-      - name: Run the OAGF collector (never publishes)
+      - name: Collect new OAGF jurisdiction months (never publishes)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           API_ENVIRONMENT: production
@@ -33,3 +33,8 @@ jobs:
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
           ALERT_TO: ${{ secrets.ALERT_TO }}
         run: gaiafaac-db collect-oagf --months-back 24
+      - name: Detect and retain recent official OAGF revisions (never publishes)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_ENVIRONMENT: production
+        run: python -m gaiafaac_api.pipeline.oagf.revision_monitor --months-back 24
