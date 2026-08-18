@@ -118,13 +118,16 @@ def _create_missing_revision_cases(session: Session, *, detected_at: datetime) -
         previous = session.get(OagfDiscoveryRecord, record.previous_record_id)
         if previous is None or previous.sha256 is None or previous.sha256 == record.sha256:
             continue
-        if record.source_document_id is None:
+        if record.source_document_id is None or previous.source_document_id is None:
             continue
-        previous_source = (
-            session.get(SourceDocument, previous.source_document_id)
-            if previous.source_document_id
-            else None
-        )
+        if session.scalar(
+            select(OagfRevisionCase.id).where(
+                OagfRevisionCase.source_document_id == record.source_document_id,
+                OagfRevisionCase.previous_source_document_id == previous.source_document_id,
+            )
+        ):
+            continue
+        previous_source = session.get(SourceDocument, previous.source_document_id)
         session.add(
             OagfRevisionCase(
                 discovery_record_id=record.id,
@@ -166,13 +169,13 @@ def run_revision_monitor(
         storage=storage or DatabaseArchiveStorage(session),
         now=timestamp,
     )
-    cross_url_revisions = _link_cross_url_revisions(session)
+    _link_cross_url_revisions(session)
     cases_created = _create_missing_revision_cases(session, detected_at=timestamp)
     return RevisionMonitorSummary(
         discovered=sync.discovered,
         archived=sync.archived,
         duplicates=sync.duplicates,
-        revisions_detected=sync.revisions + cross_url_revisions,
+        revisions_detected=cases_created,
         revision_cases_created=cases_created,
         inaccessible=sync.inaccessible,
         errors=sync.errors,
