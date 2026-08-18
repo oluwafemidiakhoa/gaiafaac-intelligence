@@ -25,6 +25,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
+    collect = commands.add_parser(
+        "collect",
+        help="Discover, archive, validate and queue official national FAAC evidence (never publishes)",
+    )
+    collect.add_argument("--months-back", type=int, default=24)
+    collect.add_argument("--max-pages", type=int, default=6)
+
     import_command = commands.add_parser(
         "import", help="Import official national distribution evidence into review"
     )
@@ -102,7 +109,37 @@ def main() -> None:
     args = build_parser().parse_args()
     session_factory = create_session_factory(create_database_engine())
     with session_factory() as session:
-        if args.command == "import":
+        if args.command == "collect":
+            from gaiafaac_api.config import get_settings
+            from gaiafaac_api.pipeline.national_evidence import run_national_evidence_collection
+            from gaiafaac_api.pipeline.national_notify import send_national_review_alert
+
+            summary = run_national_evidence_collection(
+                session,
+                months_back=args.months_back,
+                max_pages=args.max_pages,
+            )
+            settings = get_settings()
+            queue_url = "https://gaiafaac-web.up.railway.app/review/national"
+            for item in summary.queued:
+                send_national_review_alert(
+                    settings,
+                    reporting_label=item.reporting_label,
+                    run_id=item.run_id,
+                    finding_count=item.finding_count,
+                    blocking_finding_count=item.blocking_finding_count,
+                    queue_url=queue_url,
+                )
+            print(
+                "National collection complete: "
+                f"checked={len(summary.checked_urls)}, "
+                f"queued={len(summary.queued)}, "
+                f"deferred={len(summary.deferred)}, "
+                f"quarantined={len(summary.quarantined)}, "
+                f"duplicates={len(summary.duplicates)}, "
+                f"errors={len(summary.errors)}."
+            )
+        elif args.command == "import":
             result = import_national_distribution(
                 session,
                 NationalDistributionImportRequest(
