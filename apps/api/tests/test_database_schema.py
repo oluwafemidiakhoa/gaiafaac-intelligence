@@ -30,6 +30,8 @@ EXPECTED_TABLES = {
     "forecasts",
     "generated_insights",
     "national_distributions",
+    "national_evidence_candidates",
+    "national_evidence_sync_runs",
     "oagf_discovery_records",
     "oagf_sync_runs",
     "organization_invites",
