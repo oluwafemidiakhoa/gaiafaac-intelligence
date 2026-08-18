@@ -24,10 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Format changed review pages and emit diff
-        run: |
-          npx prettier --write 'apps/web/src/app/review/pending/page.tsx' 'apps/web/src/app/review/pending/[runId]/page.tsx'
-          git diff -- 'apps/web/src/app/review/pending/page.tsx' 'apps/web/src/app/review/pending/[runId]/page.tsx'
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
