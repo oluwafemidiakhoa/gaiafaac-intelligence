@@ -91,9 +91,7 @@ export default async function OagfRevisionQueuePage() {
                     </CardDescription>
                   </div>
                   <StatusPill
-                    tone={
-                      item.status === 'pending_review' ? 'neutral' : 'warning'
-                    }
+                    tone={item.status === 'pending_review' ? 'neutral' : 'demo'}
                   >
                     {item.status.replaceAll('_', ' ')}
                   </StatusPill>
