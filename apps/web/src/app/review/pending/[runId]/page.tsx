@@ -15,9 +15,15 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { formatDate, humanize } from '@/lib/format'
-import { approveReview, getReviewPacket, rejectReview } from '@/lib/review-api'
+import {
+  approveReview,
+  getReviewActors,
+  getReviewPacket,
+  publishReview,
+  rejectReview,
+} from '@/lib/review-api'
 
-export const metadata: Metadata = { title: 'Accountant review packet' }
+export const metadata: Metadata = { title: 'OAGF review packet' }
 export const dynamic = 'force-dynamic'
 
 function rawAmount(value: string | null, unit: string) {
@@ -34,20 +40,46 @@ export default async function ReviewPacketPage({
 }) {
   const { runId } = await params
   const query = await searchParams
-  const result = await getReviewPacket(runId)
+  const [result, actorsResult] = await Promise.all([
+    getReviewPacket(runId),
+    getReviewActors(),
+  ])
   const packet = result.data
+  const actors = actorsResult.data ?? []
+  const reviewers = actors.filter(
+    (actor) => actor.role === 'reviewer' || actor.role === 'administrator',
+  )
+  const publishers = actors.filter((actor) => actor.role === 'administrator')
 
   async function approveAction(formData: FormData) {
     'use server'
-
+    const reviewerId = String(formData.get('reviewer_id') ?? '')
     const note = String(formData.get('note') ?? '').trim()
     const attestation = formData.get('attestation') === 'on'
-    if (!attestation) {
+    if (!reviewerId || !attestation) {
       redirect(
-        `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent('You must complete the reviewer attestation before approval.')}`,
+        `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent('Choose the actual reviewer and complete the attestation.')}`,
       )
     }
-    const action = await approveReview(runId, note || undefined)
+    const action = await approveReview(runId, reviewerId, note || undefined)
+    if (action.error) {
+      redirect(
+        `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent(action.error)}`,
+      )
+    }
+    redirect(`/review/pending/${encodeURIComponent(runId)}`)
+  }
+
+  async function rejectAction(formData: FormData) {
+    'use server'
+    const reviewerId = String(formData.get('reviewer_id') ?? '')
+    const reason = String(formData.get('reason') ?? '').trim()
+    if (!reviewerId || reason.length < 3) {
+      redirect(
+        `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent('Choose the reviewer and provide a clear rejection reason.')}`,
+      )
+    }
+    const action = await rejectReview(runId, reviewerId, reason)
     if (action.error) {
       redirect(
         `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent(action.error)}`,
@@ -56,16 +88,16 @@ export default async function ReviewPacketPage({
     redirect('/review/pending')
   }
 
-  async function rejectAction(formData: FormData) {
+  async function publishAction(formData: FormData) {
     'use server'
-
-    const reason = String(formData.get('reason') ?? '').trim()
-    if (reason.length < 3) {
+    const publisherId = String(formData.get('publisher_id') ?? '')
+    const attestation = formData.get('attestation') === 'on'
+    if (!publisherId || !attestation) {
       redirect(
-        `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent('A clear rejection reason is required.')}`,
+        `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent('Choose a publisher and complete the publication attestation.')}`,
       )
     }
-    const action = await rejectReview(runId, reason)
+    const action = await publishReview(runId, publisherId)
     if (action.error) {
       redirect(
         `/review/pending/${encodeURIComponent(runId)}?error=${encodeURIComponent(action.error)}`,
@@ -78,9 +110,9 @@ export default async function ReviewPacketPage({
     return (
       <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
         <PageHeader
-          eyebrow="Controlled accountant review"
+          eyebrow="OAGF evidence control"
           title="Review packet unavailable"
-          description="Only real, unpublished evidence can be opened in the accountant review workspace."
+          description="Only real, unpublished OAGF evidence can be opened here."
         />
         <div className="mt-8">
           <DataUnavailable
@@ -88,21 +120,22 @@ export default async function ReviewPacketPage({
           />
         </div>
         <Button asChild variant="outline" className="mt-5">
-          <Link href="/review/pending">Back to review queue</Link>
+          <Link href="/review/pending">Back to OAGF queue</Link>
         </Button>
       </div>
     )
   }
 
   const complete = packet.covered_states === packet.expected_states
-  const canApprove = complete && packet.blocking_count === 0
+  const canApprove = complete && packet.blocking_count === 0 && !packet.approval
+  const canPublish = packet.approval !== null
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
-        eyebrow="Controlled accountant review"
+        eyebrow="OAGF evidence control"
         title={packet.reporting_label}
-        description="Compare the extracted evidence against the retained official source before recording a human verification decision. Approval does not publish the report."
+        description="Review retained jurisdiction evidence, approve it explicitly, then publish only through a different active administrator."
       />
 
       {query.error ? (
@@ -164,12 +197,7 @@ export default async function ReviewPacketPage({
                 Open retained official source
                 <ExternalLink className="size-3.5" aria-hidden="true" />
               </a>
-            ) : (
-              <p className="text-muted-foreground mt-5 text-sm">
-                No external source URL was retained. Verify against the
-                controlled source archive before approval.
-              </p>
-            )}
+            ) : null}
           </CardContent>
         </Card>
 
@@ -177,13 +205,9 @@ export default async function ReviewPacketPage({
           <CardHeader>
             <ShieldCheck className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">Control status</CardTitle>
-            <CardDescription>
-              Approval is enabled only for complete evidence with no blocking
-              validation findings.
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-1">
+            <dl className="grid gap-4 text-sm">
               <div>
                 <dt className="text-muted-foreground">Coverage</dt>
                 <dd className="mt-1 font-mono font-semibold">
@@ -201,6 +225,14 @@ export default async function ReviewPacketPage({
               <div>
                 <dt className="text-muted-foreground">Pipeline status</dt>
                 <dd className="mt-1 font-medium">{humanize(packet.status)}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Human approval</dt>
+                <dd className="mt-1 font-medium">
+                  {packet.approval
+                    ? `Approved by ${packet.approval.actor_name ?? 'recorded reviewer'}`
+                    : 'Awaiting review'}
+                </dd>
               </div>
             </dl>
           </CardContent>
@@ -277,12 +309,7 @@ export default async function ReviewPacketPage({
       </section>
 
       <section className="mt-8">
-        <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
-          Validation record
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold">
-          Findings requiring review
-        </h2>
+        <h2 className="text-2xl font-semibold">Validation findings</h2>
         {packet.findings.length ? (
           <div className="mt-5 space-y-3">
             {packet.findings.map((finding, index) => (
@@ -307,57 +334,74 @@ export default async function ReviewPacketPage({
         ) : (
           <Card className="mt-5 border-dashed">
             <CardContent className="pt-6 text-sm">
-              Automated validation recorded no findings for this import.
+              Automated validation recorded no findings.
             </CardContent>
           </Card>
         )}
       </section>
 
-      <section className="mt-10 grid gap-5 lg:grid-cols-2">
+      <section className="mt-10 grid gap-5 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Approve evidence</CardTitle>
+            <CardTitle>Reviewer approval</CardTitle>
             <CardDescription>
-              Record human verification only after reconciling the extracted
-              values against the official source. This action does not publish
-              the report.
+              Select the person who actually performed the review.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={approveAction} className="space-y-4">
-              <label className="grid gap-1.5 text-sm font-medium">
-                Review note (optional)
-                <textarea
-                  name="note"
-                  rows={4}
-                  className="border-input bg-background rounded-md border px-3 py-2 text-sm"
-                  placeholder="Document material review observations or reconciliation notes."
-                />
-              </label>
-              <label className="flex items-start gap-3 text-sm leading-6">
-                <input
-                  type="checkbox"
-                  name="attestation"
-                  className="mt-1 size-4"
-                  disabled={!canApprove}
-                />
-                <span>
-                  I attest that I reviewed the retained source, checked the
-                  reporting period and jurisdiction coverage, investigated
-                  validation findings, and found the extracted evidence suitable
-                  for human verification.
-                </span>
-              </label>
-              <Button type="submit" disabled={!canApprove}>
-                Record human verification
-              </Button>
-              {!canApprove ? (
-                <p className="text-muted-foreground text-xs leading-5">
-                  Approval is disabled until coverage is complete and all
-                  blocking findings are resolved.
+            {packet.approval ? (
+              <div className="space-y-2 text-sm">
+                <StatusPill tone="success">Human verified</StatusPill>
+                <p className="font-medium">
+                  Approved by{' '}
+                  {packet.approval.actor_name ?? 'recorded reviewer'}
                 </p>
-              ) : null}
-            </form>
+              </div>
+            ) : (
+              <form action={approveAction} className="space-y-4">
+                <label className="grid gap-1.5 text-sm font-medium">
+                  Reviewer
+                  <select
+                    name="reviewer_id"
+                    required
+                    className="border-input bg-background rounded-md border px-3 py-2"
+                  >
+                    <option value="">Choose active reviewer</option>
+                    {reviewers.map((actor) => (
+                      <option key={actor.id} value={actor.id}>
+                        {actor.full_name} · {actor.role}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1.5 text-sm font-medium">
+                  Review note (optional)
+                  <textarea
+                    name="note"
+                    rows={3}
+                    className="border-input bg-background rounded-md border px-3 py-2"
+                  />
+                </label>
+                <label className="flex items-start gap-3 text-sm leading-6">
+                  <input
+                    type="checkbox"
+                    name="attestation"
+                    className="mt-1 size-4"
+                    disabled={!canApprove}
+                  />
+                  <span>
+                    I verified the retained source, reporting period, complete
+                    jurisdiction coverage and validation record.
+                  </span>
+                </label>
+                <Button
+                  type="submit"
+                  disabled={!canApprove || reviewers.length === 0}
+                >
+                  Approve evidence
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
 
@@ -365,35 +409,103 @@ export default async function ReviewPacketPage({
           <CardHeader>
             <CardTitle>Reject evidence</CardTitle>
             <CardDescription>
-              Reject when the source, extraction, reconciliation, or validation
-              evidence is not acceptable. The rejected records and reason remain
-              in the audit trail.
+              Preserve unacceptable evidence and its rejection reason in the
+              audit trail.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={rejectAction} className="space-y-4">
               <label className="grid gap-1.5 text-sm font-medium">
+                Reviewer
+                <select
+                  name="reviewer_id"
+                  required
+                  className="border-input bg-background rounded-md border px-3 py-2"
+                >
+                  <option value="">Choose active reviewer</option>
+                  {reviewers.map((actor) => (
+                    <option key={actor.id} value={actor.id}>
+                      {actor.full_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1.5 text-sm font-medium">
                 Rejection reason
                 <textarea
                   name="reason"
-                  rows={5}
+                  rows={4}
                   required
                   minLength={3}
-                  className="border-input bg-background rounded-md border px-3 py-2 text-sm"
-                  placeholder="Describe the evidence problem clearly enough for remediation and later audit."
+                  className="border-input bg-background rounded-md border px-3 py-2"
                 />
               </label>
-              <Button type="submit" variant="outline">
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={packet.approval !== null}
+              >
                 Reject and preserve evidence
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Administrator publication</CardTitle>
+            <CardDescription>
+              Enabled after approval. The API requires a different active
+              administrator from the reviewer.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={publishAction} className="space-y-4">
+              <label className="grid gap-1.5 text-sm font-medium">
+                Publisher
+                <select
+                  name="publisher_id"
+                  required
+                  disabled={!canPublish}
+                  className="border-input bg-background rounded-md border px-3 py-2"
+                >
+                  <option value="">Choose active administrator</option>
+                  {publishers.map((actor) => (
+                    <option key={actor.id} value={actor.id}>
+                      {actor.full_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-start gap-3 text-sm leading-6">
+                <input
+                  type="checkbox"
+                  name="attestation"
+                  className="mt-1 size-4"
+                  disabled={!canPublish}
+                />
+                <span>
+                  I am publishing previously approved OAGF evidence under
+                  four-eyes control.
+                </span>
+              </label>
+              <Button
+                type="submit"
+                disabled={!canPublish || publishers.length === 0}
+              >
+                Publish OAGF record
               </Button>
             </form>
           </CardContent>
         </Card>
       </section>
 
-      <div className="mt-8">
+      <div className="mt-8 flex gap-3">
         <Button asChild variant="outline">
-          <Link href="/review/pending">Back to review queue</Link>
+          <Link href="/review/pending">Back to OAGF queue</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/review">Evidence control home</Link>
         </Button>
       </div>
     </div>

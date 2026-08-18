@@ -14,9 +14,12 @@ describe('pendingReviewSchema', () => {
       expected_states: 37,
       finding_count: 2,
       blocking_count: 2,
+      approved: false,
+      approved_by: null,
       created_at: '2026-07-31T00:00:00Z',
     })
     expect(parsed.reporting_label).toBe('OAGF Jan 2024')
+    expect(parsed.approved).toBe(false)
   })
 
   it('rejects an item missing coverage', () => {

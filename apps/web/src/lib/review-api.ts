@@ -1,5 +1,12 @@
 import { z } from 'zod'
 
+const actorSchema = z.object({
+  id: z.string(),
+  full_name: z.string(),
+  email: z.string(),
+  role: z.enum(['reviewer', 'administrator']),
+})
+
 export const pendingReviewSchema = z.object({
   run_id: z.string(),
   reporting_label: z.string(),
@@ -10,6 +17,8 @@ export const pendingReviewSchema = z.object({
   expected_states: z.number().int(),
   finding_count: z.number().int(),
   blocking_count: z.number().int(),
+  approved: z.boolean(),
+  approved_by: z.string().nullable(),
   created_at: z.string().nullable(),
 })
 
@@ -41,6 +50,15 @@ const reviewFindingSchema = z.object({
   outcome: z.string(),
 })
 
+const approvalSchema = z
+  .object({
+    actor_user_id: z.string().nullable(),
+    actor_name: z.string().nullable(),
+    created_at: z.string(),
+    note: z.string().nullable(),
+  })
+  .nullable()
+
 export const reviewPacketSchema = z.object({
   run_id: z.string(),
   reporting_label: z.string(),
@@ -53,6 +71,7 @@ export const reviewPacketSchema = z.object({
   blocking_count: z.number().int(),
   allocations: z.array(reviewAllocationSchema),
   findings: z.array(reviewFindingSchema),
+  approval: approvalSchema,
 })
 
 const reviewActionSchema = z.object({
@@ -62,6 +81,7 @@ const reviewActionSchema = z.object({
   published: z.boolean(),
 })
 
+export type ReviewActor = z.infer<typeof actorSchema>
 export type PendingReviewItem = z.infer<typeof pendingReviewSchema>
 export type ReviewPacket = z.infer<typeof reviewPacketSchema>
 export type ReviewAction = z.infer<typeof reviewActionSchema>
@@ -89,119 +109,93 @@ function adminHeaders() {
   }
 }
 
-export async function getPendingReviews(): Promise<
-  ApiResult<PendingReviewItem[]>
-> {
+async function getJson<T>(
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<ApiResult<T>> {
   try {
-    const response = await fetch(`${apiBaseUrl()}/api/v1/review/pending`, {
-      next: { revalidate: 120 },
-      headers: { 'X-Admin-Key': process.env.ADMIN_KEY ?? '' },
-    })
-    if (!response.ok) {
-      return { data: null, error: 'The review queue is unavailable.' }
-    }
-    return {
-      data: z.array(pendingReviewSchema).parse(await response.json()),
-      error: null,
-    }
-  } catch {
-    return { data: null, error: 'The review queue is unavailable.' }
-  }
-}
-
-export async function getReviewPacket(
-  runId: string,
-): Promise<ApiResult<ReviewPacket>> {
-  try {
-    const response = await fetch(`${apiBaseUrl()}/api/v1/review/${runId}`, {
+    const response = await fetch(`${apiBaseUrl()}${path}`, {
       cache: 'no-store',
       headers: { 'X-Admin-Key': process.env.ADMIN_KEY ?? '' },
     })
     if (!response.ok) {
-      return {
-        data: null,
-        error:
-          response.status === 404
-            ? 'This review packet is no longer pending.'
-            : 'The review packet is unavailable.',
-      }
+      return { data: null, error: 'The review service is unavailable.' }
     }
-    return {
-      data: reviewPacketSchema.parse(await response.json()),
-      error: null,
-    }
+    return { data: schema.parse(await response.json()), error: null }
   } catch {
-    return { data: null, error: 'The review packet is unavailable.' }
+    return { data: null, error: 'The review service is unavailable.' }
   }
 }
 
-export async function approveReview(
+export function getReviewActors() {
+  return getJson('/api/v1/review/actors', z.array(actorSchema))
+}
+
+export function getPendingReviews() {
+  return getJson('/api/v1/review/pending', z.array(pendingReviewSchema))
+}
+
+export function getReviewPacket(runId: string) {
+  return getJson(
+    `/api/v1/review/${encodeURIComponent(runId)}`,
+    reviewPacketSchema,
+  )
+}
+
+async function postAction(
+  path: string,
+  body: Record<string, unknown>,
+): Promise<ApiResult<ReviewAction>> {
+  try {
+    const response = await fetch(`${apiBaseUrl()}${path}`, {
+      method: 'POST',
+      headers: adminHeaders(),
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        detail?: string
+      } | null
+      return {
+        data: null,
+        error: payload?.detail ?? 'Review action failed.',
+      }
+    }
+    return {
+      data: reviewActionSchema.parse(await response.json()),
+      error: null,
+    }
+  } catch {
+    return { data: null, error: 'Review action failed.' }
+  }
+}
+
+export function approveReview(
   runId: string,
+  reviewerId: string,
   note?: string,
-): Promise<ApiResult<ReviewAction>> {
-  const reviewerId = process.env.REVIEWER_ID
-  if (!reviewerId) {
-    return { data: null, error: 'Reviewer identity is not configured.' }
-  }
-  try {
-    const response = await fetch(
-      `${apiBaseUrl()}/api/v1/review/${runId}/approve`,
-      {
-        method: 'POST',
-        headers: adminHeaders(),
-        body: JSON.stringify({
-          reviewer_id: reviewerId,
-          attestation: true,
-          note,
-        }),
-      },
-    )
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as {
-        detail?: string
-      } | null
-      return {
-        data: null,
-        error: payload?.detail ?? 'Approval failed.',
-      }
-    }
-    return {
-      data: reviewActionSchema.parse(await response.json()),
-      error: null,
-    }
-  } catch {
-    return { data: null, error: 'Approval failed.' }
-  }
+) {
+  return postAction(`/api/v1/review/${encodeURIComponent(runId)}/approve`, {
+    reviewer_id: reviewerId,
+    attestation: true,
+    note,
+  })
 }
 
-export async function rejectReview(
+export function rejectReview(
   runId: string,
+  reviewerId: string,
   reason: string,
-): Promise<ApiResult<ReviewAction>> {
-  const reviewerId = process.env.REVIEWER_ID
-  if (!reviewerId) {
-    return { data: null, error: 'Reviewer identity is not configured.' }
-  }
-  try {
-    const response = await fetch(
-      `${apiBaseUrl()}/api/v1/review/${runId}/reject`,
-      {
-        method: 'POST',
-        headers: adminHeaders(),
-        body: JSON.stringify({ reviewer_id: reviewerId, reason }),
-      },
-    )
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as {
-        detail?: string
-      } | null
-      return { data: null, error: payload?.detail ?? 'Rejection failed.' }
-    }
-    return {
-      data: reviewActionSchema.parse(await response.json()),
-      error: null,
-    }
-  } catch {
-    return { data: null, error: 'Rejection failed.' }
-  }
+) {
+  return postAction(`/api/v1/review/${encodeURIComponent(runId)}/reject`, {
+    reviewer_id: reviewerId,
+    reason,
+  })
+}
+
+export function publishReview(runId: string, publisherId: string) {
+  return postAction(`/api/v1/review/${encodeURIComponent(runId)}/publish`, {
+    publisher_id: publisherId,
+    attestation: true,
+  })
 }

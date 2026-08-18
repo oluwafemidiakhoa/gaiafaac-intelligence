@@ -7,16 +7,21 @@ from sqlalchemy.orm import Session
 
 from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.session import get_session
-from gaiafaac_api.pipeline.approval import approve_import, reject_import
+from gaiafaac_api.pipeline.approval import approve_import, publish_import, reject_import
 from gaiafaac_api.pipeline.errors import ApprovalError
 from gaiafaac_api.review_schemas import (
     ApproveReviewRequest,
     PendingReviewItem,
+    PublishReviewRequest,
     RejectReviewRequest,
     ReviewActionResponse,
     ReviewPacket,
 )
-from gaiafaac_api.services.review_queue import get_review_packet, list_pending_reviews
+from gaiafaac_api.services.review_queue import (
+    get_review_packet,
+    list_active_review_actors,
+    list_pending_reviews,
+)
 
 router = APIRouter(prefix="/review", tags=["review queue"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -38,9 +43,18 @@ def require_admin(x_admin_key: Annotated[str | None, Header()] = None) -> None:
 
 
 @router.get(
+    "/actors",
+    summary="Active OAGF reviewers and administrators",
+    dependencies=[Depends(require_admin)],
+)
+def review_actors(session: DatabaseSession) -> list[dict[str, object]]:
+    return list_active_review_actors(session)
+
+
+@router.get(
     "/pending",
     response_model=list[PendingReviewItem],
-    summary="Real months awaiting human review (admin only, metadata only)",
+    summary="Real months awaiting human action (admin only, metadata only)",
     dependencies=[Depends(require_admin)],
 )
 def pending_reviews(session: DatabaseSession) -> list[PendingReviewItem]:
@@ -116,6 +130,35 @@ def reject_review(
     return ReviewActionResponse(
         run_id=result.run_id,
         status="rejected",
+        allocations_affected=result.allocations_approved,
+        published=result.published,
+    )
+
+
+@router.post(
+    "/{run_id}/publish",
+    response_model=ReviewActionResponse,
+    summary="Publish approved OAGF evidence under four-eyes control",
+    dependencies=[Depends(require_admin)],
+)
+def publish_review(
+    run_id: uuid.UUID,
+    request: PublishReviewRequest,
+    session: DatabaseSession,
+) -> ReviewActionResponse:
+    if not request.attestation:
+        raise HTTPException(status_code=422, detail="Publisher attestation is required.")
+    try:
+        result = publish_import(
+            session,
+            run_id=run_id,
+            reviewer_id=request.publisher_id,
+        )
+    except ApprovalError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return ReviewActionResponse(
+        run_id=result.run_id,
+        status="published",
         allocations_affected=result.allocations_approved,
         published=result.published,
     )

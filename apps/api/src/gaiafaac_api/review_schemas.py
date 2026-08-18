@@ -17,6 +17,8 @@ class PendingReviewItem(BaseModel):
     expected_states: int
     finding_count: int
     blocking_count: int
+    approved: bool = False
+    approved_by: str | None = None
     created_at: datetime | None
 
 
@@ -48,6 +50,13 @@ class ReviewFindingItem(BaseModel):
     outcome: str
 
 
+class ReviewApproval(BaseModel):
+    actor_user_id: str | None
+    actor_name: str | None
+    created_at: datetime
+    note: str | None = None
+
+
 class ReviewPacket(BaseModel):
     run_id: str
     reporting_label: str
@@ -60,6 +69,7 @@ class ReviewPacket(BaseModel):
     blocking_count: int
     allocations: list[ReviewAllocationItem]
     findings: list[ReviewFindingItem]
+    approval: ReviewApproval | None = None
 
 
 class ApproveReviewRequest(BaseModel):
@@ -71,6 +81,11 @@ class ApproveReviewRequest(BaseModel):
 class RejectReviewRequest(BaseModel):
     reviewer_id: uuid.UUID
     reason: str = Field(min_length=3, max_length=2000)
+
+
+class PublishReviewRequest(BaseModel):
+    publisher_id: uuid.UUID
+    attestation: bool
 
 
 class ReviewActionResponse(BaseModel):
