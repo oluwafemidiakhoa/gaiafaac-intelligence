@@ -72,8 +72,7 @@ def _link_cross_url_revisions(session: Session) -> int:
             (
                 candidate
                 for candidate in candidates
-                if candidate.sha256 != record.sha256
-                and _same_reporting_hint(candidate, record)
+                if candidate.sha256 != record.sha256 and _same_reporting_hint(candidate, record)
             ),
             None,
         )
@@ -110,9 +109,7 @@ def _create_missing_revision_cases(session: Session, *, detected_at: datetime) -
     created = 0
     for record in records:
         if session.scalar(
-            select(OagfRevisionCase.id).where(
-                OagfRevisionCase.discovery_record_id == record.id
-            )
+            select(OagfRevisionCase.id).where(OagfRevisionCase.discovery_record_id == record.id)
         ):
             continue
         previous = session.get(OagfDiscoveryRecord, record.previous_record_id)
