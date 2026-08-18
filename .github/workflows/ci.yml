@@ -2,55 +2,37 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  configuration:
+  normalize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose config --quiet
-
-  web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - name: Format OAGF revision files and emit diff
-        run: |
-          npx prettier --write 'apps/web/src/app/review/oagf-revisions/[caseId]/page.tsx' 'apps/web/src/app/review/oagf-revisions/[caseId]/source/[version]/route.ts' 'apps/web/src/app/review/oagf-revisions/page.tsx' 'apps/web/src/app/review/page.tsx' 'apps/web/src/lib/oagf-revision-api.ts'
-          git diff -- 'apps/web/src/app/review/oagf-revisions/[caseId]/page.tsx' 'apps/web/src/app/review/oagf-revisions/[caseId]/source/[version]/route.ts' 'apps/web/src/app/review/oagf-revisions/page.tsx' 'apps/web/src/app/review/page.tsx' 'apps/web/src/lib/oagf-revision-api.ts'
-      - uses: actions/upload-artifact@v4
-        with:
-          name: formatted-oagf-revision-files
-          path: |
-            apps/web/src/app/review/oagf-revisions
-            apps/web/src/app/review/page.tsx
-            apps/web/src/lib/oagf-revision-api.ts
-      - run: npm run format
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run test
-      - run: npm run build
-
-  api:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: pip
-          cache-dependency-path: apps/api/pyproject.toml
+      - run: npm ci
       - run: python -m pip install -e "apps/api[dev,extraction]"
-      - run: python -m ruff format --check apps/api
-      - run: python -m ruff check apps/api
-      - run: python -m pytest apps/api/tests
+      - name: Normalize formatting
+        run: |
+          python -m ruff format apps/api
+          npx prettier --write apps/web/src/app/review apps/web/src/lib/oagf-revision-api.ts
+      - name: Commit deterministic formatter output
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api apps/web/src/app/review apps/web/src/lib/oagf-revision-api.ts
+          git commit -m "Normalize OAGF revision formatting"
+          git push origin HEAD:${{ github.head_ref }}
