@@ -127,8 +127,7 @@ export default async function ReviewPacketPage({
   }
 
   const complete = packet.covered_states === packet.expected_states
-  const canApprove =
-    complete && packet.blocking_count === 0 && !packet.approval
+  const canApprove = complete && packet.blocking_count === 0 && !packet.approval
   const canPublish = packet.approval !== null
 
   return (
@@ -225,9 +224,7 @@ export default async function ReviewPacketPage({
               </div>
               <div>
                 <dt className="text-muted-foreground">Pipeline status</dt>
-                <dd className="mt-1 font-medium">
-                  {humanize(packet.status)}
-                </dd>
+                <dd className="mt-1 font-medium">{humanize(packet.status)}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Human approval</dt>
