@@ -18,7 +18,9 @@ def _item(session: Session, case: OagfRevisionCase) -> OagfRevisionCaseItem:
     previous = session.get(OagfDiscoveryRecord, case.previous_record_id)
     if current is None or previous is None or current.sha256 is None or previous.sha256 is None:
         raise RuntimeError("OAGF revision case has incomplete discovery lineage")
-    period = session.get(ReportingPeriod, case.reporting_period_id) if case.reporting_period_id else None
+    period = (
+        session.get(ReportingPeriod, case.reporting_period_id) if case.reporting_period_id else None
+    )
     reviewer = session.get(User, case.reviewed_by) if case.reviewed_by else None
     return OagfRevisionCaseItem(
         id=str(case.id),
@@ -49,9 +51,7 @@ def list_oagf_revision_cases(session: Session) -> list[OagfRevisionCaseItem]:
     return [_item(session, case) for case in cases]
 
 
-def get_oagf_revision_case(
-    session: Session, case_id: uuid.UUID
-) -> OagfRevisionCaseItem | None:
+def get_oagf_revision_case(session: Session, case_id: uuid.UUID) -> OagfRevisionCaseItem | None:
     case = session.get(OagfRevisionCase, case_id)
     return _item(session, case) if case else None
 
@@ -68,10 +68,15 @@ def resolve_oagf_revision_case(
     reviewer = session.get(User, reviewer_id)
     if case is None:
         raise ApprovalError("OAGF revision case does not exist")
-    if reviewer is None or not reviewer.is_active or reviewer.role not in {
-        UserRole.REVIEWER,
-        UserRole.ADMINISTRATOR,
-    }:
+    if (
+        reviewer is None
+        or not reviewer.is_active
+        or reviewer.role
+        not in {
+            UserRole.REVIEWER,
+            UserRole.ADMINISTRATOR,
+        }
+    ):
         raise ApprovalError("Revision review requires an active reviewer or administrator")
     if case.status == "resolved":
         return _item(session, case)
