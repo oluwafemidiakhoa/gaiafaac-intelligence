@@ -50,9 +50,7 @@ def pending_national_reviews(session: DatabaseSession) -> list[dict[str, object]
 
 
 @router.get("/{run_id}", summary="National evidence review packet")
-def national_review_packet(
-    run_id: uuid.UUID, session: DatabaseSession
-) -> dict[str, object]:
+def national_review_packet(run_id: uuid.UUID, session: DatabaseSession) -> dict[str, object]:
     packet = get_national_review_packet(session, run_id)
     if packet is None:
         raise HTTPException(status_code=404, detail="National review packet not found.")
@@ -84,7 +82,9 @@ def approve_national_review(
     }
 
 
-@router.post("/{run_id}/publish", summary="Publish approved national evidence under four-eyes control")
+@router.post(
+    "/{run_id}/publish", summary="Publish approved national evidence under four-eyes control"
+)
 def publish_national_review(
     run_id: uuid.UUID,
     request: NationalPublicationRequest,
