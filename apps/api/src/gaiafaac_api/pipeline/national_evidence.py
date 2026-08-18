@@ -348,6 +348,13 @@ def _extract_months(text: str) -> tuple[date, date]:
             text,
             flags=re.I,
         )
+    if not allocation_matches:
+        allocation_matches = re.findall(
+            rf"\bas\s+({MONTH_PATTERN})[,]?\s+(20\d{{2}})\s+"
+            rf"(?:federation\s+)?revenue",
+            text,
+            flags=re.I,
+        )
     meeting_matches = re.findall(
         rf"(?:at|during)\s+(?:the\s+)?({MONTH_PATTERN})\s+(20\d{{2}})\s+"
         rf"(?:Federation\s+Account\s+Allocation\s+Committee|FAAC)(?:\s+meeting)?",
