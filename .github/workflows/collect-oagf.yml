@@ -1,11 +1,12 @@
 name: Collect OAGF FAAC data
 
-# Daily, governance-preserving collector: fetches any newly published OAGF month,
-# imports + validates it, and queues it for human review. It NEVER publishes.
+# Daily, governance-preserving collector: checks the rolling 24-month window for
+# newly published OAGF months, imports + validates them, and queues them for
+# human review. It NEVER approves or publishes.
 on:
   schedule:
     - cron: '0 6 * * *' # daily 06:00 UTC
-  workflow_dispatch: {} # allow manual runs from the Actions tab
+  workflow_dispatch: {}
 
 concurrency:
   group: collect-oagf
@@ -31,4 +32,4 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
           ALERT_TO: ${{ secrets.ALERT_TO }}
-        run: gaiafaac-db collect-oagf --months-back 3
+        run: gaiafaac-db collect-oagf --months-back 24
