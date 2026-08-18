@@ -50,13 +50,17 @@ function adminHeaders() {
   }
 }
 
-async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<ApiResult<T>> {
+async function getJson<T>(
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<ApiResult<T>> {
   try {
     const response = await fetch(`${apiBaseUrl()}${path}`, {
       cache: 'no-store',
       headers: { 'X-Admin-Key': process.env.ADMIN_KEY ?? '' },
     })
-    if (!response.ok) return { data: null, error: 'The OAGF revision service is unavailable.' }
+    if (!response.ok)
+      return { data: null, error: 'The OAGF revision service is unavailable.' }
     return { data: schema.parse(await response.json()), error: null }
   } catch {
     return { data: null, error: 'The OAGF revision service is unavailable.' }
@@ -95,7 +99,9 @@ export async function resolveOagfRevision(
       },
     )
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { detail?: string } | null
+      const payload = (await response.json().catch(() => null)) as {
+        detail?: string
+      } | null
       return { data: null, error: payload?.detail ?? 'Revision review failed.' }
     }
     return { data: resolveSchema.parse(await response.json()), error: null }
@@ -104,6 +110,9 @@ export async function resolveOagfRevision(
   }
 }
 
-export function oagfRevisionSourceApiUrl(caseId: string, version: 'current' | 'previous') {
+export function oagfRevisionSourceApiUrl(
+  caseId: string,
+  version: 'current' | 'previous',
+) {
   return `${apiBaseUrl()}/api/v1/review/oagf-revisions/${encodeURIComponent(caseId)}/source/${version}`
 }
