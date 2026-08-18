@@ -440,11 +440,18 @@ def extract_national_claims(document: str) -> ExtractedNationalClaims:
     lgas = _claim_after(text, r"(?:Local\s+Government\s+Councils?|LGCs?)")
 
     derivation_match = None
-    for match in re.finditer(MONEY_PATTERN, text, flags=re.I):
-        context = text[max(0, match.start() - 120) : match.end() + 120].casefold()
-        if "derivation" in context:
-            derivation_match = match
-            break
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        if "derivation" not in sentence.casefold():
+            continue
+        money_matches = list(re.finditer(MONEY_PATTERN, sentence, flags=re.I))
+        if not money_matches:
+            continue
+        derivation_at = sentence.casefold().find("derivation")
+        derivation_match = min(
+            money_matches,
+            key=lambda match: abs(match.start() - derivation_at),
+        )
+        break
     if derivation_match is None:
         raise NationalEvidenceError("Required 13% derivation claim is missing")
 
