@@ -10,7 +10,10 @@ export async function GET(
 ) {
   const { caseId, version } = await params
   if (version !== 'current' && version !== 'previous') {
-    return NextResponse.json({ detail: 'Invalid revision version.' }, { status: 400 })
+    return NextResponse.json(
+      { detail: 'Invalid revision version.' },
+      { status: 400 },
+    )
   }
 
   const response = await fetch(oagfRevisionSourceApiUrl(caseId, version), {

@@ -135,8 +135,7 @@ def test_revision_classification_is_attributable_and_does_not_publish(session, a
                 "resolution_code": "requires_data_republication",
                 "attestation": True,
                 "note": (
-                    "The official revision changes fiscal values and needs "
-                    "a governed replacement."
+                    "The official revision changes fiscal values and needs a governed replacement."
                 ),
             },
         )
