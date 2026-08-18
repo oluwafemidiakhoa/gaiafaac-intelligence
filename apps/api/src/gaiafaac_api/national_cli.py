@@ -27,7 +27,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     collect = commands.add_parser(
         "collect",
-        help="Discover, archive, validate and queue official national FAAC evidence (never publishes)",
+        help=(
+            "Discover, archive, validate and queue official national FAAC evidence "
+            "(never publishes)"
+        ),
     )
     collect.add_argument("--months-back", type=int, default=24)
     collect.add_argument("--max-pages", type=int, default=6)
