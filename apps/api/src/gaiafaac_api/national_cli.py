@@ -35,6 +35,21 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--months-back", type=int, default=24)
     collect.add_argument("--max-pages", type=int, default=6)
 
+    repair = commands.add_parser(
+        "repair-autopilot",
+        help=(
+            "Re-extract unapproved unpublished national-autopilot packets with the "
+            "hardened parser; quarantine unsafe official-source conflicts"
+        ),
+    )
+    repair.add_argument(
+        "--run-id",
+        action="append",
+        type=uuid.UUID,
+        dest="run_ids",
+        help="Limit repair to one extraction run; repeat for multiple runs.",
+    )
+
     import_command = commands.add_parser(
         "import", help="Import official national distribution evidence into review"
     )
@@ -114,7 +129,9 @@ def main() -> None:
     with session_factory() as session:
         if args.command == "collect":
             from gaiafaac_api.config import get_settings
-            from gaiafaac_api.pipeline.national_evidence import run_national_evidence_collection
+            from gaiafaac_api.pipeline.national_evidence_hardened import (
+                run_national_evidence_collection,
+            )
             from gaiafaac_api.pipeline.national_notify import send_national_review_alert
 
             summary = run_national_evidence_collection(
@@ -142,6 +159,30 @@ def main() -> None:
                 f"duplicates={len(summary.duplicates)}, "
                 f"errors={len(summary.errors)}."
             )
+        elif args.command == "repair-autopilot":
+            from gaiafaac_api.pipeline.national_evidence_hardened import (
+                repair_unpublished_national_evidence,
+            )
+
+            result = repair_unpublished_national_evidence(
+                session,
+                run_ids=set(args.run_ids) if args.run_ids else None,
+            )
+            print(
+                "National autopilot repair complete: "
+                f"repaired={len(result.repaired)}, "
+                f"quarantined={len(result.quarantined)}, "
+                f"duplicates={len(result.duplicates)}, "
+                f"skipped={len(result.skipped)}."
+            )
+            for item in result.quarantined:
+                print(f"QUARANTINED {item['run_id']} | {item['reason']}")
+            for item in result.duplicates:
+                print(
+                    f"DUPLICATE {item['candidate_id']} | duplicate_of={item['duplicate_of']}"
+                )
+            for item in result.skipped:
+                print(f"SKIPPED {item['run_id']} | {item['reason']}")
         elif args.command == "import":
             result = import_national_distribution(
                 session,
