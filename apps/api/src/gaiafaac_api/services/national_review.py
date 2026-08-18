@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -26,9 +25,7 @@ def _value(value: Decimal | None) -> str | None:
     return str(value) if value is not None else None
 
 
-def _distribution_for_run(
-    session: Session, run: ExtractionRun
-) -> NationalDistribution | None:
+def _distribution_for_run(session: Session, run: ExtractionRun) -> NationalDistribution | None:
     configuration = run.configuration or {}
     if configuration.get("scope") != "national_distribution":
         return None
@@ -91,7 +88,11 @@ def list_pending_national_reviews(session: Session) -> list[dict[str, object]]:
     runs = list(
         session.scalars(
             select(ExtractionRun)
-            .where(ExtractionRun.status.in_([ExtractionStatus.REQUIRES_REVIEW, ExtractionStatus.COMPLETED]))
+            .where(
+                ExtractionRun.status.in_(
+                    [ExtractionStatus.REQUIRES_REVIEW, ExtractionStatus.COMPLETED]
+                )
+            )
             .order_by(ExtractionRun.created_at.desc())
         )
     )
@@ -125,16 +126,16 @@ def list_pending_national_reviews(session: Session) -> list[dict[str, object]]:
                 "finding_count": len(findings),
                 "blocking_count": sum(item.severity in _BLOCKING for item in findings),
                 "approved": approval is not None,
-                "approved_by": str(approval.actor_user_id) if approval and approval.actor_user_id else None,
+                "approved_by": str(approval.actor_user_id)
+                if approval and approval.actor_user_id
+                else None,
                 "created_at": run.created_at.isoformat() if run.created_at else None,
             }
         )
     return items
 
 
-def get_national_review_packet(
-    session: Session, run_id: uuid.UUID
-) -> dict[str, object] | None:
+def get_national_review_packet(session: Session, run_id: uuid.UUID) -> dict[str, object] | None:
     run = session.get(ExtractionRun, run_id)
     if run is None:
         return None
@@ -149,7 +150,9 @@ def get_national_review_packet(
     reconciliation = reconciliation_for_distribution(distribution, run)
     configuration = run.configuration or {}
     approval = _approval(session, distribution.id)
-    approver = session.get(User, approval.actor_user_id) if approval and approval.actor_user_id else None
+    approver = (
+        session.get(User, approval.actor_user_id) if approval and approval.actor_user_id else None
+    )
     return {
         "run_id": str(run.id),
         "distribution_id": str(distribution.id),
@@ -167,7 +170,9 @@ def get_national_review_packet(
             "source_url": source.source_url,
             "original_filename": source.original_filename,
             "sha256": source.sha256,
-            "publication_date": source.publication_date.isoformat() if source.publication_date else None,
+            "publication_date": source.publication_date.isoformat()
+            if source.publication_date
+            else None,
             "source_type": configuration.get("source_type"),
             "source_authority": configuration.get("source_authority"),
             "canonical_source_status": configuration.get("canonical_source_status"),
