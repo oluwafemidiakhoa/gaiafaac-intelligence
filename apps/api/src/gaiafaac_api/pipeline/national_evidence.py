@@ -189,11 +189,11 @@ class _TextParser(HTMLParser):
         self._ignored_depth = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag in {"script", "style", "noscript", "svg"}:
+        if tag in {"head", "script", "style", "noscript", "svg"}:
             self._ignored_depth += 1
 
     def handle_endtag(self, tag: str) -> None:
-        if tag in {"script", "style", "noscript", "svg"} and self._ignored_depth:
+        if tag in {"head", "script", "style", "noscript", "svg"} and self._ignored_depth:
             self._ignored_depth -= 1
 
     def handle_data(self, data: str) -> None:
