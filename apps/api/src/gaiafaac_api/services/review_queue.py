@@ -5,18 +5,21 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from gaiafaac_api.database.enums import ValidationSeverity
+from gaiafaac_api.database.enums import UserRole, ValidationSeverity
 from gaiafaac_api.database.models import (
+    AuditLog,
     ExtractionRun,
     ReportingPeriod,
     SourceDocument,
     State,
     StateAllocation,
+    User,
     ValidationResult,
 )
 from gaiafaac_api.review_schemas import (
     PendingReviewItem,
     ReviewAllocationItem,
+    ReviewApproval,
     ReviewFindingItem,
     ReviewPacket,
     ReviewSource,
@@ -26,8 +29,43 @@ EXPECTED_STATE_COUNT = 37
 _BLOCKING = {ValidationSeverity.ERROR, ValidationSeverity.CRITICAL}
 
 
+def list_active_review_actors(session: Session) -> list[dict[str, object]]:
+    users = list(
+        session.scalars(
+            select(User)
+            .where(
+                User.is_active.is_(True),
+                User.role.in_([UserRole.REVIEWER, UserRole.ADMINISTRATOR]),
+            )
+            .order_by(User.full_name, User.email)
+        )
+    )
+    return [
+        {
+            "id": str(user.id),
+            "full_name": user.full_name,
+            "email": user.email,
+            "role": user.role.value,
+        }
+        for user in users
+    ]
+
+
+def _approval(session: Session, run_id: uuid.UUID) -> AuditLog | None:
+    return session.scalar(
+        select(AuditLog)
+        .where(
+            AuditLog.action == "import.approved",
+            AuditLog.entity_type == "extraction_run",
+            AuditLog.entity_id == run_id,
+        )
+        .order_by(AuditLog.created_at.desc())
+        .limit(1)
+    )
+
+
 def list_pending_reviews(session: Session) -> list[PendingReviewItem]:
-    """Real (non-demo), unpublished periods awaiting human review. Metadata only."""
+    """Real (non-demo), unpublished periods awaiting human action. Metadata only."""
     periods = session.scalars(
         select(ReportingPeriod)
         .where(
@@ -48,6 +86,8 @@ def list_pending_reviews(session: Session) -> list[PendingReviewItem]:
             .where(ExtractionRun.source_document_id == source.id)
             .order_by(ExtractionRun.started_at.desc())
         )
+        if run is None:
+            continue
         covered = (
             session.scalar(
                 select(func.count())
@@ -59,28 +99,29 @@ def list_pending_reviews(session: Session) -> list[PendingReviewItem]:
             )
             or 0
         )
-        findings = (
-            list(
-                session.scalars(
-                    select(ValidationResult).where(ValidationResult.extraction_run_id == run.id)
-                )
+        findings = list(
+            session.scalars(
+                select(ValidationResult).where(ValidationResult.extraction_run_id == run.id)
             )
-            if run is not None
-            else []
         )
         blocking = sum(finding.severity in _BLOCKING for finding in findings)
+        approval = _approval(session, run.id)
         items.append(
             PendingReviewItem(
-                run_id=str(run.id) if run is not None else "",
+                run_id=str(run.id),
                 reporting_label=period.reporting_label,
                 revenue_month=period.revenue_month,
                 source_organization=source.source_organization,
-                status=run.status.value if run is not None else "unknown",
+                status=run.status.value,
                 covered_states=covered,
                 expected_states=EXPECTED_STATE_COUNT,
                 finding_count=len(findings),
                 blocking_count=blocking,
-                created_at=run.started_at if run is not None else None,
+                approved=approval is not None,
+                approved_by=str(approval.actor_user_id)
+                if approval and approval.actor_user_id
+                else None,
+                created_at=run.started_at,
             )
         )
     return items
@@ -117,6 +158,10 @@ def get_review_packet(session: Session, run_id: uuid.UUID) -> ReviewPacket | Non
         )
     )
     blocking = sum(finding.severity in _BLOCKING for finding in findings)
+    approval = _approval(session, run.id)
+    approver = (
+        session.get(User, approval.actor_user_id) if approval and approval.actor_user_id else None
+    )
 
     return ReviewPacket(
         run_id=str(run.id),
@@ -172,4 +217,14 @@ def get_review_packet(session: Session, run_id: uuid.UUID) -> ReviewPacket | Non
             )
             for finding in findings
         ],
+        approval=(
+            ReviewApproval(
+                actor_user_id=str(approval.actor_user_id) if approval.actor_user_id else None,
+                actor_name=approver.full_name if approver else None,
+                created_at=approval.created_at,
+                note=(approval.payload or {}).get("review_note"),
+            )
+            if approval is not None
+            else None
+        ),
     )
