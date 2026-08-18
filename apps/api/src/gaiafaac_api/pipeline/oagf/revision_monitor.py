@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.models import OagfDiscoveryRecord, SourceDocument
 from gaiafaac_api.database.oagf_revision_models import OagfRevisionCase
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
-from gaiafaac_api.pipeline.oagf.storage import DatabaseArchiveStorage
+from gaiafaac_api.pipeline.oagf.discovery import OagfDiscoveryClient
+from gaiafaac_api.pipeline.oagf.storage import ArchiveStorage, DatabaseArchiveStorage
 from gaiafaac_api.pipeline.oagf.sync import SyncOptions, run_oagf_sync
 
 
@@ -82,6 +83,8 @@ def run_revision_monitor(
     *,
     months_back: int | None = 24,
     now: datetime | None = None,
+    client: OagfDiscoveryClient | None = None,
+    storage: ArchiveStorage | None = None,
 ) -> RevisionMonitorSummary:
     """Detect official OAGF FAAC source changes without mutating published fiscal data."""
     timestamp = now or datetime.now(UTC)
@@ -94,7 +97,8 @@ def run_revision_monitor(
     sync = run_oagf_sync(
         session,
         options=SyncOptions(category="faac-report", since=since, download_only=True),
-        storage=DatabaseArchiveStorage(session),
+        client=client,
+        storage=storage or DatabaseArchiveStorage(session),
         now=timestamp,
     )
     cases_created = _create_missing_revision_cases(session, detected_at=timestamp)
