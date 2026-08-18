@@ -7,7 +7,13 @@ from sqlalchemy import engine_from_config, pool
 
 from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.base import Base
-from gaiafaac_api.database import commercial_models, igr_models, ledger_models, models  # noqa: F401
+from gaiafaac_api.database import (  # noqa: F401
+    commercial_models,
+    igr_models,
+    ledger_models,
+    models,
+    oagf_revision_models,
+)
 
 config = context.config
 if config.config_file_name is not None:
