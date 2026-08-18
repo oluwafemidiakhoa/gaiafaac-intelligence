@@ -33,9 +33,12 @@ def _add_months(anchor: date, delta: int) -> date:
 
 
 def _same_reporting_hint(left: OagfDiscoveryRecord, right: OagfDiscoveryRecord) -> bool:
-    if left.source_publication_date and right.source_publication_date:
-        if left.source_publication_date == right.source_publication_date:
-            return True
+    if (
+        left.source_publication_date
+        and right.source_publication_date
+        and left.source_publication_date == right.source_publication_date
+    ):
+        return True
     return bool(
         left.displayed_year
         and left.displayed_month
