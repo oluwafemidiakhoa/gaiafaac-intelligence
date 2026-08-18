@@ -19,7 +19,7 @@ ARTICLE_URL = (
     "from-a-gross-total-of-n2-344-trillion-for-the-month-of-february-2025/"
 )
 
-ARTICLE_HTML = f"""
+ARTICLE_HTML = """
 <html>
 <head><title>FG, States, LGCs Share N1.678 Trillion From February 2025 Revenue</title></head>
 <body>
