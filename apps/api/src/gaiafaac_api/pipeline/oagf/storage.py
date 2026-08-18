@@ -79,7 +79,7 @@ class DatabaseArchiveStorage:
 
     @staticmethod
     def _storage_path(checksum: str) -> str:
-        return f"db://oagf/archive/{checksum}"
+        return f"/oagf-db-archive/{checksum}"
 
     def _archive_bytes(
         self,
