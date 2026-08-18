@@ -1,0 +1,35 @@
+name: Collect national FAAC evidence
+
+# Daily, governance-preserving collector. It discovers official government
+# releases, archives their exact bytes, imports deterministic claims into review,
+# and NEVER approves or publishes evidence.
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: collect-national-faac
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install API package
+        run: python -m pip install -e "apps/api[extraction]"
+      - name: Discover, archive, validate, and queue national evidence
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_ENVIRONMENT: production
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          ALERT_FROM: ${{ secrets.ALERT_FROM }}
+          ALERT_TO: ${{ secrets.ALERT_TO }}
+        run: gaiafaac-national collect --months-back 24
