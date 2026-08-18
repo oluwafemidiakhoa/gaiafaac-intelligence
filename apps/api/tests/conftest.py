@@ -11,6 +11,7 @@ from gaiafaac_api.database import (  # noqa: F401
     ledger_models,
     models,
     national_evidence_models,
+    oagf_revision_models,
 )
 from gaiafaac_api.database.base import Base
 
