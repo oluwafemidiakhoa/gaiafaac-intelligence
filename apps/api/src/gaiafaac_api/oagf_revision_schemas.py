@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import uuid
 from datetime import date, datetime
 from typing import Literal
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -35,7 +35,7 @@ class OagfRevisionCaseItem(BaseModel):
 
 
 class ResolveOagfRevisionRequest(BaseModel):
-    reviewer_id: UUID
+    reviewer_id: uuid.UUID
     resolution_code: RevisionResolution
     attestation: bool
     note: str = Field(min_length=3, max_length=4000)
