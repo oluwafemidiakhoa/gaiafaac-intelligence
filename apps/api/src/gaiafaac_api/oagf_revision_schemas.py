@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import Literal
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-RevisionResolution = Literal[
-    "no_material_fiscal_change",
-    "metadata_only_change",
-    "requires_data_republication",
-    "investigation_required",
-]
+class RevisionResolution(StrEnum):
+    NO_MATERIAL_FISCAL_CHANGE = "no_material_fiscal_change"
+    METADATA_ONLY_CHANGE = "metadata_only_change"
+    REQUIRES_DATA_REPUBLICATION = "requires_data_republication"
+    INVESTIGATION_REQUIRED = "investigation_required"
 
 
 class OagfRevisionCaseItem(BaseModel):
