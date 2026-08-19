@@ -40,10 +40,14 @@ def _active_user(session: Session, user_id: uuid.UUID, *, administrator: bool = 
     user = session.get(User, user_id)
     if user is None or not user.is_active:
         raise ValueError("An active database user is required")
-    allowed = {UserRole.ADMINISTRATOR} if administrator else {
-        UserRole.REVIEWER,
-        UserRole.ADMINISTRATOR,
-    }
+    allowed = (
+        {UserRole.ADMINISTRATOR}
+        if administrator
+        else {
+            UserRole.REVIEWER,
+            UserRole.ADMINISTRATOR,
+        }
+    )
     if user.role not in allowed:
         raise ValueError("The selected user is not authorized for this action")
     return user
@@ -75,9 +79,7 @@ def import_lga_table_iv_from_archive(
         raise ValueError("OAGF source document is not attached to a reporting period")
 
     existing_review = session.scalar(
-        select(LocalGovernmentReview).where(
-            LocalGovernmentReview.source_document_id == source.id
-        )
+        select(LocalGovernmentReview).where(LocalGovernmentReview.source_document_id == source.id)
     )
     if existing_review is not None:
         return existing_review
@@ -229,7 +231,9 @@ def approve_lga_review(
     if review.status == "published":
         raise ValueError("Published LGA evidence cannot be re-approved")
     if review.blocking_count != 0 or review.record_count != EXPECTED_LGA_JURISDICTIONS:
-        raise ValueError("LGA evidence has blocking findings or incomplete 774-jurisdiction coverage")
+        raise ValueError(
+            "LGA evidence has blocking findings or incomplete 774-jurisdiction coverage"
+        )
 
     allocations = list(
         session.scalars(
