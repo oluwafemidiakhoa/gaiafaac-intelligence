@@ -31,7 +31,9 @@ def _normalized_original_values(candidate: NationalEvidenceCandidate) -> dict[st
             raise ValueError(f"National evidence candidate is missing {field_name}")
         normalized = raw_claim.get("normalized_billion")
         if normalized is None:
-            raise ValueError(f"National evidence candidate has no normalized value for {field_name}")
+            raise ValueError(
+                f"National evidence candidate has no normalized value for {field_name}"
+            )
         values[field_name] = str(normalized)
     return values
 
