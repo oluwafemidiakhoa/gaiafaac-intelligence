@@ -50,8 +50,9 @@ def revalidate_repaired_source_precision(
     accidentally replaced those strings with full source phrases (for example ``N1.203 trillion``),
     which the precision parser cannot interpret and therefore collapses tolerance to one kobo.
 
-    Keep the literal source phrases in ``candidate.extracted_claims`` for provenance, while restoring
-    the normalized billion-naira strings used by the validator for precision-aware reconciliation.
+    Keep the literal source phrases in ``candidate.extracted_claims`` for provenance, while
+    restoring the normalized billion-naira strings used by the validator for precision-aware
+    reconciliation.
     """
     updated: list[str] = []
     for run_id in run_ids:
