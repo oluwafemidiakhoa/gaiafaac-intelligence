@@ -163,7 +163,11 @@ export const publishedNationalDistributionSchema = z.object({
       'official_national_summary_evidence',
       'official_government_press_release',
     ]),
-    source_authority: z.enum(['canonical', 'official_secondary', 'contextual']),
+    source_authority: z.enum([
+      'canonical',
+      'official_secondary',
+      'contextual',
+    ]),
   }),
   net_distributable_amount: nationalObservedValueSchema,
   federal_amount: nationalObservedValueSchema,
@@ -189,7 +193,10 @@ export async function getPublishedNationalDistributions(): Promise<
       { next: { revalidate: 300 } },
     )
     if (!response.ok) {
-      return { data: null, error: 'The national evidence registry is unavailable.' }
+      return {
+        data: null,
+        error: 'The national evidence registry is unavailable.',
+      }
     }
     return {
       data: z
