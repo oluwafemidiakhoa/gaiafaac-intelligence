@@ -95,9 +95,7 @@ def _find_index(labels: list[str], start: int, end: int, *needles: str) -> int |
 def _resolve_panels(table: list[list[str | None]]) -> list[_Panel]:
     labels = _column_labels(table)
     lga_columns = [
-        index
-        for index, label in enumerate(labels)
-        if "local government councils" in label
+        index for index, label in enumerate(labels) if "local government councils" in label
     ]
     if not lga_columns:
         return []
@@ -121,19 +119,11 @@ def _resolve_panels(table: list[list[str | None]]) -> list[_Panel]:
             _Panel(
                 state=state_index,
                 lga=lga_index,
-                net_statutory=_find_index(
-                    labels, lga_index + 1, end, "net statutory allocation"
-                ),
+                net_statutory=_find_index(labels, lga_index + 1, end, "net statutory allocation"),
                 deduction=_find_index(labels, lga_index + 1, end, "deduction"),
-                ecology_share=_find_index(
-                    labels, lga_index + 1, end, "total share", "ecology"
-                ),
-                ecology_transfer=_find_index(
-                    labels, lga_index + 1, end, "transfer", "ecology"
-                ),
-                net_ecology=_find_index(
-                    labels, lga_index + 1, end, "net share", "ecology"
-                ),
+                ecology_share=_find_index(labels, lga_index + 1, end, "total share", "ecology"),
+                ecology_transfer=_find_index(labels, lga_index + 1, end, "transfer", "ecology"),
+                net_ecology=_find_index(labels, lga_index + 1, end, "net share", "ecology"),
                 vat=_find_index(labels, lga_index + 1, end, "value added tax"),
                 total_net=total_net,
                 start=start,
