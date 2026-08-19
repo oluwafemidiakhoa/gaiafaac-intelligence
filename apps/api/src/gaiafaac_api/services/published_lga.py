@@ -132,7 +132,8 @@ def published_lgas_for_state(
         local_government_count=len(records),
         local_governments=records,
         note=(
-            "Only published, non-demo, human-verified OAGF Table IV local-government evidence is returned. "
+            "Only published, non-demo, human-verified OAGF Table IV "
+            "local-government evidence is returned. "
             "No LGA amount is estimated from an aggregate."
         ),
     )
