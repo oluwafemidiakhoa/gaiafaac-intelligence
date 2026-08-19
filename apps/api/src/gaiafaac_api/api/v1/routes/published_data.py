@@ -13,6 +13,7 @@ from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchResponse
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystResponse
 from gaiafaac_api.igr_schemas import PublishedIgrRecord, PublishedIgrResponse
+from gaiafaac_api.lga_schemas import PublishedLgaDetailResponse, PublishedLgaStateResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
 from gaiafaac_api.services.decision_packet import decision_packet
@@ -28,6 +29,7 @@ from gaiafaac_api.services.published_data import (
     published_sources,
 )
 from gaiafaac_api.services.published_igr import latest_published_igr, published_igr
+from gaiafaac_api.services.published_lga import published_lga_history, published_lgas_for_state
 
 router = APIRouter(prefix="/published", tags=["published data"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -147,6 +149,47 @@ def published_igr_endpoint(
     state_slug: Annotated[str | None, Query(min_length=2, max_length=100)] = None,
 ) -> PublishedIgrResponse:
     return published_igr(session, year=year, state_slug=state_slug)
+
+
+@router.get(
+    "/local-governments/{state_code}",
+    response_model=PublishedLgaStateResponse,
+    summary="Latest published OAGF Table IV evidence for every LGA in a state",
+)
+def published_lgas_for_state_endpoint(
+    state_code: str,
+    session: DatabaseSession,
+) -> PublishedLgaStateResponse:
+    result = published_lgas_for_state(session, state_code=state_code)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published local-government evidence exists for this jurisdiction.",
+        )
+    return result
+
+
+@router.get(
+    "/local-governments/{state_code}/{local_government_slug}",
+    response_model=PublishedLgaDetailResponse,
+    summary="Published OAGF Table IV allocation history for one local government",
+)
+def published_lga_history_endpoint(
+    state_code: str,
+    local_government_slug: str,
+    session: DatabaseSession,
+) -> PublishedLgaDetailResponse:
+    result = published_lga_history(
+        session,
+        state_code=state_code,
+        local_government_slug=local_government_slug,
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published evidence exists for this local government.",
+        )
+    return result
 
 
 @router.get(
