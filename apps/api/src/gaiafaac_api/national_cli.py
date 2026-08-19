@@ -172,9 +172,7 @@ def main() -> None:
                 session,
                 run_ids=run_ids,
             )
-            precision_run_ids = {
-                uuid.UUID(run_id) for run_id in result.repaired
-            }
+            precision_run_ids = {uuid.UUID(run_id) for run_id in result.repaired}
             precision_revalidated = revalidate_repaired_source_precision(
                 session,
                 run_ids=precision_run_ids,
