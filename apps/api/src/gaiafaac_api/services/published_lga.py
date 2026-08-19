@@ -101,11 +101,11 @@ def _published_statement():
     )
 
 
-def published_lgas_for_state(session: Session, *, state_slug: str) -> PublishedLgaStateResponse | None:
+def published_lgas_for_state(session: Session, *, state_code: str) -> PublishedLgaStateResponse | None:
     rows = list(
         session.execute(
             _published_statement()
-            .where(State.slug == state_slug)
+            .where(State.code == state_code.upper())
             .order_by(
                 LocalGovernment.official_name,
                 ReportingPeriod.disbursement_month.desc(),
@@ -141,14 +141,14 @@ def published_lgas_for_state(session: Session, *, state_slug: str) -> PublishedL
 def published_lga_history(
     session: Session,
     *,
-    state_slug: str,
+    state_code: str,
     local_government_slug: str,
 ) -> PublishedLgaDetailResponse | None:
     rows = list(
         session.execute(
             _published_statement()
             .where(
-                State.slug == state_slug,
+                State.code == state_code.upper(),
                 LocalGovernment.slug == local_government_slug,
             )
             .order_by(
