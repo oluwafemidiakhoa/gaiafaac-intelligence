@@ -70,7 +70,9 @@ export default async function LocalGovernmentsPage({
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="text-muted-foreground text-xs">Latest total net</p>
+                  <p className="text-muted-foreground text-xs">
+                    Latest total net
+                  </p>
                   <p className="mt-1 font-mono text-lg font-semibold">
                     {formatNaira(lga.total_net_allocation)}
                   </p>
