@@ -163,14 +163,26 @@ def main() -> None:
             from gaiafaac_api.pipeline.national_evidence_hardened import (
                 repair_unpublished_national_evidence,
             )
+            from gaiafaac_api.pipeline.national_repair_precision import (
+                revalidate_repaired_source_precision,
+            )
 
+            run_ids = set(args.run_ids) if args.run_ids else None
             result = repair_unpublished_national_evidence(
                 session,
-                run_ids=set(args.run_ids) if args.run_ids else None,
+                run_ids=run_ids,
+            )
+            precision_run_ids = {
+                uuid.UUID(run_id) for run_id in result.repaired
+            }
+            precision_revalidated = revalidate_repaired_source_precision(
+                session,
+                run_ids=precision_run_ids,
             )
             print(
                 "National autopilot repair complete: "
                 f"repaired={len(result.repaired)}, "
+                f"precision_revalidated={len(precision_revalidated)}, "
                 f"quarantined={len(result.quarantined)}, "
                 f"duplicates={len(result.duplicates)}, "
                 f"skipped={len(result.skipped)}."
