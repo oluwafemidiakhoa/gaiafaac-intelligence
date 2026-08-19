@@ -59,9 +59,7 @@ def _allocation(
             else None
         ),
         vat_amount=(
-            format(allocation.vat_amount, ".2f")
-            if allocation.vat_amount is not None
-            else None
+            format(allocation.vat_amount, ".2f") if allocation.vat_amount is not None else None
         ),
         total_net_allocation=format(allocation.total_net_allocation, ".2f"),
         reported_unit=allocation.reported_unit.value,
@@ -101,7 +99,9 @@ def _published_statement():
     )
 
 
-def published_lgas_for_state(session: Session, *, state_code: str) -> PublishedLgaStateResponse | None:
+def published_lgas_for_state(
+    session: Session, *, state_code: str
+) -> PublishedLgaStateResponse | None:
     rows = list(
         session.execute(
             _published_statement()
