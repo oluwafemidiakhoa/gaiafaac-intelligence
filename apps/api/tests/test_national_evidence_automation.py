@@ -1,15 +1,15 @@
 from datetime import date
 
+import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.enums import VerificationStatus
 from gaiafaac_api.database.models import NationalDistribution, ReportingPeriod, SourceDocument
 from gaiafaac_api.database.national_evidence_models import NationalEvidenceCandidate
-from gaiafaac_api.pipeline.national_evidence import (
-    FetchResponse,
+from gaiafaac_api.pipeline.national_evidence import FetchResponse, _official_url
+from gaiafaac_api.pipeline.national_evidence_hardened import (
     NationalEvidenceError,
-    _official_url,
     extract_national_claims,
     run_national_evidence_collection,
 )
@@ -21,7 +21,7 @@ ARTICLE_URL = (
 
 ARTICLE_HTML = """
 <html>
-<head><title>FG, States, LGCs Share N1.678 Trillion From February 2025 Revenue</title></head>
+<head><title>FG, States, LGCs Share N1.678 Trillion From February 2025 Revenue | FAAC</title></head>
 <body>
 <article>
 <time datetime="2025-03-22T10:30:00+01:00">March 22, 2025</time>
@@ -36,12 +36,47 @@ derivation revenue.</p>
 </html>
 """
 
+SEPTEMBER_2024_HTML = """
+<html>
+<head><title>FAAC: FG, STATES, LGCs SHARE N1.203 TRILLION FROM AUGUST 2024 REVENUE</title></head>
+<body><article>
+<p>At the September 2024 FAAC meeting, the Federation Account Allocation Committee
+shared a total sum of N1.203 trillion as August 2024 federation revenue.</p>
+<p>The Federal Government received N374.925 billion, the State Governments received
+N422.861 billion and the Local Government Councils received N306.533 billion.</p>
+<p>N99.474 billion was shared to the relevant States as 13% derivation revenue.</p>
+</article></body></html>
+"""
+
+JULY_2024_UNIT_CONFLICT_HTML = """
+<html>
+<head><title>FAAC: FG, STATES, LGCs SHARE N1,358.075 TRILLION FOR JULY 2024</title></head>
+<body><article>
+<p>At the August 2024 FAAC meeting, FAAC shared N1,358.075 trillion as July 2024 revenue.</p>
+<p>The Federal Government received N431.079 billion, the States received N473.477 billion
+and the Local Government Councils received N343.703 billion.</p>
+<p>N109.816 billion was shared to oil producing States as 13% derivation revenue.</p>
+</article></body></html>
+"""
+
+SEPTEMBER_2024_SOURCE_CONFLICT_HTML = """
+<html>
+<head><title>FAAC: FG, STATES, LGCs SHARE N1.289 TRILLION FROM SEPTEMBER 2024 REVENUE</title></head>
+<body><article>
+<p>At the October 2024 FAAC meeting, FAAC shared a total sum of N1.298 trillion
+as September 2024 federation revenue.</p>
+<p>The Federal Government received N424.867 billion, the States received N453.724 billion
+and the Local Government Councils received N329.864 billion.</p>
+<p>N90.415 billion was shared to the relevant States as 13% derivation revenue.</p>
+</article></body></html>
+"""
+
 SEARCH_HTML = f"""
 <html><body><a href="{ARTICLE_URL}">FG States LGCs share FAAC revenue</a></body></html>
 """
 
 
-def test_extracts_mixed_units_without_using_title_amounts() -> None:
+def test_extracts_mixed_units_without_using_headline_recipient_mentions() -> None:
     claims = extract_national_claims(ARTICLE_HTML)
     assert claims.net_distributable_amount.normalized_billion == "1678"
     assert claims.federal_amount.normalized_billion == "569.656"
@@ -52,11 +87,32 @@ def test_extracts_mixed_units_without_using_title_amounts() -> None:
     assert claims.allocation_period_month == date(2025, 2, 1)
 
 
+def test_realistic_2024_headline_does_not_poison_states_or_lgcs() -> None:
+    claims = extract_national_claims(SEPTEMBER_2024_HTML)
+    assert claims.net_distributable_amount.normalized_billion == "1203"
+    assert claims.federal_amount.normalized_billion == "374.925"
+    assert claims.states_amount.normalized_billion == "422.861"
+    assert claims.local_governments_amount.normalized_billion == "306.533"
+    assert claims.derivation_amount.normalized_billion == "99.474"
+
+
+def test_orders_of_magnitude_source_unit_conflict_is_quarantinable() -> None:
+    with pytest.raises(NationalEvidenceError) as caught:
+        extract_national_claims(JULY_2024_UNIT_CONFLICT_HTML)
+    assert caught.value.reason_code == "SOURCE_MONETARY_UNIT_CONFLICT"
+
+
+def test_title_body_distributable_total_conflict_is_quarantinable() -> None:
+    with pytest.raises(NationalEvidenceError) as caught:
+        extract_national_claims(SEPTEMBER_2024_SOURCE_CONFLICT_HTML)
+    assert caught.value.reason_code == "SOURCE_DISTRIBUTABLE_TOTAL_CONFLICT"
+
+
 def test_official_url_guard_rejects_cross_domain_urls() -> None:
     assert _official_url(ARTICLE_URL, "fmino.gov.ng") == ARTICLE_URL
     try:
         _official_url("https://example.com/fake-faac", "fmino.gov.ng")
-    except NationalEvidenceError as error:
+    except Exception as error:
         assert "Refusing non-official URL" in str(error)
     else:
         raise AssertionError("cross-domain source should be rejected")
@@ -103,6 +159,7 @@ def test_collection_archives_imports_and_hardens_period_semantics(session: Sessi
     assert candidate is not None
     assert candidate.content == ARTICLE_HTML.encode()
     assert candidate.status == "imported"
+    assert candidate.details["parser_version"] == "3"
 
     source = session.get(SourceDocument, candidate.source_document_id)
     assert source is not None
