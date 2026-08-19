@@ -61,8 +61,12 @@ def test_published_lga_state_returns_only_governed_records(session):
     source = _source(session, period)
     run = _run(session, source)
 
-    first_lga = LocalGovernment(state_id=first.id, official_name="Alpha Council", slug="alpha-council")
-    second_lga = LocalGovernment(state_id=second.id, official_name="Beta Council", slug="beta-council")
+    first_lga = LocalGovernment(
+        state_id=first.id, official_name="Alpha Council", slug="alpha-council"
+    )
+    second_lga = LocalGovernment(
+        state_id=second.id, official_name="Beta Council", slug="beta-council"
+    )
     session.add_all([first_lga, second_lga])
     session.flush()
 
