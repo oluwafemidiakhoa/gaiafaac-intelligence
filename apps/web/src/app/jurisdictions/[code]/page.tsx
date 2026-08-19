@@ -103,6 +103,11 @@ export default async function JurisdictionFiscalStatePage({
         <span className="text-muted-foreground font-mono text-xs">
           Effective {formatDate(fiscalState.effective_at.slice(0, 10))}
         </span>
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/jurisdictions/${canonicalCode}/local-governments`}>
+            Local governments
+          </Link>
+        </Button>
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

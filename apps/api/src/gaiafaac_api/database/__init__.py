@@ -5,6 +5,7 @@ from gaiafaac_api.database import (
     customer_models,
     igr_models,
     ledger_models,
+    lga_models,
     models,
 )
 from gaiafaac_api.database.base import Base
@@ -15,5 +16,6 @@ __all__ = [
     "customer_models",
     "igr_models",
     "ledger_models",
+    "lga_models",
     "models",
 ]

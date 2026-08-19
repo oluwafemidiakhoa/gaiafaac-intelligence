@@ -259,3 +259,125 @@ export async function getLatestPublishedIgr(
     return { data: null, error: 'The IGR evidence service is unavailable.' }
   }
 }
+
+const publishedLgaSourceSchema = z.object({
+  organization: z.string(),
+  source_url: z.string().nullable(),
+  original_filename: z.string(),
+  sha256: z.string().length(64),
+  publication_date: z.iso.date().nullable(),
+  document_version: z.string(),
+})
+
+export const publishedLgaAllocationSchema = z.object({
+  reporting_period_id: z.string(),
+  reporting_label: z.string(),
+  revenue_month: z.iso.date(),
+  disbursement_month: z.iso.date(),
+  allocation_period_month: z.iso.date().nullable(),
+  published_at: z.string().nullable(),
+  state_name: z.string(),
+  state_code: z.string(),
+  state_slug: z.string(),
+  local_government_name: z.string(),
+  local_government_slug: z.string(),
+  net_statutory_allocation: z.string().nullable(),
+  deduction_amount: z.string().nullable(),
+  ecology_share: z.string().nullable(),
+  ecology_transfer: z.string().nullable(),
+  net_ecology_share: z.string().nullable(),
+  vat_amount: z.string().nullable(),
+  total_net_allocation: z.string(),
+  reported_unit: z.string(),
+  source_page: z.number().int().nullable(),
+  source_table: z.string(),
+  verification_status: z.string(),
+  source: publishedLgaSourceSchema,
+})
+
+export type PublishedLgaAllocation = z.infer<
+  typeof publishedLgaAllocationSchema
+>
+
+const publishedLgaStateSchema = z.object({
+  state_name: z.string(),
+  state_code: z.string(),
+  state_slug: z.string(),
+  local_government_count: z.number().int(),
+  local_governments: z.array(publishedLgaAllocationSchema),
+  note: z.string(),
+})
+
+export type PublishedLgaState = z.infer<typeof publishedLgaStateSchema>
+
+const publishedLgaDetailSchema = z.object({
+  state_name: z.string(),
+  state_code: z.string(),
+  state_slug: z.string(),
+  local_government_name: z.string(),
+  local_government_slug: z.string(),
+  record_count: z.number().int(),
+  allocations: z.array(publishedLgaAllocationSchema),
+  note: z.string(),
+})
+
+export type PublishedLgaDetail = z.infer<typeof publishedLgaDetailSchema>
+
+export async function getPublishedLgasForState(
+  stateCode: string,
+): Promise<ApiResult<PublishedLgaState>> {
+  try {
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/published/local-governments/${encodeURIComponent(stateCode)}`,
+      { next: { revalidate: 300 } },
+    )
+    if (!response.ok) {
+      return {
+        data: null,
+        error:
+          response.status === 404
+            ? 'No published local-government evidence is available for this jurisdiction yet.'
+            : 'The local-government evidence service is unavailable.',
+      }
+    }
+    return {
+      data: publishedLgaStateSchema.parse(await response.json()),
+      error: null,
+    }
+  } catch {
+    return {
+      data: null,
+      error: 'The local-government evidence service is unavailable.',
+    }
+  }
+}
+
+export async function getPublishedLgaHistory(
+  stateCode: string,
+  localGovernmentSlug: string,
+): Promise<ApiResult<PublishedLgaDetail>> {
+  try {
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/published/local-governments/${encodeURIComponent(stateCode)}/${encodeURIComponent(localGovernmentSlug)}`,
+      { next: { revalidate: 300 } },
+    )
+    if (!response.ok) {
+      return {
+        data: null,
+        error:
+          response.status === 404
+            ? 'No published evidence is available for this local government yet.'
+            : 'The local-government evidence service is unavailable.',
+      }
+    }
+    return {
+      data: publishedLgaDetailSchema.parse(await response.json()),
+      error: null,
+    }
+  } catch {
+    return {
+      data: null,
+      error: 'The local-government evidence service is unavailable.',
+    }
+  }
+}
