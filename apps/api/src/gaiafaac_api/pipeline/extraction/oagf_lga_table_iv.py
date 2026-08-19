@@ -163,9 +163,12 @@ def extract_oagf_table_iv(path: Path) -> ExtractedLgaTable:
                     current_state = ""
                     for raw in table:
                         state = _cell(raw, panel.state)
-                        if state and _slug_text(state) not in {"state", "states"}:
-                            if not state.casefold().endswith(" total"):
-                                current_state = state
+                        if (
+                            state
+                            and _slug_text(state) not in {"state", "states"}
+                            and not state.casefold().endswith(" total")
+                        ):
+                            current_state = state
                         lga = _cell(raw, panel.lga)
                         total_original = _cell(raw, panel.total_net)
                         total_net = _money(total_original)
