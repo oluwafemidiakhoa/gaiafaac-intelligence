@@ -24,11 +24,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Inspect remaining Prettier diff
-        run: |
-          npx prettier --write apps/web/src/app/sources/page.tsx apps/web/src/lib/published-api.ts
-          git diff -- apps/web/src/app/sources/page.tsx apps/web/src/lib/published-api.ts
-          exit 1
+      - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
