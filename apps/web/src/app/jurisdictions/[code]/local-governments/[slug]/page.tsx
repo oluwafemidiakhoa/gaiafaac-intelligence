@@ -53,7 +53,8 @@ export default async function LocalGovernmentPage({
       <div className="mt-7 flex flex-wrap items-center gap-3">
         <StatusPill tone="success">Human verified</StatusPill>
         <span className="text-muted-foreground font-mono text-xs">
-          {data.record_count} published period{data.record_count === 1 ? '' : 's'}
+          {data.record_count} published period
+          {data.record_count === 1 ? '' : 's'}
         </span>
         <Button asChild variant="outline" size="sm">
           <Link href={`/jurisdictions/${data.state_code}/local-governments`}>
@@ -103,7 +104,9 @@ export default async function LocalGovernmentPage({
         <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
           Published history
         </p>
-        <h2 className="mt-2 text-2xl font-semibold">Monthly allocation evidence</h2>
+        <h2 className="mt-2 text-2xl font-semibold">
+          Monthly allocation evidence
+        </h2>
 
         <div className="mt-5 space-y-4">
           {data.allocations.map((allocation) => (
@@ -150,16 +153,26 @@ export default async function LocalGovernmentPage({
                 </div>
 
                 <div className="border-border mt-5 border-t pt-4 text-xs">
-                  <p className="font-medium">{allocation.source.organization}</p>
+                  <p className="font-medium">
+                    {allocation.source.organization}
+                  </p>
                   <p className="text-muted-foreground mt-1">
-                    {allocation.source.original_filename} · {allocation.source_table}
-                    {allocation.source_page ? ` · page ${allocation.source_page}` : ''}
+                    {allocation.source.original_filename} ·{' '}
+                    {allocation.source_table}
+                    {allocation.source_page
+                      ? ` · page ${allocation.source_page}`
+                      : ''}
                   </p>
                   <p className="text-muted-foreground mt-2 font-mono break-all">
                     SHA-256 {allocation.source.sha256}
                   </p>
                   {allocation.source.source_url ? (
-                    <Button asChild variant="outline" size="sm" className="mt-3">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                    >
                       <a
                         href={allocation.source.source_url}
                         target="_blank"
