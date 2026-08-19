@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from typing import Any
 
 _EXPECTED_JURISDICTIONS = 774
 _SKIP_NAMES = {"", "local government councils", "total", "grand total"}
@@ -44,6 +45,12 @@ class _Panel:
     total_net: int
     start: int
     end: int
+
+
+@dataclass
+class _PanelCursor:
+    panel: _Panel | None = None
+    current_state: str = ""
 
 
 def _clean(value: str | None) -> str:
@@ -138,80 +145,183 @@ def _is_total_name(name: str) -> bool:
     return folded in _SKIP_NAMES or folded.endswith(" total")
 
 
+def _table_width(table: list[list[str | None]]) -> int:
+    return max((len(row) for row in table), default=0)
+
+
+def _best_table(tables: list[list[list[str | None]]]) -> list[list[str | None]] | None:
+    if not tables:
+        return None
+    return max(tables, key=lambda table: (len(table), _table_width(table)))
+
+
+def _panel_fits(table: list[list[str | None]], panel: _Panel) -> bool:
+    return _table_width(table) > max(panel.state, panel.lga, panel.total_net)
+
+
+def _extract_rows(
+    table: list[list[str | None]],
+    *,
+    panel: _Panel,
+    cursor: _PanelCursor,
+    page_number: int,
+    seen: set[tuple[str, str]],
+) -> tuple[list[ExtractedLgaAllocation], int]:
+    extracted: list[ExtractedLgaAllocation] = []
+    duplicates = 0
+
+    for raw in table:
+        state = _cell(raw, panel.state)
+        state_key = _slug_text(state)
+        if (
+            state
+            and state_key not in {"state", "states"}
+            and not state.casefold().endswith(" total")
+            and re.search(r"[A-Za-z]", state)
+        ):
+            cursor.current_state = state
+
+        lga = _cell(raw, panel.lga)
+        total_original = _cell(raw, panel.total_net)
+        total_net = _money(total_original)
+        if (
+            not cursor.current_state
+            or _is_total_name(lga)
+            or total_net is None
+            or not re.search(r"[A-Za-z]", lga)
+        ):
+            continue
+
+        key = (_slug_text(cursor.current_state), _slug_text(lga))
+        if key in seen:
+            duplicates += 1
+            continue
+        seen.add(key)
+
+        originals = {
+            "net_statutory_allocation": _cell(raw, panel.net_statutory) or None,
+            "deduction_amount": _cell(raw, panel.deduction) or None,
+            "ecology_share": _cell(raw, panel.ecology_share) or None,
+            "ecology_transfer": _cell(raw, panel.ecology_transfer) or None,
+            "net_ecology_share": _cell(raw, panel.net_ecology) or None,
+            "vat_amount": _cell(raw, panel.vat) or None,
+            "total_net_allocation": total_original,
+        }
+        extracted.append(
+            ExtractedLgaAllocation(
+                state_name=cursor.current_state,
+                local_government_name=lga,
+                net_statutory_allocation=_money(originals["net_statutory_allocation"]),
+                deduction_amount=_money(originals["deduction_amount"]),
+                ecology_share=_money(originals["ecology_share"]),
+                ecology_transfer=_money(originals["ecology_transfer"]),
+                net_ecology_share=_money(originals["net_ecology_share"]),
+                vat_amount=_money(originals["vat_amount"]),
+                total_net_allocation=total_net,
+                originals=originals,
+                page=page_number,
+            )
+        )
+
+    return extracted, duplicates
+
+
+def _extract_side(
+    page: Any,
+    *,
+    side: int,
+    cursor: _PanelCursor,
+    page_number: int,
+    seen: set[tuple[str, str]],
+) -> tuple[list[ExtractedLgaAllocation], int, bool]:
+    midpoint = float(page.width) / 2
+    bbox = (
+        (0, 0, midpoint, float(page.height))
+        if side == 0
+        else (midpoint, 0, float(page.width), float(page.height))
+    )
+    cropped = page.crop(bbox)
+    table = _best_table(cropped.extract_tables() or [])
+    if table is None:
+        return [], 0, False
+
+    resolved = _resolve_panels(table)
+    if resolved:
+        cursor.panel = resolved[0]
+    elif cursor.panel is None or not _panel_fits(table, cursor.panel):
+        return [], 0, False
+
+    rows, duplicates = _extract_rows(
+        table,
+        panel=cursor.panel,
+        cursor=cursor,
+        page_number=page_number,
+        seen=seen,
+    )
+    return rows, duplicates, True
+
+
 def extract_oagf_table_iv(path: Path) -> ExtractedLgaTable:
     """Extract all observed LGA rows from OAGF Table IV, failing closed on coverage.
 
-    OAGF Table IV is laid out as two side-by-side state/LGA panels on many pages.
-    Column names, not fixed offsets, determine monetary meaning. The extractor
-    therefore tolerates page-layout changes while refusing to infer missing cells.
+    The official OAGF Table IV is a two-panel landscape table. Only its first
+    page repeats the full column header; continuation pages retain the same
+    column geometry and may begin mid-state. Extraction therefore crops each
+    page into left/right panels, carries each panel's column map and state
+    context across page boundaries, and stops at the Table IV grand total.
     """
     import pdfplumber
 
     extracted: list[ExtractedLgaAllocation] = []
     warnings: list[str] = []
     seen: set[tuple[str, str]] = set()
+    cursors = [_PanelCursor(), _PanelCursor()]
+    started = False
+    finished = False
+    duplicate_count = 0
 
     with pdfplumber.open(path) as pdf:
         for page in pdf.pages:
             page_text = _slug_text(page.extract_text() or "")
-            if "local government councils" not in page_text:
-                continue
-            tables = page.extract_tables() or []
-            for table in tables:
-                panels = _resolve_panels(table)
-                for panel in panels:
-                    current_state = ""
-                    for raw in table:
-                        state = _cell(raw, panel.state)
-                        if (
-                            state
-                            and _slug_text(state) not in {"state", "states"}
-                            and not state.casefold().endswith(" total")
-                        ):
-                            current_state = state
-                        lga = _cell(raw, panel.lga)
-                        total_original = _cell(raw, panel.total_net)
-                        total_net = _money(total_original)
-                        if (
-                            not current_state
-                            or _is_total_name(lga)
-                            or total_net is None
-                            or not re.search(r"[A-Za-z]", lga)
-                        ):
-                            continue
+            if not started:
+                if (
+                    "local government councils" not in page_text
+                    or "total net allocation" not in page_text
+                ):
+                    continue
+                started = True
 
-                        key = (_slug_text(current_state), _slug_text(lga))
-                        if key in seen:
-                            continue
-                        seen.add(key)
+            page_rows = 0
+            for side, cursor in enumerate(cursors):
+                rows, duplicates, resolved = _extract_side(
+                    page,
+                    side=side,
+                    cursor=cursor,
+                    page_number=page.page_number,
+                    seen=seen,
+                )
+                duplicate_count += duplicates
+                if resolved:
+                    extracted.extend(rows)
+                    page_rows += len(rows)
 
-                        originals = {
-                            "net_statutory_allocation": _cell(raw, panel.net_statutory) or None,
-                            "deduction_amount": _cell(raw, panel.deduction) or None,
-                            "ecology_share": _cell(raw, panel.ecology_share) or None,
-                            "ecology_transfer": _cell(raw, panel.ecology_transfer) or None,
-                            "net_ecology_share": _cell(raw, panel.net_ecology) or None,
-                            "vat_amount": _cell(raw, panel.vat) or None,
-                            "total_net_allocation": total_original,
-                        }
-                        extracted.append(
-                            ExtractedLgaAllocation(
-                                state_name=current_state,
-                                local_government_name=lga,
-                                net_statutory_allocation=_money(
-                                    originals["net_statutory_allocation"]
-                                ),
-                                deduction_amount=_money(originals["deduction_amount"]),
-                                ecology_share=_money(originals["ecology_share"]),
-                                ecology_transfer=_money(originals["ecology_transfer"]),
-                                net_ecology_share=_money(originals["net_ecology_share"]),
-                                vat_amount=_money(originals["vat_amount"]),
-                                total_net_allocation=total_net,
-                                originals=originals,
-                                page=page.page_number,
-                            )
-                        )
+            if page_rows == 0 and "grand total" not in page_text:
+                warnings.append(
+                    f"OAGF Table IV page {page.page_number} could not be resolved into LGA rows."
+                )
 
+            if "grand total" in page_text:
+                finished = True
+                break
+
+    if not started:
+        warnings.append("OAGF Table IV header was not found in the source document.")
+    if started and not finished:
+        warnings.append("OAGF Table IV grand total was not found before the document ended.")
+    if any(cursor.panel is None for cursor in cursors):
+        warnings.append("OAGF Table IV left/right panel geometry could not be fully resolved.")
+    if duplicate_count:
+        warnings.append(f"OAGF Table IV contained {duplicate_count} duplicate jurisdiction row(s).")
     if len(extracted) != _EXPECTED_JURISDICTIONS:
         warnings.append(
             "OAGF Table IV coverage is incomplete or ambiguous: "
@@ -221,5 +331,5 @@ def extract_oagf_table_iv(path: Path) -> ExtractedLgaTable:
     return ExtractedLgaTable(
         rows=extracted,
         warnings=warnings,
-        requires_review=len(extracted) != _EXPECTED_JURISDICTIONS,
+        requires_review=bool(warnings),
     )
