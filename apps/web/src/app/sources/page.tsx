@@ -86,7 +86,8 @@ export default async function SourcesPage() {
             <Landmark className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">National FAAC evidence</CardTitle>
             <CardDescription>
-              Independent official national distributions and reconciliation evidence.
+              Independent official national distributions and reconciliation
+              evidence.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -124,7 +125,10 @@ export default async function SourcesPage() {
             <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
               OAGF jurisdiction evidence
             </p>
-            <h2 id="jurisdiction-evidence" className="mt-2 text-2xl font-semibold">
+            <h2
+              id="jurisdiction-evidence"
+              className="mt-2 text-2xl font-semibold"
+            >
               Published 37-jurisdiction allocation sources
             </h2>
             <p className="text-muted-foreground mt-2 text-sm">
@@ -179,7 +183,9 @@ export default async function SourcesPage() {
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-muted-foreground">Publication state</dt>
+                      <dt className="text-muted-foreground">
+                        Publication state
+                      </dt>
                       <dd className="mt-1 font-medium">Human verified</dd>
                     </div>
                     <div className="sm:col-span-2 lg:col-span-3">
@@ -227,7 +233,8 @@ export default async function SourcesPage() {
         {nationalSources.length === 0 ? (
           <DataUnavailable
             message={
-              nationalResult.error ?? 'No governed national evidence is published yet.'
+              nationalResult.error ??
+              'No governed national evidence is published yet.'
             }
           />
         ) : (
@@ -237,8 +244,13 @@ export default async function SourcesPage() {
                 <CardHeader>
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <Scale className="text-primary size-5" aria-hidden="true" />
-                      <CardTitle className="pt-3">{item.reporting_label}</CardTitle>
+                      <Scale
+                        className="text-primary size-5"
+                        aria-hidden="true"
+                      />
+                      <CardTitle className="pt-3">
+                        {item.reporting_label}
+                      </CardTitle>
                       <CardDescription className="mt-2">
                         {item.source.source_organization} ·{' '}
                         {humanize(item.source.source_authority)}
@@ -258,13 +270,17 @@ export default async function SourcesPage() {
                 <CardContent>
                   <dl className="grid gap-5 text-sm sm:grid-cols-2 lg:grid-cols-4">
                     <div>
-                      <dt className="text-muted-foreground">Disbursement month</dt>
+                      <dt className="text-muted-foreground">
+                        Disbursement month
+                      </dt>
                       <dd className="mt-1 font-medium">
                         {formatDate(item.disbursement_month)}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-muted-foreground">Allocation period</dt>
+                      <dt className="text-muted-foreground">
+                        Allocation period
+                      </dt>
                       <dd className="mt-1 font-medium">
                         {formatDate(item.allocation_period_month)}
                       </dd>
@@ -295,10 +311,14 @@ export default async function SourcesPage() {
                     </div>
                     <div>
                       <dt className="text-muted-foreground">Document version</dt>
-                      <dd className="mt-1 font-mono">{item.source.document_version}</dd>
+                      <dd className="mt-1 font-mono">
+                        {item.source.document_version}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-muted-foreground">Publication state</dt>
+                      <dt className="text-muted-foreground">
+                        Publication state
+                      </dt>
                       <dd className="mt-1 font-medium">Human verified</dd>
                     </div>
                     <div className="sm:col-span-2 lg:col-span-4">
