@@ -116,6 +116,95 @@ export async function getPublishedSources(): Promise<
   }
 }
 
+const nationalObservedValueSchema = z.object({
+  value: z.string().nullable(),
+  evidence_class: z.enum(['observed', 'derived', 'conflicted', 'missing']),
+})
+
+const nationalReconciliationSchema = z.object({
+  status: z.enum(['reconciled', 'conflicted', 'incomplete', 'unavailable']),
+  observed_total: z.string().nullable(),
+  derived_total: z.string().nullable(),
+  variance: z.string().nullable(),
+  tolerance: z.string().nullable(),
+  evidence_class: z.enum(['observed', 'derived', 'conflicted', 'missing']),
+  basis: z.string(),
+  note: z.string(),
+})
+
+export const publishedNationalDistributionSchema = z.object({
+  reporting_period_id: z.string(),
+  reporting_label: z.string(),
+  revenue_month: z.iso.date(),
+  disbursement_month: z.iso.date(),
+  allocation_period_month: z.iso.date().nullable(),
+  published_at: z.string().nullable(),
+  verification_status: z.string(),
+  reported_unit: z.string(),
+  derivation_treatment: z.string(),
+  states_scope: z.string(),
+  canonical_source_status: z.enum([
+    'available',
+    'missing',
+    'superseded',
+    'conflicted',
+  ]),
+  covered_jurisdictions: z.number().int(),
+  expected_jurisdictions: z.number().int(),
+  source: z.object({
+    source_organization: z.string(),
+    source_url: z.string().nullable(),
+    original_filename: z.string(),
+    sha256: z.string().length(64),
+    publication_date: z.iso.date().nullable(),
+    document_version: z.string(),
+    source_type: z.enum([
+      'canonical_national_evidence',
+      'official_national_summary_evidence',
+      'official_government_press_release',
+    ]),
+    source_authority: z.enum(['canonical', 'official_secondary', 'contextual']),
+  }),
+  net_distributable_amount: nationalObservedValueSchema,
+  federal_amount: nationalObservedValueSchema,
+  states_amount: nationalObservedValueSchema,
+  local_governments_amount: nationalObservedValueSchema,
+  derivation_amount: nationalObservedValueSchema,
+  vat_amount: nationalObservedValueSchema,
+  statutory_amount: nationalObservedValueSchema,
+  component_reconciliation: nationalReconciliationSchema,
+  jurisdiction_reconciliation: nationalReconciliationSchema,
+})
+
+export type PublishedNationalDistribution = z.infer<
+  typeof publishedNationalDistributionSchema
+>
+
+export async function getPublishedNationalDistributions(): Promise<
+  ApiResult<PublishedNationalDistribution[]>
+> {
+  try {
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/published/national-distribution/history?limit=24`,
+      { next: { revalidate: 300 } },
+    )
+    if (!response.ok) {
+      return { data: null, error: 'The national evidence registry is unavailable.' }
+    }
+    return {
+      data: z
+        .array(publishedNationalDistributionSchema)
+        .parse(await response.json()),
+      error: null,
+    }
+  } catch {
+    return {
+      data: null,
+      error: 'The national evidence registry is unavailable.',
+    }
+  }
+}
+
 const publishedIgrSourceSchema = z.object({
   organization: z.string(),
   source_url: z.url().nullable(),
