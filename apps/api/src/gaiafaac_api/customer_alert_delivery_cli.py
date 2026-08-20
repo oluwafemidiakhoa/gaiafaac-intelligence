@@ -9,9 +9,7 @@ from gaiafaac_api.services.alert_delivery import deliver_customer_alerts
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Deliver opted-in GaiaFAAC customer alert emails."
-    )
+    parser = argparse.ArgumentParser(description="Deliver opted-in GaiaFAAC customer alert emails.")
     parser.add_argument("--year", type=int, default=datetime.now(UTC).year)
     parser.add_argument("--max-attempts", type=int, default=5)
     return parser
