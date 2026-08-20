@@ -18,6 +18,8 @@ from gaiafaac_api.services.institutional_webhooks import (
     create_endpoint,
     rotate_endpoint_secret,
     set_endpoint_enabled,
+    webhook_configuration_ready,
+    webhook_delivery_ready,
 )
 from gaiafaac_api.webhook_schemas import (
     WebhookAttemptItem,
@@ -26,6 +28,7 @@ from gaiafaac_api.webhook_schemas import (
     WebhookEndpointCreated,
     WebhookEndpointItem,
     WebhookSecretRotated,
+    WebhookStatusResponse,
 )
 
 router = APIRouter(prefix="/account/webhooks", tags=["institutional webhooks"])
@@ -92,6 +95,30 @@ def _owned_delivery(
     if delivery is None:
         raise HTTPException(status_code=404, detail="Webhook delivery not found.")
     return delivery
+
+
+@router.get("/status", response_model=WebhookStatusResponse)
+def webhook_status(
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> WebhookStatusResponse:
+    _require_webhook_admin(session, user)
+    settings = get_settings()
+    configured = webhook_configuration_ready(settings)
+    enabled = webhook_delivery_ready(settings)
+    return WebhookStatusResponse(
+        signing_configured=configured,
+        delivery_enabled=enabled,
+        note=(
+            "Institutional webhook signing and outbound delivery are operational."
+            if enabled
+            else (
+                "Webhook signing is configured, but outbound delivery is disabled by the operator."
+                if configured
+                else "Institutional webhook signing is not configured; endpoint creation is disabled."
+            )
+        ),
+    )
 
 
 @router.get("", response_model=list[WebhookEndpointItem])
