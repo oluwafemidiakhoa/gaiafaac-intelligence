@@ -74,3 +74,24 @@ class OrganizationInvite(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class CustomerWatchlist(Base):
+    """A customer's saved state preference; fiscal evidence remains in the governed ledger."""
+
+    __tablename__ = "customer_watchlists"
+    __table_args__ = (
+        UniqueConstraint("user_id", "state_id", name="uq_customer_watchlist_user_state"),
+        Index("ix_customer_watchlists_user_created", "user_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    state_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("states.state_id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
