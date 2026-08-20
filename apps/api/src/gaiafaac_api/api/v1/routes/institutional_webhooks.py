@@ -9,6 +9,7 @@ from sqlalchemy import select
 from gaiafaac_api.config import get_settings
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.database.webhook_models import (
+    OrganizationWebhookAttempt,
     OrganizationWebhookDelivery,
     OrganizationWebhookEndpoint,
 )
@@ -19,6 +20,7 @@ from gaiafaac_api.services.institutional_webhooks import (
     set_endpoint_enabled,
 )
 from gaiafaac_api.webhook_schemas import (
+    WebhookAttemptItem,
     WebhookCreateRequest,
     WebhookDeliveryItem,
     WebhookEndpointCreated,
@@ -74,6 +76,22 @@ def _owned_endpoint(
     if endpoint is None:
         raise HTTPException(status_code=404, detail="Webhook endpoint not found.")
     return endpoint
+
+
+def _owned_delivery(
+    session: DatabaseSession,
+    organization_id: uuid.UUID,
+    delivery_id: uuid.UUID,
+) -> OrganizationWebhookDelivery:
+    delivery = session.scalar(
+        select(OrganizationWebhookDelivery).where(
+            OrganizationWebhookDelivery.id == delivery_id,
+            OrganizationWebhookDelivery.organization_id == organization_id,
+        )
+    )
+    if delivery is None:
+        raise HTTPException(status_code=404, detail="Webhook delivery not found.")
+    return delivery
 
 
 @router.get("", response_model=list[WebhookEndpointItem])
@@ -201,4 +219,31 @@ def webhook_deliveries(
             created_at=delivery.created_at,
         )
         for delivery in deliveries
+    ]
+
+
+@router.get("/deliveries/{delivery_id}/attempts", response_model=list[WebhookAttemptItem])
+def webhook_delivery_attempts(
+    delivery_id: uuid.UUID,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> list[WebhookAttemptItem]:
+    organization_id = _require_webhook_admin(session, user)
+    _owned_delivery(session, organization_id, delivery_id)
+    attempts = session.scalars(
+        select(OrganizationWebhookAttempt)
+        .where(OrganizationWebhookAttempt.delivery_id == delivery_id)
+        .order_by(OrganizationWebhookAttempt.attempt_number)
+    ).all()
+    return [
+        WebhookAttemptItem(
+            id=attempt.id,
+            delivery_id=attempt.delivery_id,
+            attempt_number=attempt.attempt_number,
+            attempted_at=attempt.attempted_at,
+            response_status=attempt.response_status,
+            response_body_excerpt=attempt.response_body_excerpt,
+            error=attempt.error,
+        )
+        for attempt in attempts
     ]
