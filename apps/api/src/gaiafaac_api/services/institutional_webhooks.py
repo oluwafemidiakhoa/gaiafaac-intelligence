@@ -19,6 +19,7 @@ from gaiafaac_api.config import Settings
 from gaiafaac_api.database.ledger_models import FiscalEvent
 from gaiafaac_api.database.models import State
 from gaiafaac_api.database.webhook_models import (
+    OrganizationWebhookAttempt,
     OrganizationWebhookDelivery,
     OrganizationWebhookEndpoint,
 )
@@ -69,6 +70,8 @@ def webhook_delivery_ready(settings: Settings) -> bool:
 
 def validate_webhook_url(value: str) -> str:
     raw = value.strip()
+    if any(ord(character) < 32 or ord(character) == 127 for character in raw) or " " in raw:
+        raise ValueError("Webhook endpoint URL contains invalid whitespace or control characters.")
     parsed = urlsplit(raw)
     if parsed.scheme.lower() != "https":
         raise ValueError("Webhook endpoints must use HTTPS.")
@@ -80,7 +83,7 @@ def validate_webhook_url(value: str) -> str:
         raise ValueError("Webhook endpoint fragments are not allowed.")
     if parsed.port not in {None, 443}:
         raise ValueError("Webhook endpoints must use HTTPS port 443.")
-    hostname = parsed.hostname.rstrip(".").lower()
+    hostname = parsed.hostname.rstrip(".").encode("idna").decode("ascii").lower()
     if hostname == "localhost" or hostname.endswith(".localhost"):
         raise ValueError("Webhook endpoint must use a globally routable hostname.")
     try:
@@ -327,9 +330,10 @@ def _post_https(
     timeout: float = 10.0,
 ) -> WebhookHttpResult:
     parsed = urlsplit(validate_webhook_url(endpoint_url))
-    hostname = parsed.hostname
-    if hostname is None:
+    hostname_raw = parsed.hostname
+    if hostname_raw is None:
         raise ValueError("Webhook endpoint hostname is required.")
+    hostname = hostname_raw.rstrip(".").encode("idna").decode("ascii").lower()
     addresses = _resolve_public_addresses(hostname)
     path = parsed.path or "/"
     if parsed.query:
@@ -489,12 +493,17 @@ def run_webhook_delivery(
         attempt_at = datetime.now(UTC)
         delivery.attempt_count += 1
         delivery.last_attempt_at = attempt_at
+        attempt_error: str | None = None
+        response_status: int | None = None
+        response_excerpt: str | None = None
         try:
             result = _post_https(
                 endpoint_url=endpoint.url,
                 body=body_text.encode("utf-8"),
                 headers=headers,
             )
+            response_status = result.status
+            response_excerpt = result.body_excerpt
             delivery.response_status = result.status
             delivery.response_body_excerpt = result.body_excerpt
             delivery.last_error = None
@@ -506,7 +515,8 @@ def run_webhook_delivery(
             else:
                 raise ConnectionError(f"Webhook returned HTTP {result.status}.")
         except (ConnectionError, OSError, ValueError) as error:
-            delivery.last_error = str(error)[:500]
+            attempt_error = str(error)[:500]
+            delivery.last_error = attempt_error
             if delivery.attempt_count >= max_attempts:
                 delivery.status = "dead_letter"
                 delivery.next_attempt_at = None
@@ -516,6 +526,16 @@ def run_webhook_delivery(
                 delay = _RETRY_DELAYS[min(delivery.attempt_count - 1, len(_RETRY_DELAYS) - 1)]
                 delivery.next_attempt_at = attempt_at + delay
                 retrying += 1
+        session.add(
+            OrganizationWebhookAttempt(
+                delivery_id=delivery.id,
+                attempt_number=delivery.attempt_count,
+                attempted_at=attempt_at,
+                response_status=response_status,
+                response_body_excerpt=response_excerpt,
+                error=attempt_error,
+            )
+        )
         session.commit()
 
     return WebhookRunSummary(
