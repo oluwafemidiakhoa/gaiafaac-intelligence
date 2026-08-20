@@ -37,9 +37,11 @@ class Settings(BaseSettings):
     alert_to: str = ""
     admin_key: str = ""
 
-    # Customer self-service. Empty Stripe values keep billing securely disabled.
+    # Customer self-service. Empty integration values keep delivery securely disabled.
     customer_app_url: str = "http://localhost:3000"
     customer_alert_email_enabled: bool = False
+    institutional_webhook_enabled: bool = False
+    institutional_webhook_master_secret: str = ""
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_price_analyst: str = ""
@@ -58,6 +60,7 @@ class Settings(BaseSettings):
         "alert_to",
         "admin_key",
         "customer_app_url",
+        "institutional_webhook_master_secret",
         "stripe_secret_key",
         "stripe_webhook_secret",
         "stripe_price_analyst",
