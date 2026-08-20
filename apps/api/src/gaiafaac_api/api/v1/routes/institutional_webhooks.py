@@ -115,7 +115,10 @@ def webhook_status(
             else (
                 "Webhook signing is configured, but outbound delivery is disabled by the operator."
                 if configured
-                else "Institutional webhook signing is not configured; endpoint creation is disabled."
+                else (
+                    "Institutional webhook signing is not configured; endpoint creation is "
+                    "disabled."
+                )
             )
         ),
     )
