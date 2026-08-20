@@ -52,7 +52,9 @@ def _organization_with_api(session) -> tuple[Organization, User]:
     return organization, user
 
 
-def _publish_event(session, state: State, *, detected_at: datetime, event_type: str = "source_revised"):
+def _publish_event(
+    session, state: State, *, detected_at: datetime, event_type: str = "source_revised"
+):
     event = publish_fiscal_event(
         session,
         state_id=state.id,
@@ -73,9 +75,7 @@ def test_webhook_url_rejects_non_public_destinations(monkeypatch):
     monkeypatch.setattr(
         socket,
         "getaddrinfo",
-        lambda *args, **kwargs: [
-            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 443))
-        ],
+        lambda *args, **kwargs: [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 443))],
     )
     with pytest.raises(ValueError, match="non-public"):
         webhooks.validate_webhook_url("https://hooks.example.com/gaia")
@@ -342,11 +342,14 @@ def test_delivery_is_deferred_when_api_entitlement_is_revoked(session, monkeypat
     assert delivery is not None
     assert delivery.status == "deferred"
     assert delivery.attempt_count == 0
-    assert session.scalar(
-        select(OrganizationWebhookAttempt).where(
-            OrganizationWebhookAttempt.delivery_id == delivery.id
+    assert (
+        session.scalar(
+            select(OrganizationWebhookAttempt).where(
+                OrganizationWebhookAttempt.delivery_id == delivery.id
+            )
         )
-    ) is None
+        is None
+    )
 
 
 def test_revoked_organization_deferred_count_is_not_multiplied_by_endpoints(session, monkeypatch):
