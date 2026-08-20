@@ -124,9 +124,7 @@ def test_customer_can_add_list_and_remove_state_watchlist(session):
         assert listed.status_code == 200
         assert len(listed.json()) == 1
 
-        removed = client.delete(
-            f"/api/v1/watchlists/{created.json()['id']}", headers=headers
-        )
+        removed = client.delete(f"/api/v1/watchlists/{created.json()['id']}", headers=headers)
         assert removed.status_code == 204
         assert client.get("/api/v1/watchlists", headers=headers).json() == []
     finally:
@@ -135,7 +133,9 @@ def test_customer_can_add_list_and_remove_state_watchlist(session):
 
 def test_inbox_persists_fiscal_watch_and_lifecycle_events_idempotently(session):
     seed_states(session)
-    states = list(session.scalars(select(State).where(State.is_fct.is_(False)).order_by(State.name)))
+    states = list(
+        session.scalars(select(State).where(State.is_fct.is_(False)).order_by(State.name))
+    )
     assert len(states) >= 2
     watched_state, unwatched_state = states[:2]
 
@@ -209,7 +209,9 @@ def test_inbox_persists_fiscal_watch_and_lifecycle_events_idempotently(session):
 
 def test_customer_can_mark_one_or_all_alerts_read_without_cross_account_access(session):
     seed_states(session)
-    state = session.scalars(select(State).where(State.is_fct.is_(False)).order_by(State.name)).first()
+    state = session.scalars(
+        select(State).where(State.is_fct.is_(False)).order_by(State.name)
+    ).first()
     assert state is not None
     source = _source(session)
     january = _period(session, 1)
@@ -233,21 +235,33 @@ def test_customer_can_mark_one_or_all_alerts_read_without_cross_account_access(s
     try:
         owner = _authorization(_register(client, email="owner@example.com"))
         other = _authorization(_register(client, email="other@example.com"))
-        assert client.post(
-            "/api/v1/watchlists", headers=owner, json={"state_code": state.code}
-        ).status_code == 201
+        assert (
+            client.post(
+                "/api/v1/watchlists", headers=owner, json={"state_code": state.code}
+            ).status_code
+            == 201
+        )
 
         inbox = client.get("/api/v1/watchlists/alerts?year=2026", headers=owner).json()
         assert inbox["unread_count"] == 2
         first_id = inbox["alerts"][0]["id"]
 
-        assert client.post(f"/api/v1/watchlists/alerts/{first_id}/read", headers=other).status_code == 404
-        assert client.post(f"/api/v1/watchlists/alerts/{first_id}/read", headers=owner).status_code == 204
+        assert (
+            client.post(f"/api/v1/watchlists/alerts/{first_id}/read", headers=other).status_code
+            == 404
+        )
+        assert (
+            client.post(f"/api/v1/watchlists/alerts/{first_id}/read", headers=owner).status_code
+            == 204
+        )
         after_one = client.get("/api/v1/watchlists/alerts?year=2026", headers=owner).json()
         assert after_one["unread_count"] == 1
         assert sum(item["is_read"] for item in after_one["alerts"]) == 1
 
-        assert client.post("/api/v1/watchlists/alerts/read-all?year=2026", headers=owner).status_code == 204
+        assert (
+            client.post("/api/v1/watchlists/alerts/read-all?year=2026", headers=owner).status_code
+            == 204
+        )
         after_all = client.get("/api/v1/watchlists/alerts?year=2026", headers=owner).json()
         assert after_all["unread_count"] == 0
         assert all(item["is_read"] for item in after_all["alerts"])
