@@ -31,6 +31,7 @@ EXPECTED_TABLES = {
     "oagf_discovery_records",
     "oagf_revision_cases",
     "oagf_sync_runs",
+    "organization_webhook_attempts",
     "organization_webhook_deliveries",
     "organization_webhook_endpoints",
     "organizations",
