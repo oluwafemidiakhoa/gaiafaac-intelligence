@@ -46,3 +46,18 @@ class WatchlistAlertsResponse(BaseModel):
     unread_count: int
     alerts: list[WatchlistAlert]
     note: str
+
+
+class NotificationPreferenceUpdate(BaseModel):
+    email_enabled: bool
+    include_fiscal_watch: bool = True
+    include_fiscal_events: bool = True
+
+
+class NotificationPreferenceResponse(BaseModel):
+    email_enabled: bool
+    include_fiscal_watch: bool
+    include_fiscal_events: bool
+    email_enabled_at: datetime | None
+    delivery_available: bool
+    delivery_note: str
