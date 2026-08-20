@@ -401,9 +401,7 @@ export function OrganizationWatchlistWorkspace({
         <Card className="mt-4 border-dashed bg-background/70">
           <CardHeader>
             <Bell className="text-muted-foreground size-5" aria-hidden="true" />
-            <CardTitle className="pt-3">
-              No shared governed alerts yet
-            </CardTitle>
+            <CardTitle className="pt-3">No shared governed alerts yet</CardTitle>
             <CardDescription>
               Nothing has crossed the deterministic monitoring or evidence-event
               boundary for the shared jurisdictions in {year}. Nothing has been
