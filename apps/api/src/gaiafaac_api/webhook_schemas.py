@@ -51,3 +51,13 @@ class WebhookDeliveryItem(BaseModel):
     last_error: str | None
     payload_sha256: str
     created_at: datetime
+
+
+class WebhookAttemptItem(BaseModel):
+    id: uuid.UUID
+    delivery_id: uuid.UUID
+    attempt_number: int
+    attempted_at: datetime
+    response_status: int | None
+    response_body_excerpt: str | None
+    error: str | None
