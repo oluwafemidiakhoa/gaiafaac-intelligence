@@ -61,19 +61,26 @@ Implemented foundation:
 - authenticated per-user state watchlists;
 - persistent notification records with stable event keys;
 - deterministic Fiscal Watch allocation signals;
-- immutable Fiscal Event lifecycle signals, including source revisions, claim supersession, evidence status changes, conflicts and Fiscal State changes;
+- immutable Fiscal Event lifecycle signals, including new sources, source revisions, claim supersession, evidence status changes, conflicts and Fiscal State changes;
 - read/unread state and durable alert history;
 - evidence IDs and links back into governed proof/event surfaces;
-- ownership isolation between customer accounts.
+- ownership isolation between customer accounts;
+- explicit customer email preferences with customer opt-in plus an independent operator delivery gate;
+- idempotent customer email delivery history and retryable failures;
+- organization-scoped institutional webhooks for API-entitled organizations;
+- owner/admin endpoint management, jurisdiction/event routing and one-time secret rotation;
+- HMAC-SHA256 signed canonical payloads with delivery IDs, timestamps and secret versions;
+- outbound webhook SSRF controls, TLS hostname verification, no redirects and repeated destination validation;
+- webhook payload SHA-256 verification, retry/dead-letter state and append-only network-attempt history;
+- entitlement re-checks before institutional event materialization and delivery.
 
 Next distribution layers:
 
-- new verified publication notifications across additional fiscal domains;
-- organization-shared watchlists and alert routing;
-- email digests and immediate email delivery;
-- signed webhooks / event feeds for API and enterprise customers;
-- delivery attempts, retry policy and idempotency ledger;
-- per-event-type and per-severity notification preferences.
+- new verified publication notifications across additional fiscal domains as governed events mature;
+- organization-shared human watchlists and team-level routing policies;
+- digest scheduling and user-selectable delivery cadence;
+- webhook observability, dead-letter replay tooling and service-level reporting;
+- additional institutional channels only where they can preserve the same evidence and delivery guarantees.
 
 ### Decision graph
 
@@ -135,7 +142,7 @@ Shared workspaces, scheduled reports, evidence collections, admin/audit controls
 
 ### API / Data
 
-Versioned API, bulk licensed exports, event feeds, evidence manifests, higher rate limits and service commitments.
+Versioned API, bulk licensed exports, signed institutional event webhooks, evidence manifests, higher rate limits and service commitments.
 
 ### Enterprise / Institutional
 
@@ -169,6 +176,8 @@ Product metrics:
 - returning jurisdiction-watchlist users;
 - saved searches/comparisons;
 - alert engagement and unread-to-read conversion;
+- notification delivery success and dead-letter recovery time;
+- institutional webhook active endpoints and event-delivery retention;
 - Decision Packet generation;
 - institutional API active keys;
 - export/API retention;
@@ -179,7 +188,7 @@ Product metrics:
 1. Make the evidence graph unbreakable.
 2. Make state/LGA/national discovery exceptional.
 3. Turn evidence changes into alerts/watchlists.
-4. Add reliable outbound alert distribution and organization-level routing.
+4. Harden and operate outbound alert distribution and institutional event routing.
 5. Turn research into saved institutional workflows and exports.
 6. Expand authoritative fiscal domains.
 7. Make AI the fastest way to query the governed graph.
