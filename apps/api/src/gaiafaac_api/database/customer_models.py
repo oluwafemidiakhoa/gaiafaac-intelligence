@@ -115,12 +115,8 @@ class OrganizationWatchlist(Base):
 
     __tablename__ = "organization_watchlists"
     __table_args__ = (
-        UniqueConstraint(
-            "organization_id", "state_id", name="uq_organization_watchlist_org_state"
-        ),
-        Index(
-            "ix_organization_watchlists_org_created", "organization_id", "created_at"
-        ),
+        UniqueConstraint("organization_id", "state_id", name="uq_organization_watchlist_org_state"),
+        Index("ix_organization_watchlists_org_created", "organization_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -143,16 +139,12 @@ class OrganizationAlert(Base):
 
     __tablename__ = "organization_alerts"
     __table_args__ = (
-        UniqueConstraint(
-            "organization_id", "event_key", name="uq_organization_alert_org_event"
-        ),
+        UniqueConstraint("organization_id", "event_key", name="uq_organization_alert_org_event"),
         CheckConstraint(
             "source_kind IN ('fiscal_watch', 'fiscal_event', 'publication')",
             name="ck_organization_alert_source_kind",
         ),
-        Index(
-            "ix_organization_alerts_org_occurred", "organization_id", "occurred_at"
-        ),
+        Index("ix_organization_alerts_org_occurred", "organization_id", "occurred_at"),
         Index("ix_organization_alerts_state_occurred", "state_id", "occurred_at"),
     )
 
@@ -182,9 +174,7 @@ class OrganizationAlertReceipt(Base):
 
     __tablename__ = "organization_alert_receipts"
     __table_args__ = (
-        UniqueConstraint(
-            "alert_id", "user_id", name="uq_organization_alert_receipt_alert_user"
-        ),
+        UniqueConstraint("alert_id", "user_id", name="uq_organization_alert_receipt_alert_user"),
         Index("ix_organization_alert_receipts_user_read", "user_id", "read_at"),
     )
 

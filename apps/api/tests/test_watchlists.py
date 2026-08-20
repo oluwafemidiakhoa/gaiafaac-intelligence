@@ -367,9 +367,7 @@ def test_team_members_share_watchlist_but_only_admins_can_change_it(session):
         assert created.status_code == 201
         assert created.json()["state_code"] == state.code
 
-        member_list = client.get(
-            "/api/v1/watchlists/organization", headers=member_headers
-        )
+        member_list = client.get("/api/v1/watchlists/organization", headers=member_headers)
         assert member_list.status_code == 200
         assert [item["state_code"] for item in member_list.json()] == [state.code]
 
@@ -417,9 +415,7 @@ def test_shared_inbox_is_org_scoped_with_per_member_read_receipts(session):
     try:
         owner_token = _register(client, email="shared-owner@example.com")
         owner = _activate_plan(session, "shared-owner@example.com")
-        member_token = _organization_member_token(
-            session, owner, email="shared-member@example.com"
-        )
+        member_token = _organization_member_token(session, owner, email="shared-member@example.com")
         outsider_token = _register(client, email="outsider@example.com")
         _activate_plan(session, "outsider@example.com")
 

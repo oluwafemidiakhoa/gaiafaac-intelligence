@@ -416,9 +416,7 @@ def remove_organization_watchlist(
     return True
 
 
-def _organization_watched_states(
-    session: Session, organization_id: uuid.UUID
-) -> list[State]:
+def _organization_watched_states(session: Session, organization_id: uuid.UUID) -> list[State]:
     return list(
         session.scalars(
             select(State)
@@ -429,9 +427,7 @@ def _organization_watched_states(
     )
 
 
-def _existing_organization_event_keys(
-    session: Session, organization_id: uuid.UUID
-) -> set[str]:
+def _existing_organization_event_keys(session: Session, organization_id: uuid.UUID) -> set[str]:
     return set(
         session.scalars(
             select(OrganizationAlert.event_key).where(
@@ -549,9 +545,7 @@ def organization_watchlist_alerts(
                 )
             ).all()
         }
-    alerts = [
-        _alert_item(alert, state, read_map.get(alert.id)) for alert, state in rows
-    ]
+    alerts = [_alert_item(alert, state, read_map.get(alert.id)) for alert, state in rows]
     return WatchlistAlertsResponse(
         year=year,
         watchlist_count=len(list_organization_watchlists(session, organization_id)),

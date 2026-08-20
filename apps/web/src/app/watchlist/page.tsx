@@ -39,8 +39,8 @@ export default async function WatchlistPage() {
         <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
           Your individual watchlist and read state stay separate from the
           organization workspace. Email preferences continue to apply to your
-          individual governed alerts and remain subject to GaiaFAAC&apos;s delivery
-          controls.
+          individual governed alerts and remain subject to GaiaFAAC&apos;s
+          delivery controls.
         </p>
       </div>
       <NotificationPreferencesCard />
