@@ -1,0 +1,60 @@
+from __future__ import annotations
+
+import uuid
+from datetime import UTC, datetime
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, Response, status
+
+from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
+from gaiafaac_api.services.watchlists import (
+    add_watchlist,
+    list_watchlists,
+    remove_watchlist,
+    watchlist_alerts,
+)
+from gaiafaac_api.watchlist_schemas import (
+    WatchlistAlertsResponse,
+    WatchlistCreateRequest,
+    WatchlistItem,
+)
+
+router = APIRouter(prefix="/watchlists", tags=["customer watchlists"])
+
+
+@router.get("", response_model=list[WatchlistItem])
+def get_watchlists(session: DatabaseSession, user: CurrentCustomer) -> list[WatchlistItem]:
+    return list_watchlists(session, user)
+
+
+@router.post("", response_model=WatchlistItem, status_code=status.HTTP_201_CREATED)
+def create_watchlist(
+    payload: WatchlistCreateRequest,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> WatchlistItem:
+    item = add_watchlist(session, user, payload.state_code)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Unknown state code.")
+    return item
+
+
+@router.delete("/{watchlist_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_watchlist(
+    watchlist_id: uuid.UUID,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> Response:
+    if not remove_watchlist(session, user, watchlist_id):
+        raise HTTPException(status_code=404, detail="Watchlist item not found.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/alerts", response_model=WatchlistAlertsResponse)
+def get_watchlist_alerts(
+    session: DatabaseSession,
+    user: CurrentCustomer,
+    year: Annotated[int | None, Query(ge=2000, le=2100)] = None,
+) -> WatchlistAlertsResponse:
+    resolved_year = year if year is not None else datetime.now(UTC).year
+    return watchlist_alerts(session, user, resolved_year)
