@@ -1,4 +1,4 @@
-import { ChevronDown, Menu } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import Link from 'next/link'
 
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -6,26 +6,12 @@ import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
-const primaryNavigation = [
+const navigation = [
   { href: '/terminal', label: 'Terminal' },
-  { href: '/live', label: 'Live data' },
-  { href: '/states', label: 'Jurisdictions' },
-  { href: '/sources', label: 'Sources' },
-]
-
-const moreNavigation = [
-  { href: '/fiscal-pulse', label: 'Fiscal Pulse' },
-  { href: '/national-reconciliation', label: 'National Reconciliation' },
-  { href: '/overview', label: 'Overview' },
-  { href: '/insights', label: 'Insights' },
-  { href: '/events', label: 'Fiscal Events' },
-  { href: '/compare', label: 'Compare jurisdictions' },
-  { href: '/gaia-analyst', label: 'Gaia Analyst' },
-  { href: '/fiscal-design', label: 'Fiscal Design Lab' },
-  { href: '/fiscal-watch', label: 'Fiscal Watch' },
-  { href: '/decision-packets', label: 'Decision Packets' },
-  { href: '/methodology', label: 'Methodology' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/live', label: 'Live' },
+  { href: '/fiscal-pulse', label: 'Intelligence' },
+  { href: '/sources', label: 'Evidence' },
+  { href: '/decision-packets', label: 'Workspace' },
 ]
 
 export async function SiteHeader() {
@@ -80,7 +66,7 @@ export async function SiteHeader() {
           className="ml-auto hidden items-center gap-6 lg:flex"
           aria-label="Primary navigation"
         >
-          {primaryNavigation.map((item) => (
+          {navigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -89,28 +75,11 @@ export async function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <details className="relative">
-            <summary className="text-muted-foreground hover:text-foreground flex cursor-pointer list-none items-center gap-1 text-sm whitespace-nowrap transition-colors [&::-webkit-details-marker]:hidden">
-              More
-              <ChevronDown className="size-3.5" aria-hidden="true" />
-            </summary>
-            <div className="border-border bg-background absolute right-0 z-50 mt-3 w-64 rounded-lg border p-2 shadow-lg">
-              {moreNavigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="hover:bg-muted block rounded-md px-3 py-2 text-sm transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </details>
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
           <Button asChild size="sm" variant="outline">
-            <Link href="/account#exports">Export data</Link>
+            <Link href="/gaia-analyst">Ask Gaia</Link>
           </Button>
           <Button asChild size="sm">
             <Link href="/account">Account</Link>
@@ -125,7 +94,7 @@ export async function SiteHeader() {
           </summary>
           <div className="border-border bg-background absolute right-0 z-50 mt-3 w-72 rounded-lg border p-3 shadow-lg">
             <nav className="grid gap-1" aria-label="Mobile navigation">
-              {[...primaryNavigation, ...moreNavigation].map((item) => (
+              {navigation.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -135,10 +104,10 @@ export async function SiteHeader() {
                 </Link>
               ))}
               <Link
-                href="/account#exports"
+                href="/gaia-analyst"
                 className="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors"
               >
-                Export data
+                Ask Gaia
               </Link>
               <Link
                 href="/account"
