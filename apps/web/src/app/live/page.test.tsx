@@ -76,7 +76,9 @@ describe('LivePage', () => {
 
     render(await LivePage())
 
-    expect(screen.getByText('Know what changed. Trace exactly why.')).toBeVisible()
+    expect(
+      screen.getByText('Know what changed. Trace exactly why.'),
+    ).toBeVisible()
     expect(screen.getByText('+8.0% vs prior published period')).toBeVisible()
     expect(screen.getByText('+12.5%')).toBeVisible()
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
@@ -103,7 +105,9 @@ describe('LivePage', () => {
     expect(
       screen.getByText('Governed intelligence appears only after publication.'),
     ).toBeVisible()
-    expect(screen.getByText(/No verified month is published yet/i)).toBeVisible()
+    expect(
+      screen.getByText(/No verified month is published yet/i),
+    ).toBeVisible()
     expect(screen.queryByText('Lagos')).not.toBeInTheDocument()
   })
 })
