@@ -143,13 +143,7 @@ def _event_types(values: list[str]) -> list[str]:
 
 
 def _jurisdictions(values: list[str]) -> list[str]:
-    return sorted(
-        {
-            value.strip().upper().removeprefix("NG-")
-            for value in values
-            if value.strip()
-        }
-    )
+    return sorted({value.strip().upper().removeprefix("NG-") for value in values if value.strip()})
 
 
 def create_endpoint(
