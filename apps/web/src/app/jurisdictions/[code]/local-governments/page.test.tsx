@@ -54,7 +54,8 @@ describe('LocalGovernmentsPage', () => {
   it('guides users to state evidence without substituting for missing LGA evidence', async () => {
     vi.mocked(getPublishedLgasForState).mockResolvedValue({
       data: null,
-      error: 'No published local-government evidence is available for this jurisdiction yet.',
+      error:
+        'No published local-government evidence is available for this jurisdiction yet.',
     })
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
