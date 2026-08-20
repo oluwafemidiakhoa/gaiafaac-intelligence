@@ -54,9 +54,7 @@ def get_notification_preference(
     preference = session.get(CustomerNotificationPreference, user.id)
     return NotificationPreferenceResponse(
         email_enabled=preference.email_enabled if preference is not None else False,
-        include_fiscal_watch=(
-            preference.include_fiscal_watch if preference is not None else True
-        ),
+        include_fiscal_watch=(preference.include_fiscal_watch if preference is not None else True),
         include_fiscal_events=(
             preference.include_fiscal_events if preference is not None else True
         ),
