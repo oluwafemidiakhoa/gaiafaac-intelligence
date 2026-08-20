@@ -39,6 +39,7 @@ class Settings(BaseSettings):
 
     # Customer self-service. Empty Stripe values keep billing securely disabled.
     customer_app_url: str = "http://localhost:3000"
+    customer_alert_email_enabled: bool = False
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_price_analyst: str = ""
