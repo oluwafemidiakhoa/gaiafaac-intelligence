@@ -38,6 +38,12 @@ class WebhookSecretRotated(BaseModel):
     signing_note: str
 
 
+class WebhookStatusResponse(BaseModel):
+    signing_configured: bool
+    delivery_enabled: bool
+    note: str
+
+
 class WebhookDeliveryItem(BaseModel):
     id: uuid.UUID
     endpoint_id: uuid.UUID
