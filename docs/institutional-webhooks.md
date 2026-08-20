@@ -161,7 +161,7 @@ Successful deliveries are not resent. A unique database constraint on `(endpoint
 
 ## Attempt audit history
 
-The delivery table stores the current aggregate state. Every actual outbound network attempt also appends an immutable-style attempt record containing:
+The delivery table stores the current aggregate state. Every actual outbound network attempt also appends an immutable attempt record containing:
 
 - attempt number;
 - attempt timestamp;
@@ -169,7 +169,7 @@ The delivery table stores the current aggregate state. Every actual outbound net
 - up to 1,000 characters of response-body excerpt;
 - delivery error, when applicable.
 
-Deferred states that make no network request do not increment the attempt counter and do not create attempt records.
+The ORM rejects updates and deletes of individual attempt records. Deferred states that make no network request do not increment the attempt counter and do not create attempt records.
 
 Organization administrators can inspect delivery history through the customer API, including:
 
