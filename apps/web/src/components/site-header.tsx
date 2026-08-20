@@ -7,13 +7,14 @@ import { formatDate } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
 const primaryNavigation = [
+  { href: '/terminal', label: 'Terminal' },
   { href: '/live', label: 'Live data' },
   { href: '/states', label: 'Jurisdictions' },
-  { href: '/fiscal-pulse', label: 'Fiscal Pulse' },
   { href: '/sources', label: 'Sources' },
 ]
 
 const moreNavigation = [
+  { href: '/fiscal-pulse', label: 'Fiscal Pulse' },
   { href: '/national-reconciliation', label: 'National Reconciliation' },
   { href: '/overview', label: 'Overview' },
   { href: '/insights', label: 'Insights' },
@@ -70,7 +71,7 @@ export async function SiteHeader() {
           <span>
             <span className="block font-semibold tracking-tight">GaiaFAAC</span>
             <span className="text-muted-foreground hidden text-[0.68rem] xl:block">
-              Nigeria fiscal evidence ledger
+              Fiscal intelligence operating system
             </span>
           </span>
         </Link>
