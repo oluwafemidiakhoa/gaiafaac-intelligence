@@ -16,6 +16,7 @@ from gaiafaac_api.database.models import Organization, State, Subscription, User
 from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.database.webhook_models import (
+    OrganizationWebhookAttempt,
     OrganizationWebhookDelivery,
     OrganizationWebhookEndpoint,
 )
@@ -165,6 +166,17 @@ def test_delivery_is_signed_integrity_checked_and_sent_once(session, monkeypatch
     assert delivery is not None
     assert delivery.status == "delivered"
     assert webhooks.canonical_sha256(delivery.payload) == delivery.payload_sha256
+    attempts = list(
+        session.scalars(
+            select(OrganizationWebhookAttempt).where(
+                OrganizationWebhookAttempt.delivery_id == delivery.id
+            )
+        )
+    )
+    assert len(attempts) == 1
+    assert attempts[0].attempt_number == 1
+    assert attempts[0].response_status == 204
+    assert attempts[0].error is None
 
     body, headers = captured[0]
     timestamp = int(headers["Gaia-Webhook-Timestamp"])
@@ -213,6 +225,15 @@ def test_failed_delivery_dead_letters_at_attempt_limit(session, monkeypatch):
     assert delivery is not None
     assert delivery.status == "dead_letter"
     assert delivery.attempt_count == 1
+    attempt = session.scalar(
+        select(OrganizationWebhookAttempt).where(
+            OrganizationWebhookAttempt.delivery_id == delivery.id
+        )
+    )
+    assert attempt is not None
+    assert attempt.attempt_number == 1
+    assert attempt.response_status is None
+    assert attempt.error == "receiver unavailable"
 
 
 def test_delivery_is_deferred_when_api_entitlement_is_revoked(session, monkeypatch):
@@ -255,6 +276,12 @@ def test_delivery_is_deferred_when_api_entitlement_is_revoked(session, monkeypat
     assert result.deferred >= 1
     assert delivery is not None
     assert delivery.status == "deferred"
+    assert delivery.attempt_count == 0
+    assert session.scalar(
+        select(OrganizationWebhookAttempt).where(
+            OrganizationWebhookAttempt.delivery_id == delivery.id
+        )
+    ) is None
 
 
 def test_webhook_management_requires_api_entitlement(session, monkeypatch):
