@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, date, datetime, time
+from datetime import UTC, datetime, time
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -121,7 +121,9 @@ def _watched_states(session: Session, user: User) -> list[State]:
 
 def _existing_event_keys(session: Session, user: User) -> set[str]:
     return set(
-        session.scalars(select(CustomerAlert.event_key).where(CustomerAlert.user_id == user.id))
+        session.scalars(
+            select(CustomerAlert.event_key).where(CustomerAlert.user_id == user.id)
+        )
     )
 
 
@@ -140,7 +142,9 @@ def sync_watchlist_alerts(session: Session, user: User, year: int) -> int:
         state = state_by_code.get(event.state_code)
         if state is None:
             continue
-        event_key = f"fiscal-watch:{event.state_code}:{event.revenue_month.isoformat()}:{event.kind}"
+        event_key = (
+            f"fiscal-watch:{event.state_code}:{event.revenue_month.isoformat()}:{event.kind}"
+        )
         if event_key in existing_keys:
             continue
         pending.append(
@@ -234,7 +238,9 @@ def _alert_item(alert: CustomerAlert, state: State) -> WatchlistAlert:
         headline=str(payload.get("headline") or alert.event_type.replace("_", " ")),
         detail=str(payload.get("detail") or "Recorded governed fiscal event."),
         link_path=str(payload.get("link_path") or "/events"),
-        evidence_ids=[str(item) for item in evidence_ids] if isinstance(evidence_ids, list) else [],
+        evidence_ids=(
+            [str(item) for item in evidence_ids] if isinstance(evidence_ids, list) else []
+        ),
         metrics=metrics if isinstance(metrics, dict) else {},
         read_at=_stored_utc(alert.read_at) if alert.read_at is not None else None,
         is_read=alert.read_at is not None,
@@ -273,7 +279,10 @@ def watchlist_alerts(session: Session, user: User, year: int) -> WatchlistAlerts
 
 def mark_alert_read(session: Session, user: User, alert_id: uuid.UUID) -> bool:
     alert = session.scalar(
-        select(CustomerAlert).where(CustomerAlert.id == alert_id, CustomerAlert.user_id == user.id)
+        select(CustomerAlert).where(
+            CustomerAlert.id == alert_id,
+            CustomerAlert.user_id == user.id,
+        )
     )
     if alert is None:
         return False
