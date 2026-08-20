@@ -100,3 +100,26 @@ class OrganizationWebhookDelivery(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+
+class OrganizationWebhookAttempt(Base):
+    """Append-only record of one actual network attempt for a webhook delivery."""
+
+    __tablename__ = "organization_webhook_attempts"
+    __table_args__ = (
+        UniqueConstraint("delivery_id", "attempt_number", name="uq_org_webhook_attempt_number"),
+        Index("ix_org_webhook_attempts_delivery", "delivery_id", "attempt_number"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    delivery_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organization_webhook_deliveries.id", ondelete="CASCADE"), nullable=False
+    )
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    response_status: Mapped[int | None] = mapped_column(Integer)
+    response_body_excerpt: Mapped[str | None] = mapped_column(String(1000))
+    error: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
