@@ -160,14 +160,17 @@ describe('JurisdictionFiscalStatePage', () => {
       data: null,
       error: 'Unavailable',
     })
-    vi.mocked(getFiscalEvents).mockResolvedValue({ data: null, error: null })
+    vi.mocked(getFiscalEvents).mockResolvedValue({
+      data: null,
+      error: 'Unavailable',
+    })
     vi.mocked(getJurisdictionEvidenceSources).mockResolvedValue({
       data: null,
-      error: null,
+      error: 'Unavailable',
     })
     vi.mocked(getJurisdictionFiscalIntelligence).mockResolvedValue({
       data: null,
-      error: null,
+      error: 'Unavailable',
     })
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
