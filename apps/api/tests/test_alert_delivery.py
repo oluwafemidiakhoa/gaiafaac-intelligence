@@ -1,5 +1,5 @@
 import smtplib
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -64,7 +64,7 @@ def _seed_alert(session):
             email_enabled=True,
             include_fiscal_watch=True,
             include_fiscal_events=True,
-            email_enabled_at=datetime.now(UTC),
+            email_enabled_at=datetime.now(UTC) - timedelta(days=1),
         )
     )
     alert = CustomerAlert(
@@ -75,7 +75,7 @@ def _seed_alert(session):
         source_event_id=None,
         event_type="source_revised",
         severity="material",
-        occurred_at=datetime(2026, 8, 1, tzinfo=UTC),
+        occurred_at=datetime.now(UTC),
         payload={
             "headline": "Official fiscal source revised",
             "detail": "A revised official source was retained.",
@@ -94,7 +94,7 @@ def test_delivery_sends_once_and_records_success(session, monkeypatch):
     monkeypatch.setattr(smtplib, "SMTP_SSL", _FakeSMTP)
     _, alert = _seed_alert(session)
 
-    first = deliver_customer_alerts(session, _settings(), year=2026)
+    first = deliver_customer_alerts(session, _settings(), year=datetime.now(UTC).year)
     assert first.sent == 1
     assert len(_FakeSMTP.sent) == 1
     assert "Official fiscal source revised" in _FakeSMTP.sent[0]["Subject"]
@@ -107,7 +107,7 @@ def test_delivery_sends_once_and_records_success(session, monkeypatch):
     assert delivery.attempt_count == 1
     assert delivery.delivered_at is not None
 
-    second = deliver_customer_alerts(session, _settings(), year=2026)
+    second = deliver_customer_alerts(session, _settings(), year=datetime.now(UTC).year)
     assert second.sent == 0
     assert second.skipped_sent == 1
     assert len(_FakeSMTP.sent) == 1
@@ -122,7 +122,7 @@ def test_delivery_is_deferred_when_operator_gate_is_off(session, monkeypatch):
     result = deliver_customer_alerts(
         session,
         _settings(customer_alert_email_enabled=False),
-        year=2026,
+        year=datetime.now(UTC).year,
     )
     assert result.deferred == 1
     delivery = session.scalar(
@@ -132,6 +132,69 @@ def test_delivery_is_deferred_when_operator_gate_is_off(session, monkeypatch):
     assert delivery.status == "deferred"
     assert delivery.attempt_count == 0
     assert delivery.delivered_at is None
+
+
+def test_delivery_excludes_alert_persisted_before_email_opt_in(session, monkeypatch):
+    _FakeSMTP.sent = []
+    monkeypatch.setattr(smtplib, "SMTP_SSL", _FakeSMTP)
+    user, alert = _seed_alert(session)
+    preference = session.get(CustomerNotificationPreference, user.id)
+    assert preference is not None
+    preference.email_enabled_at = alert.created_at + timedelta(seconds=1)
+    session.commit()
+
+    result = deliver_customer_alerts(session, _settings(), year=datetime.now(UTC).year)
+
+    assert result.alerts_eligible == 0
+    assert result.sent == 0
+    assert _FakeSMTP.sent == []
+    delivery = session.scalar(
+        select(CustomerAlertDelivery).where(CustomerAlertDelivery.alert_id == alert.id)
+    )
+    assert delivery is None
+
+
+def test_delivery_excludes_old_event_persisted_after_email_opt_in(session, monkeypatch):
+    _FakeSMTP.sent = []
+    monkeypatch.setattr(smtplib, "SMTP_SSL", _FakeSMTP)
+    user, alert = _seed_alert(session)
+    preference = session.get(CustomerNotificationPreference, user.id)
+    assert preference is not None
+    preference.email_enabled_at = alert.created_at - timedelta(seconds=1)
+    alert.occurred_at = preference.email_enabled_at - timedelta(days=30)
+    session.commit()
+
+    result = deliver_customer_alerts(session, _settings(), year=datetime.now(UTC).year)
+
+    assert result.alerts_eligible == 0
+    assert result.sent == 0
+    assert _FakeSMTP.sent == []
+    delivery = session.scalar(
+        select(CustomerAlertDelivery).where(CustomerAlertDelivery.alert_id == alert.id)
+    )
+    assert delivery is None
+
+
+def test_delivery_fails_closed_when_enabled_preference_has_no_opt_in_timestamp(
+    session, monkeypatch
+):
+    _FakeSMTP.sent = []
+    monkeypatch.setattr(smtplib, "SMTP_SSL", _FakeSMTP)
+    user, alert = _seed_alert(session)
+    preference = session.get(CustomerNotificationPreference, user.id)
+    assert preference is not None
+    preference.email_enabled_at = None
+    session.commit()
+
+    result = deliver_customer_alerts(session, _settings(), year=datetime.now(UTC).year)
+
+    assert result.alerts_eligible == 0
+    assert result.sent == 0
+    assert _FakeSMTP.sent == []
+    delivery = session.scalar(
+        select(CustomerAlertDelivery).where(CustomerAlertDelivery.alert_id == alert.id)
+    )
+    assert delivery is None
 
 
 def _client(session) -> TestClient:
