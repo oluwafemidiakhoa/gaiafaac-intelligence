@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
-from typing import Literal
+from datetime import datetime
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -21,27 +21,28 @@ class WatchlistItem(BaseModel):
 
 
 class WatchlistAlert(BaseModel):
+    id: uuid.UUID
     event_key: str
-    kind: Literal["negative_net", "large_monthly_move", "high_deduction_burden"]
-    severity: Literal["watch", "elevated"]
+    source_kind: Literal["fiscal_watch", "fiscal_event", "publication"]
+    event_type: str
+    severity: str
     state_name: str
     state_slug: str
     state_code: str
-    revenue_month: date
+    occurred_at: datetime
     headline: str
     detail: str
-    current_net: str | None
-    previous_net: str | None
-    change_pct: float | None
-    deduction_burden_pct: float | None
-    proof_path: str
+    link_path: str
+    evidence_ids: list[str] = Field(default_factory=list)
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    read_at: datetime | None
+    is_read: bool
 
 
 class WatchlistAlertsResponse(BaseModel):
     year: int
-    latest_revenue_month: date | None
-    previous_revenue_month: date | None
-    watched_states: int
-    event_count: int
-    events: list[WatchlistAlert]
+    watchlist_count: int
+    alert_count: int
+    unread_count: int
+    alerts: list[WatchlistAlert]
     note: str
