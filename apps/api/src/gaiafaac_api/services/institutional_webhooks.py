@@ -349,7 +349,7 @@ def _post_https(
     header_text = "".join(f"{key}: {value}\r\n" for key, value in request_headers.items())
     request = f"POST {path} HTTP/1.1\r\n{header_text}\r\n".encode("ascii") + body
     context = ssl.create_default_context()
-    last_error: OSError | ssl.SSLError | None = None
+    last_error: OSError | None = None
     for address in addresses:
         raw_socket = None
         tls_socket = None
@@ -362,7 +362,7 @@ def _post_https(
             response.begin()
             excerpt = response.read(1000).decode("utf-8", errors="replace")
             return WebhookHttpResult(status=response.status, body_excerpt=excerpt)
-        except (OSError, ssl.SSLError) as error:
+        except OSError as error:
             last_error = error
         finally:
             if tls_socket is not None:
@@ -385,13 +385,21 @@ def _defer_organization_deliveries(
             )
         )
     )
+    changed = 0
+    normalized_reason = reason[:500]
     for delivery in deliveries:
+        if (
+            delivery.status != "deferred"
+            or delivery.last_error != normalized_reason
+            or delivery.next_attempt_at is not None
+        ):
+            changed += 1
         delivery.status = "deferred"
-        delivery.last_error = reason[:500]
+        delivery.last_error = normalized_reason
         delivery.next_attempt_at = None
-    if deliveries:
+    if changed:
         session.commit()
-    return len(deliveries)
+    return changed
 
 
 def run_webhook_delivery(
@@ -410,6 +418,7 @@ def run_webhook_delivery(
     )
     created = delivered = retrying = dead_letter = deferred = 0
     api_access_by_org: dict[uuid.UUID, bool] = {}
+    deferred_organizations: set[uuid.UUID] = set()
     eligible_endpoints: list[OrganizationWebhookEndpoint] = []
     for endpoint in endpoints:
         api_access = api_access_by_org.get(endpoint.organization_id)
@@ -418,11 +427,13 @@ def run_webhook_delivery(
             api_access = entitlements.api_access
             api_access_by_org[endpoint.organization_id] = api_access
         if not api_access:
-            deferred += _defer_organization_deliveries(
-                session,
-                endpoint.organization_id,
-                "Organization plan no longer includes institutional webhook delivery.",
-            )
+            if endpoint.organization_id not in deferred_organizations:
+                deferred += _defer_organization_deliveries(
+                    session,
+                    endpoint.organization_id,
+                    "Organization plan no longer includes institutional webhook delivery.",
+                )
+                deferred_organizations.add(endpoint.organization_id)
             continue
         eligible_endpoints.append(endpoint)
         created += enqueue_endpoint_events(session, endpoint)
@@ -493,6 +504,9 @@ def run_webhook_delivery(
         attempt_at = datetime.now(UTC)
         delivery.attempt_count += 1
         delivery.last_attempt_at = attempt_at
+        delivery.response_status = None
+        delivery.response_body_excerpt = None
+        delivery.last_error = None
         attempt_error: str | None = None
         response_status: int | None = None
         response_excerpt: str | None = None
@@ -506,7 +520,6 @@ def run_webhook_delivery(
             response_excerpt = result.body_excerpt
             delivery.response_status = result.status
             delivery.response_body_excerpt = result.body_excerpt
-            delivery.last_error = None
             if 200 <= result.status < 300:
                 delivery.status = "delivered"
                 delivery.delivered_at = attempt_at
@@ -514,7 +527,7 @@ def run_webhook_delivery(
                 delivered += 1
             else:
                 raise ConnectionError(f"Webhook returned HTTP {result.status}.")
-        except (ConnectionError, OSError, ValueError) as error:
+        except (OSError, ValueError) as error:
             attempt_error = str(error)[:500]
             delivery.last_error = attempt_error
             if delivery.attempt_count >= max_attempts:
