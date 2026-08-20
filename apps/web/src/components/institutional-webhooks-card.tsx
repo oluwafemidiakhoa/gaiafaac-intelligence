@@ -41,6 +41,12 @@ interface WebhookDelivery {
   created_at: string
 }
 
+interface WebhookStatus {
+  signing_configured: boolean
+  delivery_enabled: boolean
+  note: string
+}
+
 interface SecretResponse {
   signing_secret: string
   secret_version: number
@@ -51,6 +57,7 @@ const inputClass =
   'border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-10 w-full rounded-md border px-3 text-sm outline-none focus-visible:ring-[3px]'
 
 const eventTypes = [
+  'new_source_detected',
   'source_revised',
   'claim_superseded',
   'evidence_upgraded',
@@ -75,12 +82,14 @@ function statusTone(status: WebhookDelivery['status']) {
 export function InstitutionalWebhooksCard() {
   const [endpoints, setEndpoints] = useState<WebhookEndpoint[]>([])
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([])
+  const [status, setStatus] = useState<WebhookStatus | null>(null)
   const [message, setMessage] = useState('')
   const [secret, setSecret] = useState<SecretResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   async function load() {
-    const [endpointResponse, deliveryResponse] = await Promise.all([
+    const [statusResponse, endpointResponse, deliveryResponse] = await Promise.all([
+      fetch('/api/customer/account/webhooks/status', { cache: 'no-store' }),
       fetch('/api/customer/account/webhooks', { cache: 'no-store' }),
       fetch('/api/customer/account/webhooks/deliveries?limit=25', {
         cache: 'no-store',
@@ -91,6 +100,7 @@ export function InstitutionalWebhooksCard() {
       setLoading(false)
       return
     }
+    if (statusResponse.ok) setStatus((await statusResponse.json()) as WebhookStatus)
     setEndpoints((await endpointResponse.json()) as WebhookEndpoint[])
     if (deliveryResponse.ok) {
       setDeliveries((await deliveryResponse.json()) as WebhookDelivery[])
@@ -172,10 +182,22 @@ export function InstitutionalWebhooksCard() {
               HTTPS-only, signed, retried, and governed by your API-plan entitlement.
             </CardDescription>
           </div>
-          <StatusPill tone="success">API infrastructure</StatusPill>
+          <StatusPill tone={status?.delivery_enabled ? 'success' : 'neutral'}>
+            {status?.delivery_enabled
+              ? 'Delivery operational'
+              : status?.signing_configured
+                ? 'Configuration only'
+                : 'Operator setup required'}
+          </StatusPill>
         </div>
       </CardHeader>
       <CardContent className="space-y-7">
+        {status ? (
+          <p className="border-border bg-muted/20 rounded-md border p-3 text-xs leading-5">
+            {status.note}
+          </p>
+        ) : null}
+
         {message ? (
           <p className="border-border bg-muted/30 rounded-md border p-3 text-sm">{message}</p>
         ) : null}
@@ -237,7 +259,9 @@ export function InstitutionalWebhooksCard() {
               ))}
             </div>
           </fieldset>
-          <Button type="submit">Create webhook</Button>
+          <Button type="submit" disabled={status ? !status.signing_configured : false}>
+            Create webhook
+          </Button>
         </form>
 
         <section>
@@ -293,7 +317,7 @@ export function InstitutionalWebhooksCard() {
         <section>
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h3 className="text-sm font-semibold">Recent delivery ledger</h3>
-            <span className="text-muted-foreground text-xs">Latest 25 attempts</span>
+            <span className="text-muted-foreground text-xs">Latest 25 deliveries</span>
           </div>
           {deliveries.length === 0 ? (
             <p className="text-muted-foreground mt-3 text-sm">
