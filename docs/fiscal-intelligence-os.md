@@ -54,16 +54,26 @@ Users should be able to ask "what did Gaia know on this date?" Point-in-time sta
 
 ### Alert graph
 
-Events should become subscriptions:
+Events become customer subscriptions without becoming a second fiscal source of truth.
 
-- new verified month;
-- source changed at same URL;
-- revised official value;
-- evidence conflict;
-- coverage degradation;
-- material allocation movement;
-- new IGR/debt/budget evidence;
-- watchlisted jurisdiction change.
+Implemented foundation:
+
+- authenticated per-user state watchlists;
+- persistent notification records with stable event keys;
+- deterministic Fiscal Watch allocation signals;
+- immutable Fiscal Event lifecycle signals, including source revisions, claim supersession, evidence status changes, conflicts and Fiscal State changes;
+- read/unread state and durable alert history;
+- evidence IDs and links back into governed proof/event surfaces;
+- ownership isolation between customer accounts.
+
+Next distribution layers:
+
+- new verified publication notifications across additional fiscal domains;
+- organization-shared watchlists and alert routing;
+- email digests and immediate email delivery;
+- signed webhooks / event feeds for API and enterprise customers;
+- delivery attempts, retry policy and idempotency ledger;
+- per-event-type and per-severity notification preferences.
 
 ### Decision graph
 
@@ -117,7 +127,7 @@ Latest verified evidence, basic jurisdiction pages, limited comparisons, source/
 
 ### Analyst
 
-Longer history, saved watchlists, alerts, enhanced comparisons, exports and Decision Packets.
+Longer history, saved watchlists, persistent alerts, enhanced comparisons, exports and Decision Packets.
 
 ### Team
 
@@ -158,7 +168,7 @@ Product metrics:
 
 - returning jurisdiction-watchlist users;
 - saved searches/comparisons;
-- alert engagement;
+- alert engagement and unread-to-read conversion;
 - Decision Packet generation;
 - institutional API active keys;
 - export/API retention;
@@ -169,7 +179,8 @@ Product metrics:
 1. Make the evidence graph unbreakable.
 2. Make state/LGA/national discovery exceptional.
 3. Turn evidence changes into alerts/watchlists.
-4. Turn research into saved institutional workflows and exports.
-5. Expand authoritative fiscal domains.
-6. Make AI the fastest way to query the governed graph.
-7. Build enterprise distribution around the same verifiable evidence core.
+4. Add reliable outbound alert distribution and organization-level routing.
+5. Turn research into saved institutional workflows and exports.
+6. Expand authoritative fiscal domains.
+7. Make AI the fastest way to query the governed graph.
+8. Build enterprise distribution around the same verifiable evidence core.
