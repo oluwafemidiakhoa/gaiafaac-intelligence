@@ -236,6 +236,71 @@ def test_failed_delivery_dead_letters_at_attempt_limit(session, monkeypatch):
     assert attempt.error == "receiver unavailable"
 
 
+def test_retry_clears_stale_http_metadata_after_connection_failure(session, monkeypatch):
+    seed_states(session)
+    state = session.scalars(select(State).order_by(State.name)).first()
+    assert state is not None
+    organization, user = _organization_with_api(session)
+    monkeypatch.setattr(socket, "getaddrinfo", _public_dns)
+    settings = Settings(
+        institutional_webhook_enabled=True,
+        institutional_webhook_master_secret="t" * 64,
+    )
+    endpoint, _secret = webhooks.create_endpoint(
+        session,
+        settings,
+        organization_id=organization.id,
+        created_by_user_id=user.id,
+        name="Retry metadata test",
+        url="https://hooks.example.com/gaia",
+        event_types=["source_revised"],
+        jurisdiction_codes=[],
+    )
+    endpoint.created_at = datetime(2026, 1, 1, tzinfo=UTC)
+    session.commit()
+    _publish_event(session, state, detected_at=datetime(2026, 5, 15, tzinfo=UTC))
+
+    monkeypatch.setattr(
+        webhooks,
+        "_post_https",
+        lambda **kwargs: webhooks.WebhookHttpResult(status=503, body_excerpt="busy"),
+    )
+    first = webhooks.run_webhook_delivery(session, settings)
+    delivery = session.scalar(
+        select(OrganizationWebhookDelivery).where(
+            OrganizationWebhookDelivery.endpoint_id == endpoint.id
+        )
+    )
+    assert first.retrying == 1
+    assert delivery is not None
+    assert delivery.response_status == 503
+    assert delivery.response_body_excerpt == "busy"
+
+    delivery.next_attempt_at = None
+    session.commit()
+    monkeypatch.setattr(
+        webhooks,
+        "_post_https",
+        lambda **kwargs: (_ for _ in ()).throw(ConnectionError("connect timeout")),
+    )
+    second = webhooks.run_webhook_delivery(session, settings)
+    session.refresh(delivery)
+
+    assert second.retrying == 1
+    assert delivery.attempt_count == 2
+    assert delivery.response_status is None
+    assert delivery.response_body_excerpt is None
+    assert delivery.last_error == "connect timeout"
+    attempts = list(
+        session.scalars(
+            select(OrganizationWebhookAttempt)
+            .where(OrganizationWebhookAttempt.delivery_id == delivery.id)
+            .order_by(OrganizationWebhookAttempt.attempt_number)
+        )
+    )
+    assert [attempt.response_status for attempt in attempts] == [503, None]
+
+
 def test_delivery_is_deferred_when_api_entitlement_is_revoked(session, monkeypatch):
     seed_states(session)
     state = session.scalars(select(State).order_by(State.name)).first()
@@ -282,6 +347,55 @@ def test_delivery_is_deferred_when_api_entitlement_is_revoked(session, monkeypat
             OrganizationWebhookAttempt.delivery_id == delivery.id
         )
     ) is None
+
+
+def test_revoked_organization_deferred_count_is_not_multiplied_by_endpoints(session, monkeypatch):
+    seed_states(session)
+    state = session.scalars(select(State).order_by(State.name)).first()
+    assert state is not None
+    organization, user = _organization_with_api(session)
+    monkeypatch.setattr(socket, "getaddrinfo", _public_dns)
+    settings = Settings(
+        institutional_webhook_enabled=True,
+        institutional_webhook_master_secret="c" * 64,
+    )
+    endpoints = []
+    for name in ("Primary", "Secondary"):
+        endpoint, _secret = webhooks.create_endpoint(
+            session,
+            settings,
+            organization_id=organization.id,
+            created_by_user_id=user.id,
+            name=name,
+            url=f"https://{name.lower()}.example.com/gaia",
+            event_types=["source_revised"],
+            jurisdiction_codes=[],
+        )
+        endpoint.created_at = datetime(2026, 1, 1, tzinfo=UTC)
+        endpoints.append(endpoint)
+    session.commit()
+    _publish_event(session, state, detected_at=datetime(2026, 6, 15, tzinfo=UTC))
+    for endpoint in endpoints:
+        assert webhooks.enqueue_endpoint_events(session, endpoint) == 1
+
+    subscription = session.scalar(
+        select(Subscription).where(Subscription.organization_id == organization.id)
+    )
+    assert subscription is not None
+    subscription.status = SubscriptionStatus.CANCELED
+    session.commit()
+
+    result = webhooks.run_webhook_delivery(session, settings)
+    deliveries = list(
+        session.scalars(
+            select(OrganizationWebhookDelivery).where(
+                OrganizationWebhookDelivery.organization_id == organization.id
+            )
+        )
+    )
+    assert len(deliveries) == 2
+    assert result.deferred == 2
+    assert all(delivery.status == "deferred" for delivery in deliveries)
 
 
 def test_webhook_management_requires_api_entitlement(session, monkeypatch):
