@@ -1,14 +1,20 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from gaiafaac_api.database.enums import ReportedUnit
+from gaiafaac_api.database.customer_models import CustomerAlert
+from gaiafaac_api.database.enums import (
+    EvidenceStatus,
+    FiscalEventSeverity,
+    ReportedUnit,
+)
 from gaiafaac_api.database.models import ReportingPeriod, SourceDocument, State, StateAllocation
 from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.main import app
+from gaiafaac_api.services.fiscal_institutional import publish_fiscal_event
 
 
 def _client(session) -> TestClient:
@@ -16,14 +22,14 @@ def _client(session) -> TestClient:
     return TestClient(app)
 
 
-def _register(client: TestClient) -> str:
+def _register(client: TestClient, *, email: str = "watch@example.com") -> str:
     response = client.post(
         "/api/v1/account/register",
         json={
             "full_name": "Watch Analyst",
-            "email": "watch@example.com",
+            "email": email,
             "password": "a-long-secure-password",
-            "organization_name": "Watch Research",
+            "organization_name": f"Watch Research {email}",
         },
     )
     assert response.status_code == 201
@@ -80,6 +86,7 @@ def test_watchlists_require_customer_authentication(session):
     try:
         response = client.get("/api/v1/watchlists")
         assert response.status_code == 401
+        assert client.get("/api/v1/watchlists/alerts?year=2026").status_code == 401
     finally:
         app.dependency_overrides.clear()
 
@@ -126,7 +133,7 @@ def test_customer_can_add_list_and_remove_state_watchlist(session):
         app.dependency_overrides.clear()
 
 
-def test_watchlist_alerts_filter_deterministic_fiscal_watch_events(session):
+def test_inbox_persists_fiscal_watch_and_lifecycle_events_idempotently(session):
     seed_states(session)
     states = list(session.scalars(select(State).where(State.is_fct.is_(False)).order_by(State.name)))
     assert len(states) >= 2
@@ -139,28 +146,110 @@ def test_watchlist_alerts_filter_deterministic_fiscal_watch_events(session):
     _allocation(session, source, february, watched_state, "40.00")
     _allocation(session, source, january, unwatched_state, "100.00")
     _allocation(session, source, february, unwatched_state, "20.00")
+    publish_fiscal_event(
+        session,
+        state_id=watched_state.id,
+        event_type="source_revised",
+        severity=FiscalEventSeverity.MATERIAL,
+        effective_at=datetime(2026, 2, 15, tzinfo=UTC),
+        detected_at=datetime(2026, 2, 16, tzinfo=UTC),
+        evidence_status=EvidenceStatus.VERIFIED,
+        evidence_ids=["source-sha-1", "source-sha-2"],
+        explanation="A revised official source was retained without rewriting prior evidence.",
+    )
+    publish_fiscal_event(
+        session,
+        state_id=unwatched_state.id,
+        event_type="source_revised",
+        severity=FiscalEventSeverity.MATERIAL,
+        effective_at=datetime(2026, 2, 15, tzinfo=UTC),
+        detected_at=datetime(2026, 2, 16, tzinfo=UTC),
+        evidence_status=EvidenceStatus.VERIFIED,
+        evidence_ids=["other-source"],
+        explanation="This event belongs to an unwatched state.",
+    )
     session.commit()
 
     client = _client(session)
     try:
         token = _register(client)
         headers = _authorization(token)
-        created = client.post(
-            "/api/v1/watchlists",
-            headers=headers,
-            json={"state_code": watched_state.code},
+        assert (
+            client.post(
+                "/api/v1/watchlists",
+                headers=headers,
+                json={"state_code": watched_state.code},
+            ).status_code
+            == 201
         )
-        assert created.status_code == 201
 
-        response = client.get("/api/v1/watchlists/alerts?year=2026", headers=headers)
-        assert response.status_code == 200
-        body = response.json()
+        first = client.get("/api/v1/watchlists/alerts?year=2026", headers=headers)
+        assert first.status_code == 200
+        body = first.json()
         assert body["watchlist_count"] == 1
-        assert body["alert_count"] == 1
-        assert body["alerts"][0]["state_code"] == watched_state.code
-        assert body["alerts"][0]["kind"] == "large_monthly_move"
-        assert body["alerts"][0]["change_pct"] == -60.0
-        assert body["alerts"][0]["event_key"].endswith(":large_monthly_move")
-        assert "not credit ratings" in body["note"]
+        assert body["alert_count"] == 2
+        assert body["unread_count"] == 2
+        assert {item["source_kind"] for item in body["alerts"]} == {
+            "fiscal_watch",
+            "fiscal_event",
+        }
+        assert {item["state_code"] for item in body["alerts"]} == {watched_state.code}
+        lifecycle = next(item for item in body["alerts"] if item["source_kind"] == "fiscal_event")
+        assert lifecycle["event_type"] == "source_revised"
+        assert lifecycle["evidence_ids"] == ["source-sha-1", "source-sha-2"]
+        assert lifecycle["is_read"] is False
+
+        second = client.get("/api/v1/watchlists/alerts?year=2026", headers=headers)
+        assert second.status_code == 200
+        assert second.json()["alert_count"] == 2
+        assert len(session.scalars(select(CustomerAlert)).all()) == 2
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_customer_can_mark_one_or_all_alerts_read_without_cross_account_access(session):
+    seed_states(session)
+    state = session.scalars(select(State).where(State.is_fct.is_(False)).order_by(State.name)).first()
+    assert state is not None
+    source = _source(session)
+    january = _period(session, 1)
+    february = _period(session, 2)
+    _allocation(session, source, january, state, "100.00")
+    _allocation(session, source, february, state, "40.00")
+    publish_fiscal_event(
+        session,
+        state_id=state.id,
+        event_type="fiscal_state_changed",
+        severity=FiscalEventSeverity.NOTABLE,
+        effective_at=datetime(2026, 2, 20, tzinfo=UTC),
+        detected_at=datetime(2026, 2, 20, tzinfo=UTC),
+        evidence_status=EvidenceStatus.VERIFIED,
+        evidence_ids=["GFS-NG-TEST"],
+        explanation="The published Fiscal State changed after governed evidence was updated.",
+    )
+    session.commit()
+
+    client = _client(session)
+    try:
+        owner = _authorization(_register(client, email="owner@example.com"))
+        other = _authorization(_register(client, email="other@example.com"))
+        assert client.post(
+            "/api/v1/watchlists", headers=owner, json={"state_code": state.code}
+        ).status_code == 201
+
+        inbox = client.get("/api/v1/watchlists/alerts?year=2026", headers=owner).json()
+        assert inbox["unread_count"] == 2
+        first_id = inbox["alerts"][0]["id"]
+
+        assert client.post(f"/api/v1/watchlists/alerts/{first_id}/read", headers=other).status_code == 404
+        assert client.post(f"/api/v1/watchlists/alerts/{first_id}/read", headers=owner).status_code == 204
+        after_one = client.get("/api/v1/watchlists/alerts?year=2026", headers=owner).json()
+        assert after_one["unread_count"] == 1
+        assert sum(item["is_read"] for item in after_one["alerts"]) == 1
+
+        assert client.post("/api/v1/watchlists/alerts/read-all?year=2026", headers=owner).status_code == 204
+        after_all = client.get("/api/v1/watchlists/alerts?year=2026", headers=owner).json()
+        assert after_all["unread_count"] == 0
+        assert all(item["is_read"] for item in after_all["alerts"])
     finally:
         app.dependency_overrides.clear()
