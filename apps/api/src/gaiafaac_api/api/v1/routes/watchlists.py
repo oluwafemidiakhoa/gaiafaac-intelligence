@@ -10,6 +10,8 @@ from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.services.watchlists import (
     add_watchlist,
     list_watchlists,
+    mark_alert_read,
+    mark_all_alerts_read,
     remove_watchlist,
     watchlist_alerts,
 )
@@ -58,3 +60,25 @@ def get_watchlist_alerts(
 ) -> WatchlistAlertsResponse:
     resolved_year = year if year is not None else datetime.now(UTC).year
     return watchlist_alerts(session, user, resolved_year)
+
+
+@router.post("/alerts/{alert_id}/read", status_code=status.HTTP_204_NO_CONTENT)
+def read_watchlist_alert(
+    alert_id: uuid.UUID,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> Response:
+    if not mark_alert_read(session, user, alert_id):
+        raise HTTPException(status_code=404, detail="Alert not found.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/alerts/read-all", status_code=status.HTTP_204_NO_CONTENT)
+def read_all_watchlist_alerts(
+    session: DatabaseSession,
+    user: CurrentCustomer,
+    year: Annotated[int | None, Query(ge=2000, le=2100)] = None,
+) -> Response:
+    resolved_year = year if year is not None else datetime.now(UTC).year
+    mark_all_alerts_read(session, user, resolved_year)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
