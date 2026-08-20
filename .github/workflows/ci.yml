@@ -15,6 +15,50 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
 
+  format-snapshot:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+      - run: npm ci
+      - run: python -m pip install -e "apps/api[dev,extraction]"
+      - run: npm run format:write
+      - run: python -m ruff format apps/api
+      - name: Collect formatted files
+        run: |
+          mkdir -p /tmp/formatted
+          cp --parents \
+            apps/web/src/app/live/page.test.tsx \
+            apps/web/src/app/live/page.tsx \
+            apps/web/src/app/pricing/page.tsx \
+            apps/web/src/app/terminal/page.tsx \
+            apps/web/src/components/gaia-terminal-search.test.tsx \
+            apps/web/src/components/gaia-terminal-search.tsx \
+            apps/web/src/components/institutional-webhooks-card.tsx \
+            apps/web/src/components/notification-preferences-card.tsx \
+            apps/web/src/components/watchlist-workspace.tsx \
+            apps/api/src/gaiafaac_api/customer_alert_delivery_cli.py \
+            apps/api/src/gaiafaac_api/services/alert_delivery.py \
+            apps/api/src/gaiafaac_api/services/institutional_webhooks.py \
+            apps/api/src/gaiafaac_api/services/watchlists.py \
+            apps/api/tests/test_institutional_webhooks.py \
+            apps/api/tests/test_watchlists.py \
+            /tmp/formatted/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-pr-source
+          path: /tmp/formatted
+          if-no-files-found: error
+
   web:
     runs-on: ubuntu-latest
     steps:
