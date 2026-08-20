@@ -1,145 +1,160 @@
 # Architecture
 
-GaiaFAAC Intelligence uses a deployable monorepo with a clear boundary between presentation, public API, durable storage, and offline processing.
+GaiaFAAC Intelligence is a deployable monorepo that separates source collection, evidence processing, publication authority, public reads, institutional workflows, and derived intelligence.
 
 ```text
-Browser -> Next.js web -> FastAPI /api/v1 -> PostgreSQL
-                              ^
-                              |
-                    reviewed pipeline outputs
-
-Source files -> collectors -> extractors -> transformers
-             -> validators -> explicit approval -> loaders
+                         +--------------------------+
+                         |  Official/public sources |
+                         +------------+-------------+
+                                      |
+                           collect/archive + SHA-256
+                                      |
+                                      v
++---------+      +--------------------+---------------------+
+| Browser | ---> | Next.js web / institutional interfaces  |
++---------+      +--------------------+---------------------+
+                                      |
+                                      v
+                         +------------+-------------+
+                         | FastAPI /api/v1          |
+                         | auth/read/review services|
+                         +------------+-------------+
+                                      |
+                                      v
+                              PostgreSQL 16
+                                      ^
+                                      |
+     extract -> normalize -> validate -> reconcile -> human review -> publication
+                                      |
+                         retained source evidence
 ```
 
-The Next.js app is a server-first App Router application. The FastAPI service owns validation, authorization, database access, publication policy, and future approved Ask Gaia functions. Data pipelines are deliberately separate from request handling so document processing cannot publish directly.
+The critical boundary is that **collection and extraction do not have publication authority**.
 
-Milestone 2 adds the durable data model and source registry. All monetary columns
-use fixed-precision `NUMERIC`; reported text and unit metadata remain alongside
-normalized values. Reporting periods retain revenue month, FAAC meeting date, and
-publication date separately.
+## Evidence lifecycle
 
-Source registration is intentionally a metadata-only boundary:
+The governed path is:
 
 ```text
-local source file -> SHA-256 + metadata -> source_documents
-                                       -> no extraction or publication
+source discovered
+  -> exact bytes retained
+  -> SHA-256/source metadata registered
+  -> deterministic extraction
+  -> unit/period/jurisdiction normalization
+  -> deterministic validation
+  -> reconciliation findings
+  -> review queue
+  -> explicit human approval
+  -> separate publication transition
+  -> immutable claims/proofs/states/certificates
+  -> public and commercial intelligence
 ```
 
-Demo records have `is_demo=true`, remain unpublished, and are protected by
-database checks that reject a demo/published combination.
+A source inconsistency remains an inconsistency. The system does not mutate observed values to make them reconcile.
 
-Milestone 3 implements the controlled ingestion path:
+## Core data domains
+
+### State FAAC evidence
+
+State allocations preserve source lineage, reporting-period semantics, gross/deduction/net values where reported, components, validation findings, review state and publication state.
+
+### National distribution evidence
+
+National evidence records distributable totals and reported components such as federal, states, local governments and derivation according to explicit source semantics. Reconciliation uses source-derived precision and preserves conflicts rather than forcing equality.
+
+### Local-government evidence
+
+OAGF Table IV extraction produces individual local-government observations tied to the retained OAGF source. The governed workflow fails closed when expected coverage or panel/table interpretation is incomplete. The current LGA ledger requires complete governed jurisdiction coverage before approval/publication and applies four-eyes publication controls.
+
+### IGR evidence
+
+State IGR is a separate fiscal domain with its own source, period, unit and publication semantics. It must not be merged into FAAC claims without explicit methodology.
+
+## Fiscal Ledger
+
+Published fiscal evidence can be materialized into an immutable ledger layer:
 
 ```text
-reviewed CSV
-  -> extension and size contract
-  -> SHA-256 source registration
-  -> exact unit-aware monetary parsing
-  -> explicit state alias normalization
-  -> pending allocation records
-  -> durable reconciliation findings
-  -> active reviewer/administrator decision
-  -> human-verified or rejected (still unpublished)
+published governed record
+  -> FiscalClaim
+  -> EvidenceVerification
+  -> EvidenceManifest
+  -> FiscalProof
+  -> FiscalState
+  -> FiscalEvent
+  -> FiscalCertificate
 ```
 
-Invalid rows become reviewable findings rather than silently corrected values.
-Approval re-runs validation to avoid approving stale results and writes an audit
-record. Administrative HTTP endpoints, document extraction from PDF/Excel,
-publication, dashboards, and analytics remain outside Milestone 3.
+Canonical hashing is deterministic. Decimal values remain decimal strings in canonical JSON; object ordering, Unicode and timezone handling must stay stable so historical proofs remain reproducible.
 
-Milestone 4 adds a demo-only read boundary:
+Reads must not silently mutate or recalculate historical immutable evidence objects.
+
+## Trust layer
+
+The trust layer adds explicit evidence quality and change history without replacing the source record:
 
 ```text
-Next.js Server Components
-  -> versioned FastAPI read endpoints
-  -> queries constrained to is_demo=true and is_published=false
-  -> labelled demo responses
+source registry
+  + claim revision/supersession
+  + explicit evidence conflict
+  + deterministic coverage/integrity
+  -> point-in-time Fiscal State
 ```
 
-The overview aggregates only the three synthetic seed rows and calls the result
-a demo-sample total. The state directory still lists all 37 jurisdictions; the
-34 without a demo allocation receive `null`, never zero or an inferred value.
-Internal source storage paths are not exposed. Pages render an explicit
-unavailable state when the API or seed is absent.
+Conflict detection must be based on retained claims and explicit scope, not an LLM narrative. A conflict is data, not an accusation.
 
-## Gaia Fiscal Ledger foundation
+## Institutional UX
 
-The Phase 1 ledger extends the publication boundary rather than replacing it:
+The web application exposes both public discovery and institutional evidence workflows. Current areas include state/FCT and LGA drill-down, source/evidence exploration, Fiscal Pulse, Fiscal Watch, Fiscal Proof, Fiscal State, certificates, events, Decision Packets, Fiscal Design, Gaia Analyst and account/commercial foundations.
 
-```text
-published StateAllocation + State + ReportingPeriod + SourceDocument
-  -> explicit ledger materialization service
-  -> immutable FiscalClaim + EvidenceVerification
-  -> canonical EvidenceManifest + FiscalProof
-  -> versioned FiscalState
-  -> /api/v1/proofs/{gaia_id}
-  -> /api/v1/jurisdictions/{code}/state
-```
+The intended experience is:
 
-Reads never materialize or mutate ledger objects. No migration backfills production
-records. An approved process must explicitly call the materialization services after
-the underlying allocation has been published. The original published and demo APIs,
-Fiscal Pulse, Fiscal Watch, Decision Packets, Gaia Analyst, Fiscal Design, and legacy
-Fiscal Proof endpoint remain compatible.
+- extremely simple jurisdiction/month discovery;
+- evidence status visible beside important numbers;
+- direct source and proof access;
+- missing/conflicted data rendered explicitly;
+- revision history visible rather than overwritten;
+- institutional workflows layered on top of the same governed data.
 
-Canonical hashing lives in `gaiafaac_api.ledger.canonical`. It preserves Decimal
-scale as JSON strings, normalizes Unicode to NFC, normalizes aware datetimes to UTC,
-sorts object keys, and rejects binary floating point. Browser verification implements
-the same canonical object ordering for proof manifests while preserving the existing
-Fiscal Design v1 `JSON.stringify(payload)` behavior.
+## Derived intelligence
 
-## Gaia Fiscal Ledger trust layer
+Derived services may calculate analytics, monitoring signals, comparisons, scenarios and grounded natural-language answers only from eligible governed data.
 
-Phase 2 remains inside the governed publication boundary:
+Derived intelligence must preserve the distinction between:
 
-```text
-approved source + published claim
-  -> versioned evidence-source registry record
-  -> optional immutable claim revision
-  -> optional explicit conflict + participants
-  -> deterministic coverage + Evidence Integrity
-  -> immutable Fiscal State v1.1
-  -> historical state and source-registry APIs
-```
+- observed source values;
+- deterministic derived metrics;
+- assumptions;
+- modeled/scenario values;
+- unavailable evidence.
 
-Trust calculations are pure `Decimal` functions configured in
-`gaiafaac_api.ledger.trust`. Conflict detection is not inferred from narrative or an
-LLM: a service must explicitly register claims that share jurisdiction, domain,
-period, and metric but have different retained values. Reads do not recalculate old
-states, so historical methodology and results remain reproducible.
+No analytic movement alone is evidence of corruption, misconduct, governance quality, credit quality or default risk.
 
-### Phase 2 assessment
+## Authorization boundaries
 
-- **Strengths retained:** exact money, distinct fiscal dates, source SHA-256 lineage,
-  human approval, deterministic services, and fail-closed missing data.
-- **Debt addressed:** deterministic coverage/integrity, immutable revision records,
-  explicit conflict participants, richer source metadata, and inclusive date history.
-- **Reusable foundation:** Phase 1 claims, manifests, proofs, states, canonical hashing,
-  and approval integration are extended rather than replaced.
-- **Remaining gaps:** conflict-resolution governance, historical backfill, expanded
-  evidence ingestion, and deterministic fiscal classification remain later work.
-- **Primary migration risk:** implying quality where evidence is absent. Component
-  scores therefore remain `insufficient_evidence` until their documented inputs exist;
-  the migration creates no synthetic registry, revision, conflict, or state records.
+Operational review/publication endpoints are protected by server-side authorization. Customer/commercial endpoints use their own session/API-key/entitlement controls. Authorization belongs in API/service code and must not rely on frontend hiding or middleware alone.
 
-## Institutional UX layer
+Four-eyes flows must prevent the same authorized actor from both approving and publishing the governed batch when that control applies.
 
-Phase 3 adds two immutable read models without changing Fiscal Proof or Fiscal State
-hash semantics:
+## Source authority and third-party data
 
-```text
-recorded source / revision / conflict / state transition
-  -> deterministic FiscalEvent
-  -> filterable institutional event stream
+Primary official evidence is preferred. Official secondary sources may corroborate or fill clearly labeled availability gaps. Third-party fiscal portals may be used for feature benchmarking, discovery or contextual comparison, but their figures do not enter the canonical ledger without independent source verification.
 
-published FiscalState + its proof IDs
-  -> immutable Fiscal Certificate manifest
-  -> HTML / print / JSON representations
-```
+## Database and integrity
 
-The web application reads these objects through Server Components. Jurisdiction pages
-link every available domain claim to its proof and render absent domains as
-`unavailable`. No public event or certificate mutation endpoint exists. Classification
-of financial movements remains Phase 4 work; Phase 3 emits evidence lifecycle events
-only.
+Money uses fixed-precision database types and Python `Decimal`. Production targets PostgreSQL. Database constraints, Pydantic contracts, service-layer invariants and frontend runtime schemas should agree on publication and evidence semantics.
+
+The test suite uses SQLite for many API tests, so PostgreSQL-specific precision, migration, locking and concurrency behavior requires additional production-like verification.
+
+## Scheduled operations
+
+GitHub Actions currently provide CI plus governed collection/revision-monitoring workflows. Scheduled collection may discover, archive, extract, validate and queue evidence, but human review remains the publication boundary.
+
+## Next architecture priorities
+
+1. Production PostgreSQL integration tests for monetary precision, migrations and publication invariants.
+2. Cross-level reconciliation where national/state/FCT/LGA source semantics are genuinely comparable.
+3. Unified search and evidence identity across jurisdictions, periods and domains.
+4. Durable notification/event delivery for source revisions, new publications, conflicts and material deterministic movements.
+5. Expanded fiscal domains (debt, expenditure, budgets, liabilities) only with the same source/review/proof contract.
+6. Stable institutional APIs, exports and saved-workspace primitives.

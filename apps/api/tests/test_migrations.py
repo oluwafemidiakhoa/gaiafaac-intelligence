@@ -8,6 +8,10 @@ from gaiafaac_api.config import get_settings
 
 EXPECTED_TABLES = {
     "audit_logs",
+    "customer_alert_deliveries",
+    "customer_alerts",
+    "customer_notification_preferences",
+    "customer_watchlists",
     "evidence_manifests",
     "evidence_conflict_claims",
     "evidence_conflicts",
@@ -27,6 +31,9 @@ EXPECTED_TABLES = {
     "oagf_discovery_records",
     "oagf_revision_cases",
     "oagf_sync_runs",
+    "organization_webhook_attempts",
+    "organization_webhook_deliveries",
+    "organization_webhook_endpoints",
     "organizations",
     "reporting_periods",
     "source_documents",

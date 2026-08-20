@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
+import { InstitutionalWebhooksCard } from '@/components/institutional-webhooks-card'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -489,6 +490,8 @@ export default function AccountPage() {
           </CardContent>
         </Card>
       ) : null}
+
+      {profile.api_access && canAdmin ? <InstitutionalWebhooksCard /> : null}
     </div>
   )
 }

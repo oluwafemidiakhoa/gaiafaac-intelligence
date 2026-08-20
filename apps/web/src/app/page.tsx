@@ -93,9 +93,10 @@ export default async function Home() {
                 Nigeria’s fiscal numbers, with the evidence attached.
               </h1>
               <p className="mt-7 max-w-3xl text-lg leading-8 text-pretty text-emerald-50/75">
-                GaiaFAAC is a research ledger for public-finance evidence:
-                sourced, reconciled, human-reviewed, version-aware and designed
-                so a serious analyst can trace the number back to the document.
+                GaiaFAAC is a fiscal intelligence operating system for public
+                evidence: sourced, reconciled, human-reviewed, version-aware and
+                designed so a serious analyst can trace the number back to the
+                document.
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <Button
@@ -103,8 +104,8 @@ export default async function Home() {
                   size="lg"
                   className="bg-white text-emerald-950 hover:bg-emerald-50"
                 >
-                  <Link href="/live">
-                    Open research workspace
+                  <Link href="/terminal">
+                    Open Gaia Terminal
                     <ArrowRight className="size-4" aria-hidden="true" />
                   </Link>
                 </Button>
@@ -229,7 +230,7 @@ export default async function Home() {
                 </CardDescription>
                 <div className="flex flex-wrap gap-2 pt-4">
                   <Button asChild size="sm">
-                    <Link href="/account#exports">Export CSV / XLSX</Link>
+                    <Link href="/terminal">Open Gaia Terminal</Link>
                   </Button>
                   <Button asChild size="sm" variant="outline">
                     <Link href="/compare">

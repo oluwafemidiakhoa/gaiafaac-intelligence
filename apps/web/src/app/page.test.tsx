@@ -43,14 +43,15 @@ describe('Home', () => {
     expect(screen.getAllByText('₦5,400.00').length).toBeGreaterThan(0)
     expect(screen.queryByText(/DEMO DATA/i)).not.toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Open research workspace/i }),
-    ).toHaveAttribute('href', '/live')
+      screen.getAllByRole('link', { name: /Open Gaia Terminal/i })[0],
+    ).toHaveAttribute('href', '/terminal')
     expect(
       screen.getByRole('link', { name: /Inspect the evidence/i }),
     ).toHaveAttribute('href', '/sources')
-    expect(
-      screen.getByRole('link', { name: /Export CSV \/ XLSX/i }),
-    ).toHaveAttribute('href', '/account#exports')
+    expect(screen.getByRole('link', { name: /Export data/i })).toHaveAttribute(
+      'href',
+      '/account#exports',
+    )
     expect(
       screen.getAllByRole('link', { name: /Verify a manifest/i })[0],
     ).toHaveAttribute('href', '/fiscal-design/verify')
