@@ -3,9 +3,19 @@ import Link from 'next/link'
 import { DataUnavailable } from '@/components/data-unavailable'
 import { PageHeader } from '@/components/page-header'
 import { StatusPill } from '@/components/status-pill'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { formatDate, formatNaira } from '@/lib/format'
-import { getPublishedLgasForState } from '@/lib/published-api'
+import {
+  getPublishedLgasForState,
+  getPublishedOverview,
+} from '@/lib/published-api'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,9 +26,18 @@ export default async function LocalGovernmentsPage({
 }) {
   const { code } = await params
   const stateCode = code.toUpperCase()
-  const result = await getPublishedLgasForState(stateCode)
+  const [result, overviewResult] = await Promise.all([
+    getPublishedLgasForState(stateCode),
+    getPublishedOverview(),
+  ])
 
   if (!result.data) {
+    const publishedOverview = overviewResult.data
+    const allocation =
+      publishedOverview?.allocations.find(
+        (item) => item.state_code === stateCode,
+      ) ?? null
+
     return (
       <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
         <PageHeader
@@ -34,6 +53,64 @@ export default async function LocalGovernmentsPage({
             }
           />
         </div>
+
+        {publishedOverview && allocation ? (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Available state evidence</CardTitle>
+              <CardDescription>
+                Verified state-level FAAC evidence is available while the
+                local-government Table IV evidence remains unpublished.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-muted-foreground text-sm">
+                    Latest verified period
+                  </p>
+                  <p className="mt-1 font-medium">
+                    {formatDate(publishedOverview.period.revenue_month)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-sm">
+                    State FAAC net allocation
+                  </p>
+                  <p className="mt-1 font-mono text-lg font-semibold">
+                    {formatNaira(allocation.net_allocation)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-muted-foreground text-sm leading-6">
+                State-level evidence does not substitute for missing LGA
+                evidence. No local-government value has been inferred from the
+                state total.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild>
+                  <Link href={`/states/${allocation.state_slug}`}>
+                    Open state evidence
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/fiscal-proof/${allocation.state_slug}/${publishedOverview.period.revenue_month}`}
+                  >
+                    Verify allocation
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/decision-packets/${allocation.state_slug}?year=${publishedOverview.period.revenue_month.slice(0, 4)}`}
+                  >
+                    Decision Packet
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     )
   }
