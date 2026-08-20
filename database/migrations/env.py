@@ -9,9 +9,11 @@ from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.base import Base
 from gaiafaac_api.database import (  # noqa: F401
     commercial_models,
+    customer_models,
     igr_models,
     ledger_models,
     models,
+    national_evidence_models,
     oagf_revision_models,
 )
 
