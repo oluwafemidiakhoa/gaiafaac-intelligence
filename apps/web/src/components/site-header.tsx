@@ -11,7 +11,7 @@ const navigation = [
   { href: '/live', label: 'Live' },
   { href: '/fiscal-pulse', label: 'Intelligence' },
   { href: '/sources', label: 'Evidence' },
-  { href: '/decision-packets', label: 'Workspace' },
+  { href: '/watchlist', label: 'Workspace' },
 ]
 
 export async function SiteHeader() {
