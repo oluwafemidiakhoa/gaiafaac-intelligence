@@ -66,7 +66,9 @@ describe('GaiaTerminalSearch', () => {
 
     expect(screen.getByText('No governed result found')).toBeVisible()
     expect(
-      screen.getByText(/does not invent a jurisdiction, workflow or fiscal value/i),
+      screen.getByText(
+        /does not invent a jurisdiction, workflow or fiscal value/i,
+      ),
     ).toBeVisible()
   })
 })
