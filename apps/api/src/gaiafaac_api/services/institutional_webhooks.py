@@ -4,7 +4,6 @@ import hashlib
 import hmac
 import http.client
 import ipaddress
-import json
 import secrets
 import socket
 import ssl
@@ -61,7 +60,7 @@ def _utc(value: datetime) -> datetime:
 
 
 def webhook_configuration_ready(settings: Settings) -> bool:
-    return bool(settings.institutional_webhook_master_secret)
+    return len(settings.institutional_webhook_master_secret) >= 32
 
 
 def webhook_delivery_ready(settings: Settings) -> bool:
@@ -85,11 +84,11 @@ def validate_webhook_url(value: str) -> str:
     if hostname == "localhost" or hostname.endswith(".localhost"):
         raise ValueError("Webhook endpoint must use a globally routable hostname.")
     try:
-        literal = ipaddress.ip_address(hostname)
+        ipaddress.ip_address(hostname)
     except ValueError:
-        literal = None
-    if literal is not None and not literal.is_global:
-        raise ValueError("Webhook endpoint IP address is not globally routable.")
+        pass
+    else:
+        raise ValueError("Webhook endpoint must use a hostname, not an IP literal.")
     _resolve_public_addresses(hostname)
     return raw
 
@@ -123,7 +122,7 @@ def derive_signing_secret(
     version: int,
 ) -> str:
     master = settings.institutional_webhook_master_secret
-    if not master:
+    if len(master) < 32:
         raise ValueError("Institutional webhook signing is not configured.")
     seed = f"{endpoint_id}:{salt}:{version}".encode()
     digest = hmac.new(master.encode(), seed, hashlib.sha256).hexdigest()
@@ -179,6 +178,7 @@ def create_endpoint(
         jurisdiction_codes=codes,
         secret_salt=secrets.token_hex(32),
         secret_version=1,
+        created_at=datetime.now(UTC),
     )
     session.add(endpoint)
     session.commit()
@@ -197,6 +197,8 @@ def rotate_endpoint_secret(
     settings: Settings,
     endpoint: OrganizationWebhookEndpoint,
 ) -> str:
+    if not webhook_configuration_ready(settings):
+        raise ValueError("Institutional webhook signing is not configured.")
     endpoint.secret_version += 1
     pending = list(
         session.scalars(
@@ -403,23 +405,21 @@ def run_webhook_delivery(
         )
     )
     created = delivered = retrying = dead_letter = deferred = 0
-    checked_orgs: set[uuid.UUID] = set()
+    api_access_by_org: dict[uuid.UUID, bool] = {}
     eligible_endpoints: list[OrganizationWebhookEndpoint] = []
     for endpoint in endpoints:
-        if endpoint.organization_id not in checked_orgs:
+        api_access = api_access_by_org.get(endpoint.organization_id)
+        if api_access is None:
             _code, entitlements, _subscription = current_plan(session, endpoint.organization_id)
-            checked_orgs.add(endpoint.organization_id)
-            if not entitlements.api_access:
-                deferred += _defer_organization_deliveries(
-                    session,
-                    endpoint.organization_id,
-                    "Organization plan no longer includes institutional webhook delivery.",
-                )
-                continue
-        else:
-            _code, entitlements, _subscription = current_plan(session, endpoint.organization_id)
-            if not entitlements.api_access:
-                continue
+            api_access = entitlements.api_access
+            api_access_by_org[endpoint.organization_id] = api_access
+        if not api_access:
+            deferred += _defer_organization_deliveries(
+                session,
+                endpoint.organization_id,
+                "Organization plan no longer includes institutional webhook delivery.",
+            )
+            continue
         eligible_endpoints.append(endpoint)
         created += enqueue_endpoint_events(session, endpoint)
 
@@ -448,6 +448,13 @@ def run_webhook_delivery(
                 delivery.next_attempt_at = None
                 deferred += 1
                 session.commit()
+            continue
+        if delivery.attempt_count >= max_attempts:
+            delivery.status = "dead_letter"
+            delivery.next_attempt_at = None
+            delivery.last_error = "Webhook delivery attempt limit reached."
+            dead_letter += 1
+            session.commit()
             continue
         if not webhook_delivery_ready(settings):
             delivery.status = "deferred"
