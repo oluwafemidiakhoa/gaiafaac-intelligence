@@ -6,7 +6,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
+from gaiafaac_api.services.alert_delivery import (
+    get_notification_preference,
+    update_notification_preference,
+)
 from gaiafaac_api.services.watchlists import (
     add_watchlist,
     list_watchlists,
@@ -16,6 +21,8 @@ from gaiafaac_api.services.watchlists import (
     watchlist_alerts,
 )
 from gaiafaac_api.watchlist_schemas import (
+    NotificationPreferenceResponse,
+    NotificationPreferenceUpdate,
     WatchlistAlertsResponse,
     WatchlistCreateRequest,
     WatchlistItem,
@@ -82,3 +89,20 @@ def read_all_watchlist_alerts(
     resolved_year = year if year is not None else datetime.now(UTC).year
     mark_all_alerts_read(session, user, resolved_year)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/preferences", response_model=NotificationPreferenceResponse)
+def get_watchlist_preferences(
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> NotificationPreferenceResponse:
+    return get_notification_preference(session, user, get_settings())
+
+
+@router.post("/preferences", response_model=NotificationPreferenceResponse)
+def set_watchlist_preferences(
+    payload: NotificationPreferenceUpdate,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> NotificationPreferenceResponse:
+    return update_notification_preference(session, user, payload, get_settings())
