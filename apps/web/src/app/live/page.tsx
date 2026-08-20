@@ -171,7 +171,9 @@ export default async function LivePage() {
           <div className="mt-8 grid gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-white/12 bg-white/5 p-4">
               <p className="text-xs text-white/45">Source organization</p>
-              <p className="mt-2 font-medium">{data.source.source_organization}</p>
+              <p className="mt-2 font-medium">
+                {data.source.source_organization}
+              </p>
               <p className="mt-1 truncate font-mono text-xs text-white/50">
                 {data.source.original_filename}
               </p>
@@ -187,7 +189,9 @@ export default async function LivePage() {
                   {national.jurisdiction_reconciliation.status}
                 </span>
               ) : (
-                <p className="mt-2 font-medium text-white/70">Awaiting evidence</p>
+                <p className="mt-2 font-medium text-white/70">
+                  Awaiting evidence
+                </p>
               )}
             </div>
             <div className="rounded-xl border border-white/12 bg-white/5 p-4">
@@ -283,7 +287,8 @@ export default async function LivePage() {
               <CardHeader>
                 <CardTitle>Biggest published movements</CardTitle>
                 <CardDescription>
-                  Deterministic period-over-period changes from governed records.
+                  Deterministic period-over-period changes from governed
+                  records.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -438,7 +443,7 @@ export default async function LivePage() {
           </CardContent>
         </Card>
 
-        <Card className="mt-5 bg-muted/20">
+        <Card className="bg-muted/20 mt-5">
           <CardHeader>
             <CardTitle className="text-base">Evidence provenance</CardTitle>
             <CardDescription>
