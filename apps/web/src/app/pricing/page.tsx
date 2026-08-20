@@ -1,4 +1,10 @@
-import { Building2, Check, DatabaseZap, ShieldCheck, Sparkles } from 'lucide-react'
+import {
+  Building2,
+  Check,
+  DatabaseZap,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -149,10 +155,11 @@ export default function PricingPage() {
           <div>
             <p className="font-medium">Two commercial motions</p>
             <p className="text-muted-foreground mt-1 max-w-4xl text-sm leading-6">
-              Self-service plans match GaiaFAAC&apos;s current billing and entitlement
-              system. Institution-wide use, redistribution, higher-volume data
-              delivery and dedicated evidence workspaces are contracted
-              separately so scope, support and permitted use are explicit.
+              Self-service plans match GaiaFAAC&apos;s current billing and
+              entitlement system. Institution-wide use, redistribution,
+              higher-volume data delivery and dedicated evidence workspaces are
+              contracted separately so scope, support and permitted use are
+              explicit.
             </p>
           </div>
         </div>
@@ -265,7 +272,9 @@ export default function PricingPage() {
 
         <div className="border-border bg-background mt-6 flex flex-wrap items-center justify-between gap-5 rounded-xl border p-5">
           <div>
-            <p className="font-semibold">Institutional scope is contract-priced</p>
+            <p className="font-semibold">
+              Institutional scope is contract-priced
+            </p>
             <p className="text-muted-foreground mt-1 max-w-3xl text-sm leading-6">
               GaiaFAAC does not publish fictional enterprise prices before the
               required data coverage, permitted use, delivery volume and support
