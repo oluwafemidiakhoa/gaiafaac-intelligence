@@ -262,7 +262,7 @@ export function WatchlistWorkspace({
             <CardTitle className="pt-3">Monitoring contract</CardTitle>
             <CardDescription>
               Allocation movements come from Fiscal Watch. Source revisions,
-              conflicts and Fiscal State changes come from Gaia's immutable
+              conflicts and Fiscal State changes come from Gaia&apos;s immutable
               event ledger.
             </CardDescription>
           </CardHeader>
