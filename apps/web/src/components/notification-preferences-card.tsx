@@ -28,7 +28,9 @@ async function errorMessage(response: Response) {
 }
 
 export function NotificationPreferencesCard() {
-  const [preference, setPreference] = useState<NotificationPreference | null>(null)
+  const [preference, setPreference] = useState<NotificationPreference | null>(
+    null,
+  )
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -91,11 +93,14 @@ export function NotificationPreferencesCard() {
             <div>
               <CardTitle>Alert delivery</CardTitle>
               <CardDescription className="mt-1 max-w-3xl">
-                Inbox alerts are always governed by your Watchlist. Email is a separate, explicit opt-in and can be disabled at any time.
+                Inbox alerts are always governed by your Watchlist. Email is a
+                separate, explicit opt-in and can be disabled at any time.
               </CardDescription>
             </div>
           </div>
-          <StatusPill tone={preference.delivery_available ? 'success' : 'neutral'}>
+          <StatusPill
+            tone={preference.delivery_available ? 'success' : 'neutral'}
+          >
             {preference.delivery_available ? 'Email operational' : 'Inbox only'}
           </StatusPill>
         </div>
@@ -107,15 +112,21 @@ export function NotificationPreferencesCard() {
             className="mt-1 size-4"
             checked={preference.email_enabled}
             onChange={(event) =>
-              setPreference({ ...preference, email_enabled: event.target.checked })
+              setPreference({
+                ...preference,
+                email_enabled: event.target.checked,
+              })
             }
           />
           <span>
             <span className="flex items-center gap-2 font-medium">
-              <Mail className="size-4" aria-hidden="true" /> Email my governed alerts
+              <Mail className="size-4" aria-hidden="true" /> Email my governed
+              alerts
             </span>
             <span className="text-muted-foreground mt-1 block text-sm leading-6">
-              Send alerts to the email address on this GaiaFAAC account. Delivery occurs only when the platform operator has enabled the outbound channel.
+              Send alerts to the email address on this GaiaFAAC account.
+              Delivery occurs only when the platform operator has enabled the
+              outbound channel.
             </span>
           </span>
         </label>
@@ -136,7 +147,8 @@ export function NotificationPreferencesCard() {
             <span>
               <span className="font-medium">Allocation signals</span>
               <span className="text-muted-foreground mt-1 block text-sm leading-6">
-                Large monthly moves, negative net allocations and high deduction burden.
+                Large monthly moves, negative net allocations and high deduction
+                burden.
               </span>
             </span>
           </label>
@@ -155,22 +167,30 @@ export function NotificationPreferencesCard() {
             <span>
               <span className="font-medium">Evidence lifecycle</span>
               <span className="text-muted-foreground mt-1 block text-sm leading-6">
-                Source revisions, superseded claims, evidence changes, conflicts and Fiscal State changes.
+                Source revisions, superseded claims, evidence changes, conflicts
+                and Fiscal State changes.
               </span>
             </span>
           </label>
         </div>
 
         <div className="bg-muted/25 flex items-start gap-3 rounded-lg p-4 text-sm">
-          <ShieldCheck className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <p className="text-muted-foreground leading-6">{preference.delivery_note}</p>
+          <ShieldCheck
+            className="text-primary mt-0.5 size-4 shrink-0"
+            aria-hidden="true"
+          />
+          <p className="text-muted-foreground leading-6">
+            {preference.delivery_note}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <Button onClick={() => save(preference)} disabled={saving}>
             {saving ? 'Saving…' : 'Save alert delivery'}
           </Button>
-          {message ? <span className="text-muted-foreground text-sm">{message}</span> : null}
+          {message ? (
+            <span className="text-muted-foreground text-sm">{message}</span>
+          ) : null}
         </div>
       </CardContent>
     </Card>
