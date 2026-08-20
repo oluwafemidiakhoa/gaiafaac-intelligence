@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 
 from gaiafaac_api.database import (  # noqa: F401
     commercial_models,
+    customer_models,
     igr_models,
     ledger_models,
     models,
