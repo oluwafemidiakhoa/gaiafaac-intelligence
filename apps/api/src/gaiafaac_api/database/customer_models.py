@@ -2,8 +2,19 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, UniqueConstraint, Uuid, func
+from sqlalchemy import (
+    JSON,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    UniqueConstraint,
+    Uuid,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from gaiafaac_api.database.base import Base
@@ -92,6 +103,43 @@ class CustomerWatchlist(Base):
     state_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("states.state_id", ondelete="RESTRICT"), nullable=False, index=True
     )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class CustomerAlert(Base):
+    """Persistent notification snapshot pointing back to governed fiscal evidence."""
+
+    __tablename__ = "customer_alerts"
+    __table_args__ = (
+        UniqueConstraint("user_id", "event_key", name="uq_customer_alert_user_event"),
+        CheckConstraint(
+            "source_kind IN ('fiscal_watch', 'fiscal_event', 'publication')",
+            name="ck_customer_alert_source_kind",
+        ),
+        Index("ix_customer_alerts_user_occurred", "user_id", "occurred_at"),
+        Index("ix_customer_alerts_user_read", "user_id", "read_at"),
+        Index("ix_customer_alerts_state_occurred", "state_id", "occurred_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    state_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("states.state_id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    event_key: Mapped[str] = mapped_column(String(240), nullable=False)
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_event_id: Mapped[str | None] = mapped_column(
+        ForeignKey("fiscal_events.event_id", ondelete="RESTRICT"), nullable=True
+    )
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    severity: Mapped[str] = mapped_column(String(24), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
