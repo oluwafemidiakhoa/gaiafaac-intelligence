@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import smtplib
-import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from email.message import EmailMessage
@@ -169,6 +168,8 @@ def deliver_customer_alerts(
         )
     )
     sent = failed = deferred = skipped_sent = alerts_eligible = 0
+    year_start = datetime(year, 1, 1, tzinfo=UTC)
+    year_end = datetime(year + 1, 1, 1, tzinfo=UTC)
 
     for preference in preferences:
         user = session.get(User, preference.user_id)
@@ -178,7 +179,11 @@ def deliver_customer_alerts(
         alerts = list(
             session.scalars(
                 select(CustomerAlert)
-                .where(CustomerAlert.user_id == user.id)
+                .where(
+                    CustomerAlert.user_id == user.id,
+                    CustomerAlert.occurred_at >= year_start,
+                    CustomerAlert.occurred_at < year_end,
+                )
                 .order_by(CustomerAlert.occurred_at, CustomerAlert.created_at)
             )
         )
@@ -210,7 +215,9 @@ def deliver_customer_alerts(
             now = datetime.now(UTC)
             if not delivery_available(settings):
                 delivery.status = "deferred"
-                delivery.last_error = "Customer alert email delivery is disabled or SMTP is incomplete."
+                delivery.last_error = (
+                    "Customer alert email delivery is disabled or SMTP is incomplete."
+                )
                 delivery.last_attempt_at = now
                 deferred += 1
                 session.commit()
