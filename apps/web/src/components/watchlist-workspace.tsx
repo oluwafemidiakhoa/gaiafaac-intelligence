@@ -64,7 +64,9 @@ export function WatchlistWorkspace({
 }) {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([])
   const [alerts, setAlerts] = useState<AlertsResponse | null>(null)
-  const [selectedCode, setSelectedCode] = useState(availableStates[0]?.state_code ?? '')
+  const [selectedCode, setSelectedCode] = useState(
+    availableStates[0]?.state_code ?? '',
+  )
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const year = new Date().getUTCFullYear()
@@ -74,8 +76,16 @@ export function WatchlistWorkspace({
     return availableStates.filter((state) => !watched.has(state.state_code))
   }, [availableStates, watchlist])
 
+  const effectiveSelectedCode = selectableStates.some(
+    (state) => state.state_code === selectedCode,
+  )
+    ? selectedCode
+    : (selectableStates[0]?.state_code ?? '')
+
   async function load() {
-    const response = await fetch('/api/customer/watchlists', { cache: 'no-store' })
+    const response = await fetch('/api/customer/watchlists', {
+      cache: 'no-store',
+    })
     if (response.status === 401) {
       window.location.assign('/account/login')
       return
@@ -89,9 +99,10 @@ export function WatchlistWorkspace({
     const nextWatchlist = (await response.json()) as WatchlistItem[]
     setWatchlist(nextWatchlist)
 
-    const alertsResponse = await fetch(`/api/customer/watchlists/alerts?year=${year}`, {
-      cache: 'no-store',
-    })
+    const alertsResponse = await fetch(
+      `/api/customer/watchlists/alerts?year=${year}`,
+      { cache: 'no-store' },
+    )
     if (alertsResponse.ok) {
       setAlerts((await alertsResponse.json()) as AlertsResponse)
     } else {
@@ -101,23 +112,19 @@ export function WatchlistWorkspace({
   }
 
   useEffect(() => {
+    // Initial Watchlist hydration intentionally updates local UI state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => {
-    if (!selectableStates.some((state) => state.state_code === selectedCode)) {
-      setSelectedCode(selectableStates[0]?.state_code ?? '')
-    }
-  }, [selectableStates, selectedCode])
-
   async function addState() {
-    if (!selectedCode) return
+    if (!effectiveSelectedCode) return
     setMessage('')
     const response = await fetch('/api/customer/watchlists', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state_code: selectedCode }),
+      body: JSON.stringify({ state_code: effectiveSelectedCode }),
     })
     if (!response.ok) {
       setMessage(await errorMessage(response))
@@ -139,13 +146,19 @@ export function WatchlistWorkspace({
   }
 
   if (loading) {
-    return <p className="text-muted-foreground mt-8 text-sm">Loading Watchlist…</p>
+    return (
+      <p className="text-muted-foreground mt-8 text-sm">
+        Loading Watchlist…
+      </p>
+    )
   }
 
   return (
     <div className="mt-9 space-y-8">
       {message ? (
-        <p className="border-border bg-muted/30 rounded-lg border p-3 text-sm">{message}</p>
+        <p className="border-border bg-muted/30 rounded-lg border p-3 text-sm">
+          {message}
+        </p>
       ) : null}
 
       <section className="grid gap-4 lg:grid-cols-[1fr_20rem]">
@@ -155,7 +168,8 @@ export function WatchlistWorkspace({
               <div>
                 <CardTitle>Follow a jurisdiction</CardTitle>
                 <CardDescription className="mt-1">
-                  Save the states you need to monitor. Gaia filters governed Fiscal Watch signals to your list.
+                  Save the states you need to monitor. Gaia filters governed
+                  Fiscal Watch signals to your list.
                 </CardDescription>
               </div>
               <StatusPill tone="success">Evidence-backed</StatusPill>
@@ -164,14 +178,16 @@ export function WatchlistWorkspace({
           <CardContent>
             <div className="flex flex-col gap-3 sm:flex-row">
               <select
-                value={selectedCode}
+                value={effectiveSelectedCode}
                 onChange={(event) => setSelectedCode(event.target.value)}
                 disabled={selectableStates.length === 0}
                 className="border-input bg-background h-10 min-w-0 flex-1 rounded-md border px-3 text-sm"
                 aria-label="Jurisdiction to watch"
               >
                 {selectableStates.length === 0 ? (
-                  <option value="">All available jurisdictions are watched</option>
+                  <option value="">
+                    All available jurisdictions are watched
+                  </option>
                 ) : (
                   selectableStates.map((state) => (
                     <option key={state.state_code} value={state.state_code}>
@@ -180,7 +196,7 @@ export function WatchlistWorkspace({
                   ))
                 )}
               </select>
-              <Button onClick={addState} disabled={!selectedCode}>
+              <Button onClick={addState} disabled={!effectiveSelectedCode}>
                 <Plus className="size-4" aria-hidden="true" />
                 Watch state
               </Button>
@@ -193,7 +209,8 @@ export function WatchlistWorkspace({
             <Radar className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">Monitoring contract</CardTitle>
             <CardDescription>
-              Current alerts cover large monthly moves, negative net allocations and high deduction burden only.
+              Current alerts cover large monthly moves, negative net allocations
+              and high deduction burden only.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -205,9 +222,14 @@ export function WatchlistWorkspace({
             <p className="text-primary font-mono text-xs font-semibold tracking-[0.16em] uppercase">
               My Watchlist
             </p>
-            <h2 className="mt-2 text-2xl font-semibold">{watchlist.length} jurisdictions followed</h2>
+            <h2 className="mt-2 text-2xl font-semibold">
+              {watchlist.length} jurisdictions followed
+            </h2>
           </div>
-          <Link href="/decision-packets" className="text-primary text-sm font-medium hover:underline">
+          <Link
+            href="/decision-packets"
+            className="text-primary text-sm font-medium hover:underline"
+          >
             Create Decision Packet →
           </Link>
         </div>
@@ -215,10 +237,14 @@ export function WatchlistWorkspace({
         {watchlist.length === 0 ? (
           <Card className="mt-4 border-dashed">
             <CardHeader>
-              <Eye className="text-muted-foreground size-5" aria-hidden="true" />
+              <Eye
+                className="text-muted-foreground size-5"
+                aria-hidden="true"
+              />
               <CardTitle className="pt-3">Nothing followed yet</CardTitle>
               <CardDescription>
-                Add a state above. Gaia will not generate an alert until a governed Fiscal Watch signal exists for that state.
+                Add a state above. Gaia will not generate an alert until a
+                governed Fiscal Watch signal exists for that state.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -249,7 +275,9 @@ export function WatchlistWorkspace({
                     <Link href={`/states/${item.state_slug}`}>Open state</Link>
                   </Button>
                   <Button asChild size="sm" variant="outline">
-                    <Link href={`/decision-packets/${item.state_slug}`}>Decision packet</Link>
+                    <Link href={`/decision-packets/${item.state_slug}`}>
+                      Decision packet
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -268,7 +296,10 @@ export function WatchlistWorkspace({
               {alerts?.alert_count ?? 0} governed signals in {year}
             </h2>
           </div>
-          <Link href="/fiscal-watch" className="text-primary text-sm font-medium hover:underline">
+          <Link
+            href="/fiscal-watch"
+            className="text-primary text-sm font-medium hover:underline"
+          >
             Open full Fiscal Watch →
           </Link>
         </div>
@@ -276,10 +307,16 @@ export function WatchlistWorkspace({
         {!alerts || alerts.alerts.length === 0 ? (
           <Card className="mt-4 border-dashed">
             <CardHeader>
-              <Bell className="text-muted-foreground size-5" aria-hidden="true" />
-              <CardTitle className="pt-3">No active watchlist signals</CardTitle>
+              <Bell
+                className="text-muted-foreground size-5"
+                aria-hidden="true"
+              />
+              <CardTitle className="pt-3">
+                No active watchlist signals
+              </CardTitle>
               <CardDescription>
-                No deterministic Fiscal Watch event currently matches your saved jurisdictions for {year}. No alert has been inferred.
+                No deterministic Fiscal Watch event currently matches your saved
+                jurisdictions for {year}. No alert has been inferred.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -291,15 +328,23 @@ export function WatchlistWorkspace({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <StatusPill tone={alert.severity === 'elevated' ? 'demo' : 'neutral'}>
+                        <StatusPill
+                          tone={
+                            alert.severity === 'elevated' ? 'demo' : 'neutral'
+                          }
+                        >
                           {alert.severity}
                         </StatusPill>
                         <span className="text-muted-foreground text-xs">
                           {alert.state_name} · {formatDate(alert.revenue_month)}
                         </span>
                       </div>
-                      <CardTitle className="pt-3 text-lg">{alert.headline}</CardTitle>
-                      <CardDescription className="mt-2 max-w-4xl">{alert.detail}</CardDescription>
+                      <CardTitle className="pt-3 text-lg">
+                        {alert.headline}
+                      </CardTitle>
+                      <CardDescription className="mt-2 max-w-4xl">
+                        {alert.detail}
+                      </CardDescription>
                     </div>
                     <Button asChild size="sm" variant="outline">
                       <Link href={alert.proof_path}>Inspect proof</Link>
@@ -310,11 +355,15 @@ export function WatchlistWorkspace({
                   <dl className="grid gap-4 text-sm sm:grid-cols-3">
                     <div>
                       <dt className="text-muted-foreground">Current net</dt>
-                      <dd className="mt-1 font-mono font-medium">{formatNaira(alert.current_net)}</dd>
+                      <dd className="mt-1 font-mono font-medium">
+                        {formatNaira(alert.current_net)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-muted-foreground">Previous net</dt>
-                      <dd className="mt-1 font-mono font-medium">{formatNaira(alert.previous_net)}</dd>
+                      <dd className="mt-1 font-mono font-medium">
+                        {formatNaira(alert.previous_net)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-muted-foreground">Observed signal</dt>
@@ -334,7 +383,9 @@ export function WatchlistWorkspace({
         )}
 
         {alerts ? (
-          <p className="text-muted-foreground mt-4 max-w-4xl text-xs leading-5">{alerts.note}</p>
+          <p className="text-muted-foreground mt-4 max-w-4xl text-xs leading-5">
+            {alerts.note}
+          </p>
         ) : null}
       </section>
     </div>
