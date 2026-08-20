@@ -114,7 +114,6 @@ export function InstitutionalWebhooksCard() {
     // Initial institutional-integration hydration updates local UI state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function createWebhook(event: FormEvent<HTMLFormElement>) {
