@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -10,6 +11,7 @@ from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseState
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystEvidence, GaiaAnalystResponse
 from gaiafaac_api.services.fiscal_pulse import fiscal_pulse
 from gaiafaac_api.services.fiscal_watch import fiscal_watch
+from gaiafaac_api.services.published_data import get_published_overview, latest_published_period
 
 _TOP_N = 5
 
@@ -20,27 +22,32 @@ class _StateMatch:
     second: FiscalPulseState | None
 
 
+@dataclass(frozen=True)
+class _LatestStateNet:
+    state_name: str
+    state_slug: str
+    value: str
+    revenue_month: date
+    reporting_label: str
+
+
 def _slug_tokens(value: str) -> set[str]:
     return {token for token in re.split(r"[^a-z0-9]+", value.lower()) if token}
 
 
 def _state_matches(question: str, states: list[FiscalPulseState]) -> _StateMatch:
     lowered = question.lower()
+    question_tokens = _slug_tokens(lowered)
     matches: list[FiscalPulseState] = []
     for state in states:
-        aliases = {
-            state.state_name.lower(),
-            state.state_slug.lower(),
-            state.state_code.lower(),
-        }
-        if state.state_code == "FC":
-            aliases.update({"fct", "abuja", "federal capital territory"})
-        if any(alias in lowered for alias in aliases):
-            matches.append(state)
-            continue
-        question_tokens = _slug_tokens(lowered)
+        named = state.state_name.lower() in lowered or state.state_slug.lower() in lowered
+        coded = state.state_code.lower() in question_tokens
+        fct = state.state_code == "FC" and bool(
+            {"fct", "abuja"} & question_tokens or "federal capital territory" in lowered
+        )
         state_tokens = _slug_tokens(state.state_name)
-        if state_tokens and state_tokens.issubset(question_tokens):
+        token_named = bool(state_tokens and state_tokens.issubset(question_tokens))
+        if named or coded or fct or token_named:
             matches.append(state)
     unique: list[FiscalPulseState] = []
     seen: set[str] = set()
@@ -78,6 +85,30 @@ def _evidence(
     )
 
 
+def _latest_state_net(
+    session: Session, *, state: FiscalPulseState, year: int
+) -> _LatestStateNet | None:
+    period = latest_published_period(session)
+    if period is None or period.revenue_month.year != year:
+        return None
+    overview = get_published_overview(session, period)
+    if overview is None:
+        return None
+    allocation = next(
+        (item for item in overview.allocations if item.state_slug == state.state_slug),
+        None,
+    )
+    if allocation is None or allocation.net_allocation is None:
+        return None
+    return _LatestStateNet(
+        state_name=allocation.state_name,
+        state_slug=allocation.state_slug,
+        value=allocation.net_allocation,
+        revenue_month=period.revenue_month,
+        reporting_label=period.reporting_label,
+    )
+
+
 def _unsupported(question: str, year: int, coverage_label: str) -> GaiaAnalystResponse:
     return GaiaAnalystResponse(
         question=question,
@@ -102,6 +133,7 @@ def _unsupported(question: str, year: int, coverage_label: str) -> GaiaAnalystRe
 def _suggested_questions(year: int) -> list[str]:
     return [
         f"What changed in the latest published FAAC data for {year}?",
+        f"What is Lagos's latest verified FAAC net allocation in {year}?",
         f"Which states received the highest net FAAC allocation in {year}?",
         f"Which states had the highest deduction burden in {year}?",
         f"Which states were the most volatile in {year}?",
@@ -129,6 +161,57 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
         )
 
     state_match = _state_matches(lowered, pulse.states)
+    asks_for_net = any(token in _slug_tokens(lowered) for token in ("net", "allocation", "faac"))
+
+    if state_match.first is not None and "latest" in lowered and asks_for_net:
+        latest = _latest_state_net(session, state=state_match.first, year=year)
+        if latest is None:
+            return GaiaAnalystResponse(
+                question=question,
+                year=year,
+                intent="latest_state_net",
+                status="insufficient_data",
+                answer=(
+                    f"No complete published {year} FAAC allocation is available for "
+                    f"{state_match.first.state_name}."
+                ),
+                coverage_label=pulse.coverage_label,
+                evidence=[],
+                caveat=pulse.note,
+                suggested_questions=_suggested_questions(year),
+            )
+        period_label = latest.revenue_month.strftime("%B %Y")
+        return GaiaAnalystResponse(
+            question=question,
+            year=year,
+            intent="latest_state_net",
+            status="answered",
+            answer=(
+                f"{latest.state_name}'s latest verified net FAAC allocation is "
+                f"{_money(latest.value)} for {period_label}."
+            ),
+            coverage_label=f"Latest complete published FAAC period · {period_label}",
+            evidence=[
+                GaiaAnalystEvidence(
+                    state_name=latest.state_name,
+                    state_slug=latest.state_slug,
+                    label=f"{period_label} net FAAC allocation",
+                    value=_money(latest.value),
+                    metric="latest_net_allocation",
+                    reference_path=(
+                        f"/fiscal-proof/{latest.state_slug}/{latest.revenue_month.isoformat()}"
+                    ),
+                    reference_label="Verify with Fiscal Proof",
+                    period_label=period_label,
+                    relevant_date=latest.revenue_month.isoformat(),
+                )
+            ],
+            caveat=(
+                "This answer uses the latest complete, published jurisdiction allocation period "
+                "for the requested year and does not substitute partial or unpublished data."
+            ),
+            suggested_questions=_suggested_questions(year),
+        )
 
     if any(token in lowered for token in ("latest", "changed", "change", "watch", "alert")):
         if not watch.events:

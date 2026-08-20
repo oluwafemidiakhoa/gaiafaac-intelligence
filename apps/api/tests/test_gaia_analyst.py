@@ -1,3 +1,5 @@
+from datetime import date
+
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse, FiscalPulseState
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchEvent, FiscalWatchResponse
 from gaiafaac_api.services import gaia_analyst as service
@@ -111,6 +113,45 @@ def test_gaia_analyst_answers_latest_changes(monkeypatch):
     assert result.intent == "latest_changes"
     assert result.status == "answered"
     assert result.evidence[0].reference_path == "/fiscal-proof/rivers/2026-06-01"
+
+
+def test_gaia_analyst_answers_named_state_latest_net(monkeypatch):
+    _patch(monkeypatch)
+    monkeypatch.setattr(
+        service,
+        "_latest_state_net",
+        lambda session, state, year: service._LatestStateNet(
+            state_name="Lagos",
+            state_slug="lagos",
+            value="60348388366.77",
+            revenue_month=date(2026, 6, 1),
+            reporting_label="OAGF FAAC Disbursement - June 2026",
+        ),
+    )
+    result = service.gaia_analyst(
+        None,
+        question="What is Lagos's latest verified FAAC net allocation?",
+        year=2026,
+    )
+    assert result.intent == "latest_state_net"
+    assert result.status == "answered"
+    assert "Lagos" in result.answer
+    assert "NGN 60,348,388,366.77" in result.answer
+    assert len(result.evidence) == 1
+    assert result.evidence[0].state_name == "Lagos"
+    assert result.evidence[0].metric == "latest_net_allocation"
+    assert result.evidence[0].reference_path == "/fiscal-proof/lagos/2026-06-01"
+
+
+def test_gaia_analyst_does_not_match_state_code_inside_word(monkeypatch):
+    _patch(monkeypatch)
+    result = service.gaia_analyst(
+        None,
+        question="What is the latest allocation data?",
+        year=2026,
+    )
+    assert result.intent == "latest_changes"
+    assert all(item.state_name != "Lagos" for item in result.evidence)
 
 
 def test_gaia_analyst_answers_rankings(monkeypatch):

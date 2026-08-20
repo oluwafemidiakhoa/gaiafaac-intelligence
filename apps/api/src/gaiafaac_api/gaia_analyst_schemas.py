@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 AnalystIntent = Literal[
     "latest_changes",
+    "latest_state_net",
     "top_net",
     "lowest_net",
     "highest_deduction_burden",
