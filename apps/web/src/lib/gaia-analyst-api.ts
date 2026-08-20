@@ -22,6 +22,7 @@ const gaiaAnalystSchema = z.object({
   year: z.number().int(),
   intent: z.enum([
     'latest_changes',
+    'latest_state_net',
     'top_net',
     'lowest_net',
     'highest_deduction_burden',
