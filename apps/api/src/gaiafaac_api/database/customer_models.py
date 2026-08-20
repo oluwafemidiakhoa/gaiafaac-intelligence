@@ -6,10 +6,12 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     String,
     UniqueConstraint,
     Uuid,
@@ -142,4 +144,60 @@ class CustomerAlert(Base):
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class CustomerNotificationPreference(Base):
+    """Explicit customer opt-in controls for outbound alert distribution."""
+
+    __tablename__ = "customer_notification_preferences"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    email_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    include_fiscal_watch: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    include_fiscal_events: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    email_enabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class CustomerAlertDelivery(Base):
+    """Idempotent outbound-delivery state for one persisted customer alert."""
+
+    __tablename__ = "customer_alert_deliveries"
+    __table_args__ = (
+        UniqueConstraint("alert_id", "channel", name="uq_customer_alert_delivery_channel"),
+        CheckConstraint("channel IN ('email')", name="ck_customer_alert_delivery_channel"),
+        CheckConstraint(
+            "status IN ('pending', 'deferred', 'failed', 'sent')",
+            name="ck_customer_alert_delivery_status",
+        ),
+        Index("ix_customer_alert_deliveries_user_status", "user_id", "status"),
+        Index("ix_customer_alert_deliveries_alert", "alert_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    alert_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("customer_alerts.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    channel: Mapped[str] = mapped_column(String(20), nullable=False, default="email")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(500))
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
