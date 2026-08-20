@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { NotificationPreferencesCard } from '@/components/notification-preferences-card'
 import { PageHeader } from '@/components/page-header'
 import { WatchlistWorkspace } from '@/components/watchlist-workspace'
 import { getPublishedOverview } from '@/lib/published-api'
@@ -25,8 +26,9 @@ export default async function WatchlistPage() {
       <PageHeader
         eyebrow="Gaia Watchlist"
         title="Follow the jurisdictions that matter to you."
-        description="Build a personal monitoring list and see only deterministic Fiscal Watch signals for the states you follow. Every alert stays inside GaiaFAAC’s published evidence boundary and links back to its Fiscal Proof."
+        description="Build a personal monitoring list, keep a persistent alert inbox, and choose whether governed fiscal changes should also reach you by email. Every alert stays inside GaiaFAAC’s published evidence boundary and links back to its evidence trail."
       />
+      <NotificationPreferencesCard />
       <WatchlistWorkspace availableStates={availableStates} />
     </div>
   )
