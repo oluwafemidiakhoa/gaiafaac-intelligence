@@ -15,6 +15,7 @@ from gaiafaac_api.database import (  # noqa: F401
     models,
     national_evidence_models,
     oagf_revision_models,
+    webhook_models,
 )
 
 config = context.config
