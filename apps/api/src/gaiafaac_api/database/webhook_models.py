@@ -16,9 +16,10 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    event,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, Mapper, mapped_column
 
 from gaiafaac_api.database.base import Base
 
@@ -123,3 +124,11 @@ class OrganizationWebhookAttempt(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+def _immutable_attempt(_mapper: Mapper[Any], _connection: Any, _target: Any) -> None:
+    raise ValueError("Webhook delivery attempt records are immutable.")
+
+
+event.listen(OrganizationWebhookAttempt, "before_update", _immutable_attempt)
+event.listen(OrganizationWebhookAttempt, "before_delete", _immutable_attempt)
