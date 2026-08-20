@@ -1,6 +1,6 @@
+import smtplib
 from datetime import UTC, datetime
 
-import smtplib
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
