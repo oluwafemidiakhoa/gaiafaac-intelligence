@@ -56,7 +56,8 @@ const commands: TerminalCommand[] = [
       'Compare jurisdiction-ledger totals with independently governed national evidence.',
     href: '/national-reconciliation',
     category: 'Evidence',
-    keywords: 'national reconcile reconciliation variance official total evidence',
+    keywords:
+      'national reconcile reconciliation variance official total evidence',
     icon: ShieldCheck,
   },
   {
@@ -145,11 +146,7 @@ function compactNaira(value: string | null) {
 }
 
 function tokens(value: string) {
-  return value
-    .trim()
-    .toLocaleLowerCase('en-NG')
-    .split(/\s+/)
-    .filter(Boolean)
+  return value.trim().toLocaleLowerCase('en-NG').split(/\s+/).filter(Boolean)
 }
 
 function matches(haystack: string, query: string[]) {
@@ -182,7 +179,10 @@ export function GaiaTerminalSearch({
         event.preventDefault()
         inputRef.current?.focus()
       }
-      if (event.key === 'Escape' && document.activeElement === inputRef.current) {
+      if (
+        event.key === 'Escape' &&
+        document.activeElement === inputRef.current
+      ) {
         setQuery('')
         inputRef.current?.blur()
       }
@@ -244,8 +244,8 @@ export function GaiaTerminalSearch({
 
       <div className="text-muted-foreground mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
         <span>
-          Search the latest governed jurisdiction ledger and every major research
-          workflow.
+          Search the latest governed jurisdiction ledger and every major
+          research workflow.
         </span>
         {periodLabel ? <span className="font-mono">{periodLabel}</span> : null}
       </div>
@@ -255,8 +255,8 @@ export function GaiaTerminalSearch({
           <p className="font-medium">No governed result found</p>
           <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
             Gaia Terminal does not invent a jurisdiction, workflow or fiscal
-            value to satisfy a search. Try a state name, code, geopolitical zone,
-            evidence, reconciliation, Analyst or Watch.
+            value to satisfy a search. Try a state name, code, geopolitical
+            zone, evidence, reconciliation, Analyst or Watch.
           </p>
         </div>
       ) : null}
