@@ -121,9 +121,7 @@ def _watched_states(session: Session, user: User) -> list[State]:
 
 def _existing_event_keys(session: Session, user: User) -> set[str]:
     return set(
-        session.scalars(
-            select(CustomerAlert.event_key).where(CustomerAlert.user_id == user.id)
-        )
+        session.scalars(select(CustomerAlert.event_key).where(CustomerAlert.user_id == user.id))
     )
 
 
