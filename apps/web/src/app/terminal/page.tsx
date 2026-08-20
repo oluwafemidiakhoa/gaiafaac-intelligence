@@ -52,7 +52,8 @@ export default async function GaiaTerminalPage() {
               <StatusPill tone="success">Fail closed</StatusPill>
             </div>
             <CardDescription>
-              Terminal search never synthesizes a missing jurisdiction or fiscal value.
+              Terminal search never synthesizes a missing jurisdiction or fiscal
+              value.
             </CardDescription>
           </CardHeader>
         </Card>
