@@ -243,7 +243,7 @@ export function OrganizationWatchlistWorkspace({
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-primary/15 bg-primary/[0.025] p-5 sm:p-6">
+    <section className="border-primary/15 bg-primary/[0.025] mt-8 rounded-2xl border p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-3xl">
           <div className="flex items-center gap-2">
@@ -398,10 +398,12 @@ export function OrganizationWatchlistWorkspace({
       </div>
 
       {!alerts || alerts.alerts.length === 0 ? (
-        <Card className="mt-4 border-dashed bg-background/70">
+        <Card className="bg-background/70 mt-4 border-dashed">
           <CardHeader>
             <Bell className="text-muted-foreground size-5" aria-hidden="true" />
-            <CardTitle className="pt-3">No shared governed alerts yet</CardTitle>
+            <CardTitle className="pt-3">
+              No shared governed alerts yet
+            </CardTitle>
             <CardDescription>
               Nothing has crossed the deterministic monitoring or evidence-event
               boundary for the shared jurisdictions in {year}. Nothing has been
