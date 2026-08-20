@@ -18,7 +18,6 @@ from gaiafaac_api.database.session import get_session
 from gaiafaac_api.database.webhook_models import (
     OrganizationWebhookAttempt,
     OrganizationWebhookDelivery,
-    OrganizationWebhookEndpoint,
 )
 from gaiafaac_api.main import app
 from gaiafaac_api.services import institutional_webhooks as webhooks
