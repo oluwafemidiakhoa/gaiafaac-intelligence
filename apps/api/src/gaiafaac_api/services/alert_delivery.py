@@ -173,6 +173,9 @@ def deliver_customer_alerts(
         user = session.get(User, preference.user_id)
         if user is None or not user.is_active:
             continue
+        email_cutoff = preference.email_enabled_at
+        if email_cutoff is None:
+            continue
         sync_watchlist_alerts(session, user, year)
         alerts = list(
             session.scalars(
@@ -181,6 +184,8 @@ def deliver_customer_alerts(
                     CustomerAlert.user_id == user.id,
                     CustomerAlert.occurred_at >= year_start,
                     CustomerAlert.occurred_at < year_end,
+                    CustomerAlert.occurred_at >= email_cutoff,
+                    CustomerAlert.created_at >= email_cutoff,
                 )
                 .order_by(CustomerAlert.occurred_at, CustomerAlert.created_at)
             )
