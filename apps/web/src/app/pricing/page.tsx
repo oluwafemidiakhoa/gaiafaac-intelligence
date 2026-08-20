@@ -1,4 +1,4 @@
-import { Check, ShieldCheck, Sparkles } from 'lucide-react'
+import { Building2, Check, DatabaseZap, ShieldCheck, Sparkles } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -16,7 +16,7 @@ import {
 export const metadata: Metadata = {
   title: 'Pricing',
   description:
-    'Self-service access to reviewed GaiaFAAC historical evidence, exports, team workflows and API delivery.',
+    'Self-service and institutional access to reviewed GaiaFAAC fiscal evidence, exports, team workflows and programmatic delivery.',
 }
 
 const plans = [
@@ -81,6 +81,48 @@ const plans = [
   },
 ]
 
+const institutionalProducts = [
+  {
+    icon: ShieldCheck,
+    name: 'Institutional Intelligence',
+    buyer: 'Banks, asset managers, advisers and research teams',
+    description:
+      'Organization-wide fiscal monitoring, governed exports, decision packets, evidence support and custom onboarding under an annual agreement.',
+    capabilities: [
+      'Institution-wide licensed use',
+      'Priority evidence and research support',
+      'Custom jurisdiction and reporting workflows',
+      'Team onboarding and governance controls',
+    ],
+  },
+  {
+    icon: DatabaseZap,
+    name: 'Data & Evidence Feed',
+    buyer: 'Fintechs, data companies, media and internal data platforms',
+    description:
+      'Higher-volume programmatic delivery for products that need governed fiscal records, provenance and change-aware data infrastructure.',
+    capabilities: [
+      'Higher-volume API agreements',
+      'Redistribution and downstream-use licensing',
+      'Custom delivery and integration scope',
+      'Revision and event-feed roadmap access',
+    ],
+  },
+  {
+    icon: Building2,
+    name: 'Government Evidence Workspace',
+    buyer: 'Public institutions and development organizations',
+    description:
+      'Dedicated evidence rooms and comparative fiscal workflows for teams that need traceable source material, governed analysis and durable decision records.',
+    capabilities: [
+      'Dedicated evidence workspace',
+      'Comparative jurisdiction intelligence',
+      'Governed decision material',
+      'Custom implementation and support',
+    ],
+  },
+]
+
 const paidValue = [
   'Human-reviewed publication workflow',
   'Document provenance and retained SHA-256 fingerprints',
@@ -93,9 +135,9 @@ export default function PricingPage() {
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
-        eyebrow="Pricing"
-        title="Pay for governed evidence infrastructure, not public records"
-        description="The latest verified public evidence stays open. Paid plans unlock historical access, governed exports, team workflows and programmatic delivery through the self-service account system."
+        eyebrow="Access"
+        title="Start self-service. Scale into fiscal intelligence infrastructure."
+        description="The latest verified public evidence stays open. Paid access funds the governed evidence layer: historical research, reproducible exports, team workflows, programmatic delivery and institutional deployments."
       />
 
       <div className="border-primary/20 bg-primary/5 mt-8 rounded-lg border p-5">
@@ -105,18 +147,30 @@ export default function PricingPage() {
             aria-hidden="true"
           />
           <div>
-            <p className="font-medium">Founding pricing</p>
+            <p className="font-medium">Two commercial motions</p>
             <p className="text-muted-foreground mt-1 max-w-4xl text-sm leading-6">
-              These monthly prices match GaiaFAAC&apos;s current billing and
-              entitlement system. As the ledger expands into additional governed
-              source families, new institutional and higher-volume API tiers can
-              be introduced without changing what existing plans promise today.
+              Self-service plans match GaiaFAAC&apos;s current billing and entitlement
+              system. Institution-wide use, redistribution, higher-volume data
+              delivery and dedicated evidence workspaces are contracted
+              separately so scope, support and permitted use are explicit.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-10 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-primary font-mono text-xs font-semibold tracking-[0.16em] uppercase">
+            Self-service
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold">Start immediately</h2>
+        </div>
+        <p className="text-muted-foreground hidden max-w-xl text-right text-sm md:block">
+          Built for individual analysts, small teams and product evaluation.
+        </p>
+      </div>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
           <Card
             key={plan.name}
@@ -163,6 +217,69 @@ export default function PricingPage() {
         ))}
       </div>
 
+      <section className="mt-16 rounded-2xl border border-emerald-950/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),transparent_34%)] p-6 sm:p-8">
+        <div className="max-w-3xl">
+          <p className="text-primary font-mono text-xs font-semibold tracking-[0.16em] uppercase">
+            Institutional
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Buy the evidence layer as infrastructure.
+          </h2>
+          <p className="text-muted-foreground mt-4 text-sm leading-7 sm:text-base">
+            Annual institutional agreements are for organizations that need more
+            than seats: governed fiscal monitoring, broader licensed use,
+            redistribution rights, higher-volume delivery, evidence rooms or
+            implementation support.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          {institutionalProducts.map(
+            ({ icon: Icon, name, buyer, description, capabilities }) => (
+              <Card key={name} className="bg-background/80">
+                <CardHeader>
+                  <Icon className="text-primary size-5" aria-hidden="true" />
+                  <CardTitle className="pt-3">{name}</CardTitle>
+                  <CardDescription>{buyer}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm leading-6">
+                    {description}
+                  </p>
+                  <ul className="mt-5 space-y-2.5 text-sm">
+                    {capabilities.map((capability) => (
+                      <li key={capability} className="flex items-start gap-2">
+                        <Check
+                          className="text-primary mt-0.5 size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span>{capability}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ),
+          )}
+        </div>
+
+        <div className="border-border bg-background mt-6 flex flex-wrap items-center justify-between gap-5 rounded-xl border p-5">
+          <div>
+            <p className="font-semibold">Institutional scope is contract-priced</p>
+            <p className="text-muted-foreground mt-1 max-w-3xl text-sm leading-6">
+              GaiaFAAC does not publish fictional enterprise prices before the
+              required data coverage, permitted use, delivery volume and support
+              scope are understood.
+            </p>
+          </div>
+          <Button asChild size="lg">
+            <Link href="/pilot?plan=team#request-form">
+              Request institutional review
+            </Link>
+          </Button>
+        </div>
+      </section>
+
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -193,33 +310,30 @@ export default function PricingPage() {
 
         <Card className="bg-muted/30">
           <CardHeader>
-            <CardTitle>Institutional and redistribution use</CardTitle>
+            <DatabaseZap className="text-primary size-5" aria-hidden="true" />
+            <CardTitle className="pt-3">Commercial boundary</CardTitle>
             <CardDescription>
-              Large internal deployments, redistribution, white-label delivery,
-              custom onboarding and substantially higher API volume should be
-              separately licensed rather than bundled into the $299 plan.
+              Public evidence stays attributable. Commercial value comes from
+              verification, structuring, monitoring, workflow, delivery and
+              licensed use—not from claiming ownership of government records.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-sm leading-6">
-              Start with the Team or API plan to evaluate the product. For wider
-              organizational or downstream commercial use, request an
-              institutional scope so permitted use, support and pricing can be
-              agreed explicitly.
+              Start with Team or API when self-service is enough. Move to an
+              institutional agreement when the use case includes organization-
+              wide deployment, downstream redistribution, custom data delivery
+              or dedicated evidence operations.
             </p>
-            <Button asChild variant="outline" className="mt-5">
-              <Link href="/pilot?plan=team#request-form">
-                Request institutional scope
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
 
       <div className="text-muted-foreground mt-10 max-w-4xl space-y-2 text-sm leading-6">
         <p>
-          Monthly prices are in USD. Checkout, billing management and plan
-          entitlements are handled through the GaiaFAAC customer account.
+          Monthly self-service prices are in USD. Checkout, billing management
+          and plan entitlements are handled through the GaiaFAAC customer
+          account.
         </p>
         <p>
           GaiaFAAC is an independent research platform, not a government
