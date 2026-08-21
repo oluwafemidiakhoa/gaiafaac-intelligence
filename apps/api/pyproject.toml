@@ -20,6 +20,7 @@ dependencies = [
 
 [project.scripts]
 gaiafaac-db = "gaiafaac_api.cli:main"
+gaiafaac-dmo = "gaiafaac_api.dmo_cli:main"
 gaiafaac-national = "gaiafaac_api.national_cli:main"
 gaiafaac-lga = "gaiafaac_api.lga_cli:main"
 gaiafaac-webhooks = "gaiafaac_api.institutional_webhook_cli:main"
