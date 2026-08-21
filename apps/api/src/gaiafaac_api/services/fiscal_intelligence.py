@@ -85,7 +85,10 @@ def jurisdiction_intelligence(
         else (
             "Required resilience components remain unavailable."
             if missing_components
-            else "All currently defined resilience inputs are available; composite scoring remains disabled until its methodology is separately governed."
+            else (
+                "All currently defined resilience inputs are available; composite scoring "
+                "remains disabled until its methodology is separately governed."
+            )
         )
     )
     data = JurisdictionIntelligenceData(
