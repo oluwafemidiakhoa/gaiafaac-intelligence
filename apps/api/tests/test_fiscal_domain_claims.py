@@ -76,9 +76,7 @@ def test_cross_domain_claims_enter_fiscal_state_without_inference(session):
 
     assert debt_proof.gaia_id.startswith("GF-DEBT-NG-LA-2026Q2-")
     assert service_proof.gaia_id.startswith("GF-DEBTSVC-NG-LA-2026Q2-")
-    claims = session.scalars(
-        select(FiscalClaim).where(FiscalClaim.state_id == state.id)
-    ).all()
+    claims = session.scalars(select(FiscalClaim).where(FiscalClaim.state_id == state.id)).all()
     assert {claim.object_type for claim in claims} == {"debt", "debt_service"}
     assert all(claim.evidence_status is EvidenceStatus.VERIFIED for claim in claims)
 
