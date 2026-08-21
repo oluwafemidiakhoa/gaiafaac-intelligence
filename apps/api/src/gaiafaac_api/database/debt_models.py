@@ -72,9 +72,7 @@ class StateDebtRecord(Base):
     source_document_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("source_documents.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    debt_kind: Mapped[DebtKind] = mapped_column(
-        _enum_type(DebtKind, "debt_kind"), nullable=False
-    )
+    debt_kind: Mapped[DebtKind] = mapped_column(_enum_type(DebtKind, "debt_kind"), nullable=False)
     as_of_date: Mapped[date] = mapped_column(Date, nullable=False)
     debt_amount: Mapped[Decimal] = mapped_column(MONEY, nullable=False)
     debt_amount_original: Mapped[str] = mapped_column(String(120), nullable=False)
