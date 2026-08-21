@@ -19,6 +19,7 @@ AnalystIntent = Literal[
     "igr_lowest",
     "igr_compare",
     "ledger_metric",
+    "temporal_metric",
     "unsupported",
 ]
 AnalystStatus = Literal["answered", "insufficient_data", "unsupported"]

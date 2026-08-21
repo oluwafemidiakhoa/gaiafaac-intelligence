@@ -1,13 +1,15 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from gaiafaac_api.database.enums import EvidenceStatus, FiscalEventSeverity
 from gaiafaac_api.database.models import ApiKey, ReportingPeriod
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.entitlements import entitlements_for
+from gaiafaac_api.fiscal_ledger_schemas import FiscalEventStreamEnvelope
 from gaiafaac_api.published_analytics_schemas import TrendPoint
 from gaiafaac_api.published_schemas import PublishedOverviewResponse
 from gaiafaac_api.services.api_keys import (
@@ -15,6 +17,7 @@ from gaiafaac_api.services.api_keys import (
     record_request,
     requests_last_24h,
 )
+from gaiafaac_api.services.institutional_feed import institutional_event_feed
 from gaiafaac_api.services.published_data import get_published_overview
 
 router = APIRouter(prefix="/data", tags=["data api"])
@@ -106,3 +109,44 @@ def data_allocations(
             detail="No published month for that date.",
         )
     return overview
+
+
+@router.get(
+    "/events",
+    response_model=FiscalEventStreamEnvelope,
+    summary="Entitled incremental Fiscal Event feed (API key required)",
+)
+def data_events(
+    session: DatabaseSession,
+    _key: ApiAccess,
+    jurisdiction: Annotated[str | None, Query(min_length=2, max_length=16)] = None,
+    event_type: Annotated[str | None, Query(min_length=2, max_length=80)] = None,
+    severity: Annotated[FiscalEventSeverity | None, Query()] = None,
+    evidence_status: Annotated[EvidenceStatus | None, Query()] = None,
+    detected_after: Annotated[datetime | None, Query()] = None,
+    date_from: Annotated[date | None, Query()] = None,
+    date_to: Annotated[date | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 250,
+) -> FiscalEventStreamEnvelope:
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="date_from cannot be after date_to.",
+        )
+    try:
+        return institutional_event_feed(
+            session,
+            jurisdiction_code=jurisdiction,
+            event_type=event_type,
+            severity=severity,
+            evidence_status=evidence_status,
+            detected_after=detected_after,
+            date_from=date_from,
+            date_to=date_to,
+            limit=limit,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc

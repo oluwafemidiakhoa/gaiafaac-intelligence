@@ -35,6 +35,7 @@ const gaiaAnalystSchema = z.object({
     'igr_lowest',
     'igr_compare',
     'ledger_metric',
+    'temporal_metric',
     'unsupported',
   ]),
   status: z.enum(['answered', 'insufficient_data', 'unsupported']),

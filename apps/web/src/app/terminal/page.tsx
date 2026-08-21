@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { DataUnavailable } from '@/components/data-unavailable'
 import { GaiaTerminalSearch } from '@/components/gaia-terminal-search'
@@ -21,6 +22,51 @@ export const metadata: Metadata = {
 }
 export const dynamic = 'force-dynamic'
 
+const institutionalWorkflows = [
+  {
+    href: '/watchlist',
+    title: 'Organization Monitoring',
+    description:
+      'Shared jurisdiction watchlists, evidence-linked alerts and per-member read state.',
+  },
+  {
+    href: '/evidence-rooms',
+    title: 'Evidence Rooms',
+    description:
+      'Durable organization case files with immutable evidence references and separate notes.',
+  },
+  {
+    href: '/events',
+    title: 'Fiscal Events',
+    description:
+      'Inspect governed fiscal changes before routing them into institutional workflows.',
+  },
+  {
+    href: '/gaia-analyst',
+    title: 'Gaia Analyst',
+    description:
+      'Ask deterministic questions across governed fiscal evidence and historical knowledge states.',
+  },
+  {
+    href: '/compare',
+    title: 'Jurisdiction Comparison',
+    description:
+      'Compare evidence-backed fiscal metrics without ranking incomparable periods.',
+  },
+  {
+    href: '/decision-packets',
+    title: 'Decision Packets',
+    description:
+      'Create decision-ready evidence dossiers while preserving source lineage and caveats.',
+  },
+  {
+    href: '/account',
+    title: 'Institutional API',
+    description:
+      'Manage Team/API access for the machine-readable Fiscal Event stream and enterprise workflows.',
+  },
+]
+
 function compactNaira(value: string | null) {
   if (!value) return 'Unavailable'
   const amount = Number(value)
@@ -42,7 +88,7 @@ export default async function GaiaTerminalPage() {
         <PageHeader
           eyebrow="Gaia Terminal"
           title="One command surface for Nigeria’s fiscal evidence."
-          description="Search governed jurisdictions, jump into proofs and local-government evidence, ask the verified ledger, inspect revisions and reconciliation, run scenarios, monitor signals and create institutional decision material without leaving the evidence boundary."
+          description="Search governed jurisdictions, jump into proofs and local-government evidence, ask the verified ledger, inspect revisions and reconciliation, run scenarios, monitor signals, open durable Evidence Rooms and route machine-readable Fiscal Events without leaving the evidence boundary."
         />
 
         <Card className="bg-muted/25">
@@ -138,6 +184,41 @@ export default async function GaiaTerminalPage() {
           />
         </div>
       )}
+
+      <section className="mt-12">
+        <div className="mb-5 max-w-3xl">
+          <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
+            Institutional workflow
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+            Move from fiscal change to governed decision.
+          </h2>
+          <p className="text-muted-foreground mt-2 text-sm leading-6">
+            Monitoring, evidence, analysis and distribution share the same
+            governed fiscal record. Human interpretation stays distinct from
+            immutable evidence.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {institutionalWorkflows.map((workflow) => (
+            <Link key={workflow.href} href={workflow.href} className="group">
+              <Card className="group-hover:bg-muted/40 h-full transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">{workflow.title}</CardTitle>
+                  <CardDescription className="leading-6">
+                    {workflow.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <span className="text-primary text-sm font-medium">
+                    Open workflow →
+                  </span>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
