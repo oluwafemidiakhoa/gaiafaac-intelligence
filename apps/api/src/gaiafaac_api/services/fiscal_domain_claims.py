@@ -288,7 +288,8 @@ def publish_domain_claim(
                 "material_change": revision.material_change,
             },
             explanation=(
-                f"A previous {canonical_domain} claim was superseded; both versions remain retained."
+                f"A previous {canonical_domain} claim was superseded; "
+                "both versions remain retained."
             ),
         )
     return proof
