@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
+from gaiafaac_api.pipeline.dmo.approval import approve_debt_source, publish_debt_source
 from gaiafaac_api.pipeline.dmo.archive import archive_dmo_publications
 from gaiafaac_api.pipeline.dmo.discovery import discover_dmo_subnational_publications
 from gaiafaac_api.pipeline.dmo.extract import extract_dmo_debt_source
@@ -29,6 +30,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Extract one archived DMO source into unpublished review records",
     )
     extract.add_argument("source_document_id", type=uuid.UUID)
+    approve = commands.add_parser(
+        "approve-source",
+        help="Human-verify a complete DMO debt source without publishing it",
+    )
+    approve.add_argument("source_document_id", type=uuid.UUID)
+    approve.add_argument("reviewer_id", type=uuid.UUID)
+    publish = commands.add_parser(
+        "publish-source",
+        help="Publish a human-verified DMO debt source into governed fiscal claims",
+    )
+    publish.add_argument("source_document_id", type=uuid.UUID)
+    publish.add_argument("reviewer_id", type=uuid.UUID)
     return parser
 
 
@@ -53,8 +66,8 @@ def main() -> None:
             )
         )
         return
+    session_factory = create_session_factory(create_database_engine())
     if args.command == "archive-subnational":
-        session_factory = create_session_factory(create_database_engine())
         with session_factory() as session:
             results = archive_dmo_publications(
                 session,
@@ -84,7 +97,6 @@ def main() -> None:
         )
         return
     if args.command == "extract-source":
-        session_factory = create_session_factory(create_database_engine())
         with session_factory() as session:
             result = extract_dmo_debt_source(
                 session,
@@ -100,6 +112,51 @@ def main() -> None:
                     "records_extracted": result.records_extracted,
                     "total_amount": format(result.total_amount, "f"),
                     "status": "extracted_awaiting_review",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "approve-source":
+        with session_factory() as session:
+            result = approve_debt_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "debt_kind": result.debt_kind,
+                    "as_of_date": result.as_of_date,
+                    "records_affected": result.records_affected,
+                    "published": result.published,
+                    "status": "human_verified_not_published",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "publish-source":
+        with session_factory() as session:
+            result = publish_debt_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "debt_kind": result.debt_kind,
+                    "as_of_date": result.as_of_date,
+                    "records_affected": result.records_affected,
+                    "proof_count": len(result.proof_gaia_ids),
+                    "published": result.published,
+                    "status": "published_governed_claims",
                 },
                 indent=2,
                 sort_keys=True,
