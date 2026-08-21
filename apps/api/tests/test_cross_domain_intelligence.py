@@ -51,7 +51,9 @@ def test_cross_domain_ratios_require_exact_verified_evidence():
             "claims": [_claim("liability", "total_liabilities", "30")],
         },
     }
-    results = {item["key"]: item for item in derive_cross_domain_metrics(domains, fiscal_period="2026")}
+    results = {
+        item["key"]: item for item in derive_cross_domain_metrics(domains, fiscal_period="2026")
+    }
     assert results["faac_dependence"]["value"] == "75.00"
     assert results["debt_burden"]["value"] == "200.00"
     assert results["debt_service_pressure"]["value"] == "10.00"
@@ -72,7 +74,9 @@ def test_cross_domain_ratio_fails_closed_on_period_mismatch():
             "claims": [_claim("revenue", "total_revenue", "100", period="2026")],
         },
     }
-    results = {item["key"]: item for item in derive_cross_domain_metrics(domains, fiscal_period="2026Q2")}
+    results = {
+        item["key"]: item for item in derive_cross_domain_metrics(domains, fiscal_period="2026Q2")
+    }
     assert results["debt_burden"]["status"] == "insufficient_evidence"
     assert results["debt_burden"]["value"] is None
 
@@ -88,6 +92,8 @@ def test_cross_domain_ratio_fails_closed_on_currency_mismatch():
             "claims": [_claim("revenue", "total_revenue", "100", currency="NGN")],
         },
     }
-    results = {item["key"]: item for item in derive_cross_domain_metrics(domains, fiscal_period="2026")}
+    results = {
+        item["key"]: item for item in derive_cross_domain_metrics(domains, fiscal_period="2026")
+    }
     assert results["debt_service_pressure"]["status"] == "insufficient_evidence"
     assert "not directly comparable" in results["debt_service_pressure"]["explanation"]
