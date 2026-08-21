@@ -6,6 +6,7 @@ from gaiafaac_api.api.v1.routes.billing import router as billing_router
 from gaiafaac_api.api.v1.routes.commercial import router as commercial_router
 from gaiafaac_api.api.v1.routes.data_api import router as data_api_router
 from gaiafaac_api.api.v1.routes.demo_data import router as demo_data_router
+from gaiafaac_api.api.v1.routes.evidence_rooms import router as evidence_rooms_router
 from gaiafaac_api.api.v1.routes.fiscal_ledger import router as fiscal_ledger_router
 from gaiafaac_api.api.v1.routes.health import router as health_router
 from gaiafaac_api.api.v1.routes.institutional_webhooks import router as webhook_router
@@ -30,6 +31,7 @@ router.include_router(commercial_router)
 router.include_router(account_router)
 router.include_router(billing_router)
 router.include_router(watchlists_router)
+router.include_router(evidence_rooms_router)
 router.include_router(webhook_router)
 router.include_router(national_review_router)
 router.include_router(oagf_revisions_router)
