@@ -149,9 +149,12 @@ def extract_dmo_debt_source(
     if source is None:
         raise ImportContractError("DMO source document does not exist")
     kind, as_of_date, currency = _source_contract(source)
-    if session.scalar(
-        select(StateDebtRecord.id).where(StateDebtRecord.source_document_id == source.id)
-    ) is not None:
+    if (
+        session.scalar(
+            select(StateDebtRecord.id).where(StateDebtRecord.source_document_id == source.id)
+        )
+        is not None
+    ):
         raise ImportContractError("DMO source has already been extracted")
 
     path = Path(source.storage_path).expanduser().resolve(strict=True)
