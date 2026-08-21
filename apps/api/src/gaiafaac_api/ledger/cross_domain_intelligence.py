@@ -1,8 +1,4 @@
-from __future__ import annotations
-
 from decimal import Decimal, InvalidOperation
-from typing import Any
-
 
 _RATIO_SPECS = (
     (
@@ -51,11 +47,11 @@ _RATIO_SPECS = (
 
 
 def _claim(
-    domains: dict[str, Any],
+    domains: dict[str, object],
     domain_name: str,
     metrics: tuple[str, ...],
     fiscal_period: str,
-) -> dict[str, Any] | None:
+) -> dict[str, object] | None:
     domain = domains.get(domain_name)
     if not isinstance(domain, dict) or domain.get("status") != "verified":
         return None
@@ -82,7 +78,7 @@ def _decimal(value: object) -> Decimal | None:
     return result if result.is_finite() else None
 
 
-def _compatible(left: dict[str, Any], right: dict[str, Any]) -> bool:
+def _compatible(left: dict[str, object], right: dict[str, object]) -> bool:
     left_currency = left.get("currency")
     right_currency = right.get("currency")
     if left_currency or right_currency:
@@ -90,9 +86,7 @@ def _compatible(left: dict[str, Any], right: dict[str, Any]) -> bool:
     return left.get("unit") == right.get("unit")
 
 
-def _insufficient(
-    key: str, label: str, fiscal_period: str, explanation: str
-) -> dict[str, object]:
+def _insufficient(key: str, label: str, fiscal_period: str, explanation: str) -> dict[str, object]:
     return {
         "key": key,
         "status": "insufficient_evidence",
@@ -106,7 +100,7 @@ def _insufficient(
 
 
 def derive_cross_domain_metrics(
-    domains: dict[str, Any], *, fiscal_period: str
+    domains: dict[str, object], *, fiscal_period: str
 ) -> list[dict[str, object]]:
     """Calculate transparent ratios from exact-period verified claims only."""
 
@@ -132,7 +126,10 @@ def derive_cross_domain_metrics(
                     key,
                     label,
                     fiscal_period,
-                    f"{explanation} The retained denominator is missing, non-numeric, or non-positive.",
+                    (
+                        f"{explanation} The retained denominator is missing, non-numeric, "
+                        "or non-positive."
+                    ),
                 )
             )
             continue
@@ -148,9 +145,7 @@ def derive_cross_domain_metrics(
                 )
             )
             continue
-        value = (numerator_value / denominator_value * Decimal("100")).quantize(
-            Decimal("0.01")
-        )
+        value = (numerator_value / denominator_value * Decimal("100")).quantize(Decimal("0.01"))
         metrics.append(
             {
                 "key": key,
