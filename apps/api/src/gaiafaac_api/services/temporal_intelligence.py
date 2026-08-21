@@ -70,9 +70,7 @@ def temporal_fiscal_snapshot(
         if claim.supersedes_gaia_id in candidate_ids
     }
     current_rows = [
-        (claim, source)
-        for claim, source in rows
-        if claim.gaia_id not in superseded_ids
+        (claim, source) for claim, source in rows if claim.gaia_id not in superseded_ids
     ]
 
     domains: dict[str, list[TemporalFiscalClaim]] = {}
