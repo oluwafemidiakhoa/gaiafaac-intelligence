@@ -9,6 +9,7 @@ class GaiaObjectType(StrEnum):
     FAAC = "FAAC"
     IGR = "IGR"
     DEBT = "DEBT"
+    DEBT_SERVICE = "DEBTSVC"
     BUDGET = "BUDGET"
     EXPENDITURE = "EXP"
     LIABILITY = "LIABILITY"
