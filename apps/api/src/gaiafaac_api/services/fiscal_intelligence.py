@@ -17,12 +17,13 @@ from gaiafaac_api.fiscal_intelligence_schemas import (
     JurisdictionIntelligenceEnvelope,
 )
 from gaiafaac_api.fiscal_ledger_schemas import JurisdictionIdentity, LedgerMeta
+from gaiafaac_api.ledger.cross_domain_intelligence import derive_cross_domain_metrics
 from gaiafaac_api.ledger.intelligence import (
     DEFAULT_INTELLIGENCE_CONFIG,
     derive_faac_metrics,
 )
 
-INTELLIGENCE_SCHEMA_VERSION = "1.0.0"
+INTELLIGENCE_SCHEMA_VERSION = "1.1.0"
 
 
 def _state_record(
@@ -60,32 +61,10 @@ def jurisdiction_intelligence(
         faac_claims = []
     metrics = derive_faac_metrics([claim for claim in faac_claims if isinstance(claim, dict)])
     metrics.extend(
-        [
-            {
-                "key": "faac_dependence",
-                "status": "insufficient_evidence",
-                "value": None,
-                "unit": "percent",
-                "label": "FAAC dependence",
-                "fiscal_period": fiscal_state.fiscal_period,
-                "evidence_ids": [],
-                "explanation": (
-                    "A complete comparable revenue period with verified FAAC and IGR is required."
-                ),
-            },
-            {
-                "key": "debt_service_pressure",
-                "status": "insufficient_evidence",
-                "value": None,
-                "unit": "percent",
-                "label": "Debt-service pressure",
-                "fiscal_period": fiscal_state.fiscal_period,
-                "evidence_ids": [],
-                "explanation": (
-                    "Comparable verified total-revenue and debt-service claims are required."
-                ),
-            },
-        ]
+        derive_cross_domain_metrics(
+            fiscal_state.domains,
+            fiscal_period=fiscal_state.fiscal_period,
+        )
     )
     coverage = (
         format(fiscal_state.evidence_coverage, "f")
@@ -103,7 +82,14 @@ def jurisdiction_intelligence(
     reason = (
         "Evidence coverage is below the documented minimum."
         if coverage_insufficient
-        else "Required resilience components remain unavailable."
+        else (
+            "Required resilience components remain unavailable."
+            if missing_components
+            else (
+                "All currently defined resilience inputs are available; composite scoring "
+                "remains disabled until its methodology is separately governed."
+            )
+        )
     )
     data = JurisdictionIntelligenceData(
         fiscal_state_id=fiscal_state.fiscal_state_id,
@@ -131,7 +117,9 @@ def jurisdiction_intelligence(
             source_count=len(fiscal_state.sources),
             meaning=(
                 "Derived metrics use exact stored claims and documented minimum evidence. "
-                "Unavailable metrics are not estimated, annualized, or converted to zero."
+                "Unavailable metrics are not estimated, annualized, or converted to zero. "
+                "Cross-domain ratios require verified claims from the same fiscal period "
+                "with compatible units or currency."
             ),
         ),
         meta=LedgerMeta(
