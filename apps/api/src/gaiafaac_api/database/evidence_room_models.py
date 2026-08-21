@@ -127,7 +127,9 @@ def _immutable_reference(_mapper: Mapper[Any], _connection: Any, target: Any) ->
 
 
 def _durable_room(_mapper: Mapper[Any], _connection: Any, target: Any) -> None:
-    raise ValueError("Evidence Rooms are durable case files; archive them instead of deleting them.")
+    raise ValueError(
+        "Evidence Rooms are durable case files; archive them instead of deleting them."
+    )
 
 
 event.listen(EvidenceRoomEvidence, "before_update", _immutable_reference)
