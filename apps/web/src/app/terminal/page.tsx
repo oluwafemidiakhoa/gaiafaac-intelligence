@@ -194,14 +194,15 @@ export default async function GaiaTerminalPage() {
             Move from fiscal change to governed decision.
           </h2>
           <p className="text-muted-foreground mt-2 text-sm leading-6">
-            Monitoring, evidence, analysis and distribution share the same governed fiscal record.
-            Human interpretation stays distinct from immutable evidence.
+            Monitoring, evidence, analysis and distribution share the same
+            governed fiscal record. Human interpretation stays distinct from
+            immutable evidence.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {institutionalWorkflows.map((workflow) => (
             <Link key={workflow.href} href={workflow.href} className="group">
-              <Card className="h-full transition-colors group-hover:bg-muted/40">
+              <Card className="group-hover:bg-muted/40 h-full transition-colors">
                 <CardHeader>
                   <CardTitle className="text-base">{workflow.title}</CardTitle>
                   <CardDescription className="leading-6">

@@ -84,7 +84,11 @@ export function EvidenceRoomsWorkspace() {
       setRooms(result)
       setError(null)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Evidence Rooms are unavailable.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Evidence Rooms are unavailable.',
+      )
     }
   }, [])
 
@@ -94,13 +98,34 @@ export function EvidenceRoomsWorkspace() {
       setSelected(detail)
       setError(null)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Evidence Room is unavailable.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Evidence Room is unavailable.',
+      )
     }
   }, [])
 
   useEffect(() => {
-    void loadRooms()
-  }, [loadRooms])
+    let cancelled = false
+    jsonRequest<RoomSummary[]>('/evidence-rooms')
+      .then((result) => {
+        if (cancelled) return
+        setRooms(result)
+        setError(null)
+      })
+      .catch((caught: unknown) => {
+        if (cancelled) return
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Evidence Rooms are unavailable.',
+        )
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function createRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -118,7 +143,11 @@ export function EvidenceRoomsWorkspace() {
       await loadRooms()
       await openRoom(room.id)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to create Evidence Room.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to create Evidence Room.',
+      )
     } finally {
       setBusy(false)
     }
@@ -150,7 +179,11 @@ export function EvidenceRoomsWorkspace() {
       await openRoom(selected.id)
       await loadRooms()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to capture evidence.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to capture evidence.',
+      )
     } finally {
       setBusy(false)
     }
@@ -189,7 +222,11 @@ export function EvidenceRoomsWorkspace() {
       await openRoom(selected.id)
       await loadRooms()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to update room status.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to update room status.',
+      )
     } finally {
       setBusy(false)
     }
@@ -202,8 +239,8 @@ export function EvidenceRoomsWorkspace() {
           <CardHeader>
             <CardTitle>Create case file</CardTitle>
             <CardDescription>
-              Team/API organizations can create durable rooms. Evidence is immutable; notes remain
-              commentary.
+              Team/API organizations can create durable rooms. Evidence is
+              immutable; notes remain commentary.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -237,7 +274,9 @@ export function EvidenceRoomsWorkspace() {
           </CardHeader>
           <CardContent className="space-y-2">
             {rooms.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No Evidence Rooms available.</p>
+              <p className="text-muted-foreground text-sm">
+                No Evidence Rooms available.
+              </p>
             ) : (
               rooms.map((room) => (
                 <button
@@ -248,7 +287,9 @@ export function EvidenceRoomsWorkspace() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{room.title}</span>
-                    <span className="text-muted-foreground text-xs uppercase">{room.status}</span>
+                    <span className="text-muted-foreground text-xs uppercase">
+                      {room.status}
+                    </span>
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
                     {room.evidence_count} evidence · {room.note_count} notes
@@ -272,8 +313,8 @@ export function EvidenceRoomsWorkspace() {
             <CardHeader>
               <CardTitle>Select an Evidence Room</CardTitle>
               <CardDescription>
-                Open a room to capture governed references, review immutable hashes and keep human
-                notes separate.
+                Open a room to capture governed references, review immutable
+                hashes and keep human notes separate.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -284,7 +325,9 @@ export function EvidenceRoomsWorkspace() {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <CardTitle>{selected.title}</CardTitle>
-                    <CardDescription>{selected.description ?? 'No description'}</CardDescription>
+                    <CardDescription>
+                      {selected.description ?? 'No description'}
+                    </CardDescription>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -323,18 +366,23 @@ export function EvidenceRoomsWorkspace() {
               <CardHeader>
                 <CardTitle>Capture governed evidence</CardTitle>
                 <CardDescription>
-                  References are snapshotted and hashed at capture time. Captured evidence cannot be
-                  edited or deleted.
+                  References are snapshotted and hashed at capture time.
+                  Captured evidence cannot be edited or deleted.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="grid gap-3 md:grid-cols-2" onSubmit={addEvidence}>
+                <form
+                  className="grid gap-3 md:grid-cols-2"
+                  onSubmit={addEvidence}
+                >
                   <select
                     name="reference_kind"
                     defaultValue="fiscal_event"
                     className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                   >
-                    <option value="organization_alert">Organization alert</option>
+                    <option value="organization_alert">
+                      Organization alert
+                    </option>
                     <option value="fiscal_event">Fiscal Event</option>
                     <option value="fiscal_proof">Fiscal Proof</option>
                     <option value="decision_packet">Decision Packet</option>
@@ -374,28 +422,37 @@ export function EvidenceRoomsWorkspace() {
             <Card>
               <CardHeader>
                 <CardTitle>Evidence chain</CardTitle>
-                <CardDescription>{selected.evidence.length} immutable captured references</CardDescription>
+                <CardDescription>
+                  {selected.evidence.length} immutable captured references
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {selected.evidence.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No evidence captured yet.</p>
+                  <p className="text-muted-foreground text-sm">
+                    No evidence captured yet.
+                  </p>
                 ) : (
                   selected.evidence.map((item) => (
-                    <div key={item.id} className="border-border rounded-lg border p-4">
+                    <div
+                      key={item.id}
+                      className="border-border rounded-lg border p-4"
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="font-medium">{item.reference_kind.replaceAll('_', ' ')}</span>
+                        <span className="font-medium">
+                          {item.reference_kind.replaceAll('_', ' ')}
+                        </span>
                         <span className="text-muted-foreground font-mono text-xs">
                           {new Date(item.captured_at).toISOString()}
                         </span>
                       </div>
-                      <p className="text-muted-foreground mt-2 break-all font-mono text-xs">
+                      <p className="text-muted-foreground mt-2 font-mono text-xs break-all">
                         Reference: {item.reference_id}
                       </p>
-                      <p className="mt-2 break-all font-mono text-xs">
+                      <p className="mt-2 font-mono text-xs break-all">
                         Record SHA-256: {item.record_sha256}
                       </p>
                       {item.source_sha256 ? (
-                        <p className="text-muted-foreground mt-1 break-all font-mono text-xs">
+                        <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
                           Source SHA-256: {item.source_sha256}
                         </p>
                       ) : null}
@@ -409,8 +466,8 @@ export function EvidenceRoomsWorkspace() {
               <CardHeader>
                 <CardTitle>Human notes</CardTitle>
                 <CardDescription>
-                  Notes are intentionally separate from governed fiscal evidence and may be edited by
-                  their authors through the API.
+                  Notes are intentionally separate from governed fiscal evidence
+                  and may be edited by their authors through the API.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -427,8 +484,13 @@ export function EvidenceRoomsWorkspace() {
                   </Button>
                 </form>
                 {selected.notes.map((note) => (
-                  <div key={note.id} className="border-border rounded-lg border p-4">
-                    <p className="text-sm leading-6 whitespace-pre-wrap">{note.body}</p>
+                  <div
+                    key={note.id}
+                    className="border-border rounded-lg border p-4"
+                  >
+                    <p className="text-sm leading-6 whitespace-pre-wrap">
+                      {note.body}
+                    </p>
                     <p className="text-muted-foreground mt-2 text-xs">
                       Updated {new Date(note.updated_at).toISOString()}
                     </p>
