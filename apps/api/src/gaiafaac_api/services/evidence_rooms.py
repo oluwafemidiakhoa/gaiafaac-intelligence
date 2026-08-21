@@ -29,17 +29,32 @@ from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
 
 
 def _canonical_hash(value: dict[str, Any]) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    payload = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
 def _summary(session: Session, room: EvidenceRoom) -> EvidenceRoomSummary:
-    evidence_count = session.scalar(
-        select(func.count()).select_from(EvidenceRoomEvidence).where(EvidenceRoomEvidence.room_id == room.id)
-    ) or 0
-    note_count = session.scalar(
-        select(func.count()).select_from(EvidenceRoomNote).where(EvidenceRoomNote.room_id == room.id)
-    ) or 0
+    evidence_count = (
+        session.scalar(
+            select(func.count())
+            .select_from(EvidenceRoomEvidence)
+            .where(EvidenceRoomEvidence.room_id == room.id)
+        )
+        or 0
+    )
+    note_count = (
+        session.scalar(
+            select(func.count())
+            .select_from(EvidenceRoomNote)
+            .where(EvidenceRoomNote.room_id == room.id)
+        )
+        or 0
+    )
     return EvidenceRoomSummary(
         id=room.id,
         title=room.title,
@@ -62,7 +77,11 @@ def list_rooms(session: Session, organization_id: uuid.UUID) -> list[EvidenceRoo
     return [_summary(session, room) for room in rooms]
 
 
-def get_room_row(session: Session, organization_id: uuid.UUID, room_id: uuid.UUID) -> EvidenceRoom | None:
+def get_room_row(
+    session: Session,
+    organization_id: uuid.UUID,
+    room_id: uuid.UUID,
+) -> EvidenceRoom | None:
     return session.scalar(
         select(EvidenceRoom).where(
             EvidenceRoom.id == room_id,
@@ -71,7 +90,11 @@ def get_room_row(session: Session, organization_id: uuid.UUID, room_id: uuid.UUI
     )
 
 
-def get_room(session: Session, organization_id: uuid.UUID, room_id: uuid.UUID) -> EvidenceRoomDetail | None:
+def get_room(
+    session: Session,
+    organization_id: uuid.UUID,
+    room_id: uuid.UUID,
+) -> EvidenceRoomDetail | None:
     room = get_room_row(session, organization_id, room_id)
     if room is None:
         return None
@@ -151,7 +174,9 @@ def set_room_status(
 
 
 def _snapshot_organization_alert(
-    session: Session, organization_id: uuid.UUID, reference_id: str
+    session: Session,
+    organization_id: uuid.UUID,
+    reference_id: str,
 ) -> tuple[str | None, str | None, dict[str, Any]] | None:
     try:
         alert_id = uuid.UUID(reference_id)
@@ -180,30 +205,32 @@ def _snapshot_organization_alert(
 
 
 def _snapshot_fiscal_event(
-    session: Session, reference_id: str
+    session: Session,
+    reference_id: str,
 ) -> tuple[str | None, str | None, dict[str, Any]] | None:
-    event = session.get(FiscalEvent, reference_id)
-    if event is None:
+    fiscal_event = session.get(FiscalEvent, reference_id)
+    if fiscal_event is None:
         return None
     snapshot = {
-        "event_id": event.event_id,
-        "state_id": str(event.state_id),
-        "event_type": event.event_type,
-        "severity": str(event.severity),
-        "effective_at": event.effective_at.isoformat(),
-        "detected_at": event.detected_at.isoformat(),
-        "evidence_status": str(event.evidence_status),
-        "evidence_ids": list(event.evidence_ids),
-        "calculation": dict(event.calculation),
-        "explanation": event.explanation,
-        "fiscal_state_id": event.fiscal_state_id,
-        "methodology_version": event.methodology_version,
+        "event_id": fiscal_event.event_id,
+        "state_id": str(fiscal_event.state_id),
+        "event_type": fiscal_event.event_type,
+        "severity": str(fiscal_event.severity),
+        "effective_at": fiscal_event.effective_at.isoformat(),
+        "detected_at": fiscal_event.detected_at.isoformat(),
+        "evidence_status": str(fiscal_event.evidence_status),
+        "evidence_ids": list(fiscal_event.evidence_ids),
+        "calculation": dict(fiscal_event.calculation),
+        "explanation": fiscal_event.explanation,
+        "fiscal_state_id": fiscal_event.fiscal_state_id,
+        "methodology_version": fiscal_event.methodology_version,
     }
-    return f"/events?event_id={event.event_id}", None, snapshot
+    return f"/events?event_id={fiscal_event.event_id}", None, snapshot
 
 
 def _snapshot_source(
-    session: Session, reference_id: str
+    session: Session,
+    reference_id: str,
 ) -> tuple[str | None, str | None, dict[str, Any]] | None:
     source = session.scalar(
         select(SourceDocument).where(
@@ -219,10 +246,11 @@ def _snapshot_source(
         "source_url": source.source_url,
         "original_filename": source.original_filename,
         "sha256": source.sha256,
-        "publication_date": source.publication_date.isoformat() if source.publication_date else None,
+        "publication_date": (
+            source.publication_date.isoformat() if source.publication_date else None
+        ),
         "document_version": source.document_version,
         "source_status": str(source.source_status),
-        "verification_status": str(source.verification_status),
     }
     return source.source_url, source.sha256, snapshot
 
@@ -235,7 +263,11 @@ def _snapshot_fiscal_proof(
 ) -> tuple[str | None, str | None, dict[str, Any]] | None:
     if state_slug is None or revenue_month is None:
         return None
-    proof = get_fiscal_proof(session, state_slug=state_slug, revenue_month=revenue_month)
+    proof = get_fiscal_proof(
+        session,
+        state_slug=state_slug,
+        revenue_month=revenue_month,
+    )
     if proof is None or proof.proof_id != reference_id:
         return None
     snapshot = proof.model_dump(mode="json")
@@ -275,7 +307,11 @@ def _resolve_reference(
     request: EvidenceReferenceCreateRequest,
 ) -> tuple[str | None, str | None, dict[str, Any]] | None:
     if request.reference_kind == "organization_alert":
-        return _snapshot_organization_alert(session, organization_id, request.reference_id)
+        return _snapshot_organization_alert(
+            session,
+            organization_id,
+            request.reference_id,
+        )
     if request.reference_kind == "fiscal_event":
         return _snapshot_fiscal_event(session, request.reference_id)
     if request.reference_kind == "source":
@@ -297,6 +333,20 @@ def _resolve_reference(
     return None
 
 
+def _evidence_response(row: EvidenceRoomEvidence) -> EvidenceRoomEvidenceResponse:
+    return EvidenceRoomEvidenceResponse(
+        id=row.id,
+        reference_kind=row.reference_kind,
+        reference_id=row.reference_id,
+        reference_uri=row.reference_uri,
+        source_sha256=row.source_sha256,
+        record_sha256=row.record_sha256,
+        snapshot=dict(row.snapshot),
+        captured_by_user_id=row.captured_by_user_id,
+        captured_at=row.captured_at,
+    )
+
+
 def capture_reference(
     session: Session,
     organization_id: uuid.UUID,
@@ -315,17 +365,7 @@ def capture_reference(
         )
     )
     if existing is not None:
-        return EvidenceRoomEvidenceResponse(
-            id=existing.id,
-            reference_kind=existing.reference_kind,
-            reference_id=existing.reference_id,
-            reference_uri=existing.reference_uri,
-            source_sha256=existing.source_sha256,
-            record_sha256=existing.record_sha256,
-            snapshot=dict(existing.snapshot),
-            captured_by_user_id=existing.captured_by_user_id,
-            captured_at=existing.captured_at,
-        )
+        return _evidence_response(existing)
 
     resolved = _resolve_reference(session, organization_id, request)
     if resolved is None:
@@ -351,17 +391,7 @@ def capture_reference(
     session.add(row)
     session.commit()
     session.refresh(row)
-    return EvidenceRoomEvidenceResponse(
-        id=row.id,
-        reference_kind=row.reference_kind,
-        reference_id=row.reference_id,
-        reference_uri=row.reference_uri,
-        source_sha256=row.source_sha256,
-        record_sha256=row.record_sha256,
-        snapshot=dict(row.snapshot),
-        captured_by_user_id=row.captured_by_user_id,
-        captured_at=row.captured_at,
-    )
+    return _evidence_response(row)
 
 
 def add_note(
@@ -374,7 +404,11 @@ def add_note(
     room = get_room_row(session, organization_id, room_id)
     if room is None or room.status == "archived":
         return None
-    row = EvidenceRoomNote(room_id=room_id, author_user_id=user.id, body=body.strip())
+    row = EvidenceRoomNote(
+        room_id=room_id,
+        author_user_id=user.id,
+        body=body.strip(),
+    )
     session.add(row)
     session.commit()
     session.refresh(row)
