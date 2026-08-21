@@ -1,6 +1,5 @@
 from decimal import Decimal, InvalidOperation
 
-
 _RATIO_SPECS = (
     (
         "faac_dependence",
