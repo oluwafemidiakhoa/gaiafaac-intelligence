@@ -17,11 +17,13 @@ from gaiafaac_api.api.v1.routes.national_review import router as national_review
 from gaiafaac_api.api.v1.routes.oagf_revisions import router as oagf_revisions_router
 from gaiafaac_api.api.v1.routes.published_data import router as published_data_router
 from gaiafaac_api.api.v1.routes.review import router as review_router
+from gaiafaac_api.api.v1.routes.temporal import router as temporal_router
 from gaiafaac_api.api.v1.routes.watchlists import router as watchlists_router
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(health_router)
 router.include_router(fiscal_ledger_router)
+router.include_router(temporal_router)
 router.include_router(demo_data_router)
 router.include_router(analytics_router)
 router.include_router(published_data_router)
