@@ -216,7 +216,10 @@ def _temporal_answer(
         for claim in claims[:10]
     ]
     claim_summary = "; ".join(
-        f"{item.metric.replace('_', ' ')} = {item.value or 'Unavailable'} {item.currency or item.unit}"
+        (
+            f"{item.metric.replace('_', ' ')} = "
+            f"{item.value or 'Unavailable'} {item.currency or item.unit}"
+        )
         for item in claims[:5]
     )
     return GaiaAnalystResponse(
