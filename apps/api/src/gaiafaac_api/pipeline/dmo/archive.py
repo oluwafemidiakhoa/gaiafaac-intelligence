@@ -100,10 +100,7 @@ def archive_dmo_publication(
     body = _validated_download(candidate, download)
     checksum = hashlib.sha256(body).hexdigest()
     destination = (
-        archive_root
-        / candidate.debt_kind
-        / candidate.as_of_date.isoformat()
-        / f"{checksum}.pdf"
+        archive_root / candidate.debt_kind / candidate.as_of_date.isoformat() / f"{checksum}.pdf"
     ).expanduser()
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
