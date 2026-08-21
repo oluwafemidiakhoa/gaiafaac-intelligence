@@ -90,9 +90,7 @@ def _compatible(left: dict[str, Any], right: dict[str, Any]) -> bool:
     return left.get("unit") == right.get("unit")
 
 
-def _insufficient(
-    key: str, label: str, fiscal_period: str, explanation: str
-) -> dict[str, object]:
+def _insufficient(key: str, label: str, fiscal_period: str, explanation: str) -> dict[str, object]:
     return {
         "key": key,
         "status": "insufficient_evidence",
@@ -148,9 +146,7 @@ def derive_cross_domain_metrics(
                 )
             )
             continue
-        value = (numerator_value / denominator_value * Decimal("100")).quantize(
-            Decimal("0.01")
-        )
+        value = (numerator_value / denominator_value * Decimal("100")).quantize(Decimal("0.01"))
         metrics.append(
             {
                 "key": key,
