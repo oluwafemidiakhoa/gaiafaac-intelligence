@@ -65,10 +65,7 @@ def test_real_layout_examples_match_dmo_semantics():
                 "\n".join(
                     [
                         "1 ABIA 48,319,385,321.00",
-                        *[
-                            f"{index} State {index} {index * 1000:,.2f}"
-                            for index in range(2, 37)
-                        ],
+                        *[f"{index} State {index} {index * 1000:,.2f}" for index in range(2, 37)],
                         "37 FCT 389,875,138,075.16",
                     ]
                 ),
