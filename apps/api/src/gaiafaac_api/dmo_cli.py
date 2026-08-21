@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
 from gaiafaac_api.pipeline.dmo.archive import archive_dmo_publications
 from gaiafaac_api.pipeline.dmo.discovery import discover_dmo_subnational_publications
+from gaiafaac_api.pipeline.dmo.extract import extract_dmo_debt_source
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,6 +24,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     archive.add_argument("--archive-root", type=Path, default=Path("data/raw/dmo"))
     archive.add_argument("--limit", type=int)
+    extract = commands.add_parser(
+        "extract-source",
+        help="Extract one archived DMO source into unpublished review records",
+    )
+    extract.add_argument("source_document_id", type=uuid.UUID)
     return parser
 
 
@@ -71,6 +78,29 @@ def main() -> None:
                     }
                     for item in results
                 ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "extract-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = extract_dmo_debt_source(
+                session,
+                source_document_id=args.source_document_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "debt_kind": result.debt_kind,
+                    "as_of_date": result.as_of_date,
+                    "currency": result.currency,
+                    "records_extracted": result.records_extracted,
+                    "total_amount": format(result.total_amount, "f"),
+                    "status": "extracted_awaiting_review",
+                },
                 indent=2,
                 sort_keys=True,
             )

@@ -15,6 +15,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     UniqueConstraint,
@@ -79,7 +80,7 @@ class StateDebtRecord(Base):
     debt_amount_original: Mapped[str] = mapped_column(String(120), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     components: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
-    source_page: Mapped[int | None] = mapped_column(nullable=True)
+    source_page: Mapped[int | None] = mapped_column(Integer)
     source_table: Mapped[str | None] = mapped_column(String(160))
     verification_status: Mapped[VerificationStatus] = mapped_column(
         _enum_type(VerificationStatus, "debt_verification_status"),
