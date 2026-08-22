@@ -24,9 +24,10 @@ import { getNationalDistributionHistory } from '@/lib/national-distribution-api'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
-  title: 'GaiaFAAC — Evidence-grade fiscal intelligence for Nigeria',
+  title:
+    'Gaia Fiscal Intelligence — Verified public-finance evidence for Nigeria',
   description:
-    'Research-grade Nigerian fiscal intelligence with source fingerprints, human review, versioned evidence and independently verifiable records.',
+    'Verified public-finance data, evidence and fiscal events for Nigeria, with source fingerprints, human review and versioned records.',
 }
 export const dynamic = 'force-dynamic'
 
@@ -81,7 +82,7 @@ export default async function Home() {
             <div className="max-w-4xl">
               <div className="mb-6 flex flex-wrap items-center gap-3">
                 <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 font-mono text-xs font-semibold tracking-[0.16em] text-emerald-100 uppercase">
-                  Evidence-grade fiscal intelligence
+                  Verified public-finance intelligence
                 </span>
                 {data ? (
                   <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/75">
@@ -93,10 +94,10 @@ export default async function Home() {
                 Nigeria’s fiscal numbers, with the evidence attached.
               </h1>
               <p className="mt-7 max-w-3xl text-lg leading-8 text-pretty text-emerald-50/75">
-                GaiaFAAC is a fiscal intelligence operating system for public
-                evidence: sourced, reconciled, human-reviewed, version-aware and
-                designed so a serious analyst can trace the number back to the
-                document.
+                Gaia Fiscal Intelligence delivers verified public-finance data,
+                evidence and fiscal events for Nigeria: sourced, reconciled,
+                human-reviewed, version-aware and designed so a serious analyst
+                can trace every governed number back to the document.
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <Button
@@ -202,8 +203,8 @@ export default async function Home() {
                   Research workspace unavailable
                 </CardTitle>
                 <CardDescription>
-                  GaiaFAAC does not synthesize replacement values when no
-                  governed publication is available.
+                  Gaia Fiscal Intelligence does not synthesize replacement
+                  values when no governed publication is available.
                 </CardDescription>
               </CardHeader>
             </Card>

@@ -1,10 +1,10 @@
-# GaiaFAAC Intelligence
+# Gaia Fiscal Intelligence
 
-**Verified fiscal intelligence for every Nigerian state.**
+**Verified public-finance data, evidence and fiscal events for Nigeria.**
 
-GaiaFAAC Intelligence is an independent public-finance research platform that turns Nigerian Federation Account Allocation Committee records into source-linked data, comparisons, and derived fiscal signals. It is **not an official government platform**.
+Gaia Fiscal Intelligence is an independent public-finance research platform for governed Nigerian fiscal evidence. It turns official source documents into source-linked data, comparisons, fiscal events, and derived intelligence while preserving provenance, review status, and revision history. It is **not an official government platform**.
 
-The platform publishes real, human-approved FAAC records extracted from Office of the Accountant-General of the Federation source documents. Every published month preserves its source URL, document metadata, and SHA-256 fingerprint.
+**GaiaFAAC** remains the platform's FAAC module. The platform publishes real, human-approved FAAC records extracted from Office of the Accountant-General of the Federation source documents, and is expanding the same evidence-governance model across IGR, debt, budgets, expenditure, liabilities, and related fiscal domains. Every published source preserves its URL, document metadata, and SHA-256 fingerprint.
 
 ## Live product
 
@@ -48,11 +48,11 @@ Current indicators include:
 
 Missing values are never converted to zero or estimated. Where a comparable gross or deduction series is unavailable, the dependent metric is shown as unavailable.
 
-Fiscal Pulse is **not** a credit rating, solvency test, corruption signal, governance score, or prediction of default. Broader fiscal-risk assessment would require additional evidence such as IGR, debt service, debt stock, expenditure, liabilities, and other economic variables.
+Fiscal Pulse is **not** a credit rating, solvency test, corruption signal, governance score, or prediction of default. Broader fiscal-risk assessment requires additional evidence such as IGR, debt service, debt stock, expenditure, liabilities, and other economic variables.
 
 ## Commercial status
 
-GaiaFAAC is currently accepting **manually provisioned pilot customers**.
+Gaia Fiscal Intelligence is currently accepting **manually provisioned pilot customers**.
 
 The latest verified month and selected Fiscal Pulse indicators remain publicly accessible. Paid plans are intended to unlock historical intelligence, exports, reports, team access, and API use. Automated checkout, customer accounts, personalized licensed exports, and subscription self-service are not yet complete and must not be represented as available until they are implemented.
 
@@ -65,7 +65,7 @@ Commercial and pilot enquiries:
 The system separates collection, extraction, validation, approval, publication, and public access:
 
 ```text
-OAGF source document
+Official source document
   -> download and SHA-256 registration
   -> structured extraction
   -> deterministic validation
@@ -73,7 +73,7 @@ OAGF source document
   -> explicit human approval
   -> publication
   -> public pages and entitled API access
-  -> derived Fiscal Pulse signals
+  -> derived intelligence and fiscal events
 ```
 
 Important safeguards:

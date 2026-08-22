@@ -9,11 +9,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'GaiaFAAC',
-    template: '%s | GaiaFAAC',
+    default: 'Gaia Fiscal Intelligence',
+    template: '%s | Gaia Fiscal Intelligence',
   },
   description:
-    'The verifiable fiscal ledger for Nigeria: sourced, reconciled, versioned public-finance evidence.',
+    'Verified public-finance data, evidence and fiscal events for Nigeria.',
 }
 
 export default function RootLayout({

@@ -9,8 +9,8 @@ from gaiafaac_api.config import get_settings
 def create_app() -> FastAPI:
     settings = get_settings()
     application = FastAPI(
-        title="GaiaFAAC Intelligence API",
-        summary="Source-grounded Nigerian public-finance intelligence",
+        title="Gaia Fiscal Intelligence API",
+        summary="Verified public-finance data, evidence and fiscal events for Nigeria",
         version="0.1.0",
         docs_url="/docs",
         redoc_url="/redoc",

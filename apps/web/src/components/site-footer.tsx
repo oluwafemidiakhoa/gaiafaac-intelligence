@@ -5,7 +5,7 @@ export function SiteFooter() {
     <footer className="border-border mt-20 border-t">
       <div className="text-muted-foreground mx-auto grid max-w-7xl gap-5 px-5 py-10 text-sm leading-6 md:grid-cols-2 lg:px-8">
         <p>
-          GaiaFAAC Intelligence is an independent research platform, not an
+          Gaia Fiscal Intelligence is an independent research platform, not an
           official government service.
         </p>
         <p className="md:text-right">
