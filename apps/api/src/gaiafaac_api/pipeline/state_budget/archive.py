@@ -94,9 +94,7 @@ def _artifact_type(download: StateBudgetDownload) -> tuple[str, str] | None:
     suffix = PurePosixPath(urllib.parse.urlparse(download.final_url).path).suffix.lower()
     if download.body.startswith(b"%PDF-"):
         return "pdf", _PDF_MIME
-    if download.body.startswith(b"PK\x03\x04") and (
-        suffix == ".xlsx" or media_type == _XLSX_MIME
-    ):
+    if download.body.startswith(b"PK\x03\x04") and (suffix == ".xlsx" or media_type == _XLSX_MIME):
         return "xlsx", _XLSX_MIME
     return None
 
@@ -211,9 +209,7 @@ def archive_state_budget_publication(
             duplicate=True,
         )
 
-    artifact_name = PurePosixPath(
-        urllib.parse.urlparse(download.final_url).path
-    ).name
+    artifact_name = PurePosixPath(urllib.parse.urlparse(download.final_url).path).name
     original_filename = artifact_name or (
         f"{candidate.state_code.lower()}-{candidate.fiscal_year}-approved-budget.{artifact_kind}"
     )
