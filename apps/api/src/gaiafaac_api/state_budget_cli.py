@@ -16,6 +16,9 @@ from gaiafaac_api.pipeline.state_budget.discovery import (
     registered_budget_portals,
 )
 from gaiafaac_api.pipeline.state_budget.extract import extract_state_budget_source
+from gaiafaac_api.pipeline.state_budget.performance_discovery import (
+    discover_budget_performance_publications,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -30,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Discover approved-budget publications for one registered state without importing",
     )
     discover.add_argument("state_code")
+    discover_performance = commands.add_parser(
+        "discover-performance",
+        help="Discover quarterly budget-performance reports without importing values",
+    )
+    discover_performance.add_argument("state_code")
     archive = commands.add_parser(
         "archive-state",
         help="Archive approved-budget artifacts for one registered state without extracting values",
@@ -95,6 +103,28 @@ def main() -> None:
                         "document_url": item.document_url,
                         "listing_url": item.listing_url,
                         "status": "discovered_only",
+                    }
+                    for item in publications
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "discover-performance":
+        publications = discover_budget_performance_publications(args.state_code)
+        print(
+            json.dumps(
+                [
+                    {
+                        "state_code": item.state_code,
+                        "state_name": item.state_name,
+                        "fiscal_year": item.fiscal_year,
+                        "quarter": item.quarter,
+                        "title": item.title,
+                        "document_url": item.document_url,
+                        "listing_url": item.listing_url,
+                        "status": "discovered_performance_only",
                     }
                     for item in publications
                 ],
