@@ -16,6 +16,9 @@ from gaiafaac_api.pipeline.state_budget.discovery import (
     registered_budget_portals,
 )
 from gaiafaac_api.pipeline.state_budget.extract import extract_state_budget_source
+from gaiafaac_api.pipeline.state_budget.performance_archive import (
+    archive_budget_performance_publications,
+)
 from gaiafaac_api.pipeline.state_budget.performance_discovery import (
     discover_budget_performance_publications,
 )
@@ -45,6 +48,17 @@ def build_parser() -> argparse.ArgumentParser:
     archive.add_argument("state_code")
     archive.add_argument("--archive-root", type=Path, default=Path("data/raw/state-budget"))
     archive.add_argument("--limit", type=int)
+    archive_performance = commands.add_parser(
+        "archive-performance",
+        help="Archive quarterly budget-performance artifacts without extracting values",
+    )
+    archive_performance.add_argument("state_code")
+    archive_performance.add_argument(
+        "--archive-root",
+        type=Path,
+        default=Path("data/raw/state-budget-performance"),
+    )
+    archive_performance.add_argument("--limit", type=int)
     extract = commands.add_parser(
         "extract-source",
         help="Extract one archived supported state budget into unpublished review records",
@@ -157,6 +171,39 @@ def main() -> None:
                         "storage_path": item.storage_path,
                         "duplicate": item.duplicate,
                         "status": "archived_registered_only",
+                    }
+                    for item in results
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "archive-performance":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            results = archive_budget_performance_publications(
+                session,
+                discover_budget_performance_publications(args.state_code),
+                archive_root=args.archive_root,
+                limit=args.limit,
+            )
+            session.commit()
+        print(
+            json.dumps(
+                [
+                    {
+                        "source_document_id": str(item.source_document_id),
+                        "state_code": item.state_code,
+                        "fiscal_year": item.fiscal_year,
+                        "quarter": item.quarter,
+                        "document_url": item.document_url,
+                        "artifact_url": item.artifact_url,
+                        "artifact_kind": item.artifact_kind,
+                        "sha256": item.sha256,
+                        "storage_path": item.storage_path,
+                        "duplicate": item.duplicate,
+                        "status": "archived_performance_registered_only",
                     }
                     for item in results
                 ],
