@@ -67,7 +67,9 @@ def _money(raw: str, *, metric: LiabilityMetric) -> Decimal | None:
     try:
         value = Decimal(normalized.replace(",", ""))
     except InvalidOperation as error:
-        raise ImportContractError(f"Invalid liability amount for {metric.value}: {raw!r}") from error
+        raise ImportContractError(
+            f"Invalid liability amount for {metric.value}: {raw!r}"
+        ) from error
     if value < 0:
         raise ImportContractError(f"Negative liability amount for {metric.value}: {value}")
     return value
@@ -207,9 +209,13 @@ def extract_state_liability_source(
 
     state = session.scalar(select(State).where(State.code == state_code))
     if state is None:
-        raise ImportContractError(f"State-financial source references unknown state code {state_code}")
+        raise ImportContractError(
+            f"State-financial source references unknown state code {state_code}"
+        )
     if source.source_organization != f"{state.name} State Government":
-        raise ImportContractError("State-financial source organization does not match the staged state")
+        raise ImportContractError(
+            "State-financial source organization does not match the staged state"
+        )
     if (
         session.scalar(
             select(StateLiabilityRecord.id).where(
@@ -248,7 +254,9 @@ def extract_state_liability_source(
             for row in rows
         ]
         if len(records) != len(LiabilityMetric):
-            raise ImportContractError("Liability extraction did not produce the complete metric set")
+            raise ImportContractError(
+                "Liability extraction did not produce the complete metric set"
+            )
         session.add_all(records)
         source.processing_status = ProcessingStatus.READY_FOR_REVIEW
         source.source_status = SourceStatus.READY_FOR_REVIEW
