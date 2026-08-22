@@ -60,6 +60,7 @@ EXPECTED_TABLES = {
     "source_documents",
     "state_allocation_components",
     "state_allocations",
+    "state_budget_performance_records",
     "state_budget_records",
     "state_debt_records",
     "state_igr_records",
