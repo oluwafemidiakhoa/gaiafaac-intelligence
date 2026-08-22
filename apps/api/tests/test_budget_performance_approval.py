@@ -184,8 +184,7 @@ def test_performance_approval_human_verifies_without_publishing(session):
     assert source.source_status is SourceStatus.APPROVED
     assert source.processing_status is ProcessingStatus.COMPLETED
     assert all(
-        record.verification_status is VerificationStatus.HUMAN_VERIFIED
-        for record in records
+        record.verification_status is VerificationStatus.HUMAN_VERIFIED for record in records
     )
     assert all(not record.is_published for record in records)
     assert (
@@ -257,9 +256,7 @@ def test_performance_publication_creates_only_governed_expenditure_claims(sessio
             )
         )
     )
-    publishable = [
-        record for record in records if record.metric in PUBLISHABLE_EXPENDITURE_METRICS
-    ]
+    publishable = [record for record in records if record.metric in PUBLISHABLE_EXPENDITURE_METRICS]
     supporting = [
         record for record in records if record.metric not in PUBLISHABLE_EXPENDITURE_METRICS
     ]
