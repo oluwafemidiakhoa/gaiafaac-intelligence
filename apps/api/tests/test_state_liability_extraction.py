@@ -60,9 +60,7 @@ def _source(
         mime_type="application/pdf",
         processing_status=ProcessingStatus.REGISTERED,
         source_status=SourceStatus.REGISTERED,
-        document_version=(
-            f"state-financial-{evidence_kind}-{state_code.lower()}-{fiscal_year}"
-        ),
+        document_version=(f"state-financial-{evidence_kind}-{state_code.lower()}-{fiscal_year}"),
         is_demo=False,
     )
     session.add(source)
@@ -85,9 +83,7 @@ def test_extracts_oyo_arrears_summary_into_unpublished_review_records(
 
     records = list(
         session.scalars(
-            select(StateLiabilityRecord).where(
-                StateLiabilityRecord.source_document_id == source.id
-            )
+            select(StateLiabilityRecord).where(StateLiabilityRecord.source_document_id == source.id)
         )
     )
     by_metric = {record.metric: record for record in records}
