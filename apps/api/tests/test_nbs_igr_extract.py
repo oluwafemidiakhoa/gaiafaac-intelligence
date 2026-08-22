@@ -76,7 +76,9 @@ def test_extract_nbs_igr_source_stages_all_states_for_review(session, tmp_path):
         state.id for state in session.scalars(select(State)).all()
     }
     assert all(record.period_type is IgrPeriodType.ANNUAL for record in records)
-    assert all(record.verification_status is VerificationStatus.REQUIRES_REVIEW for record in records)
+    assert all(
+        record.verification_status is VerificationStatus.REQUIRES_REVIEW for record in records
+    )
     assert all(not record.is_published for record in records)
     assert refreshed is not None
     assert refreshed.processing_status is ProcessingStatus.READY_FOR_REVIEW
@@ -94,6 +96,9 @@ def test_extract_nbs_igr_source_fails_closed_on_missing_jurisdiction(session, tm
             text_reader=lambda _path: _pages(missing_code="ZA"),
         )
 
-    assert session.scalar(
-        select(StateIgrRecord.id).where(StateIgrRecord.source_document_id == source.id)
-    ) is None
+    assert (
+        session.scalar(
+            select(StateIgrRecord.id).where(StateIgrRecord.source_document_id == source.id)
+        )
+        is None
+    )
