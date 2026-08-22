@@ -61,9 +61,7 @@ def _money(value: str, *, state_name: str) -> Decimal:
     try:
         amount = Decimal(value.replace(",", "")).quantize(_CENT, rounding=ROUND_HALF_UP)
     except (InvalidOperation, ValueError) as error:
-        raise ImportContractError(
-            f"Invalid NBS IGR value for {state_name!r}: {value!r}"
-        ) from error
+        raise ImportContractError(f"Invalid NBS IGR value for {state_name!r}: {value!r}") from error
     if amount < 0:
         raise ImportContractError(f"Negative NBS IGR value for {state_name!r}: {amount}")
     return amount
