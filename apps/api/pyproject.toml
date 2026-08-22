@@ -22,6 +22,7 @@ dependencies = [
 gaiafaac-db = "gaiafaac_api.cli:main"
 gaiafaac-dmo = "gaiafaac_api.dmo_cli:main"
 gaiafaac-nbs-igr = "gaiafaac_api.nbs_igr_cli:main"
+gaiafaac-state-budget = "gaiafaac_api.state_budget_cli:main"
 gaiafaac-national = "gaiafaac_api.national_cli:main"
 gaiafaac-lga = "gaiafaac_api.lga_cli:main"
 gaiafaac-webhooks = "gaiafaac_api.institutional_webhook_cli:main"
