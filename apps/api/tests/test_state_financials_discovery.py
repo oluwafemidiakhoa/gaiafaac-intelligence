@@ -11,9 +11,7 @@ def test_registry_is_explicitly_partial_and_official():
 
     assert {portal.state_code for portal in portals} == {"OY", "ZA"}
     assert all(portal.listing_url.startswith("https://") for portal in portals)
-    assert {
-        kind for portal in portals for kind in portal.evidence_kinds
-    } == {
+    assert {kind for portal in portals for kind in portal.evidence_kinds} == {
         StateFinancialEvidenceKind.AUDITED_FINANCIAL_STATEMENT,
         StateFinancialEvidenceKind.CONTRACTOR_ARREARS_REGISTER,
     }
