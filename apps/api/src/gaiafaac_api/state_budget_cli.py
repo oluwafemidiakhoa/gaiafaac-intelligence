@@ -6,6 +6,10 @@ import uuid
 from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
+from gaiafaac_api.pipeline.state_budget.approval import (
+    approve_budget_source,
+    publish_budget_source,
+)
 from gaiafaac_api.pipeline.state_budget.archive import archive_state_budget_publications
 from gaiafaac_api.pipeline.state_budget.discovery import (
     discover_state_budget_publications,
@@ -38,6 +42,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Extract one archived supported state budget into unpublished review records",
     )
     extract.add_argument("source_document_id", type=uuid.UUID)
+    approve = commands.add_parser(
+        "approve-source",
+        help="Human-verify one complete staged state budget without publishing claims",
+    )
+    approve.add_argument("source_document_id", type=uuid.UUID)
+    approve.add_argument("reviewer_id", type=uuid.UUID)
+    publish = commands.add_parser(
+        "publish-source",
+        help="Publish one approved state budget into governed budget claims",
+    )
+    publish.add_argument("source_document_id", type=uuid.UUID)
+    publish.add_argument("reviewer_id", type=uuid.UUID)
     return parser
 
 
@@ -135,6 +151,53 @@ def main() -> None:
                     "records_extracted": result.records_extracted,
                     "total_expenditure": str(result.total_expenditure),
                     "status": "requires_review",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "approve-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = approve_budget_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "records_affected": result.records_affected,
+                    "published": result.published,
+                    "status": "approved_not_published",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "publish-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = publish_budget_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "records_affected": result.records_affected,
+                    "published": result.published,
+                    "proof_gaia_ids": list(result.proof_gaia_ids),
+                    "status": "published_governed_budget_claims",
                 },
                 indent=2,
                 sort_keys=True,
