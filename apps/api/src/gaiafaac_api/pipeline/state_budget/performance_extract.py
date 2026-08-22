@@ -232,7 +232,9 @@ def _value(
 
 
 def _validate_original_budget(rows: dict[BudgetPerformanceMetric, ParsedPerformanceRow]) -> None:
-    original = lambda metric: _value(rows, metric, "original_budget")
+    def original(metric: BudgetPerformanceMetric) -> Decimal:
+        return _value(rows, metric, "original_budget")
+
     _require_equal(
         original(BudgetPerformanceMetric.RECURRENT_REVENUE),
         original(BudgetPerformanceMetric.FAAC_REVENUE)
@@ -284,7 +286,9 @@ def _validate_actual_column(
     field: str,
     label_prefix: str,
 ) -> None:
-    actual = lambda metric: _value(rows, metric, field)
+    def actual(metric: BudgetPerformanceMetric) -> Decimal:
+        return _value(rows, metric, field)
+
     _require_equal(
         actual(BudgetPerformanceMetric.RECURRENT_REVENUE),
         actual(BudgetPerformanceMetric.FAAC_REVENUE)
