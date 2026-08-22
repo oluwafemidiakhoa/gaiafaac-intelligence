@@ -14,7 +14,9 @@ _PERFORMANCE_RE = re.compile(
     r"(?=.*\bbudget\b)(?=.*\bperformance\b)(?=.*\breport\b)(?=.*\b(?P<year>20\d{2})\b)",
     re.IGNORECASE,
 )
-_APPROVED_BUDGET_RE = re.compile(r"\bapproved\b.*\bbudget\b|\bbudget\b.*\bapproved\b", re.IGNORECASE)
+_APPROVED_BUDGET_RE = re.compile(
+    r"\bapproved\b.*\bbudget\b|\bbudget\b.*\bapproved\b", re.IGNORECASE
+)
 _QUARTER_PATTERNS: tuple[tuple[int, re.Pattern[str]], ...] = (
     (1, re.compile(r"\bQ\s*1\b|\bfirst\s+quarter\b|\b1st\s+quarter\b", re.IGNORECASE)),
     (2, re.compile(r"\bQ\s*2\b|\bsecond\s+quarter\b|\b2nd\s+quarter\b", re.IGNORECASE)),
@@ -83,7 +85,9 @@ def parse_budget_performance_listing(
     for href, title in parser.links:
         candidate = _candidate_from_link(portal, href=href, title=title)
         if candidate is not None:
-            candidates[(candidate.fiscal_year, candidate.quarter, candidate.document_url)] = candidate
+            candidates[(candidate.fiscal_year, candidate.quarter, candidate.document_url)] = (
+                candidate
+            )
     return sorted(
         candidates.values(),
         key=lambda item: (item.fiscal_year, item.quarter, item.title),
