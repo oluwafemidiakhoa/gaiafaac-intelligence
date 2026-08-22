@@ -97,7 +97,8 @@ def archive_budget_performance_publication(
             or existing.source_organization != f"{candidate.state_name} State Government"
         ):
             raise ValueError(
-                "Budget-performance SHA-256 is already registered under a different source contract."
+                "Budget-performance SHA-256 is already registered under a different "
+                "source contract."
             )
         return BudgetPerformanceArchiveResult(
             source_document_id=existing.id,
