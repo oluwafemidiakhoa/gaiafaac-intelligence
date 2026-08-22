@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
+from gaiafaac_api.database.session import create_database_engine, create_session_factory
+from gaiafaac_api.pipeline.nbs_igr.archive import archive_nbs_igr_publications
 from gaiafaac_api.pipeline.nbs_igr.discovery import discover_nbs_igr_publications
 
 
@@ -13,6 +16,12 @@ def build_parser() -> argparse.ArgumentParser:
         "discover-reports",
         help="Discover official NBS state-level IGR reports without importing or publishing",
     )
+    archive = commands.add_parser(
+        "archive-reports",
+        help="Archive official NBS IGR PDFs and register metadata without extracting values",
+    )
+    archive.add_argument("--archive-root", type=Path, default=Path("data/raw/nbs/igr"))
+    archive.add_argument("--limit", type=int)
     return parser
 
 
@@ -31,6 +40,37 @@ def main() -> None:
                         "status": "discovered_only",
                     }
                     for item in publications
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "archive-reports":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            results = archive_nbs_igr_publications(
+                session,
+                discover_nbs_igr_publications(),
+                archive_root=args.archive_root,
+                limit=args.limit,
+            )
+            session.commit()
+        print(
+            json.dumps(
+                [
+                    {
+                        "source_document_id": str(item.source_document_id),
+                        "report_id": item.report_id,
+                        "fiscal_year": item.fiscal_year,
+                        "report_url": item.report_url,
+                        "artifact_url": item.artifact_url,
+                        "sha256": item.sha256,
+                        "storage_path": item.storage_path,
+                        "duplicate": item.duplicate,
+                        "status": "archived_registered_only",
+                    }
+                    for item in results
                 ],
                 indent=2,
                 sort_keys=True,
