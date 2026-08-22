@@ -22,6 +22,9 @@ from gaiafaac_api.pipeline.state_budget.performance_archive import (
 from gaiafaac_api.pipeline.state_budget.performance_discovery import (
     discover_budget_performance_publications,
 )
+from gaiafaac_api.pipeline.state_budget.performance_extract import (
+    extract_budget_performance_source,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -64,6 +67,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Extract one archived supported state budget into unpublished review records",
     )
     extract.add_argument("source_document_id", type=uuid.UUID)
+    extract_performance = commands.add_parser(
+        "extract-performance-source",
+        help="Extract one archived quarterly performance report into unpublished review records",
+    )
+    extract_performance.add_argument("source_document_id", type=uuid.UUID)
     approve = commands.add_parser(
         "approve-source",
         help="Human-verify one complete staged state budget without publishing claims",
@@ -227,6 +235,30 @@ def main() -> None:
                     "fiscal_year": result.fiscal_year,
                     "records_extracted": result.records_extracted,
                     "total_expenditure": str(result.total_expenditure),
+                    "status": "requires_review",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "extract-performance-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = extract_budget_performance_source(
+                session,
+                source_document_id=args.source_document_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "quarter": result.quarter,
+                    "records_extracted": result.records_extracted,
+                    "total_revenue_ytd": str(result.total_revenue_ytd),
+                    "total_expenditure_ytd": str(result.total_expenditure_ytd),
                     "status": "requires_review",
                 },
                 indent=2,
