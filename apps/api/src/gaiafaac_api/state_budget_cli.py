@@ -16,6 +16,10 @@ from gaiafaac_api.pipeline.state_budget.discovery import (
     registered_budget_portals,
 )
 from gaiafaac_api.pipeline.state_budget.extract import extract_state_budget_source
+from gaiafaac_api.pipeline.state_budget.performance_approval import (
+    approve_budget_performance_source,
+    publish_budget_performance_source,
+)
 from gaiafaac_api.pipeline.state_budget.performance_archive import (
     archive_budget_performance_publications,
 )
@@ -84,6 +88,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     publish.add_argument("source_document_id", type=uuid.UUID)
     publish.add_argument("reviewer_id", type=uuid.UUID)
+    approve_performance = commands.add_parser(
+        "approve-performance-source",
+        help="Human-verify one complete budget-performance report without publishing claims",
+    )
+    approve_performance.add_argument("source_document_id", type=uuid.UUID)
+    approve_performance.add_argument("reviewer_id", type=uuid.UUID)
+    publish_performance = commands.add_parser(
+        "publish-performance-source",
+        help="Publish reviewed budget-performance spending observations as expenditure claims",
+    )
+    publish_performance.add_argument("source_document_id", type=uuid.UUID)
+    publish_performance.add_argument("reviewer_id", type=uuid.UUID)
     return parser
 
 
@@ -307,6 +323,62 @@ def main() -> None:
                     "published": result.published,
                     "proof_gaia_ids": list(result.proof_gaia_ids),
                     "status": "published_governed_budget_claims",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "approve-performance-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = approve_budget_performance_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "quarter": result.quarter,
+                    "records_affected": result.records_affected,
+                    "cross_source_budget_claims_checked": (
+                        result.cross_source_budget_claims_checked
+                    ),
+                    "published": result.published,
+                    "status": "performance_approved_not_published",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "publish-performance-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = publish_budget_performance_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "quarter": result.quarter,
+                    "records_affected": result.records_affected,
+                    "claims_published": result.claims_published,
+                    "cross_source_budget_claims_checked": (
+                        result.cross_source_budget_claims_checked
+                    ),
+                    "published": result.published,
+                    "proof_gaia_ids": list(result.proof_gaia_ids),
+                    "status": "published_governed_expenditure_claims",
                 },
                 indent=2,
                 sort_keys=True,
