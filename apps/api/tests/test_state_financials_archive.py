@@ -132,9 +132,7 @@ def test_archive_state_financial_resolves_one_official_detail_artifact(session, 
             )
         return StateFinancialDownload(
             body=xlsx_body,
-            content_type=(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            ),
+            content_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
             final_url=url,
         )
 
