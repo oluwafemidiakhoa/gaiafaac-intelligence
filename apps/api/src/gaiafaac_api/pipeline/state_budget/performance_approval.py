@@ -145,7 +145,9 @@ def _context(
     if int(version.group("year")) != fiscal_year or int(version.group("quarter")) != quarter:
         raise ApprovalError("Budget-performance source version does not match the staged period")
     if source.source_organization != f"{state.name} State Government":
-        raise ApprovalError("Budget-performance source organization does not match the staged state")
+        raise ApprovalError(
+            "Budget-performance source organization does not match the staged state"
+        )
 
     publishable = [record for record in records if record.metric in PUBLISHABLE_EXPENDITURE_METRICS]
     if len(publishable) != len(PUBLISHABLE_EXPENDITURE_METRICS):
@@ -189,9 +191,7 @@ def _check_governed_budget_alignment(
         if budget_claim is None:
             continue
         if budget_claim.value is None:
-            raise ApprovalError(
-                f"Governed budget claim for {budget_metric} has no numeric value"
-            )
+            raise ApprovalError(f"Governed budget claim for {budget_metric} has no numeric value")
         performance_budget = by_metric[performance_metric].original_budget
         if Decimal(budget_claim.value) != performance_budget:
             raise ApprovalError(
@@ -226,8 +226,7 @@ def approve_budget_performance_source(
         source.source_status is SourceStatus.APPROVED
         and source.processing_status is ProcessingStatus.COMPLETED
         and all(
-            record.verification_status is VerificationStatus.HUMAN_VERIFIED
-            for record in records
+            record.verification_status is VerificationStatus.HUMAN_VERIFIED for record in records
         )
     ):
         publishable = [
@@ -251,8 +250,7 @@ def approve_budget_performance_source(
     if any(record.is_published for record in records):
         raise ApprovalError("Unapproved budget-performance records must not already be published")
     if any(
-        record.verification_status is not VerificationStatus.REQUIRES_REVIEW
-        for record in records
+        record.verification_status is not VerificationStatus.REQUIRES_REVIEW for record in records
     ):
         raise ApprovalError(
             "Every budget-performance record must be awaiting review before approval"
@@ -347,16 +345,13 @@ def publish_budget_performance_source(
             "Budget-performance source processing must be completed before publication"
         )
     if any(
-        record.verification_status is not VerificationStatus.HUMAN_VERIFIED
-        for record in records
+        record.verification_status is not VerificationStatus.HUMAN_VERIFIED for record in records
     ):
         raise ApprovalError(
             "Every budget-performance record must be human-verified before publication"
         )
 
-    publishable = [
-        record for record in records if record.metric in PUBLISHABLE_EXPENDITURE_METRICS
-    ]
+    publishable = [record for record in records if record.metric in PUBLISHABLE_EXPENDITURE_METRICS]
     fiscal_period = f"{fiscal_year}Q{quarter}"
     if all(record.is_published for record in publishable):
         existing_ids = _existing_expenditure_proof_ids(
