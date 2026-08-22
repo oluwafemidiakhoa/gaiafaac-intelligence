@@ -25,6 +25,7 @@ from gaiafaac_api.database.base import Base
 from gaiafaac_api.database.enums import VerificationStatus
 
 MONEY = Numeric(24, 2)
+PERCENT = Numeric(9, 4)
 
 
 class BudgetMetric(StrEnum):
@@ -35,6 +36,25 @@ class BudgetMetric(StrEnum):
     PERSONNEL_COST = "personnel_cost"
     OTHER_NON_DEBT_RECURRENT = "other_non_debt_recurrent"
     BUDGETED_DEBT_SERVICE = "budgeted_debt_service"
+    TRANSFER_TO_CAPITAL_ACCOUNT = "transfer_to_capital_account"
+    OTHER_RECEIPTS = "other_receipts"
+    AID_AND_GRANTS = "aid_and_grants"
+    CAPITAL_DEVELOPMENT_FUND_RECEIPTS = "capital_development_fund_receipts"
+    CAPITAL_EXPENDITURE = "capital_expenditure"
+    TOTAL_REVENUE = "total_revenue"
+    TOTAL_EXPENDITURE = "total_expenditure"
+
+
+class BudgetPerformanceMetric(StrEnum):
+    OPENING_BALANCE = "opening_balance"
+    RECURRENT_REVENUE = "recurrent_revenue"
+    FAAC_REVENUE = "faac_revenue"
+    INDEPENDENT_REVENUE = "independent_revenue"
+    RECURRENT_EXPENDITURE = "recurrent_expenditure"
+    PERSONNEL_COST = "personnel_cost"
+    OTHER_RECURRENT_COSTS = "other_recurrent_costs"
+    OVERHEAD_COST = "overhead_cost"
+    OTHER_RECURRENT = "other_recurrent"
     TRANSFER_TO_CAPITAL_ACCOUNT = "transfer_to_capital_account"
     OTHER_RECEIPTS = "other_receipts"
     AID_AND_GRANTS = "aid_and_grants"
@@ -95,6 +115,103 @@ class StateBudgetRecord(Base):
     extraction_method: Mapped[str] = mapped_column(String(120), nullable=False)
     verification_status: Mapped[VerificationStatus] = mapped_column(
         _enum_type(VerificationStatus, "budget_verification_status"),
+        nullable=False,
+        default=VerificationStatus.PENDING,
+    )
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class StateBudgetPerformanceRecord(Base):
+    """A quarterly budget-performance observation awaiting governed review."""
+
+    __tablename__ = "state_budget_performance_records"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_document_id",
+            "state_id",
+            "metric",
+            name="uq_state_budget_performance_source_state_metric",
+        ),
+        CheckConstraint("fiscal_year >= 2000", name="ck_budget_performance_fiscal_year"),
+        CheckConstraint("quarter BETWEEN 1 AND 4", name="ck_budget_performance_quarter"),
+        CheckConstraint(
+            "original_budget >= 0",
+            name="ck_budget_performance_original_budget_nonnegative",
+        ),
+        CheckConstraint(
+            "quarter_actual IS NULL OR quarter_actual >= 0",
+            name="ck_budget_performance_quarter_actual_nonnegative",
+        ),
+        CheckConstraint(
+            "ytd_actual IS NULL OR ytd_actual >= 0",
+            name="ck_budget_performance_ytd_actual_nonnegative",
+        ),
+        CheckConstraint(
+            "performance_percent IS NULL OR performance_percent >= 0",
+            name="ck_budget_performance_percent_nonnegative",
+        ),
+        CheckConstraint("length(currency) = 3", name="ck_budget_performance_currency_length"),
+        CheckConstraint(
+            "NOT (is_demo AND is_published)",
+            name="ck_budget_performance_demo_not_published",
+        ),
+        Index(
+            "ix_budget_performance_state_period",
+            "state_id",
+            "fiscal_year",
+            "quarter",
+        ),
+        Index(
+            "ix_budget_performance_period_metric",
+            "fiscal_year",
+            "quarter",
+            "metric",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    state_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("states.state_id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    source_document_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("source_documents.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    fiscal_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    quarter: Mapped[int] = mapped_column(Integer, nullable=False)
+    metric: Mapped[BudgetPerformanceMetric] = mapped_column(
+        _enum_type(BudgetPerformanceMetric, "budget_performance_metric"), nullable=False
+    )
+    original_budget: Mapped[Decimal] = mapped_column(MONEY, nullable=False)
+    original_budget_text: Mapped[str] = mapped_column(String(120), nullable=False)
+    quarter_actual: Mapped[Decimal | None] = mapped_column(MONEY)
+    quarter_actual_text: Mapped[str] = mapped_column(String(120), nullable=False)
+    ytd_actual: Mapped[Decimal | None] = mapped_column(MONEY)
+    ytd_actual_text: Mapped[str] = mapped_column(String(120), nullable=False)
+    performance_percent: Mapped[Decimal | None] = mapped_column(PERCENT)
+    performance_percent_text: Mapped[str] = mapped_column(String(40), nullable=False)
+    balance: Mapped[Decimal | None] = mapped_column(MONEY)
+    balance_text: Mapped[str] = mapped_column(String(120), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="NGN")
+    source_page: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_table: Mapped[str] = mapped_column(String(200), nullable=False)
+    extraction_method: Mapped[str] = mapped_column(String(120), nullable=False)
+    verification_status: Mapped[VerificationStatus] = mapped_column(
+        _enum_type(VerificationStatus, "budget_performance_verification_status"),
         nullable=False,
         default=VerificationStatus.PENDING,
     )
