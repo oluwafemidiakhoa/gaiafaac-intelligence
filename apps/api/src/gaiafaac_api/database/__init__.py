@@ -3,6 +3,7 @@
 from gaiafaac_api.database import (
     commercial_models,
     customer_models,
+    debt_models,
     evidence_room_models,
     igr_models,
     ledger_models,
@@ -15,6 +16,7 @@ __all__ = [
     "Base",
     "commercial_models",
     "customer_models",
+    "debt_models",
     "evidence_room_models",
     "igr_models",
     "ledger_models",
