@@ -1,0 +1,111 @@
+from __future__ import annotations
+
+import re
+import urllib.parse
+import urllib.request
+from dataclasses import dataclass
+from html.parser import HTMLParser
+
+NBS_IGR_LIBRARY_URL = (
+    "https://www.nigerianstat.gov.ng/elibrary?queries%5Bsearch%5D=Internally%20Generated%20Revenue"
+)
+_ALLOWED_HOSTS = {"nigerianstat.gov.ng", "www.nigerianstat.gov.ng"}
+_TITLE_RE = re.compile(r"Internally Generated Revenue At State Level \((?P<year>20\d{2})\)", re.I)
+_REPORT_PATH_RE = re.compile(r"^/elibrary/read/(?P<report_id>\d+)$")
+
+
+@dataclass(frozen=True)
+class NbsIgrPublicationCandidate:
+    title: str
+    report_url: str
+    report_id: str
+    fiscal_year: int
+
+
+class _LinkParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._href: str | None = None
+        self._text: list[str] = []
+        self.links: list[tuple[str, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "a":
+            return
+        self._href = dict(attrs).get("href")
+        self._text = []
+
+    def handle_data(self, data: str) -> None:
+        if self._href is not None:
+            self._text.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() != "a" or self._href is None:
+            return
+        text = " ".join("".join(self._text).split())
+        self.links.append((self._href, text))
+        self._href = None
+        self._text = []
+
+
+def _candidate_from_link(
+    href: str,
+    title: str,
+    *,
+    listing_url: str,
+) -> NbsIgrPublicationCandidate | None:
+    title_match = _TITLE_RE.search(title)
+    if title_match is None:
+        return None
+    absolute_url = urllib.parse.urljoin(listing_url, href)
+    parsed = urllib.parse.urlparse(absolute_url)
+    if parsed.scheme != "https" or parsed.hostname not in _ALLOWED_HOSTS:
+        return None
+    path_match = _REPORT_PATH_RE.fullmatch(parsed.path.rstrip("/"))
+    if path_match is None:
+        return None
+    return NbsIgrPublicationCandidate(
+        title=title,
+        report_url=absolute_url,
+        report_id=path_match.group("report_id"),
+        fiscal_year=int(title_match.group("year")),
+    )
+
+
+def parse_nbs_igr_listing(
+    html: str,
+    *,
+    listing_url: str = NBS_IGR_LIBRARY_URL,
+) -> list[NbsIgrPublicationCandidate]:
+    parser = _LinkParser()
+    parser.feed(html)
+    candidates: dict[int, NbsIgrPublicationCandidate] = {}
+    for href, title in parser.links:
+        candidate = _candidate_from_link(href, title, listing_url=listing_url)
+        if candidate is not None:
+            candidates[candidate.fiscal_year] = candidate
+    return sorted(candidates.values(), key=lambda item: item.fiscal_year, reverse=True)
+
+
+def fetch_nbs_igr_listing(url: str = NBS_IGR_LIBRARY_URL) -> str:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname not in _ALLOWED_HOSTS:
+        raise ValueError("NBS IGR listing URL is outside the approved official HTTPS host.")
+    request = urllib.request.Request(  # noqa: S310 - validated official NBS HTTPS host
+        url,
+        headers={"User-Agent": "GaiaFAAC-NBS-IGR-collector/1.0 (research)"},
+    )
+    with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310
+        final_url = urllib.parse.urlparse(response.geturl())
+        if final_url.scheme != "https" or final_url.hostname not in _ALLOWED_HOSTS:
+            raise ValueError("NBS IGR listing redirected outside the approved official host.")
+        body = response.read(5 * 1024 * 1024 + 1)
+    if len(body) > 5 * 1024 * 1024:
+        raise ValueError("NBS IGR listing response exceeds the configured size limit.")
+    return body.decode("utf-8", errors="replace")
+
+
+def discover_nbs_igr_publications(
+    url: str = NBS_IGR_LIBRARY_URL,
+) -> list[NbsIgrPublicationCandidate]:
+    return parse_nbs_igr_listing(fetch_nbs_igr_listing(url), listing_url=url)
