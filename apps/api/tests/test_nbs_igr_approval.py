@@ -109,9 +109,12 @@ def test_approve_igr_source_human_verifies_without_publishing(session):
         for record in records
     )
     assert all(not record.is_published for record in records)
-    assert session.scalar(
-        select(FiscalClaim.id).where(FiscalClaim.source_document_id == source.id)
-    ) is None
+    assert (
+        session.scalar(
+            select(FiscalClaim.gaia_id).where(FiscalClaim.source_document_id == source.id)
+        )
+        is None
+    )
 
 
 def test_publish_igr_source_requires_prior_approval(session):
