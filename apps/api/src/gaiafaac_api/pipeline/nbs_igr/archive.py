@@ -72,7 +72,9 @@ def _fetch_document(url: str) -> NbsIgrDownload:
         final_url = response.geturl()
         final = urllib.parse.urlparse(final_url)
         if final.scheme != "https" or final.hostname not in _ALLOWED_HOSTS:
-            raise ValueError("NBS IGR artifact redirected outside the approved official HTTPS host.")
+            raise ValueError(
+                "NBS IGR artifact redirected outside the approved official HTTPS host."
+            )
         body = response.read(MAX_NBS_IGR_DOCUMENT_BYTES + 1)
         content_type = response.headers.get_content_type()
     return NbsIgrDownload(body=body, content_type=content_type, final_url=final_url)
@@ -144,9 +146,7 @@ def archive_nbs_igr_publication(
     document = SourceDocument(
         source_organization=NBS_IGR_ORGANIZATION,
         source_url=candidate.report_url,
-        original_filename=(
-            f"nbs-igr-{candidate.fiscal_year}-report-{candidate.report_id}.pdf"
-        ),
+        original_filename=(f"nbs-igr-{candidate.fiscal_year}-report-{candidate.report_id}.pdf"),
         storage_path=str(destination.resolve()),
         sha256=checksum,
         mime_type="application/pdf",
