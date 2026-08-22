@@ -150,9 +150,7 @@ def test_publish_budget_creates_only_governed_budget_claims(session):
         reviewer_id=reviewer.id,
     )
     claims = list(
-        session.scalars(
-            select(FiscalClaim).where(FiscalClaim.source_document_id == source.id)
-        )
+        session.scalars(select(FiscalClaim).where(FiscalClaim.source_document_id == source.id))
     )
     records = list(
         session.scalars(
