@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
@@ -10,6 +11,7 @@ from gaiafaac_api.pipeline.state_budget.discovery import (
     discover_state_budget_publications,
     registered_budget_portals,
 )
+from gaiafaac_api.pipeline.state_budget.extract import extract_state_budget_source
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
     archive.add_argument("state_code")
     archive.add_argument("--archive-root", type=Path, default=Path("data/raw/state-budget"))
     archive.add_argument("--limit", type=int)
+    extract = commands.add_parser(
+        "extract-source",
+        help="Extract one archived supported state budget into unpublished review records",
+    )
+    extract.add_argument("source_document_id", type=uuid.UUID)
     return parser
 
 
@@ -107,6 +114,28 @@ def main() -> None:
                     }
                     for item in results
                 ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "extract-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = extract_state_budget_source(
+                session,
+                source_document_id=args.source_document_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "records_extracted": result.records_extracted,
+                    "total_expenditure": str(result.total_expenditure),
+                    "status": "requires_review",
+                },
                 indent=2,
                 sort_keys=True,
             )
