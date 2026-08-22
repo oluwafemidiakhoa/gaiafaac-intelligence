@@ -87,9 +87,7 @@ def _context(
         )
     expected_version = f"{debt_kind.value}-{as_of_date.isoformat()}"
     if source.document_version != expected_version:
-        raise ApprovalError(
-            "DMO source version does not match staged debt kind and as-of date"
-        )
+        raise ApprovalError("DMO source version does not match staged debt kind and as-of date")
     if any(record.is_demo for record in records):
         raise ApprovalError("Demo debt evidence can never be approved or published")
 
@@ -115,8 +113,7 @@ def approve_debt_source(
         source.source_status is SourceStatus.APPROVED
         and source.processing_status is ProcessingStatus.COMPLETED
         and all(
-            record.verification_status is VerificationStatus.HUMAN_VERIFIED
-            for record in records
+            record.verification_status is VerificationStatus.HUMAN_VERIFIED for record in records
         )
     ):
         return DebtApprovalResult(
@@ -134,8 +131,7 @@ def approve_debt_source(
     if any(record.is_published for record in records):
         raise ApprovalError("Unapproved DMO debt records must not already be published")
     if any(
-        record.verification_status is not VerificationStatus.REQUIRES_REVIEW
-        for record in records
+        record.verification_status is not VerificationStatus.REQUIRES_REVIEW for record in records
     ):
         raise ApprovalError("Every DMO debt record must be awaiting review before approval")
 
@@ -191,8 +187,7 @@ def publish_debt_source(
     if source.processing_status is not ProcessingStatus.COMPLETED:
         raise ApprovalError("DMO source processing must be completed before publication")
     if any(
-        record.verification_status is not VerificationStatus.HUMAN_VERIFIED
-        for record in records
+        record.verification_status is not VerificationStatus.HUMAN_VERIFIED for record in records
     ):
         raise ApprovalError("Every DMO debt record must be human-verified before publication")
 
@@ -209,11 +204,7 @@ def publish_debt_source(
 
     published_at = datetime.now(UTC)
     effective_at = datetime.combine(as_of_date, time.min, tzinfo=UTC)
-    metric = (
-        "domestic_debt_stock"
-        if debt_kind is DebtKind.DOMESTIC
-        else "external_debt_stock"
-    )
+    metric = "domestic_debt_stock" if debt_kind is DebtKind.DOMESTIC else "external_debt_stock"
     proof_ids: list[str] = []
     try:
         for record in records:
