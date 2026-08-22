@@ -145,14 +145,12 @@ def _validate_zamfara_reconciliation(values: dict[BudgetMetric, Decimal]) -> Non
     )
     _require_equal(
         values[BudgetMetric.CAPITAL_EXPENDITURE],
-        values[BudgetMetric.TRANSFER_TO_CAPITAL_ACCOUNT]
-        + values[BudgetMetric.OTHER_RECEIPTS],
+        values[BudgetMetric.TRANSFER_TO_CAPITAL_ACCOUNT] + values[BudgetMetric.OTHER_RECEIPTS],
         label="capital expenditure",
     )
     _require_equal(
         values[BudgetMetric.TOTAL_EXPENDITURE],
-        values[BudgetMetric.RECURRENT_EXPENDITURE]
-        + values[BudgetMetric.CAPITAL_EXPENDITURE],
+        values[BudgetMetric.RECURRENT_EXPENDITURE] + values[BudgetMetric.CAPITAL_EXPENDITURE],
         label="total expenditure",
     )
     _require_equal(
@@ -247,16 +245,22 @@ def extract_state_budget_source(
         raise ImportContractError(f"State-budget source references unknown state code {state_code}")
     if source.source_organization != f"{state.name} State Government":
         raise ImportContractError("State-budget source organization does not match the state")
-    if session.scalar(
-        select(StateBudgetRecord.id).where(StateBudgetRecord.source_document_id == source.id)
-    ) is not None:
-        raise ImportContractError("State-budget source has already been extracted")
-    if session.scalar(
-        select(StateBudgetRecord.id).where(
-            StateBudgetRecord.state_id == state.id,
-            StateBudgetRecord.fiscal_year == fiscal_year,
+    if (
+        session.scalar(
+            select(StateBudgetRecord.id).where(StateBudgetRecord.source_document_id == source.id)
         )
-    ) is not None:
+        is not None
+    ):
+        raise ImportContractError("State-budget source has already been extracted")
+    if (
+        session.scalar(
+            select(StateBudgetRecord.id).where(
+                StateBudgetRecord.state_id == state.id,
+                StateBudgetRecord.fiscal_year == fiscal_year,
+            )
+        )
+        is not None
+    ):
         raise ImportContractError(
             "An approved budget dataset already exists for this state and fiscal year; "
             "reconciliation is required"
