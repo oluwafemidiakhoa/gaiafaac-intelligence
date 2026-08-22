@@ -167,7 +167,9 @@ def parse_state_financial_listing(
 ) -> list[StateFinancialPublicationCandidate]:
     parser = _LinkParser()
     parser.feed(html)
-    candidates: dict[tuple[StateFinancialEvidenceKind, int, str], StateFinancialPublicationCandidate] = {}
+    candidates: dict[
+        tuple[StateFinancialEvidenceKind, int, str], StateFinancialPublicationCandidate
+    ] = {}
     for href, title in parser.links:
         candidate = _candidate_from_link(portal, href=href, title=title)
         if candidate is not None:
@@ -183,7 +185,9 @@ def parse_state_financial_listing(
 def fetch_state_financial_listing(portal: StateFinancialPortal) -> str:
     parsed = urllib.parse.urlparse(portal.listing_url)
     if parsed.scheme != "https" or parsed.hostname not in portal.allowed_hosts:
-        raise ValueError("State-financial listing URL is outside its approved official host boundary.")
+        raise ValueError(
+            "State-financial listing URL is outside its approved official host boundary."
+        )
     request = urllib.request.Request(  # noqa: S310 - validated official HTTPS host
         portal.listing_url,
         headers={"User-Agent": "Gaia-Fiscal-state-financials-collector/1.0 (research)"},
@@ -191,7 +195,9 @@ def fetch_state_financial_listing(portal: StateFinancialPortal) -> str:
     with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310
         final = urllib.parse.urlparse(response.geturl())
         if final.scheme != "https" or final.hostname not in portal.allowed_hosts:
-            raise ValueError("State-financial listing redirected outside the approved official host.")
+            raise ValueError(
+                "State-financial listing redirected outside the approved official host."
+            )
         body = response.read(MAX_LISTING_BYTES + 1)
     if len(body) > MAX_LISTING_BYTES:
         raise ValueError("State-financial listing response exceeds the configured size limit.")
