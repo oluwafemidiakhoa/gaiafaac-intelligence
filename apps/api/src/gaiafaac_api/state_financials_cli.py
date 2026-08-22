@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
+from gaiafaac_api.database.session import create_database_engine, create_session_factory
+from gaiafaac_api.pipeline.state_financials.archive import archive_state_financial_publications
 from gaiafaac_api.pipeline.state_financials.discovery import (
     discover_state_financial_publications,
     registered_state_financial_portals,
@@ -23,6 +26,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Discover audited statements and explicit liability registers without importing",
     )
     discover.add_argument("state_code")
+    archive = commands.add_parser(
+        "archive-state",
+        help="Archive official state financial-evidence artifacts without extracting values",
+    )
+    archive.add_argument("state_code")
+    archive.add_argument(
+        "--archive-root",
+        type=Path,
+        default=Path("data/raw/state-financials"),
+    )
+    archive.add_argument("--limit", type=int)
     return parser
 
 
@@ -69,6 +83,39 @@ def main() -> None:
                         "status": "discovered_only",
                     }
                     for item in publications
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "archive-state":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            results = archive_state_financial_publications(
+                session,
+                discover_state_financial_publications(args.state_code),
+                archive_root=args.archive_root,
+                limit=args.limit,
+            )
+            session.commit()
+        print(
+            json.dumps(
+                [
+                    {
+                        "source_document_id": str(item.source_document_id),
+                        "state_code": item.state_code,
+                        "fiscal_year": item.fiscal_year,
+                        "evidence_kind": item.evidence_kind.value,
+                        "document_url": item.document_url,
+                        "artifact_url": item.artifact_url,
+                        "artifact_kind": item.artifact_kind,
+                        "sha256": item.sha256,
+                        "storage_path": item.storage_path,
+                        "duplicate": item.duplicate,
+                        "status": "archived_registered_only",
+                    }
+                    for item in results
                 ],
                 indent=2,
                 sort_keys=True,
