@@ -7,8 +7,12 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 
 MAX_LISTING_BYTES = 5 * 1024 * 1024
-_APPROVED_BUDGET_RE = re.compile(r"(?=.*\bapproved\b)(?=.*\bbudget\b)(?=.*\b(?P<year>20\d{2})\b)", re.I)
-_EXCLUDED_RE = re.compile(r"\b(proposed|citizens?|performance|appropriation\s+law|finance\s+law)\b", re.I)
+_APPROVED_BUDGET_RE = re.compile(
+    r"(?=.*\bapproved\b)(?=.*\bbudget\b)(?=.*\b(?P<year>20\d{2})\b)", re.I
+)
+_EXCLUDED_RE = re.compile(
+    r"\b(proposed|citizens?|performance|appropriation\s+law|finance\s+law)\b", re.I
+)
 
 
 @dataclass(frozen=True)
@@ -34,7 +38,9 @@ PORTALS: tuple[StateBudgetPortal, ...] = (
         state_code="OY",
         state_name="Oyo",
         listing_url="https://budget.oyostate.gov.ng/resources/",
-        allowed_hosts=frozenset({"budget.oyostate.gov.ng", "oyostate.gov.ng", "www.oyostate.gov.ng"}),
+        allowed_hosts=frozenset(
+            {"budget.oyostate.gov.ng", "oyostate.gov.ng", "www.oyostate.gov.ng"}
+        ),
     ),
     StateBudgetPortal(
         state_code="ZA",
