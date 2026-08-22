@@ -24,7 +24,8 @@ import { getNationalDistributionHistory } from '@/lib/national-distribution-api'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
-  title: 'Gaia Fiscal Intelligence — Verified public-finance evidence for Nigeria',
+  title:
+    'Gaia Fiscal Intelligence — Verified public-finance evidence for Nigeria',
   description:
     'Verified public-finance data, evidence and fiscal events for Nigeria, with source fingerprints, human review and versioned records.',
 }
@@ -202,8 +203,8 @@ export default async function Home() {
                   Research workspace unavailable
                 </CardTitle>
                 <CardDescription>
-                  Gaia Fiscal Intelligence does not synthesize replacement values
-                  when no governed publication is available.
+                  Gaia Fiscal Intelligence does not synthesize replacement
+                  values when no governed publication is available.
                 </CardDescription>
               </CardHeader>
             </Card>
