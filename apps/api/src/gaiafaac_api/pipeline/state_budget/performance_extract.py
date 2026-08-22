@@ -88,9 +88,7 @@ def _money(
     try:
         value = Decimal(normalized.replace(",", "").replace(" ", ""))
     except InvalidOperation as error:
-        raise ImportContractError(
-            f"Invalid {field} for {metric.value}: {raw!r}"
-        ) from error
+        raise ImportContractError(f"Invalid {field} for {metric.value}: {raw!r}") from error
     if not allow_negative and value < 0:
         raise ImportContractError(f"Negative {field} for {metric.value}: {value}")
     return value
@@ -320,9 +318,8 @@ def _validate_actual_column(
 
     opening = rows[BudgetPerformanceMetric.OPENING_BALANCE]
     opening_value = getattr(opening, field)
-    expected_revenue = (
-        actual(BudgetPerformanceMetric.RECURRENT_REVENUE)
-        + actual(BudgetPerformanceMetric.OTHER_RECEIPTS)
+    expected_revenue = actual(BudgetPerformanceMetric.RECURRENT_REVENUE) + actual(
+        BudgetPerformanceMetric.OTHER_RECEIPTS
     )
     if opening_value is not None:
         expected_revenue += opening_value
@@ -348,9 +345,9 @@ def _validate_balances_and_percentages(
                 raise ImportContractError(
                     f"Missing YTD actual required for {metric.value} performance percent"
                 )
-            expected = (
-                row.ytd_actual / row.original_budget * Decimal("100")
-            ).quantize(_PERCENT_TENTH, rounding=ROUND_HALF_UP)
+            expected = (row.ytd_actual / row.original_budget * Decimal("100")).quantize(
+                _PERCENT_TENTH, rounding=ROUND_HALF_UP
+            )
             _require_equal(
                 row.performance_percent,
                 expected,
@@ -434,11 +431,11 @@ def extract_budget_performance_source(
             f"No deterministic budget-performance extraction adapter is registered for {state_code}"
         )
     if source.mime_type != "application/pdf":
-        raise ImportContractError("Oyo budget-performance extraction currently requires a PDF source")
-    if source.processing_status is not ProcessingStatus.REGISTERED:
         raise ImportContractError(
-            "Budget-performance source is not in registered processing state"
+            "Oyo budget-performance extraction currently requires a PDF source"
         )
+    if source.processing_status is not ProcessingStatus.REGISTERED:
+        raise ImportContractError("Budget-performance source is not in registered processing state")
     if source.source_status is not SourceStatus.REGISTERED:
         raise ImportContractError("Budget-performance source is not in registered source state")
 
@@ -477,9 +474,7 @@ def extract_budget_performance_source(
 
     path = Path(source.storage_path).expanduser().resolve(strict=True)
     if not path.is_file():
-        raise ImportContractError(
-            f"Budget-performance archive path is not a regular file: {path}"
-        )
+        raise ImportContractError(f"Budget-performance archive path is not a regular file: {path}")
     checksum = hashlib.sha256(path.read_bytes()).hexdigest()
     if checksum != source.sha256:
         raise ImportContractError(
