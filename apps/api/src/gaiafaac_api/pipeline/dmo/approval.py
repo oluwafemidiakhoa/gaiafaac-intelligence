@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime, time
+from datetime import UTC, date, datetime, time
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -27,6 +27,11 @@ class DebtApprovalResult:
     records_affected: int
     published: bool
     proof_gaia_ids: tuple[str, ...] = ()
+
+
+def _fiscal_period(as_of_date: date) -> str:
+    quarter = ((as_of_date.month - 1) // 3) + 1
+    return f"{as_of_date.year}Q{quarter}"
 
 
 def _reviewer(session: Session, reviewer_id: uuid.UUID) -> User:
@@ -204,6 +209,7 @@ def publish_debt_source(
 
     published_at = datetime.now(UTC)
     effective_at = datetime.combine(as_of_date, time.min, tzinfo=UTC)
+    fiscal_period = _fiscal_period(as_of_date)
     metric = "domestic_debt_stock" if debt_kind is DebtKind.DOMESTIC else "external_debt_stock"
     proof_ids: list[str] = []
     try:
@@ -213,7 +219,7 @@ def publish_debt_source(
                 domain="debt",
                 state_id=record.state_id,
                 source_document_id=source.id,
-                fiscal_period=as_of_date.isoformat(),
+                fiscal_period=fiscal_period,
                 metric=metric,
                 value=record.debt_amount,
                 value_text=record.debt_amount_original,
@@ -240,6 +246,7 @@ def publish_debt_source(
                 payload={
                     "debt_kind": debt_kind.value,
                     "as_of_date": as_of_date.isoformat(),
+                    "fiscal_period": fiscal_period,
                     "records_published": len(records),
                     "proof_count": len(proof_ids),
                     "published": True,
