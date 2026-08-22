@@ -49,15 +49,17 @@ export async function SiteHeader() {
         <Link
           href="/"
           className="flex shrink-0 items-center gap-3"
-          aria-label="GaiaFAAC home"
+          aria-label="Gaia Fiscal Intelligence home"
         >
           <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md font-mono text-sm font-semibold">
             GF
           </span>
           <span>
-            <span className="block font-semibold tracking-tight">GaiaFAAC</span>
+            <span className="block font-semibold tracking-tight">
+              Gaia Fiscal Intelligence
+            </span>
             <span className="text-muted-foreground hidden text-[0.68rem] xl:block">
-              Fiscal intelligence operating system
+              Verified public-finance evidence for Nigeria
             </span>
           </span>
         </Link>
