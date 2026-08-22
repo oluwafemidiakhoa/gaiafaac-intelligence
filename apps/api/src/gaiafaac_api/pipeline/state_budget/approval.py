@@ -40,9 +40,7 @@ def _reviewer(session: Session, reviewer_id: uuid.UUID) -> User:
         UserRole.REVIEWER,
         UserRole.ADMINISTRATOR,
     }:
-        raise ApprovalError(
-            "State-budget approval requires an active reviewer or administrator"
-        )
+        raise ApprovalError("State-budget approval requires an active reviewer or administrator")
     return reviewer
 
 
@@ -85,7 +83,9 @@ def _context(
     if len(extraction_methods) != 1 or not next(iter(extraction_methods)).strip():
         raise ApprovalError("State-budget source records must share one extraction method")
     if any(record.source_page is None or not record.source_table for record in records):
-        raise ApprovalError("Every state-budget record must retain source page and table provenance")
+        raise ApprovalError(
+            "Every state-budget record must retain source page and table provenance"
+        )
     if any(record.is_demo for record in records):
         raise ApprovalError("Demo budget evidence can never be approved or published")
 
@@ -124,8 +124,7 @@ def approve_budget_source(
         source.source_status is SourceStatus.APPROVED
         and source.processing_status is ProcessingStatus.COMPLETED
         and all(
-            record.verification_status is VerificationStatus.HUMAN_VERIFIED
-            for record in records
+            record.verification_status is VerificationStatus.HUMAN_VERIFIED for record in records
         )
     ):
         return BudgetApprovalResult(
@@ -143,12 +142,9 @@ def approve_budget_source(
     if any(record.is_published for record in records):
         raise ApprovalError("Unapproved state-budget records must not already be published")
     if any(
-        record.verification_status is not VerificationStatus.REQUIRES_REVIEW
-        for record in records
+        record.verification_status is not VerificationStatus.REQUIRES_REVIEW for record in records
     ):
-        raise ApprovalError(
-            "Every state-budget record must be awaiting review before approval"
-        )
+        raise ApprovalError("Every state-budget record must be awaiting review before approval")
 
     reviewed_at = datetime.now(UTC)
     for record in records:
@@ -201,12 +197,9 @@ def publish_budget_source(
     if source.processing_status is not ProcessingStatus.COMPLETED:
         raise ApprovalError("State-budget source processing must be completed before publication")
     if any(
-        record.verification_status is not VerificationStatus.HUMAN_VERIFIED
-        for record in records
+        record.verification_status is not VerificationStatus.HUMAN_VERIFIED for record in records
     ):
-        raise ApprovalError(
-            "Every state-budget record must be human-verified before publication"
-        )
+        raise ApprovalError("Every state-budget record must be human-verified before publication")
 
     if all(record.is_published for record in records):
         return BudgetApprovalResult(
