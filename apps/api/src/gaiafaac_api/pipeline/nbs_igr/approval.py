@@ -222,7 +222,7 @@ def publish_igr_source(
                 fiscal_period=str(fiscal_year),
                 metric="igr",
                 value=record.igr_amount,
-                value_text=format(record.igr_amount, "f"),
+                value_text=record.igr_amount_original,
                 unit="currency",
                 currency="NGN",
                 effective_at=effective_at,
