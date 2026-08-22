@@ -16,6 +16,19 @@ from gaiafaac_api.pipeline.state_budget.discovery import (
     registered_budget_portals,
 )
 from gaiafaac_api.pipeline.state_budget.extract import extract_state_budget_source
+from gaiafaac_api.pipeline.state_budget.performance_approval import (
+    approve_budget_performance_source,
+    publish_budget_performance_source,
+)
+from gaiafaac_api.pipeline.state_budget.performance_archive import (
+    archive_budget_performance_publications,
+)
+from gaiafaac_api.pipeline.state_budget.performance_discovery import (
+    discover_budget_performance_publications,
+)
+from gaiafaac_api.pipeline.state_budget.performance_extract import (
+    extract_budget_performance_source,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -30,6 +43,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Discover approved-budget publications for one registered state without importing",
     )
     discover.add_argument("state_code")
+    discover_performance = commands.add_parser(
+        "discover-performance",
+        help="Discover quarterly budget-performance reports without importing values",
+    )
+    discover_performance.add_argument("state_code")
     archive = commands.add_parser(
         "archive-state",
         help="Archive approved-budget artifacts for one registered state without extracting values",
@@ -37,11 +55,27 @@ def build_parser() -> argparse.ArgumentParser:
     archive.add_argument("state_code")
     archive.add_argument("--archive-root", type=Path, default=Path("data/raw/state-budget"))
     archive.add_argument("--limit", type=int)
+    archive_performance = commands.add_parser(
+        "archive-performance",
+        help="Archive quarterly budget-performance artifacts without extracting values",
+    )
+    archive_performance.add_argument("state_code")
+    archive_performance.add_argument(
+        "--archive-root",
+        type=Path,
+        default=Path("data/raw/state-budget-performance"),
+    )
+    archive_performance.add_argument("--limit", type=int)
     extract = commands.add_parser(
         "extract-source",
         help="Extract one archived supported state budget into unpublished review records",
     )
     extract.add_argument("source_document_id", type=uuid.UUID)
+    extract_performance = commands.add_parser(
+        "extract-performance-source",
+        help="Extract one archived quarterly performance report into unpublished review records",
+    )
+    extract_performance.add_argument("source_document_id", type=uuid.UUID)
     approve = commands.add_parser(
         "approve-source",
         help="Human-verify one complete staged state budget without publishing claims",
@@ -54,6 +88,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     publish.add_argument("source_document_id", type=uuid.UUID)
     publish.add_argument("reviewer_id", type=uuid.UUID)
+    approve_performance = commands.add_parser(
+        "approve-performance-source",
+        help="Human-verify one complete budget-performance report without publishing claims",
+    )
+    approve_performance.add_argument("source_document_id", type=uuid.UUID)
+    approve_performance.add_argument("reviewer_id", type=uuid.UUID)
+    publish_performance = commands.add_parser(
+        "publish-performance-source",
+        help="Publish reviewed budget-performance spending observations as expenditure claims",
+    )
+    publish_performance.add_argument("source_document_id", type=uuid.UUID)
+    publish_performance.add_argument("reviewer_id", type=uuid.UUID)
     return parser
 
 
@@ -103,6 +149,28 @@ def main() -> None:
             )
         )
         return
+    if args.command == "discover-performance":
+        publications = discover_budget_performance_publications(args.state_code)
+        print(
+            json.dumps(
+                [
+                    {
+                        "state_code": item.state_code,
+                        "state_name": item.state_name,
+                        "fiscal_year": item.fiscal_year,
+                        "quarter": item.quarter,
+                        "title": item.title,
+                        "document_url": item.document_url,
+                        "listing_url": item.listing_url,
+                        "status": "discovered_performance_only",
+                    }
+                    for item in publications
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
     if args.command == "archive-state":
         session_factory = create_session_factory(create_database_engine())
         with session_factory() as session:
@@ -135,6 +203,39 @@ def main() -> None:
             )
         )
         return
+    if args.command == "archive-performance":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            results = archive_budget_performance_publications(
+                session,
+                discover_budget_performance_publications(args.state_code),
+                archive_root=args.archive_root,
+                limit=args.limit,
+            )
+            session.commit()
+        print(
+            json.dumps(
+                [
+                    {
+                        "source_document_id": str(item.source_document_id),
+                        "state_code": item.state_code,
+                        "fiscal_year": item.fiscal_year,
+                        "quarter": item.quarter,
+                        "document_url": item.document_url,
+                        "artifact_url": item.artifact_url,
+                        "artifact_kind": item.artifact_kind,
+                        "sha256": item.sha256,
+                        "storage_path": item.storage_path,
+                        "duplicate": item.duplicate,
+                        "status": "archived_performance_registered_only",
+                    }
+                    for item in results
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
     if args.command == "extract-source":
         session_factory = create_session_factory(create_database_engine())
         with session_factory() as session:
@@ -150,6 +251,30 @@ def main() -> None:
                     "fiscal_year": result.fiscal_year,
                     "records_extracted": result.records_extracted,
                     "total_expenditure": str(result.total_expenditure),
+                    "status": "requires_review",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "extract-performance-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = extract_budget_performance_source(
+                session,
+                source_document_id=args.source_document_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "quarter": result.quarter,
+                    "records_extracted": result.records_extracted,
+                    "total_revenue_ytd": str(result.total_revenue_ytd),
+                    "total_expenditure_ytd": str(result.total_expenditure_ytd),
                     "status": "requires_review",
                 },
                 indent=2,
@@ -198,6 +323,62 @@ def main() -> None:
                     "published": result.published,
                     "proof_gaia_ids": list(result.proof_gaia_ids),
                     "status": "published_governed_budget_claims",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "approve-performance-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = approve_budget_performance_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "quarter": result.quarter,
+                    "records_affected": result.records_affected,
+                    "cross_source_budget_claims_checked": (
+                        result.cross_source_budget_claims_checked
+                    ),
+                    "published": result.published,
+                    "status": "performance_approved_not_published",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "publish-performance-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = publish_budget_performance_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "quarter": result.quarter,
+                    "records_affected": result.records_affected,
+                    "claims_published": result.claims_published,
+                    "cross_source_budget_claims_checked": (
+                        result.cross_source_budget_claims_checked
+                    ),
+                    "published": result.published,
+                    "proof_gaia_ids": list(result.proof_gaia_ids),
+                    "status": "published_governed_expenditure_claims",
                 },
                 indent=2,
                 sort_keys=True,
