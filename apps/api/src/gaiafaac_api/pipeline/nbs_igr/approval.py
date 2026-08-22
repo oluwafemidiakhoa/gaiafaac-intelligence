@@ -122,8 +122,7 @@ def approve_igr_source(
         source.source_status is SourceStatus.APPROVED
         and source.processing_status is ProcessingStatus.COMPLETED
         and all(
-            record.verification_status is VerificationStatus.HUMAN_VERIFIED
-            for record in records
+            record.verification_status is VerificationStatus.HUMAN_VERIFIED for record in records
         )
     ):
         return IgrApprovalResult(
@@ -140,8 +139,7 @@ def approve_igr_source(
     if any(record.is_published for record in records):
         raise ApprovalError("Unapproved NBS IGR records must not already be published")
     if any(
-        record.verification_status is not VerificationStatus.REQUIRES_REVIEW
-        for record in records
+        record.verification_status is not VerificationStatus.REQUIRES_REVIEW for record in records
     ):
         raise ApprovalError("Every NBS IGR record must be awaiting review before approval")
 
@@ -194,8 +192,7 @@ def publish_igr_source(
     if source.processing_status is not ProcessingStatus.COMPLETED:
         raise ApprovalError("NBS IGR source processing must be completed before publication")
     if any(
-        record.verification_status is not VerificationStatus.HUMAN_VERIFIED
-        for record in records
+        record.verification_status is not VerificationStatus.HUMAN_VERIFIED for record in records
     ):
         raise ApprovalError("Every NBS IGR record must be human-verified before publication")
 
