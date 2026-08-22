@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
 from gaiafaac_api.pipeline.nbs_igr.archive import archive_nbs_igr_publications
 from gaiafaac_api.pipeline.nbs_igr.discovery import discover_nbs_igr_publications
+from gaiafaac_api.pipeline.nbs_igr.extract import extract_nbs_igr_source
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,6 +24,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     archive.add_argument("--archive-root", type=Path, default=Path("data/raw/nbs/igr"))
     archive.add_argument("--limit", type=int)
+    extract = commands.add_parser(
+        "extract-source",
+        help="Extract one archived NBS IGR report into unpublished review records",
+    )
+    extract.add_argument("source_document_id", type=uuid.UUID)
     return parser
 
 
@@ -46,8 +53,8 @@ def main() -> None:
             )
         )
         return
+    session_factory = create_session_factory(create_database_engine())
     if args.command == "archive-reports":
-        session_factory = create_session_factory(create_database_engine())
         with session_factory() as session:
             results = archive_nbs_igr_publications(
                 session,
@@ -72,6 +79,26 @@ def main() -> None:
                     }
                     for item in results
                 ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "extract-source":
+        with session_factory() as session:
+            result = extract_nbs_igr_source(
+                session,
+                source_document_id=args.source_document_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "fiscal_year": result.fiscal_year,
+                    "records_extracted": result.records_extracted,
+                    "total_amount": format(result.total_amount, "f"),
+                    "status": "extracted_awaiting_review",
+                },
                 indent=2,
                 sort_keys=True,
             )
