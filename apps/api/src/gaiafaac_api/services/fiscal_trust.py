@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -121,14 +121,19 @@ def create_claim_revision(
     value_change_percent = None
     material_change = None
     if previous_claim.value_text is not None and revised_claim.value_text is not None:
-        previous_value = Decimal(previous_claim.value_text)
-        revised_value = Decimal(revised_claim.value_text)
-        value_delta = revised_value - previous_value
-        if previous_value != 0:
-            value_change_percent = (value_delta / abs(previous_value) * Decimal("100")).quantize(
-                Decimal("0.000001"), rounding=ROUND_HALF_UP
-            )
-            material_change = abs(value_change_percent) >= REVISION_MATERIALITY_PERCENT
+        try:
+            previous_value = Decimal(previous_claim.value_text)
+            revised_value = Decimal(revised_claim.value_text)
+        except InvalidOperation:
+            previous_value = None
+            revised_value = None
+        if previous_value is not None and revised_value is not None:
+            value_delta = revised_value - previous_value
+            if previous_value != 0:
+                value_change_percent = (
+                    value_delta / abs(previous_value) * Decimal("100")
+                ).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
+                material_change = abs(value_change_percent) >= REVISION_MATERIALITY_PERCENT
 
     revision = ClaimRevision(
         id=uuid.uuid4(),

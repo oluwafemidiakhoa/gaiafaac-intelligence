@@ -7,6 +7,7 @@ from gaiafaac_api.api.v1.routes.commercial import router as commercial_router
 from gaiafaac_api.api.v1.routes.data_api import router as data_api_router
 from gaiafaac_api.api.v1.routes.demo_data import router as demo_data_router
 from gaiafaac_api.api.v1.routes.evidence_rooms import router as evidence_rooms_router
+from gaiafaac_api.api.v1.routes.fiscal_claims import router as fiscal_claims_router
 from gaiafaac_api.api.v1.routes.fiscal_ledger import router as fiscal_ledger_router
 from gaiafaac_api.api.v1.routes.health import router as health_router
 from gaiafaac_api.api.v1.routes.institutional_webhooks import router as webhook_router
@@ -23,6 +24,7 @@ from gaiafaac_api.api.v1.routes.watchlists import router as watchlists_router
 router = APIRouter(prefix="/api/v1")
 router.include_router(health_router)
 router.include_router(fiscal_ledger_router)
+router.include_router(fiscal_claims_router)
 router.include_router(temporal_router)
 router.include_router(demo_data_router)
 router.include_router(analytics_router)
