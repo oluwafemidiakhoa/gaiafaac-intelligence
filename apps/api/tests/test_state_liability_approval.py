@@ -149,7 +149,9 @@ def test_liability_approval_preserves_unreported_salary_and_publishes_nothing(se
     assert all(record.reviewed_at is not None for record in records)
     assert all(not record.is_published for record in records)
     assert (
-        session.scalar(select(FiscalClaim.gaia_id).where(FiscalClaim.source_document_id == source.id))
+        session.scalar(
+            select(FiscalClaim.gaia_id).where(FiscalClaim.source_document_id == source.id)
+        )
         is None
     )
 
@@ -216,6 +218,8 @@ def test_liability_reapproval_is_idempotent_and_does_not_publish(session):
     assert second.unreported_metrics == 1
     assert second.published is False
     assert (
-        session.scalar(select(FiscalClaim.gaia_id).where(FiscalClaim.source_document_id == source.id))
+        session.scalar(
+            select(FiscalClaim.gaia_id).where(FiscalClaim.source_document_id == source.id)
+        )
         is None
     )
