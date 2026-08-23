@@ -37,9 +37,7 @@ def governed_claims(session: Session, query: FiscalClaimQuery) -> FiscalClaimEnv
         state_code = query.jurisdiction.strip().upper().removeprefix("NG-")
         statement = statement.where(State.code == state_code)
     if query.fiscal_domain:
-        statement = statement.where(
-            FiscalClaim.object_type == query.fiscal_domain.strip().lower()
-        )
+        statement = statement.where(FiscalClaim.object_type == query.fiscal_domain.strip().lower())
     if query.fiscal_period:
         statement = statement.where(FiscalClaim.fiscal_period == query.fiscal_period.strip())
     if query.metric:
