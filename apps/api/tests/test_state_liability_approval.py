@@ -13,7 +13,10 @@ from gaiafaac_api.database.ledger_models import FiscalClaim
 from gaiafaac_api.database.liability_models import LiabilityMetric, StateLiabilityRecord
 from gaiafaac_api.database.models import SourceDocument, State, User
 from gaiafaac_api.pipeline.errors import ApprovalError
-from gaiafaac_api.pipeline.state_financials.approval import approve_state_liability_source
+from gaiafaac_api.pipeline.state_financials.approval import (
+    approve_state_liability_source,
+    publish_state_liability_source,
+)
 
 _AMOUNTS: dict[LiabilityMetric, tuple[Decimal | None, str]] = {
     LiabilityMetric.CONTRACTOR_ARREARS: (Decimal("4338068360.63"), "4,338,068,360.63"),
@@ -222,3 +225,85 @@ def test_liability_reapproval_is_idempotent_and_does_not_publish(session):
         )
         is None
     )
+
+
+def test_liability_publication_requires_prior_approval(session):
+    reviewer = _reviewer(session)
+    _state, source = _staged_source(session)
+
+    with pytest.raises(ApprovalError, match="Only approved state-liability sources"):
+        publish_state_liability_source(
+            session,
+            source_document_id=source.id,
+            reviewer_id=reviewer.id,
+        )
+
+
+def test_liability_publication_creates_governed_claims_and_preserves_dash(session):
+    reviewer = _reviewer(session)
+    _state, source = _staged_source(session)
+    approve_state_liability_source(
+        session,
+        source_document_id=source.id,
+        reviewer_id=reviewer.id,
+    )
+
+    result = publish_state_liability_source(
+        session,
+        source_document_id=source.id,
+        reviewer_id=reviewer.id,
+    )
+    claims = list(
+        session.scalars(
+            select(FiscalClaim)
+            .where(FiscalClaim.source_document_id == source.id)
+            .order_by(FiscalClaim.metric)
+        )
+    )
+    records = list(
+        session.scalars(
+            select(StateLiabilityRecord).where(StateLiabilityRecord.source_document_id == source.id)
+        )
+    )
+    salary_claim = next(
+        claim for claim in claims if claim.metric == LiabilityMetric.SALARY_ARREARS.value
+    )
+
+    assert result.published is True
+    assert len(result.proof_gaia_ids) == len(LiabilityMetric)
+    assert len(claims) == len(LiabilityMetric)
+    assert {claim.object_type for claim in claims} == {"liabilities"}
+    assert {claim.fiscal_period for claim in claims} == {"2021"}
+    assert {claim.currency for claim in claims} == {"NGN"}
+    assert {claim.metric for claim in claims} == {metric.value for metric in LiabilityMetric}
+    assert salary_claim.value is None
+    assert salary_claim.value_text == "-"
+    assert all(record.is_published for record in records)
+    assert all(record.published_at is not None for record in records)
+
+
+def test_liability_publication_is_idempotent(session):
+    reviewer = _reviewer(session)
+    _state, source = _staged_source(session)
+    approve_state_liability_source(
+        session,
+        source_document_id=source.id,
+        reviewer_id=reviewer.id,
+    )
+    first = publish_state_liability_source(
+        session,
+        source_document_id=source.id,
+        reviewer_id=reviewer.id,
+    )
+    second = publish_state_liability_source(
+        session,
+        source_document_id=source.id,
+        reviewer_id=reviewer.id,
+    )
+    claims = list(
+        session.scalars(select(FiscalClaim).where(FiscalClaim.source_document_id == source.id))
+    )
+
+    assert first.published is True
+    assert second.published is True
+    assert len(claims) == len(LiabilityMetric)
