@@ -8,8 +8,8 @@ from gaiafaac_api.database import (
     evidence_room_models,
     igr_models,
     ledger_models,
-    liability_models,
     lga_models,
+    liability_models,
     models,
 )
 from gaiafaac_api.database.base import Base
@@ -23,7 +23,7 @@ __all__ = [
     "evidence_room_models",
     "igr_models",
     "ledger_models",
-    "liability_models",
     "lga_models",
+    "liability_models",
     "models",
 ]
