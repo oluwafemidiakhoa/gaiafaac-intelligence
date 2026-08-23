@@ -65,6 +65,7 @@ EXPECTED_TABLES = {
     "state_debt_records",
     "state_igr_records",
     "state_indicators",
+    "state_liability_records",
     "states",
     "subscriptions",
     "users",
