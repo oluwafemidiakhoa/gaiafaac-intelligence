@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -18,6 +18,7 @@ from gaiafaac_api.database.enums import (
 from gaiafaac_api.database.liability_models import LiabilityMetric, StateLiabilityRecord
 from gaiafaac_api.database.models import AuditLog, SourceDocument, State, User
 from gaiafaac_api.pipeline.errors import ApprovalError
+from gaiafaac_api.services.fiscal_domain_claims import publish_domain_claim
 
 _VERSION_RE = re.compile(
     r"^state-financial-(?P<kind>contractor-arrears-register)-"
@@ -36,6 +37,7 @@ class StateLiabilityApprovalResult:
     unreported_metrics: int
     reconciliation_checked: bool
     published: bool
+    proof_gaia_ids: tuple[str, ...] = ()
 
 
 def _reviewer(session: Session, reviewer_id: uuid.UUID) -> User:
@@ -183,7 +185,7 @@ def approve_state_liability_source(
             numeric_metrics=sum(record.amount is not None for record in records),
             unreported_metrics=sum(record.amount is None for record in records),
             reconciliation_checked=True,
-            published=any(record.is_published for record in records),
+            published=all(record.is_published for record in records),
         )
 
     if source.source_status is not SourceStatus.READY_FOR_REVIEW:
@@ -233,4 +235,107 @@ def approve_state_liability_source(
         unreported_metrics=sum(record.amount is None for record in records),
         reconciliation_checked=True,
         published=False,
+    )
+
+
+def publish_state_liability_source(
+    session: Session,
+    *,
+    source_document_id: uuid.UUID,
+    reviewer_id: uuid.UUID,
+) -> StateLiabilityApprovalResult:
+    """Publish a human-approved liability package into immutable governed claims."""
+
+    source, reviewer, state, records, fiscal_year = _context(
+        session,
+        source_document_id=source_document_id,
+        reviewer_id=reviewer_id,
+    )
+    _validate_reconciliation(records)
+
+    if source.source_status is not SourceStatus.APPROVED:
+        raise ApprovalError("Only approved state-liability sources can be published")
+    if source.processing_status is not ProcessingStatus.COMPLETED:
+        raise ApprovalError("State-liability source processing must be completed before publication")
+    if any(
+        record.verification_status is not VerificationStatus.HUMAN_VERIFIED for record in records
+    ):
+        raise ApprovalError("Every state-liability record must be human-verified before publication")
+
+    if all(record.is_published for record in records):
+        return StateLiabilityApprovalResult(
+            source_document_id=str(source.id),
+            state_code=state.code,
+            fiscal_year=fiscal_year,
+            records_approved=len(records),
+            numeric_metrics=sum(record.amount is not None for record in records),
+            unreported_metrics=sum(record.amount is None for record in records),
+            reconciliation_checked=True,
+            published=True,
+        )
+    if any(record.is_published for record in records):
+        raise ApprovalError(
+            "State-liability source is only partially published; manual investigation required"
+        )
+
+    published_at = datetime.now(UTC)
+    effective_at = datetime.combine(date(fiscal_year, 12, 31), time.max, tzinfo=UTC)
+    proof_ids: list[str] = []
+    try:
+        for record in records:
+            proof = publish_domain_claim(
+                session,
+                domain="liabilities",
+                state_id=record.state_id,
+                source_document_id=source.id,
+                fiscal_period=str(fiscal_year),
+                metric=record.metric.value,
+                value=record.amount,
+                value_text=record.amount_text,
+                unit="currency",
+                currency="NGN",
+                effective_at=effective_at,
+                published_at=published_at,
+                source_page=record.source_page,
+                source_table=record.source_table,
+                extraction_method=record.extraction_method,
+                human_reviewed=True,
+                reconciled=True,
+            )
+            proof_ids.append(proof.gaia_id)
+            record.is_published = True
+            record.published_at = published_at
+
+        session.add(
+            AuditLog(
+                actor_user_id=reviewer.id,
+                action="state_liability.published",
+                entity_type="source_document",
+                entity_id=source.id,
+                payload={
+                    "state_code": state.code,
+                    "fiscal_year": fiscal_year,
+                    "records_published": len(records),
+                    "numeric_metrics": sum(record.amount is not None for record in records),
+                    "unreported_metrics": sum(record.amount is None for record in records),
+                    "proof_count": len(proof_ids),
+                    "published": True,
+                },
+            )
+        )
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+
+    return StateLiabilityApprovalResult(
+        source_document_id=str(source.id),
+        state_code=state.code,
+        fiscal_year=fiscal_year,
+        records_approved=len(records),
+        numeric_metrics=sum(record.amount is not None for record in records),
+        unreported_metrics=sum(record.amount is None for record in records),
+        reconciliation_checked=True,
+        published=True,
+        proof_gaia_ids=tuple(proof_ids),
     )
