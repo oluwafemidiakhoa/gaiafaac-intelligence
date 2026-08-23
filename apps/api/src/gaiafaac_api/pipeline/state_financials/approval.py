@@ -46,9 +46,7 @@ def _reviewer(session: Session, reviewer_id: uuid.UUID) -> User:
         UserRole.REVIEWER,
         UserRole.ADMINISTRATOR,
     }:
-        raise ApprovalError(
-            "State-liability approval requires an active reviewer or administrator"
-        )
+        raise ApprovalError("State-liability approval requires an active reviewer or administrator")
     return reviewer
 
 
@@ -197,9 +195,7 @@ def approve_state_liability_source(
     if any(
         record.verification_status is not VerificationStatus.REQUIRES_REVIEW for record in records
     ):
-        raise ApprovalError(
-            "Every state-liability record must be awaiting review before approval"
-        )
+        raise ApprovalError("Every state-liability record must be awaiting review before approval")
 
     reviewed_at = datetime.now(UTC)
     for record in records:
