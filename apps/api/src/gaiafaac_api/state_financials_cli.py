@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
+from gaiafaac_api.pipeline.state_financials.approval import approve_state_liability_source
 from gaiafaac_api.pipeline.state_financials.archive import archive_state_financial_publications
 from gaiafaac_api.pipeline.state_financials.discovery import (
     discover_state_financial_publications,
@@ -44,6 +45,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Extract one supported archived liability source into unpublished review records",
     )
     extract.add_argument("source_document_id", type=uuid.UUID)
+    approve = commands.add_parser(
+        "approve-liability-source",
+        help="Human-verify one complete staged liability source without publishing claims",
+    )
+    approve.add_argument("source_document_id", type=uuid.UUID)
+    approve.add_argument("reviewer_id", type=uuid.UUID)
     return parser
 
 
@@ -145,6 +152,32 @@ def main() -> None:
                     "records_extracted": result.records_extracted,
                     "total_domestic_arrears": str(result.total_domestic_arrears),
                     "status": "requires_review",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "approve-liability-source":
+        session_factory = create_session_factory(create_database_engine())
+        with session_factory() as session:
+            result = approve_state_liability_source(
+                session,
+                source_document_id=args.source_document_id,
+                reviewer_id=args.reviewer_id,
+            )
+        print(
+            json.dumps(
+                {
+                    "source_document_id": result.source_document_id,
+                    "state_code": result.state_code,
+                    "fiscal_year": result.fiscal_year,
+                    "records_approved": result.records_approved,
+                    "numeric_metrics": result.numeric_metrics,
+                    "unreported_metrics": result.unreported_metrics,
+                    "reconciliation_checked": result.reconciliation_checked,
+                    "published": result.published,
+                    "status": "approved_not_published",
                 },
                 indent=2,
                 sort_keys=True,
