@@ -256,11 +256,15 @@ def publish_state_liability_source(
     if source.source_status is not SourceStatus.APPROVED:
         raise ApprovalError("Only approved state-liability sources can be published")
     if source.processing_status is not ProcessingStatus.COMPLETED:
-        raise ApprovalError("State-liability source processing must be completed before publication")
+        raise ApprovalError(
+            "State-liability source processing must be completed before publication"
+        )
     if any(
         record.verification_status is not VerificationStatus.HUMAN_VERIFIED for record in records
     ):
-        raise ApprovalError("Every state-liability record must be human-verified before publication")
+        raise ApprovalError(
+            "Every state-liability record must be human-verified before publication"
+        )
 
     if all(record.is_published for record in records):
         return StateLiabilityApprovalResult(
