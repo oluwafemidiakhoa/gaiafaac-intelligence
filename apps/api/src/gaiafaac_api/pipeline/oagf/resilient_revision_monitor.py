@@ -52,9 +52,7 @@ def resilient_http_fetch(
                 final_url = _official_url(response.geturl())
                 body = response.read(maximum_bytes + 1)
                 if len(body) > maximum_bytes:
-                    raise DiscoveryError(
-                        f"OAGF response exceeds {maximum_bytes} bytes: {safe_url}"
-                    )
+                    raise DiscoveryError(f"OAGF response exceeds {maximum_bytes} bytes: {safe_url}")
                 return FetchResponse(
                     body=body,
                     content_type=response.headers.get_content_type(),
@@ -80,8 +78,7 @@ def resilient_http_fetch(
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Detect OAGF FAAC source revisions with bounded network retries; "
-            "never publishes."
+            "Detect OAGF FAAC source revisions with bounded network retries; never publishes."
         )
     )
     parser.add_argument("--months-back", type=int, default=24)
