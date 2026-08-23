@@ -15,7 +15,6 @@ from gaiafaac_api.database.models import SourceDocument, State, User
 from gaiafaac_api.pipeline.errors import ApprovalError
 from gaiafaac_api.pipeline.state_financials.approval import approve_state_liability_source
 
-
 _AMOUNTS: dict[LiabilityMetric, tuple[Decimal | None, str]] = {
     LiabilityMetric.CONTRACTOR_ARREARS: (Decimal("4338068360.63"), "4,338,068,360.63"),
     LiabilityMetric.PENSIONS_AND_GRATUITY_ARREARS: (
