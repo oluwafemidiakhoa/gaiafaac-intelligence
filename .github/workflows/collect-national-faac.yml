@@ -2,7 +2,8 @@ name: Collect national FAAC evidence
 
 # Daily, governance-preserving collector. It discovers official government
 # releases, archives their exact bytes, imports deterministic claims into review,
-# and NEVER approves or publishes evidence.
+# and NEVER approves or publishes evidence. Transient source outages are retried
+# and recorded; a total official-source outage still fails closed.
 on:
   schedule:
     - cron: '30 6 * * *'
@@ -32,4 +33,4 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
           ALERT_TO: ${{ secrets.ALERT_TO }}
-        run: gaiafaac-national collect --months-back 24
+        run: python -m gaiafaac_api.pipeline.national_resilient --months-back 24
