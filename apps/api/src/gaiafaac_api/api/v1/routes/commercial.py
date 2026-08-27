@@ -20,7 +20,7 @@ from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.commercial_models import PilotLead
 from gaiafaac_api.database.session import get_session
 
-router = APIRouter(prefix="commercial", tags=["commercial"])
+router = APIRouter(prefix="/commercial", tags=["commercial"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
 logger = logging.getLogger(__name__)
 
