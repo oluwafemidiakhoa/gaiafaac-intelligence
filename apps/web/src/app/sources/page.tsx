@@ -176,9 +176,14 @@ export default async function SourcesPage() {
             <Card key={lane.authority}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
-                  <Landmark className="text-primary size-5" aria-hidden="true" />
+                  <Landmark
+                    className="text-primary size-5"
+                    aria-hidden="true"
+                  />
                   <StatusPill
-                    tone={lane.status === 'Live evidence' ? 'success' : 'neutral'}
+                    tone={
+                      lane.status === 'Live evidence' ? 'success' : 'neutral'
+                    }
                   >
                     {lane.status}
                   </StatusPill>
