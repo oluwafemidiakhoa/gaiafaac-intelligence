@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card'
 import { askGaiaAnalyst } from '@/lib/gaia-analyst-api'
 
-export const metadata: Metadata = { title: 'Gaia Analyst' }
+export const metadata: Metadata = { title: 'Ask Gaia' }
 export const dynamic = 'force-dynamic'
 
 const defaultQuestion = 'What is the latest published IGR for Lagos?'
@@ -44,22 +44,25 @@ export default async function GaiaAnalystPage({
     'What is the latest published IGR for Lagos?',
     `Which states had the highest IGR in ${year}?`,
     `Compare Rivers and Lagos IGR in ${year}.`,
+    'How dependent is Lagos on FAAC?',
+    'How much debt does Lagos carry relative to revenue?',
   ]
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
-        eyebrow="Gaia Analyst"
-        title="Ask the verified fiscal ledger"
-        description="Natural-language questions over published FAAC and internally generated revenue evidence. Gaia Analyst calculates from deterministic ledger services and refuses unsupported claims instead of guessing."
+        eyebrow="Ask Gaia"
+        title="Evidence-led answers for fiscal decisions"
+        description="Ask Gaia answers from verified FAAC, IGR and Fiscal State evidence. It calculates clearly, shows the proof behind each answer, and refuses to invent facts, forecasts or ratings."
       />
 
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Ask a fiscal question</CardTitle>
+          <CardTitle>Ask Gaia</CardTitle>
           <CardDescription>
-            Ask about published FAAC movements, rankings and comparisons, or
-            governed IGR records, rankings and state-to-state comparisons.
+            Ask plain-English questions about allocation changes, rankings,
+            state comparisons, IGR, FAAC dependence, debt burden or budget
+            execution. Every answer stays tied to available evidence.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,7 +79,7 @@ export default async function GaiaAnalystPage({
                 maxLength={500}
                 required
                 className="border-input bg-background h-11 rounded-md border px-3 text-sm"
-                placeholder="Compare Rivers and Lagos IGR in 2024"
+                placeholder="How dependent is Lagos on FAAC?"
               />
             </label>
             <label className="grid gap-2 text-sm font-medium">
@@ -107,8 +110,8 @@ export default async function GaiaAnalystPage({
           <CardHeader>
             <CardTitle>Suggested questions</CardTitle>
             <CardDescription>
-              Start with a FAAC or IGR question that can be resolved directly
-              from governed, published ledger evidence.
+              Start with a question Gaia can answer directly from governed,
+              published evidence—without a paid AI subscription.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
@@ -139,7 +142,7 @@ export default async function GaiaAnalystPage({
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <CardTitle>Analyst answer</CardTitle>
+                  <CardTitle>Gaia's answer</CardTitle>
                   <CardDescription>{data.coverage_label}</CardDescription>
                 </div>
                 <StatusPill
@@ -160,9 +163,9 @@ export default async function GaiaAnalystPage({
             <CardHeader>
               <CardTitle>Evidence used</CardTitle>
               <CardDescription>
-                Structured FAAC or IGR ledger outputs supporting the answer.
-                Open the linked state record or Fiscal Proof to inspect the
-                underlying published evidence.
+                The exact FAAC, IGR or Fiscal State records used. Open the
+                linked state record or Fiscal Proof to inspect the underlying
+                published evidence.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -276,7 +279,7 @@ export default async function GaiaAnalystPage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Evidence boundary</CardTitle>
+              <CardTitle>What this answer does—and does not—say</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-sm leading-6">
