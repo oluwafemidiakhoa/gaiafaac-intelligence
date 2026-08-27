@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import logging
+import smtplib
 import uuid
+from email.message import EmailMessage
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
@@ -13,18 +16,58 @@ from gaiafaac_api.commercial_schemas import (
     PilotLeadAdminItem,
     PilotLeadCreate,
 )
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.commercial_models import PilotLead
 from gaiafaac_api.database.session import get_session
 
-router = APIRouter(prefix="/commercial", tags=["commercial"])
+router = APIRouter(prefix="commercial", tags=["commercial"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
+logger = logging.getLogger(__name__)
+
+
+def _notify_pilot_lead(lead: PilotLead) -> None:
+    """Notify the internal team without making lead capture depend on SMTP."""
+    settings = get_settings()
+    if not all(
+        [
+            settings.smtp_host,
+            settings.smtp_username,
+            settings.smtp_password,
+            settings.alert_from,
+            settings.alert_to,
+        ]
+    ):
+        logger.info("SMTP or ALERT_TO is incomplete; pilot lead notification skipped.")
+        return
+
+    message = EmailMessage()
+    message["Subject"] = f"New Gaia Fiscal Watch request — {lead.organization or lead.name}"
+    message["From"] = settings.alert_from
+    message["To"] = settings.alert_to
+    message.set_content(
+        f"A new Fiscal Watch request was received.\n\n"
+        f"Name: {lead.name}\n"
+        f"Email: {lead.email}\n"
+        f"Organization: {lead.organization or 'Not provided'}\n"
+        f"Role: {lead.role or 'Not provided'}\n"
+        f"Expected users: {lead.expected_users or 'Not provided'}\n"
+        f"Jurisdictions / periods: {lead.states_or_periods or 'Not provided'}\n\n"
+        f"Use case:\n{lead.use_case}\n\n"
+        "Review the lead in Gaia Fiscal Intelligence before activating a customer workspace.\n"
+    )
+    try:
+        with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port) as server:
+            server.login(settings.smtp_username, settings.smtp_password)
+            server.send_message(message)
+    except Exception as error:  # noqa: BLE001 - the stored lead remains the source of truth
+        logger.warning("Pilot lead notification email failed: %s", error)
 
 
 @router.post(
     "/pilot-leads",
     response_model=PilotLeadAccepted,
     status_code=status.HTTP_202_ACCEPTED,
-    summary="Request a GaiaFAAC commercial pilot",
+    summary="Request a Gaia Fiscal Intelligence commercial pilot",
 )
 def create_pilot_lead(
     payload: PilotLeadCreate,
@@ -53,6 +96,7 @@ def create_pilot_lead(
     session.add(lead)
     session.commit()
     session.refresh(lead)
+    _notify_pilot_lead(lead)
     return PilotLeadAccepted(id=lead.id)
 
 
