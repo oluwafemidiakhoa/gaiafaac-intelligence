@@ -38,27 +38,30 @@ const evidenceLanes = [
   {
     authority: 'NBS',
     label: 'State IGR',
-    state: 'Intake ready',
-    description: 'Governed state internally generated revenue evidence.',
+    state: 'Pipeline built',
+    description:
+      'The NBS intake pipeline is built. No NBS value is shown until an official report is reviewed and published.'
   },
   {
     authority: 'DMO',
     label: 'Debt pressure',
-    state: 'Intake ready',
-    description: 'State and FCT debt and debt-service evidence.',
+    state: 'Pipeline built',
+    description:
+      'The DMO intake pipeline is built. No debt value is shown until an official source is reviewed and published.'
   },
   {
     authority: 'CBN',
     label: 'Macro context',
-    state: 'Next',
+    state: 'Not connected',
     description:
-      'Official macro indicators with clear period and unit boundaries.',
+      'CBN data is not connected yet and no CBN figure is being used by Gaia.'
   },
   {
     authority: 'FIRS',
     label: 'Tax context',
-    state: 'Next',
-    description: 'Federal tax context, kept separate from state IGR.',
+    state: 'Not connected',
+    description:
+      'FIRS data is not connected yet and no FIRS figure is being used by Gaia.'
   },
 ] as const
 
