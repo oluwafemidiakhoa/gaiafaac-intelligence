@@ -62,7 +62,7 @@ function apiBaseUrl() {
 }
 
 function newestPeriod(periods: string[]) {
-  return periods.length > 0 ? [...periods].sort().at(-1) ?? null : null
+  return periods.length > 0 ? ([...periods].sort().at(-1) ?? null) : null
 }
 
 function officialClaims(
@@ -168,7 +168,8 @@ export async function getEvidenceNetworkStatus({
   } catch {
     return {
       data: null,
-      error: 'The evidence-status service is unavailable. Gaia will not guess a source status.',
+      error:
+        'The evidence-status service is unavailable. Gaia will not guess a source status.',
     }
   }
 }
