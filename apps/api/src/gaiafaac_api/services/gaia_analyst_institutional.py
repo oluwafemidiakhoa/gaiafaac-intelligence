@@ -62,13 +62,19 @@ def _state(session: Session, question: str) -> State | None:
     lowered = question.lower()
     tokens = _question_tokens(question)
     states = session.scalars(select(State).order_by(State.name.desc())).all()
+    # A full jurisdiction name is always stronger evidence than a two-letter
+    # state code. This avoids treating ordinary words such as "on" as Ondo.
     for state in states:
         named = state.name.lower() in lowered or state.slug.lower() in lowered
+        if named:
+            return state
+
+    for state in states:
         coded = state.code.lower() in tokens
         fct = state.code == "FC" and bool(
             {"fct", "abuja"} & tokens or "federal capital territory" in lowered
         )
-        if named or coded or fct:
+        if coded or fct:
             return state
     return None
 
