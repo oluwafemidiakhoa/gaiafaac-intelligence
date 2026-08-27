@@ -40,28 +40,28 @@ const evidenceLanes = [
     label: 'State IGR',
     state: 'Pipeline built',
     description:
-      'The NBS intake pipeline is built. No NBS value is shown until an official report is reviewed and published.'
+      'The NBS intake pipeline is built. No NBS value is shown until an official report is reviewed and published.',
   },
   {
     authority: 'DMO',
     label: 'Debt pressure',
     state: 'Pipeline built',
     description:
-      'The DMO intake pipeline is built. No debt value is shown until an official source is reviewed and published.'
+      'The DMO intake pipeline is built. No debt value is shown until an official source is reviewed and published.',
   },
   {
     authority: 'CBN',
     label: 'Macro context',
     state: 'Not connected',
     description:
-      'CBN data is not connected yet and no CBN figure is being used by Gaia.'
+      'CBN data is not connected yet and no CBN figure is being used by Gaia.',
   },
   {
     authority: 'FIRS',
     label: 'Tax context',
     state: 'Not connected',
     description:
-      'FIRS data is not connected yet and no FIRS figure is being used by Gaia.'
+      'FIRS data is not connected yet and no FIRS figure is being used by Gaia.',
   },
 ] as const
 
