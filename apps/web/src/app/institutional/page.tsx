@@ -144,10 +144,7 @@ export default function InstitutionalPage() {
 
       <section className="grid gap-8 rounded-2xl border border-emerald-950/10 bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
         <div>
-          <FileCheck2
-            className="size-6 text-emerald-300"
-            aria-hidden="true"
-          />
+          <FileCheck2 className="size-6 text-emerald-300" aria-hidden="true" />
           <p className="mt-5 font-mono text-xs font-semibold tracking-[0.16em] text-emerald-300 uppercase">
             Evidence model
           </p>
@@ -177,10 +174,7 @@ export default function InstitutionalPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <DatabaseZap
-                className="text-primary size-5"
-                aria-hidden="true"
-              />
+              <DatabaseZap className="text-primary size-5" aria-hidden="true" />
               <CardTitle className="pt-3 text-2xl">
                 What institutions can buy
               </CardTitle>
@@ -208,10 +202,7 @@ export default function InstitutionalPage() {
 
           <Card className="bg-muted/30">
             <CardHeader>
-              <ShieldCheck
-                className="text-primary size-5"
-                aria-hidden="true"
-              />
+              <ShieldCheck className="text-primary size-5" aria-hidden="true" />
               <CardTitle className="pt-3 text-2xl">
                 Start by verifying it yourself
               </CardTitle>
