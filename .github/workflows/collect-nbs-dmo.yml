@@ -1,0 +1,34 @@
+name: Collect NBS and DMO fiscal evidence
+
+# Weekly source intake for official NBS IGR and DMO sub-national debt evidence.
+# This workflow only discovers, downloads, fingerprints and registers official
+# source documents. It never human-approves or publishes fiscal values.
+on:
+  schedule:
+    - cron: '30 6 * * 1' # Mondays 06:30 UTC
+  workflow_dispatch: {}
+
+concurrency:
+  group: collect-nbs-dmo
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install API package with extraction dependencies
+        run: python -m pip install -e "apps/api[extraction]"
+      - name: Archive newly discovered NBS IGR sources (never publishes)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_ENVIRONMENT: production
+        run: python -m gaiafaac_api.nbs_igr_cli archive-reports --limit 12
+      - name: Archive newly discovered DMO debt sources (never publishes)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_ENVIRONMENT: production
+        run: python -m gaiafaac_api.dmo_cli archive-subnational --limit 12
