@@ -195,7 +195,7 @@ export default async function GaiaTerminalPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="break-all font-mono text-xs leading-5">
+                <p className="font-mono text-xs leading-5 break-all">
                   {data.source.sha256}
                 </p>
               </CardContent>
@@ -205,7 +205,7 @@ export default async function GaiaTerminalPage() {
           <section className="bg-muted/20 mt-9 rounded-2xl border p-5 sm:p-7">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="max-w-2xl">
-                <p className="text-primary text-xs font-semibold uppercase tracking-[0.18em]">
+                <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
                   Fiscal evidence network
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -270,7 +270,7 @@ export default async function GaiaTerminalPage() {
 
       <section className="mt-12">
         <div className="mb-5 max-w-3xl">
-          <p className="text-primary text-xs font-semibold uppercase tracking-[0.18em]">
+          <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
             Institutional workflow
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">
