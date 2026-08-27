@@ -67,6 +67,41 @@ const institutionalWorkflows = [
   },
 ]
 
+const evidenceNetwork = [
+  {
+    authority: 'OAGF / FAAC',
+    signal: 'Monthly allocations',
+    status: 'Live',
+    detail:
+      'State and FCT distribution evidence, linked to the retained official source.',
+  },
+  {
+    authority: 'NBS',
+    signal: 'State IGR',
+    status: 'Ready',
+    detail: 'Governed intake for state internally generated revenue evidence.',
+  },
+  {
+    authority: 'DMO',
+    signal: 'Debt pressure',
+    status: 'Ready',
+    detail: 'Governed intake for state and FCT debt and debt-service evidence.',
+  },
+  {
+    authority: 'CBN',
+    signal: 'Macro context',
+    status: 'Next',
+    detail:
+      'Official macroeconomic series will retain their period, unit and source boundary.',
+  },
+  {
+    authority: 'FIRS',
+    signal: 'Federal tax context',
+    status: 'Next',
+    detail: 'Federal tax context remains separate from state IGR evidence.',
+  },
+] as const
+
 function compactNaira(value: string | null) {
   if (!value) return 'Unavailable'
   const amount = Number(value)
@@ -87,8 +122,8 @@ export default async function GaiaTerminalPage() {
       <div className="grid gap-8 xl:grid-cols-[1fr_19rem] xl:items-end">
         <PageHeader
           eyebrow="Gaia Terminal"
-          title="One command surface for Nigeria’s fiscal evidence."
-          description="Search governed jurisdictions, jump into proofs and local-government evidence, ask the verified ledger, inspect revisions and reconciliation, run scenarios, monitor signals, open durable Evidence Rooms and route machine-readable Fiscal Events without leaving the evidence boundary."
+          title="Nigeria’s fiscal intelligence, with the evidence attached."
+          description="Gaia connects OAGF FAAC allocations, NBS state IGR, DMO debt evidence, CBN macro context and FIRS tax context into one governed decision system. A source becomes usable only after it is retained, checked and published."
         />
 
         <Card className="bg-muted/25">
@@ -160,11 +195,59 @@ export default async function GaiaTerminalPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="font-mono text-xs leading-5 break-all">
+                <p className="break-all font-mono text-xs leading-5">
                   {data.source.sha256}
                 </p>
               </CardContent>
             </Card>
+          </section>
+
+          <section className="bg-muted/20 mt-9 rounded-2xl border p-5 sm:p-7">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="max-w-2xl">
+                <p className="text-primary text-xs font-semibold uppercase tracking-[0.18em]">
+                  Fiscal evidence network
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                  See the whole fiscal picture—not only FAAC.
+                </h2>
+                <p className="text-muted-foreground mt-2 text-sm leading-6">
+                  Each source keeps its own definition, period and proof. Gaia
+                  does not blend federal tax, state IGR, debt and allocation
+                  data into a misleading single number.
+                </p>
+              </div>
+              <Link
+                href="/sources"
+                className="text-primary text-sm font-medium hover:underline"
+              >
+                Open evidence registry →
+              </Link>
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              {evidenceNetwork.map((lane) => (
+                <Card key={lane.authority} className="bg-background/80">
+                  <CardHeader className="gap-1 p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle className="text-sm">
+                        {lane.authority}
+                      </CardTitle>
+                      <StatusPill
+                        tone={lane.status === 'Live' ? 'success' : 'neutral'}
+                      >
+                        {lane.status}
+                      </StatusPill>
+                    </div>
+                    <CardDescription>{lane.signal}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    <p className="text-muted-foreground text-xs leading-5">
+                      {lane.detail}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </section>
 
           <section className="mt-9 rounded-2xl border border-emerald-950/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),transparent_30%)] p-5 sm:p-7">
@@ -187,7 +270,7 @@ export default async function GaiaTerminalPage() {
 
       <section className="mt-12">
         <div className="mb-5 max-w-3xl">
-          <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
+          <p className="text-primary text-xs font-semibold uppercase tracking-[0.18em]">
             Institutional workflow
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">
