@@ -101,7 +101,10 @@ export async function getEvidenceNetworkStatus({
       fetchClaims('debt'),
     ])
 
-    const nbsClaims = officialClaims(igrEnvelope, 'National Bureau of Statistics')
+    const nbsClaims = officialClaims(
+      igrEnvelope,
+      'National Bureau of Statistics',
+    )
     const dmoClaims = officialClaims(debtEnvelope, 'Debt Management Office')
 
     const lanes: EvidenceLane[] = [
@@ -124,7 +127,9 @@ export async function getEvidenceNetworkStatus({
             ? 'Human-verified NBS state IGR claims are published and source-linked.'
             : 'The governed NBS IGR pipeline is available, but no verified NBS IGR claim is published yet.',
         publishedRecordCount: nbsClaims.length,
-        latestPeriod: newestPeriod(nbsClaims.map((claim) => claim.fiscal_period)),
+        latestPeriod: newestPeriod(
+          nbsClaims.map((claim) => claim.fiscal_period),
+        ),
       },
       {
         authority: 'DMO',
@@ -135,7 +140,9 @@ export async function getEvidenceNetworkStatus({
             ? 'Human-verified DMO debt claims are published and source-linked.'
             : 'The governed DMO debt pipeline is available, but no verified DMO debt claim is published yet.',
         publishedRecordCount: dmoClaims.length,
-        latestPeriod: newestPeriod(dmoClaims.map((claim) => claim.fiscal_period)),
+        latestPeriod: newestPeriod(
+          dmoClaims.map((claim) => claim.fiscal_period),
+        ),
       },
       {
         authority: 'CBN',
