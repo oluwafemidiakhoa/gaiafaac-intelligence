@@ -24,8 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Show canonical Prettier output for evidence network helper
-        run: npx prettier apps/web/src/lib/evidence-network-api.ts
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
