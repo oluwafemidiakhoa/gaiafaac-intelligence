@@ -8,6 +8,7 @@ import { getPublishedOverview } from '@/lib/published-api'
 
 const navigation = [
   { href: '/terminal', label: 'Terminal' },
+  { href: '/institutional', label: 'Institutions' },
   { href: '/live', label: 'Live data' },
   { href: '/fiscal-pulse', label: 'Intelligence' },
   { href: '/sources', label: 'Evidence' },
@@ -65,7 +66,7 @@ export async function SiteHeader() {
         </Link>
 
         <nav
-          className="ml-auto hidden items-center gap-6 lg:flex"
+          className="ml-auto hidden items-center gap-5 lg:flex"
           aria-label="Primary navigation"
         >
           {navigation.map((item) => (
