@@ -58,7 +58,9 @@ export default function PilotPage() {
               <CardDescription>{audience}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm leading-6">{outcome}</p>
+              <p className="text-muted-foreground text-sm leading-6">
+                {outcome}
+              </p>
               <Button asChild className="mt-6 w-full">
                 <a href="#request-form">
                   Request Fiscal Watch
@@ -72,38 +74,77 @@ export default function PilotPage() {
 
       <div className="mt-12 grid gap-8 lg:grid-cols-2">
         <section>
-          <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            How it works
+          </h2>
           <ol className="text-muted-foreground mt-5 space-y-4 text-sm leading-6">
-            <li><span className="text-foreground font-medium">1. Select.</span>{' '}Choose the jurisdictions, reporting periods, and evidence domains that matter.</li>
-            <li><span className="text-foreground font-medium">2. Verify.</span>{' '}Gaia monitors retained official records and governed validation outcomes.</li>
-            <li><span className="text-foreground font-medium">3. Review.</span>{' '}Your team receives the source trail and a clear statement of what changed.</li>
-            <li><span className="text-foreground font-medium">4. Activate.</span>{' '}After scope confirmation, we provision the appropriate workspace, delivery, or API access.</li>
+            <li>
+              <span className="text-foreground font-medium">1. Select.</span>{' '}
+              Choose the jurisdictions, reporting periods, and evidence domains
+              that matter.
+            </li>
+            <li>
+              <span className="text-foreground font-medium">2. Verify.</span>{' '}
+              Gaia monitors retained official records and governed validation
+              outcomes.
+            </li>
+            <li>
+              <span className="text-foreground font-medium">3. Review.</span>{' '}
+              Your team receives the source trail and a clear statement of what
+              changed.
+            </li>
+            <li>
+              <span className="text-foreground font-medium">4. Activate.</span>{' '}
+              After scope confirmation, we provision the appropriate workspace,
+              delivery, or API access.
+            </li>
           </ol>
         </section>
 
         <section className="border-border bg-muted/30 rounded-lg border p-6">
-          <h2 className="text-xl font-semibold">What Fiscal Watch does not do</h2>
+          <h2 className="text-xl font-semibold">
+            What Fiscal Watch does not do
+          </h2>
           <ul className="text-muted-foreground mt-4 space-y-3 text-sm leading-6">
             <li>It does not turn missing public evidence into estimates.</li>
-            <li>It does not label a jurisdiction as corrupt, insolvent, or unsafe from a data movement alone.</li>
-            <li>It does retain source identity, evidence status, and revision history for serious review.</li>
+            <li>
+              It does not label a jurisdiction as corrupt, insolvent, or unsafe
+              from a data movement alone.
+            </li>
+            <li>
+              It does retain source identity, evidence status, and revision
+              history for serious review.
+            </li>
           </ul>
         </section>
       </div>
 
-      <section id="request-form" className="border-border mt-14 scroll-mt-8 rounded-xl border p-6 sm:p-8">
+      <section
+        id="request-form"
+        className="border-border mt-14 scroll-mt-8 rounded-xl border p-6 sm:p-8"
+      >
         <div className="max-w-3xl">
-          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">Institutional request</p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight">Build your watchlist</h2>
+          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+            Institutional request
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            Build your watchlist
+          </h2>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
-            Tell us the jurisdictions and evidence you need. Your request is captured for a real commercial follow-up; we confirm the governed coverage and delivery scope before activation.
+            Tell us the jurisdictions and evidence you need. Your request is
+            captured for a real commercial follow-up; we confirm the governed
+            coverage and delivery scope before activation.
           </p>
         </div>
-        <div className="mt-8 max-w-4xl"><PilotLeadForm /></div>
+        <div className="mt-8 max-w-4xl">
+          <PilotLeadForm />
+        </div>
       </section>
 
       <p className="text-muted-foreground mt-10 text-sm leading-6">
-        Gaia Fiscal Intelligence is an independent research platform, not a government service. Public-source facts remain attributable to their original publishers.
+        Gaia Fiscal Intelligence is an independent research platform, not a
+        government service. Public-source facts remain attributable to their
+        original publishers.
       </p>
     </div>
   )
