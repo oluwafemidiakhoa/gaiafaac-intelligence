@@ -15,14 +15,28 @@ from gaiafaac_api.services.temporal_intelligence import temporal_fiscal_snapshot
 _DATE = re.compile(r"\b(20\d{2})-(0[1-9]|1[0-2])-([0-2]\d|3[01])\b")
 _METRIC_HINTS = {
     "dependence": "faac_dependence",
+    "dependent": "faac_dependence",
+    "reliance": "faac_dependence",
+    "reliant": "faac_dependence",
+    "rely on faac": "faac_dependence",
     "debt burden": "debt_burden",
+    "debt level": "debt_burden",
+    "how much debt": "debt_burden",
     "debt-service pressure": "debt_service_pressure",
     "debt service pressure": "debt_service_pressure",
+    "debt service": "debt_service_pressure",
+    "can it pay debt": "debt_service_pressure",
     "budget execution": "budget_execution",
+    "budget performance": "budget_execution",
+    "spending performance": "budget_execution",
     "capital execution": "capital_execution",
+    "capital spending": "capital_execution",
     "liability burden": "liability_burden",
+    "liabilities": "liability_burden",
     "momentum": "faac_momentum",
+    "allocation trend": "faac_momentum",
     "volatility": "faac_volatility",
+    "unstable": "faac_volatility",
     "coverage": "faac_published_period_total",
 }
 _DOMAIN_HINTS = {
@@ -127,7 +141,9 @@ def _ledger_metric_answer(
         intent="ledger_metric",
         status="answered" if available else "insufficient_data",
         answer=(
-            f"{metric.label} for {state.name} is {metric.value} {metric.unit}."
+            f"For {state.name}, {metric.label.lower()} is {metric.value} {metric.unit} "
+            f"for {metric.fiscal_period}. This is a calculated indicator from the verified "
+            "Fiscal State, not a credit rating or forecast."
             if available
             else (
                 f"{metric.label} for {state.name} cannot be calculated from the current verified "
@@ -141,9 +157,10 @@ def _ledger_metric_answer(
             "conflicting, cross-period or currency-incompatible evidence is not estimated."
         ),
         suggested_questions=[
-            f"What is the debt burden for {state.name}?",
-            f"What is the debt service pressure for {state.name}?",
+            f"How dependent is {state.name} on FAAC?",
+            f"How much debt does {state.name} carry relative to revenue?",
             f"What is the budget execution rate for {state.name}?",
+            f"What changed in {state.name}'s latest published FAAC allocation?",
         ],
     )
 
@@ -268,12 +285,24 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
         phrase in lowered
         for phrase in (
             "dependence",
+            "dependent",
+            "reliance",
+            "reliant",
             "debt burden",
+            "debt level",
+            "how much debt",
             "debt service pressure",
             "debt-service pressure",
+            "can it pay debt",
             "budget execution",
+            "budget performance",
+            "spending performance",
             "capital execution",
+            "capital spending",
             "liability burden",
+            "liabilities",
+            "allocation trend",
+            "unstable",
             "resilience",
             "ledger",
         )
