@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { getEvidenceNetworkStatus } from '@/lib/evidence-network-api'
 import { formatDate, formatNaira } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
@@ -27,43 +28,6 @@ export const metadata: Metadata = {
     'Evidence-led public-finance intelligence for Nigeria: source-linked allocation, revenue and debt research for institutional decisions.',
 }
 export const dynamic = 'force-dynamic'
-
-const evidenceLanes = [
-  {
-    authority: 'OAGF / FAAC',
-    label: 'Allocations',
-    state: 'Live',
-    description: 'Monthly state and FCT allocations, source-linked to OAGF.',
-  },
-  {
-    authority: 'NBS',
-    label: 'State IGR',
-    state: 'Pipeline built',
-    description:
-      'The NBS intake pipeline is built. No NBS value is shown until an official report is reviewed and published.'
-  },
-  {
-    authority: 'DMO',
-    label: 'Debt pressure',
-    state: 'Pipeline built',
-    description:
-      'The DMO intake pipeline is built. No debt value is shown until an official source is reviewed and published.'
-  },
-  {
-    authority: 'CBN',
-    label: 'Macro context',
-    state: 'Not connected',
-    description:
-      'CBN data is not connected yet and no CBN figure is being used by Gaia.'
-  },
-  {
-    authority: 'FIRS',
-    label: 'Tax context',
-    state: 'Not connected',
-    description:
-      'FIRS data is not connected yet and no FIRS figure is being used by Gaia.'
-  },
-] as const
 
 const workflows = [
   {
@@ -97,6 +61,11 @@ function compactNaira(value: string | null) {
 export default async function GaiaTerminalPage() {
   const overview = await getPublishedOverview()
   const data = overview.data
+  const evidenceNetwork = await getEvidenceNetworkStatus({
+    oagfLive: data !== null,
+    oagfPeriod: data?.period.reporting_label ?? null,
+  })
+  const evidenceLanes = evidenceNetwork.data
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
@@ -217,36 +186,53 @@ export default async function GaiaTerminalPage() {
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-6 text-slate-500">
-                Gaia does not pretend every data lane is live. The status is
-                visible before a user relies on it.
+                Status is derived from governed published records. If Gaia
+                cannot verify a lane, it says so instead of guessing.
               </p>
             </div>
-            <div className="mt-5 grid gap-px overflow-hidden rounded-xl border border-emerald-950/10 bg-emerald-950/10 sm:grid-cols-2 lg:grid-cols-5">
-              {evidenceLanes.map((lane) => (
-                <article key={lane.authority} className="bg-white p-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <Landmark
-                      className="text-primary size-4"
-                      aria-hidden="true"
-                    />
-                    <StatusPill
-                      tone={lane.state === 'Live' ? 'success' : 'neutral'}
-                    >
-                      {lane.state}
-                    </StatusPill>
-                  </div>
-                  <p className="mt-5 text-base font-semibold text-slate-950">
-                    {lane.authority}
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-emerald-800">
-                    {lane.label}
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-slate-500">
-                    {lane.description}
-                  </p>
-                </article>
-              ))}
-            </div>
+            {evidenceLanes ? (
+              <div className="mt-5 grid gap-px overflow-hidden rounded-xl border border-emerald-950/10 bg-emerald-950/10 sm:grid-cols-2 lg:grid-cols-5">
+                {evidenceLanes.map((lane) => (
+                  <article key={lane.authority} className="bg-white p-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Landmark
+                        className="text-primary size-4"
+                        aria-hidden="true"
+                      />
+                      <StatusPill
+                        tone={lane.state === 'Live' ? 'success' : 'neutral'}
+                      >
+                        {lane.state}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-5 text-base font-semibold text-slate-950">
+                      {lane.authority}
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-emerald-800">
+                      {lane.label}
+                    </p>
+                    <p className="mt-3 text-sm leading-6 text-slate-500">
+                      {lane.description}
+                    </p>
+                    <div className="mt-4 border-t border-slate-100 pt-3 font-mono text-[0.68rem] leading-5 text-slate-500 uppercase">
+                      <p>{lane.publishedRecordCount} verified records</p>
+                      {lane.latestPeriod ? (
+                        <p>Latest: {lane.latestPeriod}</p>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5">
+                <DataUnavailable
+                  message={
+                    evidenceNetwork.error ??
+                    'The evidence-status service is unavailable.'
+                  }
+                />
+              </div>
+            )}
           </section>
 
           <section className="mt-10 rounded-2xl bg-slate-950 p-5 text-white sm:p-7">
