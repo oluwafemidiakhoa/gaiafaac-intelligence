@@ -87,8 +87,13 @@ export default function InstitutionalPage() {
 
         <Card className="border-emerald-950/10 bg-emerald-950 text-white shadow-xl shadow-emerald-950/10">
           <CardHeader>
-            <ShieldCheck className="size-6 text-emerald-300" aria-hidden="true" />
-            <CardTitle className="pt-3 text-2xl">The product is not the public data.</CardTitle>
+            <ShieldCheck
+              className="size-6 text-emerald-300"
+              aria-hidden="true"
+            />
+            <CardTitle className="pt-3 text-2xl">
+              The product is not the public data.
+            </CardTitle>
             <CardDescription className="text-emerald-50/75">
               The value is the governed infrastructure around it: provenance,
               verification, structured history, monitoring, comparison and
@@ -114,11 +119,11 @@ export default function InstitutionalPage() {
             Public does not automatically mean decision-ready.
           </h2>
           <p className="mt-4 text-base leading-8 text-slate-600">
-            FAAC allocations, state IGR, debt records, macroeconomic releases and
-            tax evidence can be public while still being expensive to collect,
-            reconcile, monitor and defend inside a serious institution. Gaia is
-            designed to reduce that evidence burden without hiding uncertainty
-            or inventing missing values.
+            FAAC allocations, state IGR, debt records, macroeconomic releases
+            and tax evidence can be public while still being expensive to
+            collect, reconcile, monitor and defend inside a serious institution.
+            Gaia is designed to reduce that evidence burden without hiding
+            uncertainty or inventing missing values.
           </p>
         </div>
 
@@ -139,7 +144,10 @@ export default function InstitutionalPage() {
 
       <section className="grid gap-8 rounded-2xl border border-emerald-950/10 bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
         <div>
-          <FileCheck2 className="size-6 text-emerald-300" aria-hidden="true" />
+          <FileCheck2
+            className="size-6 text-emerald-300"
+            aria-hidden="true"
+          />
           <p className="mt-5 font-mono text-xs font-semibold tracking-[0.16em] text-emerald-300 uppercase">
             Evidence model
           </p>
@@ -159,7 +167,7 @@ export default function InstitutionalPage() {
               className="rounded-xl border border-white/10 bg-white/5 p-4"
             >
               <p className="font-mono text-xs text-emerald-300">0{index + 1}</p>
-              <p className="mt-2 text-sm font-medium leading-6">{item}</p>
+              <p className="mt-2 text-sm leading-6 font-medium">{item}</p>
             </div>
           ))}
         </div>
@@ -169,8 +177,13 @@ export default function InstitutionalPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <DatabaseZap className="text-primary size-5" aria-hidden="true" />
-              <CardTitle className="pt-3 text-2xl">What institutions can buy</CardTitle>
+              <DatabaseZap
+                className="text-primary size-5"
+                aria-hidden="true"
+              />
+              <CardTitle className="pt-3 text-2xl">
+                What institutions can buy
+              </CardTitle>
               <CardDescription>
                 Commercial value comes from the governed layer around public
                 evidence—not ownership of government records.
@@ -178,19 +191,30 @@ export default function InstitutionalPage() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-3 text-sm leading-6 text-slate-700">
-                <li>Institutional fiscal monitoring and executive intelligence</li>
-                <li>Historical evidence, governed exports and decision packets</li>
+                <li>
+                  Institutional fiscal monitoring and executive intelligence
+                </li>
+                <li>
+                  Historical evidence, governed exports and decision packets
+                </li>
                 <li>Higher-volume data and API delivery</li>
                 <li>Organization workspaces and custom evidence workflows</li>
-                <li>Research support, integration and permitted downstream use</li>
+                <li>
+                  Research support, integration and permitted downstream use
+                </li>
               </ul>
             </CardContent>
           </Card>
 
           <Card className="bg-muted/30">
             <CardHeader>
-              <ShieldCheck className="text-primary size-5" aria-hidden="true" />
-              <CardTitle className="pt-3 text-2xl">Start by verifying it yourself</CardTitle>
+              <ShieldCheck
+                className="text-primary size-5"
+                aria-hidden="true"
+              />
+              <CardTitle className="pt-3 text-2xl">
+                Start by verifying it yourself
+              </CardTitle>
               <CardDescription>
                 The strongest introduction to Gaia is not a pitch deck. It is
                 the live evidence, the source registry and an answer you can
