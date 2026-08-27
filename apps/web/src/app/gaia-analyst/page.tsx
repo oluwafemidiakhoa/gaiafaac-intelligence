@@ -142,7 +142,7 @@ export default async function GaiaAnalystPage({
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <CardTitle>Gaia's answer</CardTitle>
+                  <CardTitle>Gaia&apos;s answer</CardTitle>
                   <CardDescription>{data.coverage_label}</CardDescription>
                 </div>
                 <StatusPill
