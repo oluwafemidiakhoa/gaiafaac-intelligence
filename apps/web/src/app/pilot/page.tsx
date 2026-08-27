@@ -1,4 +1,4 @@
-import { ArrowDown, Building2, Code2, FileSpreadsheet } from 'lucide-react'
+import { ArrowDown, BellRing, Building2, FileCheck2 } from 'lucide-react'
 import type { Metadata } from 'next'
 
 import { PageHeader } from '@/components/page-header'
@@ -12,31 +12,31 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-export const metadata: Metadata = { title: 'Pilot access' }
+export const metadata: Metadata = {
+  title: 'Fiscal Watch — Gaia Fiscal Intelligence',
+}
 
-const pilots = [
+const offers = [
   {
-    name: 'Analyst Pilot',
-    icon: FileSpreadsheet,
-    audience: 'Journalists, researchers, analysts, and independent consultants',
+    name: 'Fiscal Watch',
+    icon: BellRing,
+    audience: 'Banks, investors, insurers, infrastructure teams, and advisers',
     outcome:
-      'Evaluate published historical GaiaFAAC evidence for an agreed set of months and jurisdictions, with source lineage preserved.',
+      'Monitor selected jurisdictions for evidence-linked allocation movements, source revisions, and governed fiscal signals.',
   },
   {
-    name: 'Team Pilot',
+    name: 'Decision Packets',
+    icon: FileCheck2,
+    audience: 'Credit, legal, diligence, and research teams',
+    outcome:
+      'Receive a source-linked fiscal brief for an agreed jurisdiction, period, and decision question.',
+  },
+  {
+    name: 'Institutional Workspace',
     icon: Building2,
-    audience:
-      'Newsrooms, consultancies, NGOs, universities, and research teams',
+    audience: 'Teams that need shared review, alerts, and controlled access',
     outcome:
-      'Evaluate reviewed historical evidence in an agreed internal research workflow with manual commercial support.',
-  },
-  {
-    name: 'API Evaluation',
-    icon: Code2,
-    audience:
-      'Data teams, fintechs, research platforms, and institutional users',
-    outcome:
-      'Evaluate entitled access to published month and allocation endpoints with a manually issued GaiaFAAC API key.',
+      'Set up a governed workspace, shared watchlists, and approved evidence access for your organization.',
   },
 ]
 
@@ -44,26 +44,24 @@ export default function PilotPage() {
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
-        eyebrow="Commercial pilot"
-        title="Evaluate GaiaFAAC with your real research workflow"
-        description="Paid access is manually provisioned so we can verify that the requested published evidence and delivery method are actually available before payment. The latest verified month remains free to inspect."
+        eyebrow="Gaia Fiscal Watch"
+        title="Know what changed before it becomes a surprise."
+        description="An institutional monitoring layer for Nigeria’s governed public-finance evidence. Start with the jurisdictions, sources, and decisions your team needs to watch."
       />
 
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
-        {pilots.map(({ name, icon: Icon, audience, outcome }) => (
-          <Card key={name}>
+        {offers.map(({ name, icon: Icon, audience, outcome }) => (
+          <Card key={name} className="bg-card/80">
             <CardHeader>
               <Icon className="text-primary size-5" aria-hidden="true" />
               <CardTitle className="pt-3">{name}</CardTitle>
               <CardDescription>{audience}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm leading-6">
-                {outcome}
-              </p>
+              <p className="text-muted-foreground text-sm leading-6">{outcome}</p>
               <Button asChild className="mt-6 w-full">
                 <a href="#request-form">
-                  Request access
+                  Request Fiscal Watch
                   <ArrowDown className="size-4" aria-hidden="true" />
                 </a>
               </Button>
@@ -74,90 +72,38 @@ export default function PilotPage() {
 
       <div className="mt-12 grid gap-8 lg:grid-cols-2">
         <section>
-          <h2 className="text-2xl font-semibold tracking-tight">
-            What happens next
-          </h2>
+          <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
           <ol className="text-muted-foreground mt-5 space-y-4 text-sm leading-6">
-            <li>
-              <span className="text-foreground font-medium">
-                1. Coverage check.
-              </span>{' '}
-              We confirm which published months, jurisdictions, and retained
-              source documents are actually available.
-            </li>
-            <li>
-              <span className="text-foreground font-medium">
-                2. Delivery check.
-              </span>{' '}
-              We confirm whether your requested format can be delivered during
-              the pilot. No self-service export capability is implied.
-            </li>
-            <li>
-              <span className="text-foreground font-medium">
-                3. Written scope.
-              </span>{' '}
-              We agree the users, permitted use, evidence scope, support, price,
-              and limitations before payment.
-            </li>
-            <li>
-              <span className="text-foreground font-medium">
-                4. Provisioning.
-              </span>{' '}
-              Approved evidence or API access is provisioned manually. API
-              customers receive an entitled key for the implemented published
-              data endpoints.
-            </li>
+            <li><span className="text-foreground font-medium">1. Select.</span>{' '}Choose the jurisdictions, reporting periods, and evidence domains that matter.</li>
+            <li><span className="text-foreground font-medium">2. Verify.</span>{' '}Gaia monitors retained official records and governed validation outcomes.</li>
+            <li><span className="text-foreground font-medium">3. Review.</span>{' '}Your team receives the source trail and a clear statement of what changed.</li>
+            <li><span className="text-foreground font-medium">4. Activate.</span>{' '}After scope confirmation, we provision the appropriate workspace, delivery, or API access.</li>
           </ol>
         </section>
 
         <section className="border-border bg-muted/30 rounded-lg border p-6">
-          <h2 className="text-xl font-semibold">Before requesting access</h2>
+          <h2 className="text-xl font-semibold">What Fiscal Watch does not do</h2>
           <ul className="text-muted-foreground mt-4 space-y-3 text-sm leading-6">
-            <li>Identify the states and reporting periods you need.</li>
-            <li>
-              Tell us your preferred delivery format. We will confirm support
-              before including it in an offer.
-            </li>
-            <li>
-              Explain whether the output is for internal research, publication,
-              or integration.
-            </li>
-            <li>Provide the number of intended users.</li>
-            <li>
-              Do not send payment until coverage, permitted use, and delivery
-              have been confirmed in writing.
-            </li>
+            <li>It does not turn missing public evidence into estimates.</li>
+            <li>It does not label a jurisdiction as corrupt, insolvent, or unsafe from a data movement alone.</li>
+            <li>It does retain source identity, evidence status, and revision history for serious review.</li>
           </ul>
         </section>
       </div>
 
-      <section
-        id="request-form"
-        className="border-border mt-14 scroll-mt-8 rounded-xl border p-6 sm:p-8"
-      >
+      <section id="request-form" className="border-border mt-14 scroll-mt-8 rounded-xl border p-6 sm:p-8">
         <div className="max-w-3xl">
-          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
-            Pilot request
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-            Tell us what you need
-          </h2>
+          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">Institutional request</p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">Build your watchlist</h2>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
-            Your request is stored securely for commercial follow-up. A request
-            is not a purchase and does not guarantee a feature or data period;
-            we confirm the available scope first.
+            Tell us the jurisdictions and evidence you need. Your request is captured for a real commercial follow-up; we confirm the governed coverage and delivery scope before activation.
           </p>
         </div>
-        <div className="mt-8 max-w-4xl">
-          <PilotLeadForm />
-        </div>
+        <div className="mt-8 max-w-4xl"><PilotLeadForm /></div>
       </section>
 
       <p className="text-muted-foreground mt-10 text-sm leading-6">
-        GaiaFAAC is an independent research platform, not a government service.
-        Public-source facts remain attributable to their original publishers.
-        Commercial access covers reviewed compilation, structured access,
-        support, and controlled API use—not ownership of public records.
+        Gaia Fiscal Intelligence is an independent research platform, not a government service. Public-source facts remain attributable to their original publishers.
       </p>
     </div>
   )
