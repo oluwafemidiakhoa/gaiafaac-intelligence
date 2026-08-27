@@ -27,6 +27,44 @@ import {
 export const metadata: Metadata = { title: 'Sources' }
 export const dynamic = 'force-dynamic'
 
+const sourceLanes = [
+  {
+    authority: 'OAGF / FAAC',
+    purpose: 'Monthly state and FCT allocation evidence',
+    status: 'Live evidence',
+    detail:
+      'Official monthly distribution tables are retained, validated and published with a SHA-256 fingerprint.',
+  },
+  {
+    authority: 'NBS',
+    purpose: 'State internally generated revenue (IGR)',
+    status: 'Governed intake ready',
+    detail:
+      'Official NBS IGR reports can be discovered, archived, extracted, human-approved and then published as immutable claims.',
+  },
+  {
+    authority: 'DMO',
+    purpose: 'State and FCT debt stock and debt-service evidence',
+    status: 'Governed intake ready',
+    detail:
+      'Official DMO debt publications have a separate review-to-publication pipeline; no debt claim appears before human verification.',
+  },
+  {
+    authority: 'CBN',
+    purpose: 'Macroeconomic context',
+    status: 'Source lane reserved',
+    detail:
+      'CBN indicators will enter only as retained official series with a defined period, unit, source link and review record.',
+  },
+  {
+    authority: 'FIRS',
+    purpose: 'Federal tax-revenue context',
+    status: 'Source lane reserved',
+    detail:
+      'FIRS context will remain separate from state IGR so Gaia never treats federal tax revenue as a state-owned revenue figure.',
+  },
+] as const
+
 export default async function SourcesPage() {
   const [jurisdictionResult, nationalResult] = await Promise.all([
     getPublishedSources(),
@@ -118,6 +156,45 @@ export default async function SourcesPage() {
           </CardContent>
         </Card>
       </div>
+
+      <section className="mt-12" aria-labelledby="source-lanes">
+        <div className="mb-5 max-w-3xl">
+          <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
+            Fiscal evidence lanes
+          </p>
+          <h2 id="source-lanes" className="mt-2 text-2xl font-semibold">
+            One governed view across Nigeria&apos;s fiscal institutions
+          </h2>
+          <p className="text-muted-foreground mt-2 text-sm leading-6">
+            Gaia does not blend sources or promote planned data as live. Each
+            institution has its own evidence lane, source boundary and
+            publication gate.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {sourceLanes.map((lane) => (
+            <Card key={lane.authority}>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <Landmark className="text-primary size-5" aria-hidden="true" />
+                  <StatusPill
+                    tone={lane.status === 'Live evidence' ? 'success' : 'neutral'}
+                  >
+                    {lane.status}
+                  </StatusPill>
+                </div>
+                <CardTitle className="pt-3">{lane.authority}</CardTitle>
+                <CardDescription>{lane.purpose}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm leading-6">
+                  {lane.detail}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-12" aria-labelledby="jurisdiction-evidence">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
