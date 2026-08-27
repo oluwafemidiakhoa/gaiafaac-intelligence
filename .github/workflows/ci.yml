@@ -24,10 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Show exact Prettier diff for institutional page
-        run: |
-          npx prettier --write apps/web/src/app/institutional/page.tsx
-          git diff -- apps/web/src/app/institutional/page.tsx
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
