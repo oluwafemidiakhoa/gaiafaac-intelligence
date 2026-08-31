@@ -12,7 +12,17 @@ from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystEvidence, GaiaAnalystRe
 from gaiafaac_api.igr_schemas import PublishedIgrRecord
 from gaiafaac_api.services.fiscal_intelligence import jurisdiction_intelligence
 from gaiafaac_api.services.gaia_analyst import gaia_analyst as gaia_analyst_fa
+from gaiafaac_api.services.published_data import get_published_overview, latest_published_period
 from gaiafaac_api.services.published_igr import latest_published_igr, published_igr
+
+_LEDGER_METRIC_LABELS = {
+    "faac_dependence": "FAAC dependence",
+    "faac_momentum": "FAAC momentum",
+    "faac_volatility": "FAAC volatility",
+    "debt_service_pressure": "Debt-service pressure",
+    "faac_published_period_total": "Published FAAC total",
+}
+_DEBT_METRIC_KEYS = {"debt_service_pressure"}
 
 _TOP_N = 5
 
@@ -110,6 +120,106 @@ def _caveat() -> str:
         "IGR answers use only published, non-demo, human-verified records. Gaia Analyst does not "
         "infer missing periods, annualize partial-year values, borrow evidence from another year, "
         "or compare mismatched fiscal periods."
+    )
+
+
+def _faac_money(value: str | None) -> str:
+    if value is None:
+        return "unavailable"
+    return f"NGN {Decimal(value):,.2f}"
+
+
+def _faac_snapshot(
+    session: Session, *, state: _StateRef, year: int
+) -> tuple[str, GaiaAnalystEvidence] | None:
+    """The latest verified FAAC net allocation for a state, if one is published for `year`."""
+    period = latest_published_period(session)
+    if period is None or period.revenue_month.year != year:
+        return None
+    overview = get_published_overview(session, period)
+    if overview is None:
+        return None
+    allocation = next(
+        (item for item in overview.allocations if item.state_slug == state.slug), None
+    )
+    if allocation is None or allocation.net_allocation is None:
+        return None
+    label = period.revenue_month.strftime("%B %Y")
+    money = _faac_money(allocation.net_allocation)
+    text = f"the latest verified FAAC net allocation is {money} ({label})"
+    evidence = GaiaAnalystEvidence(
+        state_name=state.name,
+        state_slug=state.slug,
+        label=f"{label} net FAAC allocation",
+        value=money,
+        metric="latest_net_allocation",
+        reference_path=f"/states/{state.slug}",
+        reference_label="Open state record",
+        evidence_domain="faac",
+        period_label=label,
+        source_organization=overview.source.source_organization,
+        source_sha256=overview.source.sha256,
+        relevant_date=period.revenue_month.isoformat(),
+    )
+    return text, evidence
+
+
+def _igr_snapshot(session: Session, *, state: _StateRef) -> tuple[str, GaiaAnalystEvidence] | None:
+    """The latest published IGR record for a state, regardless of its fiscal period."""
+    record = latest_published_igr(session, state_slug=state.slug)
+    if record is None:
+        return None
+    text = f"the latest published IGR is {_money(record)} ({_period_label(record)})"
+    return text, _evidence(record)
+
+
+def _ledger_metric_fallback(
+    session: Session,
+    *,
+    question: str,
+    year: int,
+    state: _StateRef,
+    requested_key: str,
+    reason: str,
+) -> GaiaAnalystResponse:
+    """A composite ledger metric (e.g. FAAC dependence) could not be calculated as a single
+    ratio. Rather than dead-end, surface whatever real component evidence is verified so the
+    question isn't left with nothing - without inventing or combining mismatched periods."""
+    parts: list[str] = []
+    evidence: list[GaiaAnalystEvidence] = []
+    faac = _faac_snapshot(session, state=state, year=year)
+    if faac is not None:
+        parts.append(faac[0])
+        evidence.append(faac[1])
+    if requested_key in _DEBT_METRIC_KEYS:
+        why = "no verified DMO debt evidence has been published yet"
+    else:
+        igr = _igr_snapshot(session, state=state)
+        if igr is not None:
+            parts.append(igr[0])
+            evidence.append(igr[1])
+        why = (
+            "combining FAAC and IGR across mismatched monthly and annual periods "
+            "is not done automatically"
+        )
+    label = _LEDGER_METRIC_LABELS.get(requested_key, requested_key)
+    if evidence:
+        answer = (
+            f"Gaia does not yet calculate a single {label} ratio for {state.name} ({why}). "
+            f"Here is what is verified instead: {'; '.join(parts)}."
+        )
+        coverage_label = f"{label} · component evidence only"
+    else:
+        answer = reason
+        coverage_label = f"{label} unavailable"
+    return _response(
+        question=question,
+        year=year,
+        intent="ledger_metric",
+        status="insufficient_data",
+        answer=answer,
+        coverage_label=coverage_label,
+        evidence=evidence,
     )
 
 
@@ -390,31 +500,34 @@ def gaia_analyst(session: Session, *, question: str, year: int) -> GaiaAnalystRe
             )
         intelligence = jurisdiction_intelligence(session, jurisdiction_code=f"NG-{states[0].code}")
         if intelligence is None:
-            return _response(
+            return _ledger_metric_fallback(
+                session,
                 question=question,
                 year=year,
-                intent="ledger_metric",
-                status="insufficient_data",
-                answer=f"No published Fiscal State is available for {states[0].name}.",
-                coverage_label="Fiscal State unavailable",
-                evidence=[],
+                state=states[0],
+                requested_key=requested_key,
+                reason=f"No published Fiscal State is available for {states[0].name}.",
             )
         metric = next(item for item in intelligence.data.metrics if item.key == requested_key)
         available = metric.status == "calculated" and metric.value is not None
-        answer = (
-            f"{metric.label} for {states[0].name} is {metric.value} {metric.unit}."
-            if available
-            else (
-                f"{metric.label} for {states[0].name} cannot be calculated from "
-                f"the current verified evidence. {metric.explanation}"
+        if not available:
+            return _ledger_metric_fallback(
+                session,
+                question=question,
+                year=year,
+                state=states[0],
+                requested_key=requested_key,
+                reason=(
+                    f"{metric.label} for {states[0].name} cannot be calculated from "
+                    f"the current verified evidence. {metric.explanation}"
+                ),
             )
-        )
         return _response(
             question=question,
             year=year,
             intent="ledger_metric",
-            status="answered" if available else "insufficient_data",
-            answer=answer,
+            status="answered",
+            answer=f"{metric.label} for {states[0].name} is {metric.value} {metric.unit}.",
             coverage_label=f"Fiscal State · {intelligence.data.fiscal_period}",
             evidence=[
                 GaiaAnalystEvidence(
