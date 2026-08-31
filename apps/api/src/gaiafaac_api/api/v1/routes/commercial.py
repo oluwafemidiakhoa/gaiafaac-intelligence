@@ -13,8 +13,10 @@ from gaiafaac_api.commercial_schemas import (
     PilotLeadAdminItem,
     PilotLeadCreate,
 )
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.commercial_models import PilotLead
 from gaiafaac_api.database.session import get_session
+from gaiafaac_api.services.commercial_notify import send_pilot_lead_alert
 
 router = APIRouter(prefix="/commercial", tags=["commercial"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -53,6 +55,7 @@ def create_pilot_lead(
     session.add(lead)
     session.commit()
     session.refresh(lead)
+    send_pilot_lead_alert(get_settings(), lead=lead)
     return PilotLeadAccepted(id=lead.id)
 
 
