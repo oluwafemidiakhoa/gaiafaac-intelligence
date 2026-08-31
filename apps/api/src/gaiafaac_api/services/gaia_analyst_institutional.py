@@ -9,8 +9,21 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.models import State
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystEvidence, GaiaAnalystResponse
 from gaiafaac_api.services.fiscal_intelligence import jurisdiction_intelligence
+from gaiafaac_api.services.gaia_analyst_igr import _faac_snapshot, _igr_snapshot
 from gaiafaac_api.services.gaia_analyst_igr import gaia_analyst as legacy_gaia_analyst
 from gaiafaac_api.services.temporal_intelligence import temporal_fiscal_snapshot
+
+_METRIC_LABELS = {
+    "faac_dependence": "FAAC dependence",
+    "faac_momentum": "FAAC momentum",
+    "faac_volatility": "FAAC volatility",
+    "faac_published_period_total": "Published FAAC total",
+    "debt_burden": "Debt burden",
+    "debt_service_pressure": "Debt-service pressure",
+    "budget_execution": "Budget execution",
+    "capital_execution": "Capital execution",
+    "liability_burden": "Liability burden",
+}
 
 _DATE = re.compile(r"\b(20\d{2})-(0[1-9]|1[0-2])-([0-2]\d|3[01])\b")
 _METRIC_HINTS = {
@@ -100,6 +113,59 @@ def _known_date(question: str) -> datetime | None:
     return datetime.combine(value, time.max, tzinfo=UTC)
 
 
+def _ledger_metric_fallback(
+    session: Session,
+    *,
+    question: str,
+    year: int,
+    state: State,
+    metric_key: str,
+    label: str,
+    reason: str,
+) -> GaiaAnalystResponse:
+    """A ledger metric could not be calculated as a single ratio. Rather than dead-end,
+    surface whatever real component evidence is verified so the question isn't left with
+    nothing - without inventing or combining evidence across incompatible domains or
+    periods."""
+    parts: list[str] = []
+    evidence: list[GaiaAnalystEvidence] = []
+    faac = _faac_snapshot(session, state=state, year=year)
+    if faac is not None:
+        parts.append(faac[0])
+        evidence.append(faac[1])
+    if metric_key == "faac_dependence":
+        igr = _igr_snapshot(session, state=state)
+        if igr is not None:
+            parts.append(igr[0])
+            evidence.append(igr[1])
+        why = (
+            "combining FAAC and IGR across mismatched monthly and annual periods "
+            "is not done automatically"
+        )
+    else:
+        why = "the additional evidence domain this ratio needs has not been published yet"
+    if evidence:
+        answer = (
+            f"Gaia does not yet calculate a single {label} ratio for {state.name} ({why}). "
+            f"Here is what is verified instead: {'; '.join(parts)}."
+        )
+        coverage_label = f"{label} · component evidence only"
+    else:
+        answer = reason
+        coverage_label = "Fiscal State unavailable"
+    return GaiaAnalystResponse(
+        question=question,
+        year=year,
+        intent="ledger_metric",
+        status="insufficient_data",
+        answer=answer,
+        coverage_label=coverage_label,
+        evidence=evidence,
+        caveat="Gaia Analyst does not invent missing fiscal evidence.",
+        suggested_questions=[],
+    )
+
+
 def _ledger_metric_answer(
     session: Session,
     *,
@@ -110,21 +176,32 @@ def _ledger_metric_answer(
 ) -> GaiaAnalystResponse:
     intelligence = jurisdiction_intelligence(session, jurisdiction_code=f"NG-{state.code}")
     if intelligence is None:
-        return GaiaAnalystResponse(
+        return _ledger_metric_fallback(
+            session,
             question=question,
             year=year,
-            intent="ledger_metric",
-            status="insufficient_data",
-            answer=f"No published Fiscal State is available for {state.name}.",
-            coverage_label="Fiscal State unavailable",
-            evidence=[],
-            caveat="Gaia Analyst does not invent missing fiscal evidence.",
-            suggested_questions=[],
+            state=state,
+            metric_key=metric_key,
+            label=_METRIC_LABELS.get(metric_key, metric_key.replace("_", " ")),
+            reason=f"No published Fiscal State is available for {state.name}.",
         )
     metric = next((item for item in intelligence.data.metrics if item.key == metric_key), None)
     if metric is None:
         return legacy_gaia_analyst(session, question=question, year=year)
     available = metric.status == "calculated" and metric.value is not None
+    if not available:
+        return _ledger_metric_fallback(
+            session,
+            question=question,
+            year=year,
+            state=state,
+            metric_key=metric_key,
+            label=metric.label,
+            reason=(
+                f"{metric.label} for {state.name} cannot be calculated from the current "
+                f"verified evidence. {metric.explanation}"
+            ),
+        )
     evidence = [
         GaiaAnalystEvidence(
             state_name=state.name,
@@ -145,16 +222,11 @@ def _ledger_metric_answer(
         question=question,
         year=year,
         intent="ledger_metric",
-        status="answered" if available else "insufficient_data",
+        status="answered",
         answer=(
             f"For {state.name}, {metric.label.lower()} is {metric.value} {metric.unit} "
             f"for {metric.fiscal_period}. This is a calculated indicator from the verified "
             "Fiscal State, not a credit rating or forecast."
-            if available
-            else (
-                f"{metric.label} for {state.name} cannot be calculated from the current verified "
-                f"evidence. {metric.explanation}"
-            )
         ),
         coverage_label=f"Fiscal State · {intelligence.data.fiscal_period}",
         evidence=evidence,
