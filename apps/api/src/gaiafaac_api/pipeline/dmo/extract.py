@@ -21,6 +21,7 @@ from gaiafaac_api.services.object_storage import source_local_copy
 _ROW_RE = re.compile(r"^\s*(?P<serial>\d{1,2})\s+(?P<body>.+?)\s*$")
 _MONEY_RE = re.compile(r"(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2}")
 _VERSION_RE = re.compile(r"^(domestic|external)-(\d{4}-\d{2}-\d{2})$")
+_TOTAL_RE = re.compile(r"^\s*total\b", re.IGNORECASE)
 _CENT = Decimal("0.01")
 
 
@@ -78,6 +79,11 @@ def parse_dmo_debt_text(
     seen_serials: set[int] = set()
     for page_number, text in pages:
         for raw_line in text.splitlines():
+            if _TOTAL_RE.match(raw_line):
+                # The "Total" row marks the end of the numbered state table. Footnotes
+                # below it (e.g. "2 The Domestic Debt Stock...") can themselves start
+                # with a small leading digit and must never be mistaken for table rows.
+                return _finalize_dmo_rows(parsed, seen_serials)
             match = _ROW_RE.match(raw_line)
             if match is None:
                 continue
@@ -114,6 +120,10 @@ def parse_dmo_debt_text(
                 )
             )
             seen_serials.add(serial)
+    return _finalize_dmo_rows(parsed, seen_serials)
+
+
+def _finalize_dmo_rows(parsed: list[ParsedDebtRow], seen_serials: set[int]) -> list[ParsedDebtRow]:
     if len(parsed) != 37 or seen_serials != set(range(1, 38)):
         missing = sorted(set(range(1, 38)) - seen_serials)
         raise ImportContractError(

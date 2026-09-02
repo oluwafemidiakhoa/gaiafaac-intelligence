@@ -57,6 +57,22 @@ def test_parse_debt_rows_rejects_duplicate_serials():
         parse_dmo_debt_text([(1, text)], debt_kind=DebtKind.DOMESTIC)
 
 
+def test_parse_debt_rows_ignores_footnotes_after_the_total_row():
+    """Real DMO reports number their footnotes too (e.g. "2 The Domestic Debt Stock
+    ..."), which would otherwise collide with an already-seen table row serial."""
+    text = (
+        _domestic_text()
+        + "\nTotal 4,523,714,307,568.89"
+        + "\nImportant Notes"
+        + "\n1"
+        + "\n2 The Domestic Debt Stock for Thirty Six (36) States was as at March 31, 2026."
+    )
+
+    rows = parse_dmo_debt_text([(1, text)], debt_kind=DebtKind.DOMESTIC)
+
+    assert len(rows) == 37
+
+
 def test_real_layout_examples_match_dmo_semantics():
     domestic = parse_dmo_debt_text(
         [
