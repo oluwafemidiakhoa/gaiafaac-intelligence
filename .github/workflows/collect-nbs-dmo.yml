@@ -26,9 +26,19 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           API_ENVIRONMENT: production
+          SOURCE_ARCHIVE_BUCKET: ${{ secrets.SOURCE_ARCHIVE_BUCKET }}
+          SOURCE_ARCHIVE_ENDPOINT: ${{ secrets.SOURCE_ARCHIVE_ENDPOINT }}
+          SOURCE_ARCHIVE_ACCESS_KEY_ID: ${{ secrets.SOURCE_ARCHIVE_ACCESS_KEY_ID }}
+          SOURCE_ARCHIVE_SECRET_ACCESS_KEY: ${{ secrets.SOURCE_ARCHIVE_SECRET_ACCESS_KEY }}
+          SOURCE_ARCHIVE_REGION: ${{ secrets.SOURCE_ARCHIVE_REGION }}
         run: python -m gaiafaac_api.nbs_igr_cli archive-reports --limit 12
       - name: Archive newly discovered DMO debt sources (never publishes)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           API_ENVIRONMENT: production
+          SOURCE_ARCHIVE_BUCKET: ${{ secrets.SOURCE_ARCHIVE_BUCKET }}
+          SOURCE_ARCHIVE_ENDPOINT: ${{ secrets.SOURCE_ARCHIVE_ENDPOINT }}
+          SOURCE_ARCHIVE_ACCESS_KEY_ID: ${{ secrets.SOURCE_ARCHIVE_ACCESS_KEY_ID }}
+          SOURCE_ARCHIVE_SECRET_ACCESS_KEY: ${{ secrets.SOURCE_ARCHIVE_SECRET_ACCESS_KEY }}
+          SOURCE_ARCHIVE_REGION: ${{ secrets.SOURCE_ARCHIVE_REGION }}
         run: python -m gaiafaac_api.dmo_cli archive-subnational --limit 12

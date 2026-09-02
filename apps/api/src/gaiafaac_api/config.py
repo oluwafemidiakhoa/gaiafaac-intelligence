@@ -48,6 +48,15 @@ class Settings(BaseSettings):
     stripe_price_team: str = ""
     stripe_price_api: str = ""
 
+    # Durable retention for collected source documents (S3-compatible object storage).
+    # Empty values keep archive pipelines failing closed rather than writing to an
+    # ephemeral local/CI filesystem the deployed service can never read back.
+    source_archive_bucket: str = ""
+    source_archive_endpoint: str = ""
+    source_archive_access_key_id: str = ""
+    source_archive_secret_access_key: str = ""
+    source_archive_region: str = "auto"
+
     @field_validator(
         "api_environment",
         "api_host",
@@ -66,6 +75,11 @@ class Settings(BaseSettings):
         "stripe_price_analyst",
         "stripe_price_team",
         "stripe_price_api",
+        "source_archive_bucket",
+        "source_archive_endpoint",
+        "source_archive_access_key_id",
+        "source_archive_secret_access_key",
+        "source_archive_region",
         mode="before",
     )
     @classmethod
