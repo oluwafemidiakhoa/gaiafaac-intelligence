@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import uuid
-from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
 from gaiafaac_api.pipeline.dmo.approval import approve_debt_source, publish_debt_source
@@ -23,7 +22,6 @@ def build_parser() -> argparse.ArgumentParser:
         "archive-subnational",
         help="Archive official DMO PDFs and register source metadata without extracting values",
     )
-    archive.add_argument("--archive-root", type=Path, default=Path("data/raw/dmo"))
     archive.add_argument("--limit", type=int)
     extract = commands.add_parser(
         "extract-source",
@@ -72,7 +70,6 @@ def main() -> None:
             results = archive_dmo_publications(
                 session,
                 discover_dmo_subnational_publications(),
-                archive_root=args.archive_root,
                 limit=args.limit,
             )
             session.commit()

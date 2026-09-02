@@ -16,6 +16,7 @@ from gaiafaac_api.database.enums import ProcessingStatus, SourceStatus, Verifica
 from gaiafaac_api.database.models import SourceDocument, State
 from gaiafaac_api.pipeline.errors import ImportContractError, StateNormalizationError
 from gaiafaac_api.pipeline.states import StateNormalizer
+from gaiafaac_api.services.object_storage import source_local_copy
 
 _ROW_RE = re.compile(r"^\s*(?P<serial>\d{1,2})\s+(?P<body>.+?)\s*$")
 _MONEY_RE = re.compile(r"(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2}")
@@ -157,12 +158,13 @@ def extract_dmo_debt_source(
     ):
         raise ImportContractError("DMO source has already been extracted")
 
-    path = Path(source.storage_path).expanduser().resolve(strict=True)
-    if not path.is_file():
-        raise ImportContractError(f"DMO archive path is not a regular file: {path}")
+    with source_local_copy(source.storage_path) as path:
+        if not path.is_file():
+            raise ImportContractError(f"DMO archive path is not a regular file: {path}")
+        text_rows = text_reader(path)
 
     try:
-        rows = parse_dmo_debt_text(text_reader(path), debt_kind=kind)
+        rows = parse_dmo_debt_text(text_rows, debt_kind=kind)
         normalizer = StateNormalizer.from_session(session)
         expected_states = list(session.scalars(select(State).order_by(State.code)))
         expected_ids = {state.id for state in expected_states}

@@ -8,7 +8,6 @@ import uuid
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -16,6 +15,7 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.enums import ProcessingStatus, SourceStatus
 from gaiafaac_api.database.models import SourceDocument
 from gaiafaac_api.pipeline.nbs_igr.discovery import NbsIgrPublicationCandidate
+from gaiafaac_api.services.object_storage import put_source_object
 
 NBS_IGR_ORGANIZATION = "National Bureau of Statistics (NBS)"
 NBS_IGR_DOWNLOAD_ROOT = "https://www.nigerianstat.gov.ng/download/"
@@ -105,11 +105,18 @@ def _validated_download(
     return download.body
 
 
+PutObject = Callable[[str, bytes, str], str]
+
+
+def _put_object(key: str, body: bytes, content_type: str) -> str:
+    return put_source_object(key=key, body=body, content_type=content_type)
+
+
 def archive_nbs_igr_publication(
     session: Session,
     candidate: NbsIgrPublicationCandidate,
     *,
-    archive_root: Path = Path("data/raw/nbs/igr"),
+    put_object: PutObject = _put_object,
     fetch: FetchDocument = _fetch_document,
 ) -> NbsIgrArchiveResult:
     """Archive one official NBS IGR PDF and register source metadata only.
@@ -121,14 +128,6 @@ def archive_nbs_igr_publication(
     download = fetch(artifact_url)
     body = _validated_download(candidate, download)
     checksum = hashlib.sha256(body).hexdigest()
-    destination = (archive_root / str(candidate.fiscal_year) / f"{checksum}.pdf").expanduser()
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.exists():
-        existing_hash = hashlib.sha256(destination.read_bytes()).hexdigest()
-        if existing_hash != checksum:
-            raise ValueError("Existing NBS IGR archive path failed integrity verification.")
-    else:
-        destination.write_bytes(body)
 
     existing = session.scalar(select(SourceDocument).where(SourceDocument.sha256 == checksum))
     if existing is not None:
@@ -143,11 +142,13 @@ def archive_nbs_igr_publication(
             duplicate=True,
         )
 
+    key = f"nbs-igr/{candidate.fiscal_year}/{checksum}.pdf"
+    storage_path = put_object(key, body, "application/pdf")
     document = SourceDocument(
         source_organization=NBS_IGR_ORGANIZATION,
         source_url=candidate.report_url,
         original_filename=(f"nbs-igr-{candidate.fiscal_year}-report-{candidate.report_id}.pdf"),
-        storage_path=str(destination.resolve()),
+        storage_path=storage_path,
         sha256=checksum,
         mime_type="application/pdf",
         publication_date=None,
@@ -166,7 +167,7 @@ def archive_nbs_igr_publication(
         report_url=candidate.report_url,
         artifact_url=artifact_url,
         sha256=checksum,
-        storage_path=str(destination.resolve()),
+        storage_path=storage_path,
         duplicate=False,
     )
 
@@ -175,7 +176,7 @@ def archive_nbs_igr_publications(
     session: Session,
     candidates: Iterable[NbsIgrPublicationCandidate],
     *,
-    archive_root: Path = Path("data/raw/nbs/igr"),
+    put_object: PutObject = _put_object,
     limit: int | None = None,
     fetch: FetchDocument = _fetch_document,
 ) -> list[NbsIgrArchiveResult]:
@@ -187,7 +188,7 @@ def archive_nbs_igr_publications(
             archive_nbs_igr_publication(
                 session,
                 candidate,
-                archive_root=archive_root,
+                put_object=put_object,
                 fetch=fetch,
             )
         )

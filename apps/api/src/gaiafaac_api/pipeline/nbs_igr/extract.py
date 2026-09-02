@@ -21,6 +21,7 @@ from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
 from gaiafaac_api.database.models import SourceDocument, State
 from gaiafaac_api.pipeline.errors import ImportContractError, StateNormalizationError
 from gaiafaac_api.pipeline.states import StateNormalizer
+from gaiafaac_api.services.object_storage import source_local_copy
 
 _VERSION_RE = re.compile(r"^igr-(?P<year>20\d{2})-report-(?P<report_id>\d+)$")
 _AMOUNT_RE = re.compile(r"[N₦]\s*(?P<amount>\d[\d,]*\.\d{2})", re.IGNORECASE)
@@ -182,12 +183,13 @@ def extract_nbs_igr_source(
             "An annual IGR dataset already exists for this fiscal year; reconciliation is required"
         )
 
-    path = Path(source.storage_path).expanduser().resolve(strict=True)
-    if not path.is_file():
-        raise ImportContractError(f"NBS IGR archive path is not a regular file: {path}")
+    with source_local_copy(source.storage_path) as path:
+        if not path.is_file():
+            raise ImportContractError(f"NBS IGR archive path is not a regular file: {path}")
+        text_rows = text_reader(path)
 
     try:
-        rows = parse_nbs_igr_text(text_reader(path), fiscal_year=fiscal_year)
+        rows = parse_nbs_igr_text(text_rows, fiscal_year=fiscal_year)
         normalizer = StateNormalizer.from_session(session)
         expected_states = list(session.scalars(select(State).order_by(State.code)))
         expected_ids = {state.id for state in expected_states}

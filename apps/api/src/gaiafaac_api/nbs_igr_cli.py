@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import uuid
-from pathlib import Path
 
 from gaiafaac_api.database.session import create_database_engine, create_session_factory
 from gaiafaac_api.pipeline.nbs_igr.approval import approve_igr_source, publish_igr_source
@@ -23,7 +22,6 @@ def build_parser() -> argparse.ArgumentParser:
         "archive-reports",
         help="Archive official NBS IGR PDFs and register metadata without extracting values",
     )
-    archive.add_argument("--archive-root", type=Path, default=Path("data/raw/nbs/igr"))
     archive.add_argument("--limit", type=int)
     extract = commands.add_parser(
         "extract-source",
@@ -72,7 +70,6 @@ def main() -> None:
             results = archive_nbs_igr_publications(
                 session,
                 discover_nbs_igr_publications(),
-                archive_root=args.archive_root,
                 limit=args.limit,
             )
             session.commit()
