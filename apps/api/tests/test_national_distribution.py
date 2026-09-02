@@ -25,6 +25,9 @@ from gaiafaac_api.pipeline.national_distribution import (
 )
 from gaiafaac_api.pipeline.national_scope import declare_national_states_scope
 from gaiafaac_api.services.national_distribution import published_national_distribution
+from gaiafaac_api.services.national_distribution_history import (
+    recent_published_national_distributions,
+)
 
 
 def _user(session: Session, role: UserRole) -> User:
@@ -279,3 +282,60 @@ def test_noncanonical_evidence_cannot_claim_canonical_source_available(
             source_authority="official_secondary",
             canonical_source_status="available",
         )
+
+
+def test_history_lists_a_period_once_even_with_two_published_sources(
+    session: Session, tmp_path: Path
+) -> None:
+    """A period can legitimately have more than one published NationalDistribution -
+    e.g. an independently corroborating or corrected release under a new source
+    document (uq_national_distribution_source is keyed on source, not period alone).
+    The history trend list must still show that period exactly once."""
+    period = _period_with_jurisdictions(session)
+
+    first = _import_national(session, tmp_path, period)
+    _declare_scope(session, first.run_id)
+    approve_national_distribution(
+        session, run_id=uuid.UUID(first.run_id), reviewer_id=_user(session, UserRole.REVIEWER).id
+    )
+    publish_national_distribution(
+        session,
+        run_id=uuid.UUID(first.run_id),
+        reviewer_id=_user(session, UserRole.ADMINISTRATOR).id,
+    )
+
+    second_source = tmp_path / "second-communique.txt"
+    second_source.write_text("independently corroborating national evidence", encoding="utf-8")
+    second = import_national_distribution(
+        session,
+        NationalDistributionImportRequest(
+            path=second_source,
+            reporting_period_id=period.id,
+            source_organization="Federal Ministry of Finance (corroborating release)",
+            reported_unit="billion_naira",
+            net_distributable_amount="2551",
+            federal_amount="923.438",
+            states_amount="838.208",
+            local_governments_amount="591.390",
+            derivation_amount="197.610",
+            derivation_treatment="separate",
+            publication_date=date(2026, 7, 2),
+            source_url="https://example.test/second-official-communique",
+            source_type="canonical_national_evidence",
+            source_authority="canonical",
+            canonical_source_status="available",
+        ),
+    )
+    _declare_scope(session, second.run_id)
+    approve_national_distribution(
+        session, run_id=uuid.UUID(second.run_id), reviewer_id=_user(session, UserRole.REVIEWER).id
+    )
+    publish_national_distribution(
+        session,
+        run_id=uuid.UUID(second.run_id),
+        reviewer_id=_user(session, UserRole.ADMINISTRATOR).id,
+    )
+
+    history = recent_published_national_distributions(session, limit=24)
+    matching = [item for item in history if item.reporting_period_id == str(period.id)]
+    assert len(matching) == 1
