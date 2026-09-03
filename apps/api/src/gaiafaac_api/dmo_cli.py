@@ -8,7 +8,7 @@ from gaiafaac_api.database.session import create_database_engine, create_session
 from gaiafaac_api.pipeline.dmo.approval import approve_debt_source, publish_debt_source
 from gaiafaac_api.pipeline.dmo.archive import archive_dmo_publications
 from gaiafaac_api.pipeline.dmo.discovery import discover_dmo_subnational_publications
-from gaiafaac_api.pipeline.dmo.extract import extract_dmo_debt_source
+from gaiafaac_api.pipeline.dmo.extract import extract_dmo_debt_source, extract_pending_debt_sources
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,6 +28,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Extract one archived DMO source into unpublished review records",
     )
     extract.add_argument("source_document_id", type=uuid.UUID)
+    commands.add_parser(
+        "extract-pending",
+        help="Extract every archived-but-unextracted DMO source (never publishes)",
+    )
     approve = commands.add_parser(
         "approve-source",
         help="Human-verify a complete DMO debt source without publishing it",
@@ -114,6 +118,28 @@ def main() -> None:
                 sort_keys=True,
             )
         )
+        return
+    if args.command == "extract-pending":
+        with session_factory() as session:
+            outcomes = extract_pending_debt_sources(session)
+        print(
+            json.dumps(
+                [
+                    {
+                        "source_document_id": outcome.source_document_id,
+                        "status": outcome.status,
+                        "records_extracted": outcome.records_extracted,
+                        "total_amount": outcome.total_amount,
+                        "error": outcome.error,
+                    }
+                    for outcome in outcomes
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        if any(outcome.status == "failed" for outcome in outcomes):
+            raise SystemExit(2)
         return
     if args.command == "approve-source":
         with session_factory() as session:

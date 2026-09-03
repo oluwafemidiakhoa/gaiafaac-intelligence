@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.debt_models import DebtKind, StateDebtRecord
 from gaiafaac_api.database.enums import ProcessingStatus, SourceStatus, VerificationStatus
 from gaiafaac_api.database.models import SourceDocument, State
+from gaiafaac_api.pipeline.dmo.archive import DMO_ORGANIZATION
 from gaiafaac_api.pipeline.errors import ImportContractError, StateNormalizationError
 from gaiafaac_api.pipeline.states import StateNormalizer
 from gaiafaac_api.services.object_storage import source_local_copy
@@ -43,6 +44,15 @@ class DebtExtractionResult:
     currency: str
     records_extracted: int
     total_amount: Decimal
+
+
+@dataclass(frozen=True)
+class PendingExtractionOutcome:
+    source_document_id: str
+    status: str
+    records_extracted: int | None = None
+    total_amount: str | None = None
+    error: str | None = None
 
 
 TextReader = Callable[[Path], list[tuple[int, str]]]
@@ -236,3 +246,43 @@ def extract_dmo_debt_source(
         records_extracted=len(records),
         total_amount=total_amount.quantize(_CENT),
     )
+
+
+def extract_pending_debt_sources(
+    session: Session, *, text_reader: TextReader = _pdf_text
+) -> list[PendingExtractionOutcome]:
+    """Extract every archived-but-unextracted DMO source. Never publishes; a failure on
+    one source is recorded and does not block the others."""
+    source_ids = list(
+        session.scalars(
+            select(SourceDocument.id).where(
+                SourceDocument.source_organization == DMO_ORGANIZATION,
+                SourceDocument.processing_status == ProcessingStatus.REGISTERED,
+                SourceDocument.is_demo.is_(False),
+            )
+        )
+    )
+    outcomes: list[PendingExtractionOutcome] = []
+    for source_id in source_ids:
+        try:
+            result = extract_dmo_debt_source(
+                session, source_document_id=source_id, text_reader=text_reader
+            )
+            outcomes.append(
+                PendingExtractionOutcome(
+                    source_document_id=result.source_document_id,
+                    status="extracted",
+                    records_extracted=result.records_extracted,
+                    total_amount=format(result.total_amount, "f"),
+                )
+            )
+        except ImportContractError as error:
+            session.rollback()
+            outcomes.append(
+                PendingExtractionOutcome(
+                    source_document_id=str(source_id),
+                    status="failed",
+                    error=str(error),
+                )
+            )
+    return outcomes

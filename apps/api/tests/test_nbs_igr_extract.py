@@ -8,7 +8,11 @@ from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
 from gaiafaac_api.database.models import SourceDocument, State
 from gaiafaac_api.database.seeds import NIGERIAN_STATES, seed_states
 from gaiafaac_api.pipeline.errors import ImportContractError
-from gaiafaac_api.pipeline.nbs_igr.extract import extract_nbs_igr_source, parse_nbs_igr_text
+from gaiafaac_api.pipeline.nbs_igr.extract import (
+    extract_nbs_igr_source,
+    extract_pending_igr_sources,
+    parse_nbs_igr_text,
+)
 
 
 def _pages(*, year: int = 2023, missing_code: str | None = None) -> list[tuple[int, str]]:
@@ -146,6 +150,70 @@ def test_extract_nbs_igr_source_fails_closed_on_missing_jurisdiction(session, tm
     assert (
         session.scalar(
             select(StateIgrRecord.id).where(StateIgrRecord.source_document_id == source.id)
+        )
+        is None
+    )
+
+
+def test_extract_pending_igr_sources_isolates_failures(session, tmp_path):
+    seed_states(session)
+
+    good_path = tmp_path / "good.pdf"
+    good_path.write_bytes(b"%PDF-test")
+    good_source = SourceDocument(
+        source_organization="National Bureau of Statistics (NBS)",
+        source_url="https://www.nigerianstat.gov.ng/elibrary/read/1",
+        original_filename="good.pdf",
+        storage_path=str(good_path),
+        sha256="e" * 64,
+        mime_type="application/pdf",
+        processing_status=ProcessingStatus.REGISTERED,
+        source_status=SourceStatus.REGISTERED,
+        document_version="igr-2023-report-1",
+        is_demo=False,
+    )
+    bad_path = tmp_path / "bad.pdf"
+    bad_path.write_bytes(b"%PDF-test")
+    bad_source = SourceDocument(
+        source_organization="National Bureau of Statistics (NBS)",
+        source_url="https://www.nigerianstat.gov.ng/elibrary/read/2",
+        original_filename="bad.pdf",
+        storage_path=str(bad_path),
+        sha256="f" * 64,
+        mime_type="application/pdf",
+        processing_status=ProcessingStatus.REGISTERED,
+        source_status=SourceStatus.REGISTERED,
+        document_version="igr-2023-report-2",
+        is_demo=False,
+    )
+    session.add_all([good_source, bad_source])
+    session.commit()
+
+    good_resolved = str(good_path.resolve())
+
+    def text_reader(path):
+        if str(path) == good_resolved:
+            return _pages()
+        return [(1, "1 Abia not-a-number")]
+
+    outcomes = extract_pending_igr_sources(session, text_reader=text_reader)
+
+    by_id = {outcome.source_document_id: outcome for outcome in outcomes}
+    assert len(outcomes) == 2
+    assert by_id[str(good_source.id)].status == "extracted"
+    assert by_id[str(good_source.id)].records_extracted == 37
+    assert by_id[str(bad_source.id)].status == "failed"
+    assert by_id[str(bad_source.id)].error is not None
+
+    good_records = list(
+        session.scalars(
+            select(StateIgrRecord).where(StateIgrRecord.source_document_id == good_source.id)
+        )
+    )
+    assert len(good_records) == 37
+    assert (
+        session.scalar(
+            select(StateIgrRecord.id).where(StateIgrRecord.source_document_id == bad_source.id)
         )
         is None
     )

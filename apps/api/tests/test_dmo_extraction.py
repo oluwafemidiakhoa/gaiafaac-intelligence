@@ -9,7 +9,11 @@ from gaiafaac_api.database.enums import ProcessingStatus, SourceStatus
 from gaiafaac_api.database.models import SourceDocument, State
 from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.pipeline.dmo.archive import DMO_ORGANIZATION
-from gaiafaac_api.pipeline.dmo.extract import extract_dmo_debt_source, parse_dmo_debt_text
+from gaiafaac_api.pipeline.dmo.extract import (
+    extract_dmo_debt_source,
+    extract_pending_debt_sources,
+    parse_dmo_debt_text,
+)
 from gaiafaac_api.pipeline.errors import ImportContractError
 
 
@@ -159,3 +163,74 @@ def test_extract_dmo_source_stages_exact_state_fct_coverage(session, tmp_path):
     assert all(not record.is_published for record in records)
     assert source.source_status is SourceStatus.READY_FOR_REVIEW
     assert source.processing_status is ProcessingStatus.READY_FOR_REVIEW
+
+
+def test_extract_pending_debt_sources_isolates_failures(session, tmp_path):
+    seed_states(session)
+    states = list(session.scalars(select(State).order_by(State.name)))
+
+    good_path = tmp_path / "good.pdf"
+    good_path.write_bytes(b"%PDF-test")
+    good_source = SourceDocument(
+        source_organization=DMO_ORGANIZATION,
+        source_url="https://www.dmo.gov.ng/files/good.pdf",
+        original_filename="good.pdf",
+        storage_path=str(good_path),
+        sha256="e" * 64,
+        mime_type="application/pdf",
+        downloaded_at=datetime.now(UTC),
+        processing_status=ProcessingStatus.REGISTERED,
+        source_status=SourceStatus.REGISTERED,
+        document_version="domestic-2026-03-31",
+        is_demo=False,
+    )
+    bad_path = tmp_path / "bad.pdf"
+    bad_path.write_bytes(b"%PDF-test")
+    bad_source = SourceDocument(
+        source_organization=DMO_ORGANIZATION,
+        source_url="https://www.dmo.gov.ng/files/bad.pdf",
+        original_filename="bad.pdf",
+        storage_path=str(bad_path),
+        sha256="f" * 64,
+        mime_type="application/pdf",
+        downloaded_at=datetime.now(UTC),
+        processing_status=ProcessingStatus.REGISTERED,
+        source_status=SourceStatus.REGISTERED,
+        document_version="external-2026-03-31",
+        is_demo=False,
+    )
+    session.add_all([good_source, bad_source])
+    session.commit()
+
+    good_lines = [
+        f"{index} {state.name} {index * 1_000_000:,.2f}"
+        for index, state in enumerate(states, start=1)
+    ]
+    good_resolved = str(good_path.resolve())
+
+    def text_reader(path):
+        if str(path) == good_resolved:
+            return [(1, "\n".join(good_lines))]
+        return [(1, "1 Abia not-a-number")]
+
+    outcomes = extract_pending_debt_sources(session, text_reader=text_reader)
+
+    by_id = {outcome.source_document_id: outcome for outcome in outcomes}
+    assert len(outcomes) == 2
+    assert by_id[str(good_source.id)].status == "extracted"
+    assert by_id[str(good_source.id)].records_extracted == 37
+    assert by_id[str(bad_source.id)].status == "failed"
+    assert by_id[str(bad_source.id)].error is not None
+
+    good_records = list(
+        session.scalars(
+            select(StateDebtRecord).where(StateDebtRecord.source_document_id == good_source.id)
+        )
+    )
+    assert len(good_records) == 37
+    assert (
+        session.scalar(
+            select(StateDebtRecord.id).where(StateDebtRecord.source_document_id == bad_source.id)
+        )
+        is None
+    )

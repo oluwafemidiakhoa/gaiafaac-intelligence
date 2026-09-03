@@ -1,8 +1,10 @@
 name: Collect NBS and DMO fiscal evidence
 
 # Weekly source intake for official NBS IGR and DMO sub-national debt evidence.
-# This workflow only discovers, downloads, fingerprints and registers official
-# source documents. It never human-approves or publishes fiscal values.
+# Discovers, downloads, fingerprints and registers official source documents,
+# then deterministically extracts them into the unpublished review queue at
+# /review/nbs-igr and /review/dmo. It never human-approves or publishes
+# fiscal values - that stays a separate, explicit action.
 on:
   schedule:
     - cron: '30 6 * * 1' # Mondays 06:30 UTC
@@ -42,3 +44,24 @@ jobs:
           SOURCE_ARCHIVE_SECRET_ACCESS_KEY: ${{ secrets.SOURCE_ARCHIVE_SECRET_ACCESS_KEY }}
           SOURCE_ARCHIVE_REGION: ${{ secrets.SOURCE_ARCHIVE_REGION }}
         run: python -m gaiafaac_api.dmo_cli archive-subnational --limit 12
+      - name: Extract pending NBS IGR sources into the unpublished review queue
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_ENVIRONMENT: production
+          SOURCE_ARCHIVE_BUCKET: ${{ secrets.SOURCE_ARCHIVE_BUCKET }}
+          SOURCE_ARCHIVE_ENDPOINT: ${{ secrets.SOURCE_ARCHIVE_ENDPOINT }}
+          SOURCE_ARCHIVE_ACCESS_KEY_ID: ${{ secrets.SOURCE_ARCHIVE_ACCESS_KEY_ID }}
+          SOURCE_ARCHIVE_SECRET_ACCESS_KEY: ${{ secrets.SOURCE_ARCHIVE_SECRET_ACCESS_KEY }}
+          SOURCE_ARCHIVE_REGION: ${{ secrets.SOURCE_ARCHIVE_REGION }}
+        run: python -m gaiafaac_api.nbs_igr_cli extract-pending
+      - name: Extract pending DMO debt sources into the unpublished review queue
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_ENVIRONMENT: production
+          SOURCE_ARCHIVE_BUCKET: ${{ secrets.SOURCE_ARCHIVE_BUCKET }}
+          SOURCE_ARCHIVE_ENDPOINT: ${{ secrets.SOURCE_ARCHIVE_ENDPOINT }}
+          SOURCE_ARCHIVE_ACCESS_KEY_ID: ${{ secrets.SOURCE_ARCHIVE_ACCESS_KEY_ID }}
+          SOURCE_ARCHIVE_SECRET_ACCESS_KEY: ${{ secrets.SOURCE_ARCHIVE_SECRET_ACCESS_KEY }}
+          SOURCE_ARCHIVE_REGION: ${{ secrets.SOURCE_ARCHIVE_REGION }}
+        run: python -m gaiafaac_api.dmo_cli extract-pending
