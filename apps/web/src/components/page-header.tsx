@@ -8,14 +8,13 @@ export function PageHeader({
   description: string
 }) {
   return (
-    <header className="max-w-3xl">
-      <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
-        {eyebrow}
-      </p>
-      <h1 className="mt-4 text-4xl font-semibold tracking-[-0.035em] text-balance sm:text-5xl">
-        {title}
-      </h1>
-      <p className="text-muted-foreground mt-5 text-lg leading-8 text-pretty">
+    <header className="max-w-4xl">
+      <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.06] px-3 py-1.5">
+        <span className="size-1.5 rounded-full bg-primary shadow-[0_0_10px_color-mix(in_oklab,var(--primary)_65%,transparent)]" />
+        <p className="gaia-kicker">{eyebrow}</p>
+      </div>
+      <h1 className="gaia-display mt-5 max-w-[18ch]">{title}</h1>
+      <p className="text-muted-foreground mt-6 max-w-3xl text-lg leading-8 text-pretty sm:text-xl">
         {description}
       </p>
     </header>
