@@ -47,12 +47,7 @@ describe('Home', () => {
         name: /Every fiscal number, traced to source/i,
       }),
     ).toBeInTheDocument()
-    expect(
-      screen.getAllByRole('link', { name: /Terminal/i })[0],
-    ).toHaveAttribute('href', '/terminal')
-    expect(
-      screen.getAllByRole('link', { name: /Institutions/i })[0],
-    ).toHaveAttribute('href', '/institutions')
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: /Request Access/i }),
     ).toHaveAttribute('href', '/pricing')

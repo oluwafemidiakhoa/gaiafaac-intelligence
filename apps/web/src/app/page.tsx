@@ -62,65 +62,6 @@ export default async function Home() {
         p { max-width: 65ch; line-height: 1.6; }
       `}</style>
 
-      {/* Header */}
-      <header className="border-gold-600 border-b-2 bg-teal-900 text-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-6 lg:px-8">
-          <div className="flex items-center gap-3 text-xl font-bold">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
-            Gaia
-          </div>
-          <nav className="flex items-center gap-8">
-            <Link
-              href="/terminal"
-              className="hover:text-gold-600 text-white transition"
-            >
-              Terminal
-            </Link>
-            <Link
-              href="/institutions"
-              className="hover:text-gold-600 text-white transition"
-            >
-              Institutions
-            </Link>
-            <Link
-              href="/live"
-              className="hover:text-gold-600 text-white transition"
-            >
-              Live Data
-            </Link>
-            <Link
-              href="/gaia-analyst"
-              className="hover:text-gold-600 text-white transition"
-            >
-              Intelligence
-            </Link>
-            <Link
-              href="/evidence"
-              className="hover:text-gold-600 text-white transition"
-            >
-              Evidence
-            </Link>
-            <Link
-              href="/pricing"
-              className="bg-gold-600 inline-block rounded px-5 py-2 font-semibold text-teal-900 hover:bg-yellow-100"
-            >
-              Request Access
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       {/* Hero / Thesis */}
       <section className="border-b border-stone-200 bg-teal-50 py-16">
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
@@ -430,9 +371,12 @@ export default async function Home() {
             agency, or development institution.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="bg-gold-600 rounded px-8 py-3 font-semibold text-teal-900 hover:bg-yellow-100">
+            <Link
+              href="/pricing"
+              className="bg-gold-600 rounded px-8 py-3 font-semibold text-teal-900 hover:bg-yellow-100"
+            >
               Request Access
-            </button>
+            </Link>
             <Link
               href="/evidence"
               className="border-gold-600 rounded border-2 px-8 py-3 font-semibold text-white hover:bg-teal-800"
@@ -442,121 +386,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-stone-400 bg-stone-200 py-12 text-stone-900">
-        <div className="mx-auto max-w-6xl px-6 lg:px-8">
-          <div className="mb-8 grid gap-8 lg:grid-cols-4">
-            <div>
-              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
-                Platform
-              </h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="/terminal" className="hover:text-teal-800">
-                    Terminal
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/live" className="hover:text-teal-800">
-                    Live Data
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/gaia-analyst" className="hover:text-teal-800">
-                    Intelligence
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/evidence" className="hover:text-teal-800">
-                    Evidence Registry
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
-                For Institutions
-              </h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="/institutions" className="hover:text-teal-800">
-                    API Access
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/institutions" className="hover:text-teal-800">
-                    Decision Support
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/institutions" className="hover:text-teal-800">
-                    Audit Tools
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pricing" className="hover:text-teal-800">
-                    Pricing
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
-                Learn
-              </h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="/methodology" className="hover:text-teal-800">
-                    Methodology
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="https://github.com/oluwafemidiakhoa/gaiafaac-intelligence"
-                    className="hover:text-teal-800"
-                  >
-                    Source Code
-                  </a>
-                </li>
-                <li>
-                  <Link href="/" className="hover:text-teal-800">
-                    Documentation
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
-                Company
-              </h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="/" className="hover:text-teal-800">
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/" className="hover:text-teal-800">
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/" className="hover:text-teal-800">
-                    Legal
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-stone-400 pt-8 text-center text-sm text-stone-600">
-            <p>
-              Gaia Fiscal Intelligence is an independent research platform. Not
-              an official government service.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
