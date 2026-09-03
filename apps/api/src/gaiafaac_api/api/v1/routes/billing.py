@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
+import json
 import uuid
 from datetime import UTC, datetime, timedelta
+from urllib.error import HTTPError, URLError
+from urllib.request import Request as UrlRequest
+from urllib.request import urlopen
 
 import stripe
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
-from pydantic import BaseModel
 from sqlalchemy import select
 
 from gaiafaac_api.account_schemas import CheckoutRequest, RedirectResponse
@@ -14,16 +18,11 @@ from gaiafaac_api.config import get_settings
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.database.enums import SubscriptionStatus
 from gaiafaac_api.database.models import Subscription
-from gaiafaac_api.database.subscription_models import (
-    OrganizationSubscription,
-    SubscriptionTier,
-    TierName,
-)
 from gaiafaac_api.services.account import active_subscription, membership_for
-from gaiafaac_api.services.billing import BillingService
 
 router = APIRouter(prefix="/billing", tags=["customer billing"])
 
+_PAYSTACK_API_URL = "https://api.paystack.co"
 _STATUS_MAP = {
     "trialing": SubscriptionStatus.TRIALING,
     "active": SubscriptionStatus.ACTIVE,
@@ -44,7 +43,7 @@ def _stripe_ready():
     return settings
 
 
-def _price_id(settings, plan_code: str) -> str:
+def _stripe_price_id(settings, plan_code: str) -> str:
     prices = {
         "analyst": settings.stripe_price_analyst,
         "team": settings.stripe_price_team,
@@ -55,6 +54,18 @@ def _price_id(settings, plan_code: str) -> str:
         raise HTTPException(
             status_code=503, detail=f"Billing price for {plan_code} is not configured."
         )
+    return value
+
+
+def _paystack_price_naira(settings, plan_code: str) -> int:
+    prices = {
+        "analyst": settings.paystack_price_analyst,
+        "team": settings.paystack_price_team,
+        "api": settings.paystack_price_api,
+    }
+    value = prices.get(plan_code)
+    if value is None:
+        raise HTTPException(status_code=422, detail="Unsupported billing plan.")
     return value
 
 
@@ -81,7 +92,7 @@ def _object_get(obj, name: str, default=None):
     return getattr(obj, name, default)
 
 
-def _sync_subscription(
+def _sync_stripe_subscription(
     session: DatabaseSession,
     stripe_subscription,
     *,
@@ -127,21 +138,76 @@ def _sync_subscription(
     return row
 
 
+def _initialize_paystack_checkout(
+    *,
+    email: str,
+    organization_id: uuid.UUID,
+    plan_code: str,
+) -> RedirectResponse:
+    settings = get_settings()
+    if not settings.paystack_secret_key:
+        raise HTTPException(status_code=503, detail="Paystack billing is not configured.")
+
+    reference = f"gfi-{organization_id.hex[:12]}-{uuid.uuid4().hex[:16]}"
+    body = json.dumps(
+        {
+            "email": email,
+            "amount": _paystack_price_naira(settings, plan_code) * 100,
+            "reference": reference,
+            "callback_url": f"{settings.customer_app_url.rstrip('/')}/account?checkout=return",
+            "metadata": {
+                "organization_id": str(organization_id),
+                "plan_code": plan_code,
+                "billing_period_days": 30,
+                "gaia_reference": reference,
+            },
+        }
+    ).encode("utf-8")
+    request = UrlRequest(
+        f"{_PAYSTACK_API_URL}/transaction/initialize",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {settings.paystack_secret_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=12) as response:  # noqa: S310 - fixed trusted host
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise HTTPException(status_code=502, detail="Payment gateway is temporarily unavailable.") from error
+
+    authorization_url = (payload.get("data") or {}).get("authorization_url")
+    if not payload.get("status") or not authorization_url:
+        raise HTTPException(status_code=502, detail="Paystack did not return a checkout URL.")
+    return RedirectResponse(url=str(authorization_url))
+
+
 @router.post("/checkout", response_model=RedirectResponse)
 def create_checkout(
     payload: CheckoutRequest,
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> RedirectResponse:
-    settings = _stripe_ready()
+    settings = get_settings()
     if user.organization_id is None or membership_for(session, user) is None:
         raise HTTPException(status_code=409, detail="Customer organization is not configured.")
     if active_subscription(session, user.organization_id) is not None:
         raise HTTPException(
             status_code=409,
-            detail="An active subscription already exists. Use billing management to change it.",
+            detail="An active subscription already exists. Manage or renew it from your account.",
         )
-    price_id = _price_id(settings, payload.plan_code)
+
+    if settings.paystack_secret_key:
+        return _initialize_paystack_checkout(
+            email=user.email,
+            organization_id=user.organization_id,
+            plan_code=payload.plan_code,
+        )
+
+    settings = _stripe_ready()
+    price_id = _stripe_price_id(settings, payload.plan_code)
     checkout = stripe.checkout.Session.create(
         mode="subscription",
         customer_email=user.email,
@@ -162,9 +228,7 @@ def create_checkout(
         allow_promotion_codes=True,
     )
     if not checkout.url:
-        raise HTTPException(
-            status_code=502, detail="Billing provider did not return a checkout URL."
-        )
+        raise HTTPException(status_code=502, detail="Billing provider did not return a checkout URL.")
     return RedirectResponse(url=checkout.url)
 
 
@@ -173,11 +237,18 @@ def create_billing_portal(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> RedirectResponse:
-    settings = _stripe_ready()
+    settings = get_settings()
     if user.organization_id is None:
         raise HTTPException(status_code=409, detail="Customer organization is not configured.")
     subscription = active_subscription(session, user.organization_id)
-    if subscription is None or not subscription.external_customer_id:
+    if subscription is None:
+        raise HTTPException(status_code=404, detail="No active subscription was found.")
+
+    if subscription.external_subscription_id and subscription.external_subscription_id.startswith("gfi-"):
+        return RedirectResponse(url=f"{settings.customer_app_url.rstrip('/')}/account?billing=paystack")
+
+    settings = _stripe_ready()
+    if not subscription.external_customer_id:
         raise HTTPException(status_code=404, detail="No active billing customer was found.")
     portal = stripe.billing_portal.Session.create(
         customer=subscription.external_customer_id,
@@ -220,7 +291,7 @@ async def stripe_webhook(
             if organization_id is not None:
                 stripe.api_key = settings.stripe_secret_key
                 stripe_subscription = stripe.Subscription.retrieve(subscription_id)
-                _sync_subscription(
+                _sync_stripe_subscription(
                     session,
                     stripe_subscription,
                     organization_id=organization_id,
@@ -231,28 +302,50 @@ async def stripe_webhook(
         "customer.subscription.updated",
         "customer.subscription.deleted",
     }:
-        _sync_subscription(session, data_object)
+        _sync_stripe_subscription(session, data_object)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-class PaystackWebhookData(BaseModel):
-    reference: str
-    customer: dict | None = None
-    authorization: dict | None = None
-    subscription: str | None = None
-
-
-class PaystackWebhookEvent(BaseModel):
-    event: str
-    data: PaystackWebhookData
-
-
 def _verify_paystack_webhook(signature: str, body: bytes, secret: str) -> bool:
-    """Verify Paystack webhook signature"""
-    hash_obj = hashlib.sha512(body + secret.encode())
-    computed_signature = hash_obj.hexdigest()
-    return computed_signature == signature
+    """Verify Paystack's HMAC-SHA512 signature over the exact request body."""
+    computed = hmac.new(secret.encode("utf-8"), body, hashlib.sha512).hexdigest()
+    return hmac.compare_digest(computed, signature)
+
+
+def _activate_paystack_subscription(session: DatabaseSession, data: dict) -> None:
+    metadata = data.get("metadata") or {}
+    organization_id_text = metadata.get("organization_id")
+    plan_code = str(metadata.get("plan_code") or "").lower()
+    reference = str(data.get("reference") or metadata.get("gaia_reference") or "")
+    if plan_code not in {"analyst", "team", "api"} or not organization_id_text or not reference:
+        return
+    try:
+        organization_id = uuid.UUID(str(organization_id_text))
+    except ValueError:
+        return
+
+    now = datetime.now(UTC)
+    row = session.scalar(
+        select(Subscription).where(Subscription.external_subscription_id == reference)
+    )
+    if row is None:
+        row = Subscription(
+            organization_id=organization_id,
+            status=SubscriptionStatus.ACTIVE,
+            plan_code=plan_code,
+            external_subscription_id=reference,
+            current_period_start=now,
+            current_period_end=now + timedelta(days=30),
+        )
+        session.add(row)
+    else:
+        row.organization_id = organization_id
+        row.status = SubscriptionStatus.ACTIVE
+        row.plan_code = plan_code
+        row.current_period_start = now
+        row.current_period_end = now + timedelta(days=30)
+    session.commit()
 
 
 @router.post("/paystack-webhook", status_code=status.HTTP_204_NO_CONTENT)
@@ -261,7 +354,6 @@ async def paystack_webhook(
     session: DatabaseSession,
     paystack_signature: str | None = Header(default=None, alias="x-paystack-signature"),
 ) -> Response:
-    """Handle Paystack payment confirmations and subscription events"""
     settings = get_settings()
     if not settings.paystack_secret_key:
         raise HTTPException(status_code=503, detail="Paystack webhook is not configured.")
@@ -273,75 +365,11 @@ async def paystack_webhook(
         raise HTTPException(status_code=400, detail="Invalid Paystack webhook signature.")
 
     try:
-        import json
-
         event = json.loads(payload)
-    except (ValueError, json.JSONDecodeError) as error:
+    except json.JSONDecodeError as error:
         raise HTTPException(status_code=400, detail="Invalid JSON in Paystack webhook.") from error
 
-    event_type = event.get("event")
-    data = event.get("data", {})
-
-    if event_type == "charge.success":
-        metadata = data.get("metadata", {})
-        organization_id_str = metadata.get("organization_id")
-        plan_code = metadata.get("plan_code")
-
-        if organization_id_str and plan_code:
-            try:
-                organization_id = uuid.UUID(str(organization_id_str))
-            except ValueError:
-                return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-            billing_service = BillingService(session)
-
-            tier_name_map = {
-                "free": TierName.FREE,
-                "professional": TierName.PROFESSIONAL,
-                "enterprise": TierName.ENTERPRISE,
-            }
-
-            tier_name = tier_name_map.get(str(plan_code).lower())
-            if not tier_name:
-                return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-            tier = session.scalar(
-                select(SubscriptionTier).where(SubscriptionTier.name == tier_name.value)
-            )
-            if not tier:
-                return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-            existing_sub = session.scalar(
-                select(OrganizationSubscription).where(
-                    OrganizationSubscription.organization_id == organization_id
-                )
-            )
-
-            if existing_sub:
-                existing_sub.status = "active"
-                existing_sub.expires_at = datetime.now(UTC) + timedelta(days=30)
-                existing_sub.renewed_at = datetime.now(UTC)
-                session.commit()
-            else:
-                auth_code = data.get("authorization", {}).get("authorization_code")
-                subscription = OrganizationSubscription(
-                    organization_id=organization_id,
-                    tier_id=tier.id,
-                    tier_name=tier.name,
-                    status="active",
-                    paystack_subscription_id=data.get("reference"),
-                    paystack_authorization_code=auth_code,
-                    expires_at=datetime.now(UTC) + timedelta(days=30),
-                )
-                session.add(subscription)
-                session.commit()
-
-                billing_service.create_billing_event(
-                    organization_id=organization_id,
-                    subscription_id=subscription.id,
-                    event_type="subscription_start",
-                    amount_naira=tier.price_naira,
-                    description=f"{tier.name} subscription activated",
-                )
+    if event.get("event") == "charge.success":
+        _activate_paystack_subscription(session, event.get("data") or {})
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
