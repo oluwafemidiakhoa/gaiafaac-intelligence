@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPublishedAnalytics } from '@/lib/analytics-api'
 import { formatNaira } from '@/lib/format'
-import { getNationalDistributionHistory } from '@/lib/national-distribution-api'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
@@ -64,7 +63,7 @@ export default async function Home() {
       `}</style>
 
       {/* Header */}
-      <header className="border-b-2 border-gold-600 bg-teal-900 text-white">
+      <header className="border-gold-600 border-b-2 bg-teal-900 text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-6 lg:px-8">
           <div className="flex items-center gap-3 text-xl font-bold">
             <svg
@@ -81,40 +80,40 @@ export default async function Home() {
             </svg>
             Gaia
           </div>
-          <nav className="flex gap-8 items-center">
+          <nav className="flex items-center gap-8">
             <Link
               href="/terminal"
-              className="text-white hover:text-gold-600 transition"
+              className="hover:text-gold-600 text-white transition"
             >
               Terminal
             </Link>
             <Link
               href="/institutions"
-              className="text-white hover:text-gold-600 transition"
+              className="hover:text-gold-600 text-white transition"
             >
               Institutions
             </Link>
             <Link
               href="/live"
-              className="text-white hover:text-gold-600 transition"
+              className="hover:text-gold-600 text-white transition"
             >
               Live Data
             </Link>
             <Link
               href="/gaia-analyst"
-              className="text-white hover:text-gold-600 transition"
+              className="hover:text-gold-600 text-white transition"
             >
               Intelligence
             </Link>
             <Link
               href="/evidence"
-              className="text-white hover:text-gold-600 transition"
+              className="hover:text-gold-600 text-white transition"
             >
               Evidence
             </Link>
             <Link
               href="/pricing"
-              className="rounded bg-gold-600 px-5 py-2 font-semibold text-teal-900 hover:bg-yellow-100 inline-block"
+              className="bg-gold-600 inline-block rounded px-5 py-2 font-semibold text-teal-900 hover:bg-yellow-100"
             >
               Request Access
             </Link>
@@ -127,10 +126,13 @@ export default async function Home() {
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2">
             <div>
-              <h1 className="mb-6 text-teal-900">Every fiscal number, traced to source</h1>
+              <h1 className="mb-6 text-teal-900">
+                Every fiscal number, traced to source
+              </h1>
               <p className="mb-4 text-lg text-stone-900">
-                Nigeria's public finance data verified at the point of entry, with complete
-                provenance. For institutions that need to know where every number came from.
+                Nigeria&apos;s public finance data verified at the point of
+                entry, with complete provenance. For institutions that need to
+                know where every number came from.
               </p>
               <p className="text-lg font-semibold text-stone-600">
                 No interpolation. No inference. No guesswork.
@@ -138,61 +140,69 @@ export default async function Home() {
             </div>
             <div className="space-y-3 rounded-lg border border-stone-200 bg-white p-8">
               <div className="flex gap-3">
-                <div className="h-2 w-2 rounded-full bg-gold-600 flex-shrink-0 mt-1" />
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                 <div>
-                  <div className="font-semibold text-teal-900 text-sm uppercase tracking-wide">
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
                     Source
                   </div>
-                  <div className="text-stone-600 text-sm">
+                  <div className="text-sm text-stone-600">
                     Official government document (OAGF, FAAC, CBN)
                   </div>
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="h-2 w-2 rounded-full bg-gold-600 flex-shrink-0 mt-1" />
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                 <div>
-                  <div className="font-semibold text-teal-900 text-sm uppercase tracking-wide">
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
                     Fingerprint
                   </div>
-                  <div className="text-stone-600 text-sm">SHA-256 hash of retained bytes</div>
+                  <div className="text-sm text-stone-600">
+                    SHA-256 hash of retained bytes
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="h-2 w-2 rounded-full bg-gold-600 flex-shrink-0 mt-1" />
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                 <div>
-                  <div className="font-semibold text-teal-900 text-sm uppercase tracking-wide">
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
                     Extraction
                   </div>
-                  <div className="text-stone-600 text-sm">Deterministic parsing and validation</div>
+                  <div className="text-sm text-stone-600">
+                    Deterministic parsing and validation
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="h-2 w-2 rounded-full bg-gold-600 flex-shrink-0 mt-1" />
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                 <div>
-                  <div className="font-semibold text-teal-900 text-sm uppercase tracking-wide">
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
                     Review
                   </div>
-                  <div className="text-stone-600 text-sm">Human verification by qualified auditor</div>
+                  <div className="text-sm text-stone-600">
+                    Human verification by qualified auditor
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="h-2 w-2 rounded-full bg-gold-600 flex-shrink-0 mt-1" />
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                 <div>
-                  <div className="font-semibold text-teal-900 text-sm uppercase tracking-wide">
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
                     Approval
                   </div>
-                  <div className="text-stone-600 text-sm">
+                  <div className="text-sm text-stone-600">
                     Separate publisher signs off (four-eyes control)
                   </div>
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="h-2 w-2 rounded-full bg-gold-600 flex-shrink-0 mt-1" />
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
                 <div>
-                  <div className="font-semibold text-teal-900 text-sm uppercase tracking-wide">
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
                     Published
                   </div>
-                  <div className="text-stone-600 text-sm">Immutable record with full audit trail</div>
+                  <div className="text-sm text-stone-600">
+                    Immutable record with full audit trail
+                  </div>
                 </div>
               </div>
             </div>
@@ -204,26 +214,40 @@ export default async function Home() {
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="rounded border-l-4 border-gold-600 bg-white p-6 shadow-sm">
-              <div className="font-mono text-3xl font-bold text-gold-600">
+            <div className="border-gold-600 rounded border-l-4 bg-white p-6 shadow-sm">
+              <div className="text-gold-600 font-mono text-3xl font-bold">
                 {data ? compactNaira(data.total_net) : '—'}
               </div>
-              <div className="text-sm uppercase tracking-wide text-stone-600">Latest Published Total</div>
+              <div className="text-sm tracking-wide text-stone-600 uppercase">
+                Latest Published Total
+              </div>
               <div className="mt-2 text-xs text-stone-500">
-                {data ? `${data.covered_states}/37 jurisdictions • ${data.period?.reporting_label}` : 'Awaiting publication'}
+                {data
+                  ? `${data.covered_states}/37 jurisdictions • ${data.period?.reporting_label}`
+                  : 'Awaiting publication'}
               </div>
             </div>
-            <div className="rounded border-l-4 border-gold-600 bg-white p-6 shadow-sm">
-              <div className="font-mono text-3xl font-bold text-gold-600">37/37</div>
-              <div className="text-sm uppercase tracking-wide text-stone-600">Coverage</div>
-              <div className="mt-2 text-xs text-stone-500">All Nigerian states and FCT</div>
+            <div className="border-gold-600 rounded border-l-4 bg-white p-6 shadow-sm">
+              <div className="text-gold-600 font-mono text-3xl font-bold">
+                37/37
+              </div>
+              <div className="text-sm tracking-wide text-stone-600 uppercase">
+                Coverage
+              </div>
+              <div className="mt-2 text-xs text-stone-500">
+                All Nigerian states and FCT
+              </div>
             </div>
-            <div className="rounded border-l-4 border-gold-600 bg-white p-6 shadow-sm">
-              <div className="font-mono text-3xl font-bold text-gold-600">
+            <div className="border-gold-600 rounded border-l-4 bg-white p-6 shadow-sm">
+              <div className="text-gold-600 font-mono text-3xl font-bold">
                 {analytics?.months_published ?? '—'}
               </div>
-              <div className="text-sm uppercase tracking-wide text-stone-600">Published Periods</div>
-              <div className="mt-2 text-xs text-stone-500">Consecutive months with verified data</div>
+              <div className="text-sm tracking-wide text-stone-600 uppercase">
+                Published Periods
+              </div>
+              <div className="mt-2 text-xs text-stone-500">
+                Consecutive months with verified data
+              </div>
             </div>
           </div>
         </div>
@@ -232,54 +256,56 @@ export default async function Home() {
       {/* Values Section */}
       <section className="border-t border-stone-200 bg-white py-16">
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
-          <h2 className="mb-12 text-center text-teal-900">Built for institutional confidence</h2>
+          <h2 className="mb-12 text-center text-teal-900">
+            Built for institutional confidence
+          </h2>
           <div className="grid gap-8 lg:grid-cols-3">
             <div>
               <div className="mb-4 text-3xl">🔗</div>
               <h3 className="mb-2 text-teal-900">Unbroken Chain</h3>
               <p className="text-stone-600">
-                Every figure remains linked to its source document and cryptographic proof. No
-                intermediate guesses or backfills.
+                Every figure remains linked to its source document and
+                cryptographic proof. No intermediate guesses or backfills.
               </p>
             </div>
             <div>
               <div className="mb-4 text-3xl">🔍</div>
               <h3 className="mb-2 text-teal-900">Anomaly Intelligence</h3>
               <p className="text-stone-600">
-                AI detects unusual movements and peer deviations, flagged for review before
-                publication. Findings are always annotated.
+                AI detects unusual movements and peer deviations, flagged for
+                review before publication. Findings are always annotated.
               </p>
             </div>
             <div>
               <div className="mb-4 text-3xl">✓</div>
               <h3 className="mb-2 text-teal-900">Four-Eyes Control</h3>
               <p className="text-stone-600">
-                Separate reviewer and publisher roles ensure no single person can make data
-                public. Full audit trail recorded.
+                Separate reviewer and publisher roles ensure no single person
+                can make data public. Full audit trail recorded.
               </p>
             </div>
             <div>
               <div className="mb-4 text-3xl">📜</div>
               <h3 className="mb-2 text-teal-900">Revision History</h3>
               <p className="text-stone-600">
-                Every update preserves prior values and reason codes. You can see what changed,
-                when, and by whom.
+                Every update preserves prior values and reason codes. You can
+                see what changed, when, and by whom.
               </p>
             </div>
             <div>
               <div className="mb-4 text-3xl">⚖️</div>
               <h3 className="mb-2 text-teal-900">Conflict Resolution</h3>
               <p className="text-stone-600">
-                When sources disagree, we keep both values and flag the conflict. No silent
-                rewrites to make numbers clean.
+                When sources disagree, we keep both values and flag the
+                conflict. No silent rewrites to make numbers clean.
               </p>
             </div>
             <div>
               <div className="mb-4 text-3xl">📊</div>
               <h3 className="mb-2 text-teal-900">Peer Benchmarking</h3>
               <p className="text-stone-600">
-                Compare metrics across jurisdictions using verified data. Rank by actual
-                performance, not narrative.
+                Compare metrics across jurisdictions using verified data. Rank
+                by actual performance, not narrative.
               </p>
             </div>
           </div>
@@ -289,9 +315,11 @@ export default async function Home() {
       {/* Institutions Section */}
       <section className="border-y border-stone-200 bg-stone-50 py-16">
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
-          <h2 className="mb-12 text-center text-teal-900">Tailored for every stakeholder</h2>
+          <h2 className="mb-12 text-center text-teal-900">
+            Tailored for every stakeholder
+          </h2>
           <div className="grid gap-6 lg:grid-cols-4">
-            <div className="rounded-lg border-t-4 border-sage bg-white p-6">
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
               <h3 className="mb-4 text-teal-900">Loan Committees</h3>
               <ul className="space-y-2 text-sm text-stone-600">
                 <li>→ Sustainability assessment</li>
@@ -300,7 +328,7 @@ export default async function Home() {
                 <li>→ Peer comparison</li>
               </ul>
             </div>
-            <div className="rounded-lg border-t-4 border-sage bg-white p-6">
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
               <h3 className="mb-4 text-teal-900">Investors</h3>
               <ul className="space-y-2 text-sm text-stone-600">
                 <li>→ Growth trajectory</li>
@@ -309,7 +337,7 @@ export default async function Home() {
                 <li>→ Fiscal health score</li>
               </ul>
             </div>
-            <div className="rounded-lg border-t-4 border-sage bg-white p-6">
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
               <h3 className="mb-4 text-teal-900">Auditors</h3>
               <ul className="space-y-2 text-sm text-stone-600">
                 <li>→ Conflict resolution</li>
@@ -318,7 +346,7 @@ export default async function Home() {
                 <li>→ Coverage gaps</li>
               </ul>
             </div>
-            <div className="rounded-lg border-t-4 border-sage bg-white p-6">
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
               <h3 className="mb-4 text-teal-900">Policymakers</h3>
               <ul className="space-y-2 text-sm text-stone-600">
                 <li>→ Peer benchmarking</li>
@@ -336,27 +364,38 @@ export default async function Home() {
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2">
             <div>
-              <h2 className="mb-4 text-teal-900">API-First. Built for Integration.</h2>
+              <h2 className="mb-4 text-teal-900">
+                API-First. Built for Integration.
+              </h2>
               <p className="mb-4 text-stone-600">
-                Gaia is accessible to your systems through versioned REST APIs. Request access
-                for your institution, auditor, or development team.
+                Gaia is accessible to your systems through versioned REST APIs.
+                Request access for your institution, auditor, or development
+                team.
               </p>
-              <p className="text-xs uppercase tracking-widest text-sage font-semibold">
+              <p className="text-sage text-xs font-semibold tracking-widest uppercase">
                 Available endpoints:
               </p>
             </div>
             <div className="space-y-2 rounded bg-teal-900 p-6 font-mono text-sm text-white">
               <div className="text-gold-600">GET</div>
-              <div className="text-stone-300">/api/v1/published/readiness-matrix</div>
+              <div className="text-stone-300">
+                /api/v1/published/readiness-matrix
+              </div>
 
-              <div className="mt-4 text-gold-600">GET</div>
-              <div className="text-stone-300">/api/v1/jurisdictions/{'{code}'}/metrics</div>
+              <div className="text-gold-600 mt-4">GET</div>
+              <div className="text-stone-300">
+                /api/v1/jurisdictions/{'{code}'}/metrics
+              </div>
 
-              <div className="mt-4 text-gold-600">GET</div>
-              <div className="text-stone-300">/api/v1/evidence/provenance/{'{gaia_id}'}</div>
+              <div className="text-gold-600 mt-4">GET</div>
+              <div className="text-stone-300">
+                /api/v1/evidence/provenance/{'{gaia_id}'}
+              </div>
 
-              <div className="mt-4 text-gold-600">POST</div>
-              <div className="text-stone-300">/api/v1/decisions/packet/{'{jurisdiction}'}</div>
+              <div className="text-gold-600 mt-4">POST</div>
+              <div className="text-stone-300">
+                /api/v1/decisions/packet/{'{jurisdiction}'}
+              </div>
             </div>
           </div>
         </div>
@@ -367,16 +406,16 @@ export default async function Home() {
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <h2 className="mb-4">Ready to trust your fiscal data?</h2>
           <p className="mb-8 text-lg text-stone-200">
-            Request institutional access for your bank, audit firm, government agency, or
-            development institution.
+            Request institutional access for your bank, audit firm, government
+            agency, or development institution.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="rounded bg-gold-600 px-8 py-3 font-semibold text-teal-900 hover:bg-yellow-100">
+            <button className="bg-gold-600 rounded px-8 py-3 font-semibold text-teal-900 hover:bg-yellow-100">
               Request Access
             </button>
             <Link
               href="/evidence"
-              className="rounded border-2 border-gold-600 px-8 py-3 font-semibold text-white hover:bg-teal-800"
+              className="border-gold-600 rounded border-2 px-8 py-3 font-semibold text-white hover:bg-teal-800"
             >
               View Evidence Registry
             </Link>
@@ -389,7 +428,7 @@ export default async function Home() {
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <div className="mb-8 grid gap-8 lg:grid-cols-4">
             <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-teal-900">
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
                 Platform
               </h4>
               <ul className="space-y-2 text-sm">
@@ -416,7 +455,7 @@ export default async function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-teal-900">
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
                 For Institutions
               </h4>
               <ul className="space-y-2 text-sm">
@@ -443,7 +482,7 @@ export default async function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-teal-900">
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
                 Learn
               </h4>
               <ul className="space-y-2 text-sm">
@@ -453,7 +492,10 @@ export default async function Home() {
                   </Link>
                 </li>
                 <li>
-                  <a href="https://github.com/oluwafemidiakhoa/gaiafaac-intelligence" className="hover:text-teal-800">
+                  <a
+                    href="https://github.com/oluwafemidiakhoa/gaiafaac-intelligence"
+                    className="hover:text-teal-800"
+                  >
                     Source Code
                   </a>
                 </li>
@@ -465,30 +507,33 @@ export default async function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-teal-900">
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
                 Company
               </h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="/" className="hover:text-teal-800">
+                  <Link href="/" className="hover:text-teal-800">
                     About
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/" className="hover:text-teal-800">
+                  <Link href="/" className="hover:text-teal-800">
                     Contact
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/" className="hover:text-teal-800">
+                  <Link href="/" className="hover:text-teal-800">
                     Legal
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-stone-400 pt-8 text-center text-sm text-stone-600">
-            <p>Gaia Fiscal Intelligence is an independent research platform. Not an official government service.</p>
+            <p>
+              Gaia Fiscal Intelligence is an independent research platform. Not
+              an official government service.
+            </p>
           </div>
         </div>
       </footer>
