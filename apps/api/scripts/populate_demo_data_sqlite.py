@@ -171,7 +171,7 @@ def main() -> None:
                     as_of_date=as_of_date,
                     amount=amount,
                     amount_original=f"₦{amount:,.0f}",
-                    source_organization=f"DMO (Demo - Not Verified)",
+                    source_organization="DMO (Demo - Not Verified)",
                     source_url="https://www.dmo.gov.ng/debt-profile/sub-national-debts (demo)",
                     processing_status=ProcessingStatus.PUBLISHED,
                     verification_status=VerificationStatus.DEMO,
@@ -188,8 +188,8 @@ def main() -> None:
         print(f"   - NBS IGR 2024:        {igr_count} records")
         print(f"   - DMO Debt Sept 2024:  {debt_count} records")
         print(f"\n📂 Database location: {db_path}")
-        print(f"⚠️  All records marked as (Demo) - NOT verified real data")
-        print(f"\n💡 To use this database:")
+        print("⚠️  All records marked as (Demo) - NOT verified real data")
+        print("\n💡 To use this database:")
         print(f"   export DATABASE_URL='sqlite+pysqlite:///{db_path}'")
         print("=" * 70 + "\n")
 
