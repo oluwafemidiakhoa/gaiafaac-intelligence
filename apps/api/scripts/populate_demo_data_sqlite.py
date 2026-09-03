@@ -8,18 +8,14 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from gaiafaac_api.database.base import Base
 from gaiafaac_api.database.debt_models import DebtKind, StateDebtRecord
 from gaiafaac_api.database.enums import ProcessingStatus, VerificationStatus
 from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
 from gaiafaac_api.database.models import State
-from gaiafaac_api.database.subscription_models import (
-    OrganizationSubscription,
-    SubscriptionStatus,
-    SubscriptionTier,
-)
+from gaiafaac_api.database.subscription_models import SubscriptionTier
 
 
 def main() -> None:

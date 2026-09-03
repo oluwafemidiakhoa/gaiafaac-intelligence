@@ -1,18 +1,20 @@
-"use client"
+'use client'
 
-import * as React from "react"
+import * as React from 'react'
 
 interface TooltipContextValue {
   open: boolean
   setOpen: (open: boolean) => void
 }
 
-const TooltipContext = React.createContext<TooltipContextValue | undefined>(undefined)
+const TooltipContext = React.createContext<TooltipContextValue | undefined>(
+  undefined,
+)
 
 function useTooltip() {
   const context = React.useContext(TooltipContext)
   if (!context) {
-    throw new Error("Tooltip components must be used within TooltipProvider")
+    throw new Error('Tooltip components must be used within TooltipProvider')
   }
   return context
 }
@@ -56,11 +58,14 @@ function TooltipTrigger({
   }
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<any>, {
-      onMouseEnter: handleMouseEnter,
-      onMouseLeave: handleMouseLeave,
-      ...props,
-    })
+    return React.cloneElement(
+      children as React.ReactElement<Record<string, unknown>>,
+      {
+        onMouseEnter: handleMouseEnter,
+        onMouseLeave: handleMouseLeave,
+        ...props,
+      },
+    )
   }
 
   return (
@@ -78,14 +83,18 @@ interface TooltipContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
 }
 
-function TooltipContent({ children, className, ...props }: TooltipContentProps) {
+function TooltipContent({
+  children,
+  className,
+  ...props
+}: TooltipContentProps) {
   const { open } = useTooltip()
 
   if (!open) return null
 
   return (
     <div
-      className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-md whitespace-nowrap z-50 ${className}`}
+      className={`absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 rounded-md bg-slate-900 px-3 py-2 text-xs whitespace-nowrap text-white ${className}`}
       {...props}
     >
       {children}

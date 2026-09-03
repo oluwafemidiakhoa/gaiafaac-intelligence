@@ -38,7 +38,7 @@ export default function InstitutionsPage() {
 
         <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
           {/* Top section with hero content */}
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center py-20">
+          <div className="grid grid-cols-1 gap-12 py-20 lg:grid-cols-2 lg:items-center">
             <div className="space-y-8">
               <div>
                 <div className="mb-4 flex items-center gap-2">
@@ -51,44 +51,60 @@ export default function InstitutionsPage() {
                 </div>
                 <h1 className="text-5xl font-bold text-white lg:text-6xl">
                   Trustworthy decisions,
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                  <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                     backed by evidence
                   </span>
                 </h1>
               </div>
 
-              <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
-                AI-powered institutional decision support platform for banks, investors, auditors, and policymakers. Every decision backed by audited fiscal evidence with complete provenance.
+              <p className="max-w-lg text-xl leading-relaxed text-slate-300">
+                AI-powered institutional decision support platform for banks,
+                investors, auditors, and policymakers. Every decision backed by
+                audited fiscal evidence with complete provenance.
               </p>
 
               {/* Feature highlights */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                <div className="flex gap-3 items-start p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <CheckCircle2 className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">
+                <div className="flex items-start gap-3 rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-400" />
                   <div>
-                    <p className="font-semibold text-white">Evidence Provenance</p>
-                    <p className="text-sm text-slate-400">Every number traced to source with SHA-256</p>
+                    <p className="font-semibold text-white">
+                      Evidence Provenance
+                    </p>
+                    <p className="text-sm text-slate-400">
+                      Every number traced to source with SHA-256
+                    </p>
                   </div>
                 </div>
-                <div className="flex gap-3 items-start p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                  <Zap className="h-5 w-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 rounded-lg border border-purple-500/20 bg-purple-500/10 p-4">
+                  <Zap className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-400" />
                   <div>
-                    <p className="font-semibold text-white">Anomaly Detection</p>
-                    <p className="text-sm text-slate-400">AI identifies unusual trends & deviations</p>
+                    <p className="font-semibold text-white">
+                      Anomaly Detection
+                    </p>
+                    <p className="text-sm text-slate-400">
+                      AI identifies unusual trends & deviations
+                    </p>
                   </div>
                 </div>
-                <div className="flex gap-3 items-start p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <TrendingUp className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 rounded-lg border border-green-500/20 bg-green-500/10 p-4">
+                  <TrendingUp className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400" />
                   <div>
-                    <p className="font-semibold text-white">Peer Benchmarking</p>
-                    <p className="text-sm text-slate-400">Compare metrics across jurisdictions</p>
+                    <p className="font-semibold text-white">
+                      Peer Benchmarking
+                    </p>
+                    <p className="text-sm text-slate-400">
+                      Compare metrics across jurisdictions
+                    </p>
                   </div>
                 </div>
-                <div className="flex gap-3 items-start p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                  <AlertTriangle className="h-5 w-5 text-orange-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 rounded-lg border border-orange-500/20 bg-orange-500/10 p-4">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-400" />
                   <div>
                     <p className="font-semibold text-white">Risk Dashboard</p>
-                    <p className="text-sm text-slate-400">Identify critical issues needing attention</p>
+                    <p className="text-sm text-slate-400">
+                      Identify critical issues needing attention
+                    </p>
                   </div>
                 </div>
               </div>
@@ -99,8 +115,12 @@ export default function InstitutionsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur">
                   <CardContent className="pt-6">
-                    <div className="text-3xl font-bold text-green-400">37/37</div>
-                    <p className="text-sm text-slate-400">Jurisdictions Covered</p>
+                    <div className="text-3xl font-bold text-green-400">
+                      37/37
+                    </div>
+                    <p className="text-sm text-slate-400">
+                      Jurisdictions Covered
+                    </p>
                   </CardContent>
                 </Card>
                 <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur">
@@ -111,16 +131,20 @@ export default function InstitutionsPage() {
                 </Card>
               </div>
 
-              <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur col-span-2">
+              <Card className="col-span-2 border-slate-700/50 bg-slate-800/50 backdrop-blur">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-300">Ready for Publication</span>
-                      <span className="text-2xl font-bold text-green-400">24</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-300">
+                        Ready for Publication
+                      </span>
+                      <span className="text-2xl font-bold text-green-400">
+                        24
+                      </span>
                     </div>
-                    <div className="w-full bg-slate-700/50 rounded-full h-2">
+                    <div className="h-2 w-full rounded-full bg-slate-700/50">
                       <div
-                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full"
+                        className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
                         style={{ width: '65%' }}
                       />
                     </div>
@@ -128,16 +152,20 @@ export default function InstitutionsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur col-span-2">
+              <Card className="col-span-2 border-slate-700/50 bg-slate-800/50 backdrop-blur">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-300">Proceed with Caution</span>
-                      <span className="text-2xl font-bold text-amber-400">10</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-300">
+                        Proceed with Caution
+                      </span>
+                      <span className="text-2xl font-bold text-amber-400">
+                        10
+                      </span>
                     </div>
-                    <div className="w-full bg-slate-700/50 rounded-full h-2">
+                    <div className="h-2 w-full rounded-full bg-slate-700/50">
                       <div
-                        className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
+                        className="h-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
                         style={{ width: '27%' }}
                       />
                     </div>
@@ -145,16 +173,16 @@ export default function InstitutionsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur col-span-2">
+              <Card className="col-span-2 border-slate-700/50 bg-slate-800/50 backdrop-blur">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-slate-300">Requires Review</span>
                       <span className="text-2xl font-bold text-red-400">3</span>
                     </div>
-                    <div className="w-full bg-slate-700/50 rounded-full h-2">
+                    <div className="h-2 w-full rounded-full bg-slate-700/50">
                       <div
-                        className="bg-gradient-to-r from-red-500 to-rose-500 h-2 rounded-full"
+                        className="h-2 rounded-full bg-gradient-to-r from-red-500 to-rose-500"
                         style={{ width: '8%' }}
                       />
                     </div>
@@ -167,7 +195,7 @@ export default function InstitutionsPage() {
       </div>
 
       {/* Dashboard Section */}
-      <div className="mx-auto max-w-7xl px-5 lg:px-8 pb-12">
+      <div className="mx-auto max-w-7xl px-5 pb-12 lg:px-8">
         <PageHeader
           eyebrow="Institutional Decision Support"
           title="Jurisdiction Readiness Matrix"
@@ -182,47 +210,68 @@ export default function InstitutionsPage() {
       {/* Use Cases Section */}
       <div className="bg-gradient-to-b from-slate-950 to-blue-950/50 py-16">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Built for Decision-Makers</h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              Institutional Intelligence serves different stakeholders with tailored decision support
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-white">
+              Built for Decision-Makers
+            </h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-400">
+              Institutional Intelligence serves different stakeholders with
+              tailored decision support
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 role: 'Loan Committees',
                 focus: 'Sustainability Assessment',
                 icon: '🏦',
-                details: ['FAAC dependence', 'Revenue trends', 'Peer comparison'],
+                details: [
+                  'FAAC dependence',
+                  'Revenue trends',
+                  'Peer comparison',
+                ],
               },
               {
                 role: 'Investors',
                 focus: 'Growth & Risk',
                 icon: '📈',
-                details: ['Trend analysis', 'Anomaly detection', 'Fiscal positioning'],
+                details: [
+                  'Trend analysis',
+                  'Anomaly detection',
+                  'Fiscal positioning',
+                ],
               },
               {
                 role: 'Auditors',
                 focus: 'Controls & Changes',
                 icon: '✓',
-                details: ['Conflict resolution', 'Audit trails', 'Verification status'],
+                details: [
+                  'Conflict resolution',
+                  'Audit trails',
+                  'Verification status',
+                ],
               },
               {
                 role: 'Policymakers',
                 focus: 'Fiscal Support',
                 icon: '⚖️',
-                details: ['Peer benchmarking', 'Policy impact', 'Recommendations'],
+                details: [
+                  'Peer benchmarking',
+                  'Policy impact',
+                  'Recommendations',
+                ],
               },
             ].map((usecase, idx) => (
               <Card
                 key={idx}
-                className="border-slate-700/50 bg-slate-900/50 backdrop-blur hover:bg-slate-900/80 transition-colors"
+                className="border-slate-700/50 bg-slate-900/50 backdrop-blur transition-colors hover:bg-slate-900/80"
               >
                 <CardHeader>
-                  <div className="text-4xl mb-3">{usecase.icon}</div>
-                  <CardTitle className="text-lg text-white">{usecase.role}</CardTitle>
+                  <div className="mb-3 text-4xl">{usecase.icon}</div>
+                  <CardTitle className="text-lg text-white">
+                    {usecase.role}
+                  </CardTitle>
                   <CardDescription className="text-blue-400">
                     {usecase.focus}
                   </CardDescription>
@@ -230,8 +279,11 @@ export default function InstitutionsPage() {
                 <CardContent>
                   <ul className="space-y-2">
                     {usecase.details.map((detail, didx) => (
-                      <li key={didx} className="flex items-center gap-2 text-sm text-slate-300">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      <li
+                        key={didx}
+                        className="flex items-center gap-2 text-sm text-slate-300"
+                      >
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                         {detail}
                       </li>
                     ))}
@@ -244,15 +296,16 @@ export default function InstitutionsPage() {
       </div>
 
       {/* Technology Section */}
-      <div className="mx-auto max-w-7xl px-5 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-white mb-2">
+              <h2 className="mb-2 text-3xl font-bold text-white">
                 Enterprise-Grade Intelligence
               </h2>
               <p className="text-slate-400">
-                Built on proven institutional frameworks for auditability, compliance, and decision integrity
+                Built on proven institutional frameworks for auditability,
+                compliance, and decision integrity
               </p>
             </div>
 
@@ -282,7 +335,9 @@ export default function InstitutionsPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">{feature.title}</h3>
+                    <h3 className="font-semibold text-white">
+                      {feature.title}
+                    </h3>
                     <p className="text-sm text-slate-400">{feature.desc}</p>
                   </div>
                 </div>
@@ -294,23 +349,24 @@ export default function InstitutionsPage() {
             <CardHeader>
               <CardTitle>API-First Architecture</CardTitle>
               <CardDescription>
-                Institutional Intelligence is accessible via REST API for system integration
+                Institutional Intelligence is accessible via REST API for system
+                integration
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 font-mono text-sm">
-              <div className="p-3 rounded bg-slate-950/50 text-slate-300">
+              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
                 GET /api/v1/institutional/readiness-matrix
               </div>
-              <div className="p-3 rounded bg-slate-950/50 text-slate-300">
+              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
                 GET /api/v1/institutional/risk-indicators
               </div>
-              <div className="p-3 rounded bg-slate-950/50 text-slate-300">
+              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
                 POST /api/v1/decisions/decision-packet/&#123;jurisdiction&#125;
               </div>
-              <div className="p-3 rounded bg-slate-950/50 text-slate-300">
+              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
                 GET /api/v1/evidence/provenance/&#123;gaia_id&#125;
               </div>
-              <p className="text-xs text-slate-500 pt-2">
+              <p className="pt-2 text-xs text-slate-500">
                 Full API documentation available for enterprise integration
               </p>
             </CardContent>

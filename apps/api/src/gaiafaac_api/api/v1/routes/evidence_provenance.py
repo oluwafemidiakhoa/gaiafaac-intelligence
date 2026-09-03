@@ -79,9 +79,7 @@ def get_evidence_provenance(
     This is the evidence trail backing every published number in Gaia.
     """
     # Query the fiscal claim
-    claim = session.scalar(
-        select(FiscalClaim).where(FiscalClaim.gaia_id == gaia_id)
-    )
+    claim = session.scalar(select(FiscalClaim).where(FiscalClaim.gaia_id == gaia_id))
 
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
@@ -159,9 +157,7 @@ def get_audit_trail(
 
     Supports institutional compliance, four-eyes verification, and dispute resolution.
     """
-    claim = session.scalar(
-        select(FiscalClaim).where(FiscalClaim.gaia_id == gaia_id)
-    )
+    claim = session.scalar(select(FiscalClaim).where(FiscalClaim.gaia_id == gaia_id))
 
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")

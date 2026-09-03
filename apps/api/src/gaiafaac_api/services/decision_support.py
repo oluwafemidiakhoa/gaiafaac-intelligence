@@ -79,8 +79,7 @@ class DecisionSupportService:
             .where(
                 and_(
                     FiscalClaim.jurisdiction == jurisdiction,
-                    FiscalClaim.allocation_period
-                    >= now - timedelta(days=30 * months_back),
+                    FiscalClaim.allocation_period >= now - timedelta(days=30 * months_back),
                 )
             )
             .order_by(FiscalClaim.allocation_period)
@@ -130,9 +129,7 @@ class DecisionSupportService:
                             Anomaly(
                                 anomaly_type=AnomalyType.TREND_REVERSAL,
                                 jurisdiction=jurisdiction,
-                                period=metric_claims[-1].allocation_period.strftime(
-                                    "%Y-%m"
-                                ),
+                                period=metric_claims[-1].allocation_period.strftime("%Y-%m"),
                                 metric=metric,
                                 severity="medium",
                                 current_value=recent,
@@ -143,16 +140,16 @@ class DecisionSupportService:
                                 supporting_data={
                                     "previous_value": str(previous),
                                     "older_value": str(older),
-                                    "trend": "up_then_down" if recent < previous else "down_then_up",
+                                    "trend": (
+                                        "up_then_down" if recent < previous else "down_then_up"
+                                    ),
                                 },
                             )
                         )
 
                     # Detect unusual changes
                     if abs(pct_change) > 50 and abs(pct_change) > abs(avg_change) * 1.5:
-                        severity = (
-                            "critical" if abs(pct_change) > 100 else "high"
-                        )
+                        severity = "critical" if abs(pct_change) > 100 else "high"
                         anomaly_type = (
                             AnomalyType.UNUSUAL_GROWTH
                             if pct_change > 0
@@ -163,9 +160,7 @@ class DecisionSupportService:
                             Anomaly(
                                 anomaly_type=anomaly_type,
                                 jurisdiction=jurisdiction,
-                                period=metric_claims[-1].allocation_period.strftime(
-                                    "%Y-%m"
-                                ),
+                                period=metric_claims[-1].allocation_period.strftime("%Y-%m"),
                                 metric=metric,
                                 severity=severity,
                                 current_value=recent,
@@ -212,9 +207,7 @@ class DecisionSupportService:
         avg = sum(values) / len(values)
         std_dev = (sum((v - avg) ** 2 for v in values) / len(values)) ** 0.5
 
-        jurisdiction_value = next(
-            (p[1] for p in peer_data if p[0] == jurisdiction), None
-        )
+        jurisdiction_value = next((p[1] for p in peer_data if p[0] == jurisdiction), None)
 
         if jurisdiction_value and std_dev > 0:
             z_score = abs(jurisdiction_value - avg) / std_dev
@@ -291,20 +284,19 @@ class DecisionSupportService:
                     severity="medium",
                     current_value=Decimal(len(existing_months)),
                     expected_value=Decimal(len(expected_months)),
-                    percent_variance=(len(existing_months) / len(expected_months) - 1)
-                    * 100,
+                    percent_variance=(len(existing_months) / len(expected_months) - 1) * 100,
                     description=f"Missing data for {len(missing_months)} months ({len(missing_months) / len(expected_months) * 100:.0f}% gap)",
                     recommendation="Import missing data from source institutions or mark periods as data unavailable.",
                     supporting_data={
                         "missing_count": len(missing_months),
-                        "coverage_percent": round(len(existing_months) / len(expected_months) * 100, 1),
+                        "coverage_percent": round(
+                            len(existing_months) / len(expected_months) * 100, 1
+                        ),
                     },
                 )
             )
 
-    def _generate_decision_brief(
-        self, jurisdiction: str, claims: list
-    ) -> dict:
+    def _generate_decision_brief(self, jurisdiction: str, claims: list) -> dict:
         """Generate executive decision brief"""
         # Calculate metrics
         total_revenue = sum(
@@ -313,9 +305,7 @@ class DecisionSupportService:
         total_faac = sum(
             c.claim_value for c in claims if c.claim_value and "faac" in c.claim_type.lower()
         )
-        faac_dependence = (
-            (total_faac / total_revenue * 100) if total_revenue and total_faac else 0
-        )
+        faac_dependence = (total_faac / total_revenue * 100) if total_revenue and total_faac else 0
 
         # Group anomalies by severity
         critical = [a for a in self.anomalies if a.severity == "critical"]
@@ -326,9 +316,7 @@ class DecisionSupportService:
         can_make_decision = (
             len(critical) == 0
             and len(high) <= 1
-            and not any(
-                a.anomaly_type == AnomalyType.SOURCE_DISAGREEMENT for a in self.anomalies
-            )
+            and not any(a.anomaly_type == AnomalyType.SOURCE_DISAGREEMENT for a in self.anomalies)
         )
 
         return {
@@ -370,21 +358,19 @@ class DecisionSupportService:
                 "blockers": (
                     [a.anomaly_type.value for a in critical]
                     if critical
-                    else (
-                        [a.anomaly_type.value for a in high] if high else []
-                    )
+                    else ([a.anomaly_type.value for a in high] if high else [])
                 ),
                 "recommendation": (
                     "CRITICAL: Resolve anomalies before making decisions"
                     if critical
-                    else "Proceed with caution; see high-severity items"
-                    if high
-                    else "Clear to proceed with institutional decisions"
+                    else (
+                        "Proceed with caution; see high-severity items"
+                        if high
+                        else "Clear to proceed with institutional decisions"
+                    )
                 ),
             },
-            "next_actions": self._recommend_actions(
-                critical, high, medium, can_make_decision
-            ),
+            "next_actions": self._recommend_actions(critical, high, medium, can_make_decision),
         }
 
     def _recommend_actions(
@@ -394,9 +380,7 @@ class DecisionSupportService:
         actions = []
 
         if critical:
-            actions.append(
-                f"URGENT: Resolve {len(critical)} critical anomalies before proceeding"
-            )
+            actions.append(f"URGENT: Resolve {len(critical)} critical anomalies before proceeding")
 
         if any(a.anomaly_type == AnomalyType.SOURCE_DISAGREEMENT for a in high):
             actions.append("Contact jurisdictions to resolve source conflicts")

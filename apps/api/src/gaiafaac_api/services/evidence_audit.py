@@ -110,9 +110,7 @@ class EvidenceAuditService:
 
     def _audit_data_conflicts(self) -> None:
         """Find conflicting sources"""
-        conflicted = self.session.scalars(
-            select(FiscalClaim).where(FiscalClaim.conflicted)
-        ).all()
+        conflicted = self.session.scalars(select(FiscalClaim).where(FiscalClaim.conflicted)).all()
 
         if len(conflicted) > 0:
             self.findings.append(
@@ -131,9 +129,7 @@ class EvidenceAuditService:
     def _audit_coverage_gaps(self) -> None:
         """Find missing data periods"""
         # Get all states
-        all_states = self.session.execute(
-            select(func.distinct(FiscalClaim.jurisdiction))
-        ).scalars()
+        all_states = self.session.execute(select(func.distinct(FiscalClaim.jurisdiction))).scalars()
 
         # Get last 12 months
         now = datetime.now(timezone.utc)
@@ -183,9 +179,7 @@ class EvidenceAuditService:
             if claim.claim_value and hasattr(claim, "previous_value"):
                 if claim.previous_value:
                     pct_change = abs(
-                        (claim.claim_value - claim.previous_value)
-                        / claim.previous_value
-                        * 100
+                        (claim.claim_value - claim.previous_value) / claim.previous_value * 100
                     )
                     if pct_change > 50:  # >50% change
                         anomalies.append(claim.gaia_id)
@@ -208,8 +202,7 @@ class EvidenceAuditService:
         """Check if sources are recent"""
         stale_sources = self.session.scalars(
             select(FiscalClaim).where(
-                FiscalClaim.created_at
-                < datetime.now(timezone.utc) - timedelta(days=30)
+                FiscalClaim.created_at < datetime.now(timezone.utc) - timedelta(days=30)
             )
         ).all()
 
@@ -258,8 +251,7 @@ class EvidenceAuditService:
 
         integrity_score = max(
             0,
-            100
-            - (len(critical) * 25 + len(high) * 10 + len(medium) * 3),
+            100 - (len(critical) * 25 + len(high) * 10 + len(medium) * 3),
         )
 
         return {
@@ -328,9 +320,7 @@ def get_integrity_score_for_jurisdiction(session: Session, jurisdiction: str) ->
     audit.jurisdiction_filter = jurisdiction
 
     total_claims = session.scalar(
-        select(func.count(FiscalClaim.id)).where(
-            FiscalClaim.jurisdiction == jurisdiction
-        )
+        select(func.count(FiscalClaim.id)).where(FiscalClaim.jurisdiction == jurisdiction)
     )
 
     published = session.scalar(

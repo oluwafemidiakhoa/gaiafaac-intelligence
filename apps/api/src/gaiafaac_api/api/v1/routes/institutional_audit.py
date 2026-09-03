@@ -5,8 +5,10 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import and_, func, select
 
 from gaiafaac_api.customer_auth import DatabaseSession
+from gaiafaac_api.database.ledger_models import FiscalClaim
 from gaiafaac_api.services.evidence_audit import (
     EvidenceAuditService,
     get_integrity_score_for_jurisdiction,
@@ -124,14 +126,9 @@ def get_institutional_readiness(session: DatabaseSession) -> dict:
     - Decision support (integrity_score >= 70)
     - Requires review (has critical findings)
     """
-    from sqlalchemy import select, func, and_
-    from gaiafaac_api.database.ledger_models import FiscalClaim
-
     # Get all jurisdictions
     jurisdictions = session.execute(
-        select(func.distinct(FiscalClaim.jurisdiction)).order_by(
-            FiscalClaim.jurisdiction
-        )
+        select(func.distinct(FiscalClaim.jurisdiction)).order_by(FiscalClaim.jurisdiction)
     ).scalars()
 
     readiness = {
@@ -187,9 +184,6 @@ def get_risk_indicators(session: DatabaseSession) -> dict:
     - Data gaps impacting decisions
     - Source quality issues
     """
-    from sqlalchemy import select, func, and_
-    from gaiafaac_api.database.ledger_models import FiscalClaim
-
     # 1. Unresolved conflicts
     conflicts = session.execute(
         select(
@@ -220,9 +214,7 @@ def get_risk_indicators(session: DatabaseSession) -> dict:
     now = dt.now()
     last_30_days = now - timedelta(days=30)
 
-    stale = session.scalars(
-        select(FiscalClaim).where(FiscalClaim.updated_at < last_30_days)
-    ).all()
+    stale = session.scalars(select(FiscalClaim).where(FiscalClaim.updated_at < last_30_days)).all()
 
     return {
         "timestamp": datetime.now().isoformat(),
@@ -236,9 +228,7 @@ def get_risk_indicators(session: DatabaseSession) -> dict:
             {
                 "risk_type": "unverified_high_value",
                 "count": len(unverified_high_value),
-                "total_naira": sum(
-                    c.claim_value for c in unverified_high_value if c.claim_value
-                ),
+                "total_naira": sum(c.claim_value for c in unverified_high_value if c.claim_value),
                 "details": [
                     {
                         "jurisdiction": c.jurisdiction,
@@ -259,11 +249,13 @@ def get_risk_indicators(session: DatabaseSession) -> dict:
         "overall_risk_level": (
             "critical"
             if len(unverified_high_value) > 5 or sum(c[1] for c in conflicts) > 20
-            else "high"
-            if len(unverified_high_value) > 0 or sum(c[1] for c in conflicts) > 10
-            else "medium"
-            if len(unverified_high_value) > 0 or len(stale) > 100
-            else "low"
+            else (
+                "high"
+                if len(unverified_high_value) > 0 or sum(c[1] for c in conflicts) > 10
+                else "medium"
+                if len(unverified_high_value) > 0 or len(stale) > 100
+                else "low"
+            )
         ),
     }
 
@@ -393,13 +385,10 @@ def get_decision_brief(
     - Conflicting sources (if any)
     - Recommended actions
     """
-    from datetime import datetime as dt
-    from sqlalchemy import select, and_
-
     try:
-        period_date = dt.strptime(period, "%Y-%m")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid period (use YYYY-MM)")
+        period_date = datetime.strptime(period, "%Y-%m")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid period (use YYYY-MM)") from e
 
     # Get all claims for this jurisdiction/period
     claims = session.scalars(
@@ -412,16 +401,14 @@ def get_decision_brief(
     ).all()
 
     if not claims:
-        raise HTTPException(
-            status_code=404, detail=f"No data for {jurisdiction} in {period}"
-        )
+        raise HTTPException(status_code=404, detail=f"No data for {jurisdiction} in {period}")
 
     # Compute metrics
-    total_revenue = sum(c.claim_value for c in claims if c.claim_value and "revenue" in c.claim_type.lower())
+    total_revenue = sum(
+        c.claim_value for c in claims if c.claim_value and "revenue" in c.claim_type.lower()
+    )
     total_allocation = sum(
-        c.claim_value
-        for c in claims
-        if c.claim_value and "allocation" in c.claim_type.lower()
+        c.claim_value for c in claims if c.claim_value and "allocation" in c.claim_type.lower()
     )
     conflicts_count = sum(1 for c in claims if c.conflicted)
     unverified_count = sum(1 for c in claims if c.evidence_verification_status != "published")
@@ -440,9 +427,7 @@ def get_decision_brief(
     ).all()
 
     prev_revenue = sum(
-        c.claim_value
-        for c in prev_claims
-        if c.claim_value and "revenue" in c.claim_type.lower()
+        c.claim_value for c in prev_claims if c.claim_value and "revenue" in c.claim_type.lower()
     )
 
     return {
@@ -459,7 +444,9 @@ def get_decision_brief(
                     else 0
                 ),
                 "verification_status": (
-                    "published" if sum(1 for c in claims if c.evidence_verification_status == "published") > 0 else "draft"
+                    "published"
+                    if sum(1 for c in claims if c.evidence_verification_status == "published") > 0
+                    else "draft"
                 ),
             },
             "total_allocation": {
@@ -470,14 +457,21 @@ def get_decision_brief(
         "data_quality": {
             "total_claims": len(claims),
             "verified_claims": len([c for c in claims if c.reviewed_at]),
-            "published_claims": len([c for c in claims if c.evidence_verification_status == "published"]),
+            "published_claims": len(
+                [c for c in claims if c.evidence_verification_status == "published"]
+            ),
             "conflicts": conflicts_count,
             "unverified": unverified_count,
             "ready_for_decision": conflicts_count == 0 and unverified_count == 0,
         },
         "recommendations": [
-            "Data ready for institutional decisions"
-            if conflicts_count == 0 and unverified_count == 0
-            else f"Resolve {conflicts_count} conflicts and verify {unverified_count} claims before decisions",
+            (
+                "Data ready for institutional decisions"
+                if conflicts_count == 0 and unverified_count == 0
+                else (
+                    f"Resolve {conflicts_count} conflicts and verify "
+                    f"{unverified_count} claims before decisions"
+                )
+            ),
         ],
     }

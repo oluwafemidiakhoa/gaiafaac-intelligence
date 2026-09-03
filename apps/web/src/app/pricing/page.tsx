@@ -183,9 +183,7 @@ export default function PricingPage() {
               <CardTitle className="flex items-baseline justify-between gap-3">
                 <span>{plan.name}</span>
                 <div className="text-right">
-                  <span className="text-2xl font-semibold">
-                    {plan.price}
-                  </span>
+                  <span className="text-2xl font-semibold">{plan.price}</span>
                   {plan.period && (
                     <span className="text-muted-foreground text-sm font-normal">
                       {plan.period}
@@ -335,9 +333,9 @@ export default function PricingPage() {
 
       <div className="text-muted-foreground mt-10 max-w-4xl space-y-2 text-sm leading-6">
         <p>
-          Monthly self-service prices are in Nigerian Naira (₦). Checkout, billing
-          management and plan entitlements are handled through the GaiaFAAC
-          customer account with Paystack.
+          Monthly self-service prices are in Nigerian Naira (₦). Checkout,
+          billing management and plan entitlements are handled through the
+          GaiaFAAC customer account with Paystack.
         </p>
         <p>
           GaiaFAAC is an independent research platform, not a government

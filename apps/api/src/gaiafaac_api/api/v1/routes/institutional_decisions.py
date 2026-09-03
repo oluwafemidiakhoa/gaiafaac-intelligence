@@ -1,9 +1,12 @@
 """Institutional decision support endpoints"""
 
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import and_, func, select
 
 from gaiafaac_api.customer_auth import DatabaseSession
+from gaiafaac_api.database.ledger_models import FiscalClaim
 from gaiafaac_api.services.decision_support import DecisionSupportService
 
 router = APIRouter(prefix="/decisions", tags=["institutional decisions"])
@@ -71,13 +74,8 @@ def get_risk_summary_all_jurisdictions(
     - Have data quality issues
     - Require attention before decisions
     """
-    from sqlalchemy import select, func
-    from gaiafaac_api.database.ledger_models import FiscalClaim
-
     jurisdictions = session.execute(
-        select(func.distinct(FiscalClaim.jurisdiction)).order_by(
-            FiscalClaim.jurisdiction
-        )
+        select(func.distinct(FiscalClaim.jurisdiction)).order_by(FiscalClaim.jurisdiction)
     ).scalars()
 
     decision_service = DecisionSupportService(session)
@@ -147,21 +145,16 @@ def generate_decision_packet(
 
     Output can be exported as PDF with digital signatures for institutional records.
     """
-    from datetime import datetime as dt
-    from sqlalchemy import select, and_
-
     try:
-        period_date = dt.strptime(period, "%Y-%m")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid period (use YYYY-MM)")
+        period_date = datetime.strptime(period, "%Y-%m")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid period (use YYYY-MM)") from e
 
     # Get analysis
     decision_service = DecisionSupportService(session)
     analysis = decision_service.analyze_jurisdiction(jurisdiction, 12)
 
     # Get all claims for this period
-    from gaiafaac_api.database.ledger_models import FiscalClaim
-
     claims = session.scalars(
         select(FiscalClaim).where(
             and_(
@@ -174,7 +167,7 @@ def generate_decision_packet(
     # Tailor output to decision type
     packet = {
         "metadata": {
-            "generated_at": dt.now().isoformat(),
+            "generated_at": datetime.now().isoformat(),
             "jurisdiction": jurisdiction,
             "period": period,
             "decision_type": decision_type,
@@ -204,9 +197,7 @@ def generate_decision_packet(
             for c in claims
         ],
         "compliance": {
-            "audit_trail_complete": all(
-                c.reviewed_at and c.approved_at for c in claims
-            ),
+            "audit_trail_complete": all(c.reviewed_at and c.approved_at for c in claims),
             "all_verified": all(
                 c.evidence_verification_status.value == "published" for c in claims
             ),
@@ -223,20 +214,22 @@ def generate_decision_packet(
     # Customize based on decision type
     if decision_type == "loan":
         packet["focus"] = "Sustainability Assessment"
-        packet["lender_concern"] = f"FAAC dependence: {analysis['key_metrics'].get('faac_dependence_percent', 0):.1f}%"
+        packet["lender_concern"] = (
+            f"FAAC dependence: {analysis['key_metrics'].get('faac_dependence_percent', 0):.1f}%"
+        )
 
     elif decision_type == "investment":
         packet["focus"] = "Growth & Trend Analysis"
         packet["trend_items"] = [
-            a for a in analysis["anomalies"]["details"]
+            a
+            for a in analysis["anomalies"]["details"]
             if "growth" in a["type"] or "decline" in a["type"]
         ]
 
     elif decision_type == "audit":
         packet["focus"] = "Controls & Changes Audit"
         packet["conflict_items"] = [
-            a for a in analysis["anomalies"]["details"]
-            if "conflict" in a["type"]
+            a for a in analysis["anomalies"]["details"] if "conflict" in a["type"]
         ]
 
     return packet
