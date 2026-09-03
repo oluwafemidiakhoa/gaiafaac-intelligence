@@ -6,6 +6,7 @@ from gaiafaac_api.api.v1.routes.billing import router as billing_router
 from gaiafaac_api.api.v1.routes.commercial import router as commercial_router
 from gaiafaac_api.api.v1.routes.data_api import router as data_api_router
 from gaiafaac_api.api.v1.routes.demo_data import router as demo_data_router
+from gaiafaac_api.api.v1.routes.dmo_review import router as dmo_review_router
 from gaiafaac_api.api.v1.routes.evidence_rooms import router as evidence_rooms_router
 from gaiafaac_api.api.v1.routes.fiscal_claims import router as fiscal_claims_router
 from gaiafaac_api.api.v1.routes.fiscal_ledger import router as fiscal_ledger_router
@@ -15,6 +16,7 @@ from gaiafaac_api.api.v1.routes.national_distribution import (
     router as national_distribution_router,
 )
 from gaiafaac_api.api.v1.routes.national_review import router as national_review_router
+from gaiafaac_api.api.v1.routes.nbs_igr_review import router as nbs_igr_review_router
 from gaiafaac_api.api.v1.routes.oagf_revisions import router as oagf_revisions_router
 from gaiafaac_api.api.v1.routes.published_data import router as published_data_router
 from gaiafaac_api.api.v1.routes.review import router as review_router
@@ -40,3 +42,5 @@ router.include_router(webhook_router)
 router.include_router(national_review_router)
 router.include_router(oagf_revisions_router)
 router.include_router(review_router)
+router.include_router(dmo_review_router)
+router.include_router(nbs_igr_review_router)
