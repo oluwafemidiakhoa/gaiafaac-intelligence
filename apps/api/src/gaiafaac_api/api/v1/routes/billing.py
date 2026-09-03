@@ -157,7 +157,7 @@ def _initialize_paystack_checkout(
             "email": email,
             "amount": _paystack_price_naira(settings, plan_code) * 100,
             "reference": reference,
-            "callback_url": f"{settings.customer_app_url.rstrip('/')}/account?checkout=return",
+            "callback_url": f"{settings.customer_app_url.rstrip('/')}/account/billing?checkout=return",
             "metadata": {
                 "organization_id": str(organization_id),
                 "plan_code": plan_code,
@@ -228,13 +228,18 @@ def _activate_paystack_subscription(session: DatabaseSession, data: dict) -> Sub
     row = session.scalar(
         select(Subscription).where(Subscription.external_subscription_id == reference)
     )
-    if row is None:
-        row = session.scalar(
-            select(Subscription)
-            .where(Subscription.organization_id == organization_id)
-            .order_by(Subscription.updated_at.desc())
-        )
+    if row is not None:
+        row.status = SubscriptionStatus.ACTIVE
+        row.plan_code = plan_code
+        session.commit()
+        session.refresh(row)
+        return row
 
+    row = session.scalar(
+        select(Subscription)
+        .where(Subscription.organization_id == organization_id)
+        .order_by(Subscription.updated_at.desc())
+    )
     if row is None:
         row = Subscription(
             organization_id=organization_id,
@@ -453,7 +458,7 @@ def create_billing_portal(
         "gfi-"
     ):
         return RedirectResponse(
-            url=f"{settings.customer_app_url.rstrip('/')}/account?billing=paystack"
+            url=f"{settings.customer_app_url.rstrip('/')}/account/billing"
         )
 
     settings = _stripe_ready()
