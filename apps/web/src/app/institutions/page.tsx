@@ -28,12 +28,12 @@ export default function InstitutionsPage() {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <div className="relative min-h-screen overflow-hidden">
-        {/* Gradient background */}
+      <div className="relative min-h-screen overflow-hidden bg-stone-50">
+        {/* Teal gradient background */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-slate-900 to-slate-950" />
-          <div className="absolute top-0 right-0 -z-10 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
-          <div className="absolute bottom-0 left-0 -z-10 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-900 via-teal-800 to-teal-950" />
+          <div className="absolute top-0 right-0 -z-10 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
+          <div className="absolute bottom-0 left-0 -z-10 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl" />
         </div>
 
         <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
@@ -42,16 +42,19 @@ export default function InstitutionsPage() {
             <div className="space-y-8">
               <div>
                 <div className="mb-4 flex items-center gap-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 text-amber-300">
                     <Shield className="h-6 w-6" />
                   </div>
-                  <span className="text-sm font-medium text-blue-400">
+                  <span className="text-sm font-medium text-amber-300">
                     INSTITUTIONAL INTELLIGENCE SYSTEM
                   </span>
                 </div>
-                <h1 className="text-5xl font-bold text-white lg:text-6xl">
+                <h1
+                  className="text-5xl font-bold text-white lg:text-6xl"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
                   Trustworthy decisions,
-                  <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  <span className="block bg-gradient-to-r from-amber-300 to-amber-200 bg-clip-text text-transparent">
                     backed by evidence
                   </span>
                 </h1>
@@ -65,44 +68,44 @@ export default function InstitutionsPage() {
 
               {/* Feature highlights */}
               <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">
-                <div className="flex items-start gap-3 rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-400" />
+                <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-300" />
                   <div>
                     <p className="font-semibold text-white">
                       Evidence Provenance
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-300">
                       Every number traced to source with SHA-256
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 rounded-lg border border-purple-500/20 bg-purple-500/10 p-4">
-                  <Zap className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-400" />
+                <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+                  <Zap className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-300" />
                   <div>
                     <p className="font-semibold text-white">
                       Anomaly Detection
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-300">
                       AI identifies unusual trends & deviations
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 rounded-lg border border-green-500/20 bg-green-500/10 p-4">
-                  <TrendingUp className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400" />
+                <div className="flex items-start gap-3 rounded-lg border border-teal-500/20 bg-teal-500/10 p-4">
+                  <TrendingUp className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal-300" />
                   <div>
                     <p className="font-semibold text-white">
                       Peer Benchmarking
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-300">
                       Compare metrics across jurisdictions
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 rounded-lg border border-orange-500/20 bg-orange-500/10 p-4">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-400" />
+                <div className="flex items-start gap-3 rounded-lg border border-teal-500/20 bg-teal-500/10 p-4">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal-300" />
                   <div>
                     <p className="font-semibold text-white">Risk Dashboard</p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-300">
                       Identify critical issues needing attention
                     </p>
                   </div>
@@ -113,38 +116,38 @@ export default function InstitutionsPage() {
             {/* Stats section */}
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur">
+                <Card className="border-teal-200 bg-teal-50">
                   <CardContent className="pt-6">
-                    <div className="text-3xl font-bold text-green-400">
+                    <div className="text-3xl font-bold text-teal-900">
                       37/37
                     </div>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-teal-700">
                       Jurisdictions Covered
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur">
+                <Card className="border-amber-200 bg-amber-50">
                   <CardContent className="pt-6">
-                    <div className="text-3xl font-bold text-blue-400">30</div>
-                    <p className="text-sm text-slate-400">Published Periods</p>
+                    <div className="text-3xl font-bold text-amber-900">30</div>
+                    <p className="text-sm text-amber-700">Published Periods</p>
                   </CardContent>
                 </Card>
               </div>
 
-              <Card className="col-span-2 border-slate-700/50 bg-slate-800/50 backdrop-blur">
+              <Card className="col-span-2 border-teal-200 bg-teal-50">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-300">
+                      <span className="text-teal-800">
                         Ready for Publication
                       </span>
-                      <span className="text-2xl font-bold text-green-400">
+                      <span className="text-2xl font-bold text-teal-900">
                         24
                       </span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-700/50">
+                    <div className="h-2 w-full rounded-full bg-teal-200">
                       <div
-                        className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                        className="h-2 rounded-full bg-gradient-to-r from-teal-600 to-teal-500"
                         style={{ width: '65%' }}
                       />
                     </div>
@@ -152,20 +155,20 @@ export default function InstitutionsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="col-span-2 border-slate-700/50 bg-slate-800/50 backdrop-blur">
+              <Card className="col-span-2 border-amber-200 bg-amber-50">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-300">
+                      <span className="text-amber-800">
                         Proceed with Caution
                       </span>
-                      <span className="text-2xl font-bold text-amber-400">
+                      <span className="text-2xl font-bold text-amber-900">
                         10
                       </span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-700/50">
+                    <div className="h-2 w-full rounded-full bg-amber-200">
                       <div
-                        className="h-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                        className="h-2 rounded-full bg-gradient-to-r from-amber-600 to-amber-500"
                         style={{ width: '27%' }}
                       />
                     </div>
@@ -173,16 +176,16 @@ export default function InstitutionsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="col-span-2 border-slate-700/50 bg-slate-800/50 backdrop-blur">
+              <Card className="col-span-2 border-red-200 bg-red-50">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-300">Requires Review</span>
-                      <span className="text-2xl font-bold text-red-400">3</span>
+                      <span className="text-red-800">Requires Review</span>
+                      <span className="text-2xl font-bold text-red-900">3</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-700/50">
+                    <div className="h-2 w-full rounded-full bg-red-200">
                       <div
-                        className="h-2 rounded-full bg-gradient-to-r from-red-500 to-rose-500"
+                        className="h-2 rounded-full bg-gradient-to-r from-red-600 to-red-500"
                         style={{ width: '8%' }}
                       />
                     </div>
@@ -208,13 +211,16 @@ export default function InstitutionsPage() {
       </div>
 
       {/* Use Cases Section */}
-      <div className="bg-gradient-to-b from-slate-950 to-blue-950/50 py-16">
+      <div className="bg-gradient-to-b from-teal-900 to-teal-800 py-16">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold text-white">
+            <h2
+              className="mb-4 text-3xl font-bold text-white"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
               Built for Decision-Makers
             </h2>
-            <p className="mx-auto max-w-2xl text-lg text-slate-400">
+            <p className="mx-auto max-w-2xl text-lg text-teal-100">
               Institutional Intelligence serves different stakeholders with
               tailored decision support
             </p>
@@ -265,14 +271,14 @@ export default function InstitutionsPage() {
             ].map((usecase, idx) => (
               <Card
                 key={idx}
-                className="border-slate-700/50 bg-slate-900/50 backdrop-blur transition-colors hover:bg-slate-900/80"
+                className="border-teal-600/30 bg-teal-50/50 backdrop-blur transition-colors hover:bg-teal-50"
               >
                 <CardHeader>
                   <div className="mb-3 text-4xl">{usecase.icon}</div>
-                  <CardTitle className="text-lg text-white">
+                  <CardTitle className="text-lg text-teal-900">
                     {usecase.role}
                   </CardTitle>
-                  <CardDescription className="text-blue-400">
+                  <CardDescription className="text-amber-700">
                     {usecase.focus}
                   </CardDescription>
                 </CardHeader>
@@ -281,9 +287,9 @@ export default function InstitutionsPage() {
                     {usecase.details.map((detail, didx) => (
                       <li
                         key={didx}
-                        className="flex items-center gap-2 text-sm text-slate-300"
+                        className="flex items-center gap-2 text-sm text-teal-700"
                       >
-                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-amber-600" />
                         {detail}
                       </li>
                     ))}
@@ -300,10 +306,13 @@ export default function InstitutionsPage() {
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <div className="space-y-6">
             <div>
-              <h2 className="mb-2 text-3xl font-bold text-white">
+              <h2
+                className="mb-2 text-3xl font-bold text-teal-900"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
                 Enterprise-Grade Intelligence
               </h2>
-              <p className="text-slate-400">
+              <p className="text-teal-700">
                 Built on proven institutional frameworks for auditability,
                 compliance, and decision integrity
               </p>
@@ -330,43 +339,45 @@ export default function InstitutionsPage() {
               ].map((feature, idx) => (
                 <div key={idx} className="flex gap-4">
                   <div className="flex-shrink-0">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-200/50 text-amber-700">
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">
+                    <h3 className="font-semibold text-teal-900">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-slate-400">{feature.desc}</p>
+                    <p className="text-sm text-teal-700">{feature.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <Card className="border-slate-700/50 bg-slate-900/50 backdrop-blur">
+          <Card className="border-teal-200 bg-teal-50">
             <CardHeader>
-              <CardTitle>API-First Architecture</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-teal-900">
+                API-First Architecture
+              </CardTitle>
+              <CardDescription className="text-teal-700">
                 Institutional Intelligence is accessible via REST API for system
                 integration
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 font-mono text-sm">
-              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
+              <div className="rounded bg-teal-100 p-3 text-teal-900">
                 GET /api/v1/institutional/readiness-matrix
               </div>
-              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
+              <div className="rounded bg-teal-100 p-3 text-teal-900">
                 GET /api/v1/institutional/risk-indicators
               </div>
-              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
+              <div className="rounded bg-teal-100 p-3 text-teal-900">
                 POST /api/v1/decisions/decision-packet/&#123;jurisdiction&#125;
               </div>
-              <div className="rounded bg-slate-950/50 p-3 text-slate-300">
+              <div className="rounded bg-teal-100 p-3 text-teal-900">
                 GET /api/v1/evidence/provenance/&#123;gaia_id&#125;
               </div>
-              <p className="pt-2 text-xs text-slate-500">
+              <p className="pt-2 text-xs text-teal-600">
                 Full API documentation available for enterprise integration
               </p>
             </CardContent>
