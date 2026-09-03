@@ -1,12 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { getLgaPublicationStatus } from '@/lib/lga-status-api'
 import {
   getPublishedLgasForState,
   getPublishedOverview,
 } from '@/lib/published-api'
 
 import LocalGovernmentsPage from './page'
+
+vi.mock('@/lib/lga-status-api', () => ({
+  getLgaPublicationStatus: vi.fn(),
+}))
 
 vi.mock('@/lib/published-api', () => ({
   getPublishedLgasForState: vi.fn(),
@@ -51,7 +56,7 @@ const publishedOverview = {
 }
 
 describe('LocalGovernmentsPage', () => {
-  it('guides users to state evidence without substituting for missing LGA evidence', async () => {
+  it('shows the governed LGA pipeline stage while preserving available state evidence', async () => {
     vi.mocked(getPublishedLgasForState).mockResolvedValue({
       data: null,
       error:
@@ -59,6 +64,24 @@ describe('LocalGovernmentsPage', () => {
     })
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
+      error: null,
+    })
+    vi.mocked(getLgaPublicationStatus).mockResolvedValue({
+      data: {
+        state_name: 'Lagos',
+        state_code: 'LA',
+        stage: 'awaiting_review',
+        reporting_label: 'OAGF FAAC Disbursement - June 2026',
+        disbursement_month: '2026-06-01',
+        source_format: 'excel',
+        original_filename: 'Table-IV-June-2026.xlsx',
+        source_sha256: hash,
+        record_count: 774,
+        expected_record_count: 774,
+        blocking_count: 0,
+        message:
+          'The complete extraction is staged for human review before four-eyes publication.',
+      },
       error: null,
     })
 
@@ -70,9 +93,13 @@ describe('LocalGovernmentsPage', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'Published LGA evidence unavailable',
+        name: 'LGA evidence publication status',
       }),
     ).toBeVisible()
+    expect(screen.getByText('Awaiting human review')).toBeVisible()
+    expect(screen.getByText('774/774')).toBeVisible()
+    expect(screen.getByText('XLSX', { exact: false })).toBeVisible()
+    expect(screen.getByText('Table-IV-June-2026.xlsx')).toBeVisible()
     expect(
       screen.getByRole('heading', { name: 'Available state evidence' }),
     ).toBeVisible()
