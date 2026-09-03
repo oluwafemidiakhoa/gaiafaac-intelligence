@@ -15,10 +15,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI
-    ? [
-        ['github'],
-        ['html', { open: 'never' }],
-      ]
+    ? [['github'], ['html', { open: 'never' }]]
     : [['list']],
   use: {
     baseURL: 'http://127.0.0.1:3000',
@@ -33,8 +30,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command:
-      'npm run dev --workspace @gaiafaac/web -- --hostname 127.0.0.1',
+    command: 'npm run dev --workspace @gaiafaac/web -- --hostname 127.0.0.1',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

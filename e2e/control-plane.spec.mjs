@@ -11,7 +11,9 @@ const productRoutes = [
 ]
 
 test.describe('Gaia Control Plane', () => {
-  test('keeps the full product navigation visible on desktop', async ({ page }) => {
+  test('keeps the full product navigation visible on desktop', async ({
+    page,
+  }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     const primaryNavigation = page.getByRole('navigation', {
@@ -26,32 +28,35 @@ test.describe('Gaia Control Plane', () => {
       ).toHaveAttribute('href', href)
     }
 
-    await expect(page.getByRole('link', { name: 'Pricing' }).first()).toHaveAttribute(
-      'href',
-      '/pricing',
-    )
-    await expect(page.getByRole('link', { name: 'Account' }).first()).toHaveAttribute(
-      'href',
-      '/account',
-    )
+    await expect(
+      page.getByRole('link', { name: 'Pricing' }).first(),
+    ).toHaveAttribute('href', '/pricing')
+    await expect(
+      page.getByRole('link', { name: 'Account' }).first(),
+    ).toHaveAttribute('href', '/account')
 
     await expect(page.locator('header')).toHaveCount(1)
   })
 
   for (const [path, label] of productRoutes) {
-    test(`${label} route renders without a server failure`, async ({ page }) => {
+    test(`${label} route renders without a server failure`, async ({
+      page,
+    }) => {
       const response = await page.goto(path, { waitUntil: 'domcontentloaded' })
 
       expect(response, `${path} should return an HTTP response`).not.toBeNull()
-      expect(response.status(), `${path} should not be a 5xx response`).toBeLessThan(
-        500,
-      )
+      expect(
+        response.status(),
+        `${path} should not be a 5xx response`,
+      ).toBeLessThan(500)
       await expect(page.locator('body')).toBeVisible()
       await expect(page.locator('header')).toHaveCount(1)
     })
   }
 
-  test('Review remains a first-class evidence-control surface', async ({ page }) => {
+  test('Review remains a first-class evidence-control surface', async ({
+    page,
+  }) => {
     await page.goto('/review', { waitUntil: 'domcontentloaded' })
 
     await expect(
@@ -77,8 +82,16 @@ test.describe('Gaia Control Plane', () => {
     await expect(page.locator('h1').first()).toBeVisible()
   })
 
-  test('critical desktop surfaces do not overflow horizontally', async ({ page }) => {
-    for (const path of ['/', '/terminal', '/fiscal-pulse', '/review', '/pricing']) {
+  test('critical desktop surfaces do not overflow horizontally', async ({
+    page,
+  }) => {
+    for (const path of [
+      '/',
+      '/terminal',
+      '/fiscal-pulse',
+      '/review',
+      '/pricing',
+    ]) {
       await page.goto(path, { waitUntil: 'domcontentloaded' })
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - window.innerWidth,
@@ -95,7 +108,9 @@ test.describe('Gaia Control Plane mobile navigation', () => {
     isMobile: true,
   })
 
-  test('mobile menu preserves product and commercial navigation', async ({ page }) => {
+  test('mobile menu preserves product and commercial navigation', async ({
+    page,
+  }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     await page.getByText('Menu', { exact: true }).click()
 
@@ -111,7 +126,11 @@ test.describe('Gaia Control Plane mobile navigation', () => {
       ).toBeVisible()
     }
 
-    await expect(page.getByRole('link', { name: 'Pricing', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Account', exact: true })).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: 'Pricing', exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: 'Account', exact: true }),
+    ).toBeVisible()
   })
 })
