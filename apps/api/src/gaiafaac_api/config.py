@@ -48,19 +48,21 @@ class Settings(BaseSettings):
     stripe_price_team: str = ""
     stripe_price_api: str = ""
 
-    # Payment processing (Paystack). Empty values keep billing features disabled.
+    # Paystack is the primary Naira checkout path. Prices are expressed in Naira;
+    # Paystack receives them in kobo during transaction initialization.
     paystack_public_key: str = ""
     paystack_secret_key: str = ""
     paystack_webhook_secret: str = ""
     paystack_sandbox_mode: bool = False
+    paystack_price_analyst: int = Field(default=50_000, ge=100)
+    paystack_price_team: int = Field(default=200_000, ge=100)
+    paystack_price_api: int = Field(default=300_000, ge=100)
 
     # Invoice delivery (Zoho Mail).
     zoho_sender_email: str = ""
     zoho_sender_password: str = ""
 
     # Durable retention for collected source documents (S3-compatible object storage).
-    # Empty values keep archive pipelines failing closed rather than writing to an
-    # ephemeral local/CI filesystem the deployed service can never read back.
     source_archive_bucket: str = ""
     source_archive_endpoint: str = ""
     source_archive_access_key_id: str = ""
