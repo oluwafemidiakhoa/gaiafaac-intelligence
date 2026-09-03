@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import sessionmaker
 
 from gaiafaac_api.api.v1.router import router as api_v1_router
 from gaiafaac_api.config import get_settings
+from gaiafaac_api.database.base import engine
+from gaiafaac_api.middleware import UsageTrackingMiddleware
 
 
 def create_app() -> FastAPI:
@@ -23,6 +26,10 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["Accept", "Content-Type"],
     )
+
+    SessionLocal = sessionmaker(bind=engine)
+    application.add_middleware(UsageTrackingMiddleware, session_factory=SessionLocal)
+
     application.include_router(api_v1_router)
 
     @application.get("/", include_in_schema=False)

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from gaiafaac_api.api.v1.routes.account import router as account_router
 from gaiafaac_api.api.v1.routes.analytics import router as analytics_router
 from gaiafaac_api.api.v1.routes.billing import router as billing_router
+from gaiafaac_api.api.v1.routes.billing_dashboard import router as billing_dashboard_router
 from gaiafaac_api.api.v1.routes.commercial import router as commercial_router
 from gaiafaac_api.api.v1.routes.data_api import router as data_api_router
 from gaiafaac_api.api.v1.routes.demo_data import router as demo_data_router
@@ -36,6 +37,7 @@ router.include_router(data_api_router)
 router.include_router(commercial_router)
 router.include_router(account_router)
 router.include_router(billing_router)
+router.include_router(billing_dashboard_router)
 router.include_router(watchlists_router)
 router.include_router(evidence_rooms_router)
 router.include_router(webhook_router)
