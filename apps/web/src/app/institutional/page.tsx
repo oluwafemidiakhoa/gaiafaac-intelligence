@@ -6,6 +6,7 @@ import {
   FileCheck2,
   Landmark,
   ShieldCheck,
+  Workflow,
 } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -50,199 +51,169 @@ const evidenceModel = [
 
 export default function InstitutionalPage() {
   return (
-    <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <section className="grid gap-10 border-b border-teal-900/10 pb-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-        <div className="max-w-4xl">
-          <p className="font-mono text-xs font-semibold tracking-[0.18em] text-teal-700 uppercase">
-            Institutional intelligence
-          </p>
-          <h1
-            className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-balance text-teal-950 sm:text-5xl lg:text-6xl"
-            style={{ fontFamily: 'Georgia, serif' }}
-          >
-            Nigerian fiscal evidence, organized for serious financial decisions.
-          </h1>
-          <p className="mt-6 max-w-3xl text-base leading-8 text-teal-700 sm:text-lg">
-            Nigeria publishes critical fiscal information across many agencies,
-            reports and formats. Gaia Fiscal Intelligence is building the
-            governed evidence layer that brings those records into one
-            traceable, comparable and decision-ready system.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" className="bg-teal-900 hover:bg-teal-800">
-              <Link href="/terminal">
-                Open Gaia Terminal
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-teal-900 text-teal-900 hover:bg-teal-50"
-            >
-              <Link href="/gaia-analyst">Ask Gaia</Link>
-            </Button>
+    <div className="pb-8">
+      <section className="relative overflow-hidden border-b border-white/8 bg-[#041915] text-white">
+        <div className="absolute top-0 right-0 size-[34rem] rounded-full bg-emerald-300/[0.06] blur-3xl" />
+        <div className="gaia-shell relative grid gap-12 py-16 lg:grid-cols-[1.08fr_.92fr] lg:items-center lg:py-24">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/15 bg-amber-200/[0.06] px-3 py-1.5">
+              <Landmark className="size-3.5 text-amber-300" />
+              <span className="font-mono text-[0.65rem] font-bold tracking-[0.18em] text-amber-100 uppercase">
+                Institutional / Decision infrastructure
+              </span>
+            </div>
+            <h1 className="mt-6 max-w-[13ch] text-5xl leading-[0.96] font-semibold tracking-[-0.06em] text-balance sm:text-6xl lg:text-7xl">
+              Public finance evidence built for capital decisions.
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-emerald-50/65">
+              Gaia turns fragmented official fiscal records into a governed
+              evidence layer banks, investors, advisers and public institutions
+              can inspect, compare, monitor and defend.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild size="lg" className="rounded-full bg-amber-300 font-bold text-teal-950 hover:bg-amber-200">
+                <Link href="/pilot">
+                  Start institutional pilot <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-full border-white/15 bg-white/[0.04] text-white hover:bg-white/[0.08] hover:text-white">
+                <Link href="/terminal">Open Control Plane</Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="gaia-panel-dark overflow-hidden p-6 sm:p-8">
+            <p className="font-mono text-[0.64rem] font-semibold tracking-[0.18em] text-emerald-200/45 uppercase">
+              The commercial product
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">
+              Not the public data. The governed infrastructure around it.
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-white/55">
+              Provenance, verification, structured history, monitoring,
+              comparison, evidence-bound AI and institutional delivery turn
+              public records into usable decision infrastructure.
+            </p>
+            <div className="mt-7 grid grid-cols-2 gap-3">
+              {[
+                ['Evidence', 'Source-linked'],
+                ['Publication', 'Review-gated'],
+                ['Delivery', 'API + workspace'],
+                ['Decision', 'Auditable'],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                  <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">{label}</p>
+                  <p className="mt-2 text-sm font-semibold text-emerald-100">{value}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="rounded-xl border-2 border-amber-400 bg-teal-900 text-white shadow-xl">
-          <div className="p-6">
-            <ShieldCheck className="size-6 text-amber-300" aria-hidden="true" />
-            <h3 className="pt-3 text-2xl font-semibold">
-              The product is not the public data.
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-amber-50/75">
-              The value is the governed infrastructure around it: provenance,
-              verification, structured history, monitoring, comparison and
-              institutional delivery.
-            </p>
-            <p className="mt-4 text-sm leading-7 text-amber-50">
-              A decision-maker should be able to move from a fiscal signal to
-              the exact source document and know what was published, when it was
-              reviewed, and whether the evidence changed later.
+      <div className="gaia-shell gaia-section">
+        <section className="grid gap-8 lg:grid-cols-[.72fr_1.28fr] lg:items-start">
+          <div>
+            <p className="gaia-kicker">Institutional wedge</p>
+            <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em] text-balance">
+              Public does not mean decision-ready.
+            </h2>
+            <p className="text-muted-foreground mt-5 text-base leading-8">
+              FAAC allocations, state IGR, debt records, macroeconomic releases
+              and tax evidence can be public while still being costly to collect,
+              reconcile, monitor and defend inside a serious institution.
             </p>
           </div>
-        </div>
-      </section>
 
-      <section className="py-12">
-        <div className="max-w-3xl">
-          <p className="font-mono text-xs font-semibold tracking-[0.16em] text-teal-700 uppercase">
-            The problem
-          </p>
-          <h2
-            className="mt-3 text-3xl font-semibold tracking-tight text-teal-950"
-            style={{ fontFamily: 'Georgia, serif' }}
-          >
-            Public does not automatically mean decision-ready.
-          </h2>
-          <p className="mt-4 text-base leading-8 text-teal-700">
-            FAAC allocations, state IGR, debt records, macroeconomic releases
-            and tax evidence can be public while still being expensive to
-            collect, reconcile, monitor and defend inside a serious institution.
-            Gaia is designed to reduce that evidence burden without hiding
-            uncertainty or inventing missing values.
-          </p>
-        </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {useCases.map(({ icon: Icon, title, description }) => (
+              <article key={title} className="gaia-panel group p-6 transition hover:-translate-y-1">
+                <div className="flex size-11 items-center justify-center rounded-2xl border border-primary/10 bg-primary/[0.07]">
+                  <Icon className="text-primary size-5" />
+                </div>
+                <h3 className="mt-7 text-lg font-semibold tracking-tight">{title}</h3>
+                <p className="text-muted-foreground mt-3 text-sm leading-7">{description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {useCases.map(({ icon: Icon, title, description }) => (
-            <div
-              key={title}
-              className="rounded-lg border-2 border-teal-200 bg-white p-6 transition-shadow hover:shadow-lg"
-            >
-              <Icon className="size-6 text-teal-900" aria-hidden="true" />
-              <h3 className="pt-3 text-lg font-semibold text-teal-950">
-                {title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-teal-700">
-                {description}
+        <section className="mt-12 overflow-hidden rounded-3xl border border-white/8 bg-[#061d19] text-white shadow-[0_25px_80px_rgba(0,0,0,.15)]">
+          <div className="grid lg:grid-cols-[.8fr_1.2fr]">
+            <div className="border-b border-white/10 p-7 lg:border-r lg:border-b-0 lg:p-9">
+              <FileCheck2 className="size-6 text-amber-300" />
+              <p className="mt-6 font-mono text-[0.65rem] font-semibold tracking-[0.18em] text-amber-200/55 uppercase">
+                Evidence architecture
+              </p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">
+                Every governed number carries a defensible path.
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-white/55">
+                Collection, extraction, validation, review and publication stay
+                separate. Missing evidence remains unavailable instead of being
+                silently estimated.
               </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-8 rounded-2xl border-2 border-amber-300 bg-teal-950 p-6 text-white sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-        <div>
-          <FileCheck2 className="size-6 text-amber-300" aria-hidden="true" />
-          <p className="mt-5 font-mono text-xs font-semibold tracking-[0.16em] text-amber-300 uppercase">
-            Evidence model
-          </p>
-          <h2
-            className="mt-3 text-3xl font-semibold tracking-tight"
-            style={{ fontFamily: 'Georgia, serif' }}
-          >
-            Every governed number should have a defensible evidence trail.
-          </h2>
-          <p className="mt-4 text-sm leading-7 text-amber-50/75">
-            Gaia separates collection, extraction, validation, review and
-            publication. Missing evidence remains unavailable rather than being
-            silently estimated.
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {evidenceModel.map((item, index) => (
-            <div
-              key={item}
-              className="rounded-lg border border-amber-400/20 bg-white/5 p-4"
-            >
-              <p className="font-mono text-xs font-semibold text-amber-300">
-                0{index + 1}
-              </p>
-              <p className="mt-2 text-sm leading-6 font-medium text-amber-50">
-                {item}
-              </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3">
+              {evidenceModel.map((item, index) => (
+                <div key={item} className="border-t border-white/10 p-6 first:border-t-0 sm:border-l sm:first:border-l-0 lg:[&:nth-child(-n+3)]:border-t-0">
+                  <p className="font-mono text-xs font-semibold text-amber-300">0{index + 1}</p>
+                  <p className="mt-7 text-sm leading-6 font-medium text-white/75">{item}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section className="py-12">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border-2 border-teal-200 bg-white p-6">
-            <DatabaseZap className="size-6 text-teal-900" aria-hidden="true" />
-            <h3 className="pt-3 text-2xl font-semibold text-teal-950">
-              What institutions can buy
-            </h3>
-            <p className="mt-2 text-sm text-teal-700">
+        <section className="mt-12 grid gap-5 lg:grid-cols-2">
+          <div className="gaia-panel p-7 sm:p-8">
+            <DatabaseZap className="text-primary size-6" />
+            <p className="gaia-kicker mt-6">Commercial layer</p>
+            <h3 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">What institutions can buy</h3>
+            <p className="text-muted-foreground mt-4 text-sm leading-7">
               Commercial value comes from the governed layer around public
               evidence—not ownership of government records.
             </p>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-teal-800">
-              <li>
-                ✓ Institutional fiscal monitoring and executive intelligence
-              </li>
-              <li>
-                ✓ Historical evidence, governed exports and decision packets
-              </li>
-              <li>✓ Higher-volume data and API delivery</li>
-              <li>✓ Organization workspaces and custom evidence workflows</li>
-              <li>
-                ✓ Research support, integration and permitted downstream use
-              </li>
+            <ul className="mt-6 grid gap-3 text-sm leading-6">
+              {[
+                'Institutional fiscal monitoring and executive intelligence',
+                'Historical evidence, governed exports and decision packets',
+                'Higher-volume data and API delivery',
+                'Organization workspaces and custom evidence workflows',
+                'Research support, integration and permitted downstream use',
+              ].map((item) => (
+                <li key={item} className="flex gap-3">
+                  <ShieldCheck className="text-primary mt-0.5 size-4 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
+            <Button asChild className="mt-7">
+              <Link href="/pricing">See commercial access</Link>
+            </Button>
           </div>
 
-          <div className="rounded-lg border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-white p-6">
-            <ShieldCheck className="size-6 text-teal-900" aria-hidden="true" />
-            <h3 className="pt-3 text-2xl font-semibold text-teal-950">
-              Start by verifying it yourself
-            </h3>
-            <p className="mt-2 text-sm text-teal-700">
-              The strongest introduction to Gaia is not a pitch deck. It is the
-              live evidence, the source registry and an answer you can trace
-              back to its records.
+          <div className="overflow-hidden rounded-3xl border border-amber-300/40 bg-amber-100/60 p-7 dark:bg-amber-300/[0.07] sm:p-8">
+            <Workflow className="size-6 text-amber-800 dark:text-amber-300" />
+            <p className="mt-6 font-mono text-[0.65rem] font-bold tracking-[0.18em] text-amber-900/60 uppercase dark:text-amber-200/60">
+              Proof before pitch
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button
-                asChild
-                size="sm"
-                className="bg-teal-900 hover:bg-teal-800"
-              >
-                <Link href="/terminal">Open Terminal</Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="border-teal-900 text-teal-900"
-              >
-                <Link href="/sources">Inspect evidence</Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="border-teal-900 text-teal-900"
-              >
-                <Link href="/pricing">See commercial access</Link>
-              </Button>
+            <h3 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">
+              Let the institution verify Gaia before buying Gaia.
+            </h3>
+            <p className="text-muted-foreground mt-4 text-sm leading-7">
+              The strongest introduction is the live evidence, the source
+              registry, the review protocol and an answer that can be traced back
+              to official records.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-2">
+              <Button asChild><Link href="/terminal">Open Terminal</Link></Button>
+              <Button asChild variant="outline"><Link href="/sources">Inspect evidence</Link></Button>
+              <Button asChild variant="outline"><Link href="/review">See review controls</Link></Button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   )
 }
