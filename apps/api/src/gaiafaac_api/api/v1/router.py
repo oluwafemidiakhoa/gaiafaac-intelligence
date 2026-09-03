@@ -18,6 +18,7 @@ from gaiafaac_api.api.v1.routes.institutional_decisions import (
     router as institutional_decisions_router,
 )
 from gaiafaac_api.api.v1.routes.institutional_webhooks import router as webhook_router
+from gaiafaac_api.api.v1.routes.lga_status import router as lga_status_router
 from gaiafaac_api.api.v1.routes.national_distribution import (
     router as national_distribution_router,
 )
@@ -37,6 +38,7 @@ router.include_router(temporal_router)
 router.include_router(demo_data_router)
 router.include_router(analytics_router)
 router.include_router(published_data_router)
+router.include_router(lga_status_router)
 router.include_router(national_distribution_router)
 router.include_router(data_api_router)
 router.include_router(commercial_router)
