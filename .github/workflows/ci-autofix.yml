@@ -30,7 +30,7 @@ jobs:
           python -m pip install -e "apps/api[dev,extraction]"
           npm ci
 
-      - name: Align Ruff policy and fix correctness regression
+      - name: Align Ruff policy and fix correctness regressions
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -50,6 +50,13 @@ jobs:
           if old_status not in source:
               raise SystemExit("Expected subscription status expression not found")
           model.write_text(source.replace(old_status, new_status, 1))
+
+          subscriptions = Path("apps/api/src/gaiafaac_api/api/routes/subscriptions.py")
+          source = subscriptions.read_text()
+          old_key_hash = '    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()\n'
+          if old_key_hash not in source:
+              raise SystemExit("Expected unused key_hash assignment not found")
+          subscriptions.write_text(source.replace(old_key_hash, "", 1))
           PY
 
       - name: Apply safe API fixes and formatting
@@ -72,18 +79,6 @@ jobs:
           python -m ruff check apps/api
           npm run format
 
-      - name: Commit repair
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/api apps/web
-          if git diff --cached --quiet; then
-            echo "No repair changes to commit"
-          else
-            git commit -m "fix(ci): apply Ruff safe fixes and web formatting"
-            git push origin HEAD:main
-          fi
-
       - name: API tests
         run: python -m pytest apps/api/tests
 
@@ -98,3 +93,15 @@ jobs:
 
       - name: Web build
         run: npm run build
+
+      - name: Commit verified repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api apps/web
+          if git diff --cached --quiet; then
+            echo "No repair changes to commit"
+          else
+            git commit -m "fix(ci): apply verified lint and formatting repair"
+            git push origin HEAD:main
+          fi
