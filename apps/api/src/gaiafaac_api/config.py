@@ -48,6 +48,16 @@ class Settings(BaseSettings):
     stripe_price_team: str = ""
     stripe_price_api: str = ""
 
+    # Payment processing (Paystack). Empty values keep billing features disabled.
+    paystack_public_key: str = ""
+    paystack_secret_key: str = ""
+    paystack_webhook_secret: str = ""
+    paystack_sandbox_mode: bool = False
+
+    # Invoice delivery (Zoho Mail).
+    zoho_sender_email: str = ""
+    zoho_sender_password: str = ""
+
     # Durable retention for collected source documents (S3-compatible object storage).
     # Empty values keep archive pipelines failing closed rather than writing to an
     # ephemeral local/CI filesystem the deployed service can never read back.
@@ -75,6 +85,11 @@ class Settings(BaseSettings):
         "stripe_price_analyst",
         "stripe_price_team",
         "stripe_price_api",
+        "paystack_public_key",
+        "paystack_secret_key",
+        "paystack_webhook_secret",
+        "zoho_sender_email",
+        "zoho_sender_password",
         "source_archive_bucket",
         "source_archive_endpoint",
         "source_archive_access_key_id",
