@@ -33,26 +33,21 @@ jobs:
       - name: Apply canonical formatters
         run: |
           python -m ruff format apps/api
-          npx prettier --write apps/web/src/app/pricing/page.tsx .github/workflows/ci.yml
-
-      - name: Move CI web runtime to Node 24
-        run: |
-          sed -i "s/node-version: 20/node-version: 24/g" .github/workflows/ci.yml
-          npx prettier --write .github/workflows/ci.yml
+          npx prettier --write apps/web/src/app/pricing/page.tsx
 
       - name: Verify formatter gates
         run: |
           python -m ruff format --check apps/api
-          npx prettier --check apps/web/src/app/pricing/page.tsx .github/workflows/ci.yml
+          npx prettier --check apps/web/src/app/pricing/page.tsx
 
-      - name: Commit formatted changes
+      - name: Commit formatted source changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/api/src/gaiafaac_api/api/v1/routes/billing.py apps/web/src/app/pricing/page.tsx .github/workflows/ci.yml
+          git add apps/api/src/gaiafaac_api/api/v1/routes/billing.py apps/web/src/app/pricing/page.tsx
           if git diff --cached --quiet; then
             echo "No formatting changes required"
           else
-            git commit -m "chore(ci): format monetization changes and use Node 24"
+            git commit -m "chore: format monetization changes"
             git push origin HEAD:fix/production-paystack-monetization
           fi
