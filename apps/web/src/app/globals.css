@@ -23,34 +23,34 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(0.97 0.002 100);
-  --foreground: oklch(0.15 0.015 220);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.015 220);
-  --primary: oklch(0.35 0.08 220);
-  --primary-foreground: oklch(0.97 0.002 100);
-  --accent: oklch(0.7 0.15 60);
-  --accent-foreground: oklch(0.15 0.015 220);
-  --muted: oklch(0.96 0.004 100);
-  --muted-foreground: oklch(0.5 0.02 220);
-  --border: oklch(0.88 0.008 220);
-  --ring: oklch(0.35 0.08 220);
+  --radius: 0.9rem;
+  --background: oklch(0.975 0.004 175);
+  --foreground: oklch(0.16 0.028 190);
+  --card: oklch(0.995 0.003 175);
+  --card-foreground: oklch(0.16 0.028 190);
+  --primary: oklch(0.31 0.09 180);
+  --primary-foreground: oklch(0.98 0.006 175);
+  --accent: oklch(0.82 0.15 90);
+  --accent-foreground: oklch(0.18 0.03 180);
+  --muted: oklch(0.95 0.008 175);
+  --muted-foreground: oklch(0.48 0.025 185);
+  --border: oklch(0.88 0.016 180);
+  --ring: oklch(0.48 0.11 180);
 }
 
 .dark {
-  --background: oklch(0.12 0.01 220);
-  --foreground: oklch(0.95 0.005 100);
-  --card: oklch(0.18 0.012 220);
-  --card-foreground: oklch(0.95 0.005 100);
-  --primary: oklch(0.55 0.1 220);
-  --primary-foreground: oklch(0.12 0.01 220);
-  --accent: oklch(0.75 0.12 60);
-  --accent-foreground: oklch(0.12 0.01 220);
-  --muted: oklch(0.25 0.008 220);
-  --muted-foreground: oklch(0.7 0.02 100);
-  --border: oklch(0.3 0.012 220);
-  --ring: oklch(0.55 0.1 220);
+  --background: oklch(0.115 0.025 180);
+  --foreground: oklch(0.95 0.008 170);
+  --card: oklch(0.155 0.03 180);
+  --card-foreground: oklch(0.95 0.008 170);
+  --primary: oklch(0.73 0.13 165);
+  --primary-foreground: oklch(0.12 0.025 180);
+  --accent: oklch(0.83 0.15 90);
+  --accent-foreground: oklch(0.12 0.025 180);
+  --muted: oklch(0.205 0.025 180);
+  --muted-foreground: oklch(0.7 0.025 175);
+  --border: oklch(0.27 0.025 180);
+  --ring: oklch(0.66 0.12 165);
 }
 
 @layer base {
@@ -63,6 +63,51 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 8% -5%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 30%),
+      linear-gradient(to right, color-mix(in oklab, var(--border) 16%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--border) 14%, transparent) 1px, transparent 1px);
+    background-size: auto, 44px 44px, 44px 44px;
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--accent) 55%, transparent);
+    color: var(--foreground);
+  }
+}
+
+@layer components {
+  .gaia-shell {
+    @apply mx-auto w-full max-w-[1440px] px-5 lg:px-8;
+  }
+
+  .gaia-section {
+    @apply py-12 lg:py-16;
+  }
+
+  .gaia-panel {
+    @apply border-border/80 bg-card/92 rounded-2xl border shadow-[0_18px_55px_rgba(3,44,39,0.07)] backdrop-blur-xl;
+  }
+
+  .gaia-panel-dark {
+    @apply rounded-2xl border border-white/10 bg-[#08211d] text-white shadow-[0_22px_70px_rgba(0,0,0,0.22)];
+  }
+
+  .gaia-kicker {
+    @apply text-primary font-mono text-[0.68rem] font-bold tracking-[0.22em] uppercase;
+  }
+
+  .gaia-display {
+    @apply text-4xl font-semibold tracking-[-0.045em] text-balance sm:text-5xl lg:text-6xl;
+  }
+
+  .gaia-data-label {
+    @apply text-muted-foreground font-mono text-[0.66rem] font-semibold tracking-[0.16em] uppercase;
+  }
+
+  .gaia-data-value {
+    @apply font-mono text-2xl font-semibold tracking-[-0.03em];
   }
 }
