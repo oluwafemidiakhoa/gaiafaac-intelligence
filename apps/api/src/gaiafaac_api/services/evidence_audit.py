@@ -8,9 +8,6 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.ledger_models import FiscalClaim
-from gaiafaac_api.database.igr_models import IGRReport
-from gaiafaac_api.database.debt_models import DebtRecord
-from gaiafaac_api.database.lga_models import LGAAllocation
 
 
 class DataIntegrityIssue(str, Enum):
