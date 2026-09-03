@@ -19,11 +19,23 @@ from gaiafaac_api.pipeline.errors import ApprovalError
 from gaiafaac_api.pipeline.nbs_igr.approval import approve_igr_source, publish_igr_source
 
 
-def _reviewer(session) -> User:
+def _reviewer(session, *, email: str = "igr-reviewer@example.com") -> User:
     user = User(
-        email="igr-reviewer@example.com",
+        email=email,
         full_name="NBS IGR Reviewer",
         role=UserRole.REVIEWER,
+        is_active=True,
+    )
+    session.add(user)
+    session.flush()
+    return user
+
+
+def _administrator(session, *, email: str = "igr-publisher@example.com") -> User:
+    user = User(
+        email=email,
+        full_name="NBS IGR Administrator",
+        role=UserRole.ADMINISTRATOR,
         is_active=True,
     )
     session.add(user)
@@ -117,19 +129,20 @@ def test_approve_igr_source_human_verifies_without_publishing(session):
 
 
 def test_publish_igr_source_requires_prior_approval(session):
-    reviewer = _reviewer(session)
+    administrator = _administrator(session)
     source = _staged_source(session)
 
     with pytest.raises(ApprovalError, match="Only approved NBS IGR sources"):
         publish_igr_source(
             session,
             source_document_id=source.id,
-            reviewer_id=reviewer.id,
+            reviewer_id=administrator.id,
         )
 
 
 def test_publish_igr_source_creates_verified_governed_claims(session):
     reviewer = _reviewer(session)
+    administrator = _administrator(session)
     source = _staged_source(session)
     approve_igr_source(
         session,
@@ -140,7 +153,7 @@ def test_publish_igr_source_creates_verified_governed_claims(session):
     result = publish_igr_source(
         session,
         source_document_id=source.id,
-        reviewer_id=reviewer.id,
+        reviewer_id=administrator.id,
     )
     claims = list(
         session.scalars(
@@ -163,3 +176,32 @@ def test_publish_igr_source_creates_verified_governed_claims(session):
     assert {claim.fiscal_period for claim in claims} == {"2023"}
     assert {claim.currency for claim in claims} == {"NGN"}
     assert all(record.is_published for record in records)
+
+
+def test_publish_igr_source_requires_an_administrator(session):
+    reviewer = _reviewer(session)
+    other_reviewer = _reviewer(session, email="second-igr-reviewer@example.com")
+    source = _staged_source(session)
+    approve_igr_source(session, source_document_id=source.id, reviewer_id=reviewer.id)
+
+    with pytest.raises(ApprovalError, match="requires an active administrator"):
+        publish_igr_source(
+            session,
+            source_document_id=source.id,
+            reviewer_id=other_reviewer.id,
+        )
+
+
+def test_publish_igr_source_rejects_the_same_actor_as_reviewer(session):
+    reviewer = _reviewer(session)
+    reviewer.role = UserRole.ADMINISTRATOR
+    session.flush()
+    source = _staged_source(session)
+    approve_igr_source(session, source_document_id=source.id, reviewer_id=reviewer.id)
+
+    with pytest.raises(ApprovalError, match="cannot publish the same source"):
+        publish_igr_source(
+            session,
+            source_document_id=source.id,
+            reviewer_id=reviewer.id,
+        )

@@ -19,11 +19,23 @@ from gaiafaac_api.pipeline.dmo.archive import DMO_ORGANIZATION
 from gaiafaac_api.pipeline.errors import ApprovalError
 
 
-def _reviewer(session) -> User:
+def _reviewer(session, *, email: str = "reviewer@example.com") -> User:
     user = User(
-        email="reviewer@example.com",
+        email=email,
         full_name="DMO Reviewer",
         role=UserRole.REVIEWER,
+        is_active=True,
+    )
+    session.add(user)
+    session.flush()
+    return user
+
+
+def _administrator(session, *, email: str = "publisher@example.com") -> User:
+    user = User(
+        email=email,
+        full_name="DMO Administrator",
+        role=UserRole.ADMINISTRATOR,
         is_active=True,
     )
     session.add(user)
@@ -110,6 +122,7 @@ def test_approve_debt_source_human_verifies_without_publishing(session):
 
 def test_publish_debt_source_creates_verified_governed_claims(session):
     reviewer = _reviewer(session)
+    administrator = _administrator(session)
     source = _staged_source(session)
     approve_debt_source(
         session,
@@ -120,7 +133,7 @@ def test_publish_debt_source_creates_verified_governed_claims(session):
     result = publish_debt_source(
         session,
         source_document_id=source.id,
-        reviewer_id=reviewer.id,
+        reviewer_id=administrator.id,
     )
     claims = list(
         session.scalars(
@@ -142,3 +155,32 @@ def test_publish_debt_source_creates_verified_governed_claims(session):
     assert len(claims) == 37
     assert {claim.currency for claim in claims} == {"NGN"}
     assert all(record.is_published for record in records)
+
+
+def test_publish_debt_source_requires_an_administrator(session):
+    reviewer = _reviewer(session)
+    other_reviewer = _reviewer(session, email="second-reviewer@example.com")
+    source = _staged_source(session)
+    approve_debt_source(session, source_document_id=source.id, reviewer_id=reviewer.id)
+
+    with pytest.raises(ApprovalError, match="requires an active administrator"):
+        publish_debt_source(
+            session,
+            source_document_id=source.id,
+            reviewer_id=other_reviewer.id,
+        )
+
+
+def test_publish_debt_source_rejects_the_same_actor_as_reviewer(session):
+    reviewer = _reviewer(session)
+    reviewer.role = UserRole.ADMINISTRATOR
+    session.flush()
+    source = _staged_source(session)
+    approve_debt_source(session, source_document_id=source.id, reviewer_id=reviewer.id)
+
+    with pytest.raises(ApprovalError, match="cannot publish the same source"):
+        publish_debt_source(
+            session,
+            source_document_id=source.id,
+            reviewer_id=reviewer.id,
+        )
