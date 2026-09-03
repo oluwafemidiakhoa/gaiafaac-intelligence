@@ -53,9 +53,11 @@ def get_organization_id_from_request(request) -> str:
 @router.get("/pricing", response_model=PricingPageResponse)
 async def get_pricing_tiers(session: Session = Depends(get_session)):
     """Get available subscription tiers and pricing"""
-    tiers = session.execute(
-        select(SubscriptionTier).order_by(SubscriptionTier.price_naira)
-    ).scalars().all()
+    tiers = (
+        session.execute(select(SubscriptionTier).order_by(SubscriptionTier.price_naira))
+        .scalars()
+        .all()
+    )
 
     tier_infos = [
         SubscriptionTierInfo(
@@ -87,9 +89,7 @@ async def initiate_checkout(
 
     # Get tier
     tier = session.execute(
-        select(SubscriptionTier).where(
-            SubscriptionTier.name == request.tier_name.title()
-        )
+        select(SubscriptionTier).where(SubscriptionTier.name == request.tier_name.title())
     ).scalar_one_or_none()
 
     if not tier:
@@ -208,12 +208,16 @@ async def get_billing_dashboard(
     ).scalar_one_or_none()
 
     # Get payment history
-    payments = session.execute(
-        select(PaymentRecord)
-        .where(PaymentRecord.organization_id == organization_id)
-        .order_by(PaymentRecord.created_at.desc())
-        .limit(12)
-    ).scalars().all()
+    payments = (
+        session.execute(
+            select(PaymentRecord)
+            .where(PaymentRecord.organization_id == organization_id)
+            .order_by(PaymentRecord.created_at.desc())
+            .limit(12)
+        )
+        .scalars()
+        .all()
+    )
 
     payment_items = [
         PaymentHistoryItem(
@@ -228,9 +232,7 @@ async def get_billing_dashboard(
     ]
 
     # Calculate totals
-    total_paid = sum(
-        Decimal(str(p.amount_naira)) for p in payments if p.status == "success"
-    )
+    total_paid = sum(Decimal(str(p.amount_naira)) for p in payments if p.status == "success")
 
     next_payment = None
     if subscription and subscription.is_active():
@@ -238,9 +240,7 @@ async def get_billing_dashboard(
 
     return BillingDashboardResponse(
         subscription=(
-            SubscriptionStatusSchema.model_validate(subscription)
-            if subscription
-            else None
+            SubscriptionStatusSchema.model_validate(subscription) if subscription else None
         ),
         payment_history=payment_items,
         next_payment_date=next_payment,

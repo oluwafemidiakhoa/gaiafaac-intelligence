@@ -50,7 +50,9 @@ class SubscriptionTier(Base):
     price_naira: Mapped[int] = mapped_column(Integer, nullable=False)  # 0, 50000, 500000
     requests_per_month: Mapped[int] = mapped_column(Integer, nullable=False)
     exports_per_month: Mapped[int] = mapped_column(Integer, nullable=False)
-    features: Mapped[str] = mapped_column(String(500), nullable=False)  # JSON: ["watchlists", "alerts", "api"]
+    features: Mapped[str] = mapped_column(
+        String(500), nullable=False
+    )  # JSON: ["watchlists", "alerts", "api"]
     description: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -138,7 +140,9 @@ class PaymentRecord(Base):
     # Payment details
     paystack_transaction_id: Mapped[str | None] = mapped_column(String(100), unique=True)
     amount_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False)  # "success", "failed", "pending"
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # "success", "failed", "pending"
 
     # Invoice
     invoice_number: Mapped[str | None] = mapped_column(String(50), unique=True)
