@@ -5,7 +5,7 @@ import re
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.database.customer_models import OrganizationInvite, OrganizationMembership
@@ -29,11 +29,13 @@ def organization_slug(value: str) -> str:
 
 
 def active_subscription(session: Session, organization_id) -> Subscription | None:
+    now = datetime.now(UTC)
     return session.scalar(
         select(Subscription)
         .where(
             Subscription.organization_id == organization_id,
             Subscription.status.in_(_ACTIVE_SUBSCRIPTION_STATUSES),
+            or_(Subscription.current_period_end.is_(None), Subscription.current_period_end > now),
         )
         .order_by(Subscription.updated_at.desc())
     )
