@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { getPublishedAnalytics } from '@/lib/analytics-api'
-import { getNationalDistributionHistory } from '@/lib/national-distribution-api'
 import { getPublishedOverview } from '@/lib/published-api'
 import { publishedOverview } from '@/test/published-fixtures'
 
@@ -11,15 +10,12 @@ import Home from './page'
 vi.mock('@/lib/analytics-api', () => ({
   getPublishedAnalytics: vi.fn(),
 }))
-vi.mock('@/lib/national-distribution-api', () => ({
-  getNationalDistributionHistory: vi.fn(),
-}))
 vi.mock('@/lib/published-api', () => ({
   getPublishedOverview: vi.fn(),
 }))
 
 describe('Home', () => {
-  it('displays institutional homepage with fiscal metrics when data is available', async () => {
+  it('presents the premium governed-intelligence proposition when data is available', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
       error: null,
@@ -35,32 +31,32 @@ describe('Home', () => {
       },
       error: null,
     })
-    vi.mocked(getNationalDistributionHistory).mockResolvedValue({
-      data: [],
-      error: null,
-    })
 
     render(await Home())
 
     expect(
       screen.getByRole('heading', {
-        name: /Every fiscal number, traced to source/i,
+        name: /The intelligence layer for Nigeria's public money/i,
       }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Open live terminal/i }),
+    ).toHaveAttribute('href', '/terminal')
+    expect(
+      screen.getByRole('link', { name: /Request institutional pilot/i }),
+    ).toHaveAttribute('href', '/pilot')
+    expect(
+      screen.getByRole('heading', {
+        name: /From government PDFs to decision infrastructure/i,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Evidence Fabric')).toBeVisible()
+    expect(screen.getByText('Fiscal Intelligence')).toBeVisible()
+    expect(screen.getByText('Decision Rails')).toBeVisible()
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: /Request Access/i }),
-    ).toHaveAttribute('href', '/pricing')
-    expect(
-      screen.getByRole('heading', {
-        name: /Built for institutional confidence/i,
-      }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Unbroken Chain')).toBeVisible()
-    expect(screen.getByText('Four-Eyes Control')).toBeVisible()
   })
 
-  it('displays latest published total and coverage metrics', async () => {
+  it('renders governed metrics and institutional surfaces', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
       error: null,
@@ -76,20 +72,18 @@ describe('Home', () => {
       },
       error: null,
     })
-    vi.mocked(getNationalDistributionHistory).mockResolvedValue({
-      data: [],
-      error: null,
-    })
 
     render(await Home())
 
-    expect(screen.getByText('Latest Published Total')).toBeVisible()
-    expect(screen.getByText('Coverage')).toBeVisible()
-    expect(screen.getByText('Published Periods')).toBeVisible()
-    expect(screen.getByText('All Nigerian states and FCT')).toBeVisible()
+    expect(screen.getByText('Published capital signal')).toBeVisible()
+    expect(screen.getAllByText('Jurisdiction coverage')).toHaveLength(2)
+    expect(screen.getByText('Published periods')).toBeVisible()
+    expect(screen.getByText('Banks & lenders')).toBeVisible()
+    expect(screen.getByText('Investors & DFIs')).toBeVisible()
+    expect(screen.getByText('Auditors & governments')).toBeVisible()
   })
 
-  it('fails closed to an awaiting-publication state, inventing no totals', async () => {
+  it('fails closed without inventing fiscal totals', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: null,
       error: 'No published FAAC data is available yet.',
@@ -98,21 +92,14 @@ describe('Home', () => {
       data: null,
       error: 'Analytics are unavailable.',
     })
-    vi.mocked(getNationalDistributionHistory).mockResolvedValue({
-      data: [],
-      error: null,
-    })
 
     render(await Home())
 
-    expect(screen.getByText(/Awaiting publication/i)).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: /Research workspace unavailable/i }),
+      screen.getByText(/Research workspace unavailable/i),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Gaia Fiscal Intelligence does not synthesize replacement values/i,
-      ),
+      screen.getByText(/does not synthesize replacement values/i),
     ).toBeInTheDocument()
     expect(screen.queryByText('₦5,400.00')).not.toBeInTheDocument()
     expect(screen.queryByText('₦0.00')).not.toBeInTheDocument()
