@@ -10,17 +10,14 @@ export function MetricCard({
   detail: string
 }) {
   return (
-    <Card>
+    <Card className="group relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <CardHeader className="pb-3">
-        <CardTitle className="text-muted-foreground text-sm font-medium">
-          {label}
-        </CardTitle>
+        <CardTitle className="gaia-data-label">{label}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="font-mono text-2xl font-semibold tracking-tight">
-          {value}
-        </p>
-        <p className="text-muted-foreground mt-2 text-xs leading-5">{detail}</p>
+        <p className="gaia-data-value text-foreground">{value}</p>
+        <p className="text-muted-foreground mt-3 text-xs leading-5">{detail}</p>
       </CardContent>
     </Card>
   )
