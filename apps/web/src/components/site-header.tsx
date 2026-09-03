@@ -12,7 +12,7 @@ const navigation = [
   { href: '/live', label: 'Live data' },
   { href: '/fiscal-pulse', label: 'Intelligence' },
   { href: '/sources', label: 'Evidence' },
-  { href: '/review', label: 'Review' },
+  { href: '/pricing', label: 'Pricing' },
 ]
 
 export async function SiteHeader() {
@@ -97,6 +97,14 @@ export async function SiteHeader() {
           >
             <Link href="/pilot">Request Watch</Link>
           </Button>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+          >
+            <Link href="/account">Account</Link>
+          </Button>
           <ThemeToggle />
         </div>
 
@@ -116,6 +124,12 @@ export async function SiteHeader() {
                   {item.label}
                 </Link>
               ))}
+              <Link
+                href="/account"
+                className="rounded-md px-3 py-2 text-sm font-medium text-amber-50 transition-colors hover:bg-teal-800"
+              >
+                Account
+              </Link>
               <Link
                 href="/gaia-analyst"
                 className="rounded-md px-3 py-2 text-sm font-medium text-amber-50 transition-colors hover:bg-teal-800"
