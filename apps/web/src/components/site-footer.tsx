@@ -47,7 +47,7 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/review" className="text-muted-foreground hover:text-foreground transition">
+                <Link href="/audit-tools" className="text-muted-foreground hover:text-foreground transition">
                   Audit Tools
                 </Link>
               </li>
