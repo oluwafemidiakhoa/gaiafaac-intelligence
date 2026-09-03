@@ -8,7 +8,10 @@ from gaiafaac_api.database.session import create_database_engine, create_session
 from gaiafaac_api.pipeline.nbs_igr.approval import approve_igr_source, publish_igr_source
 from gaiafaac_api.pipeline.nbs_igr.archive import archive_nbs_igr_publications
 from gaiafaac_api.pipeline.nbs_igr.discovery import discover_nbs_igr_publications
-from gaiafaac_api.pipeline.nbs_igr.extract import extract_nbs_igr_source
+from gaiafaac_api.pipeline.nbs_igr.extract import (
+    extract_nbs_igr_source,
+    extract_pending_igr_sources,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,6 +31,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Extract one archived NBS IGR report into unpublished review records",
     )
     extract.add_argument("source_document_id", type=uuid.UUID)
+    commands.add_parser(
+        "extract-pending",
+        help="Extract every archived-but-unextracted NBS IGR source (never publishes)",
+    )
     approve = commands.add_parser(
         "approve-source",
         help="Human-approve one complete staged NBS IGR source without publishing claims",
@@ -113,6 +120,28 @@ def main() -> None:
                 sort_keys=True,
             )
         )
+        return
+    if args.command == "extract-pending":
+        with session_factory() as session:
+            outcomes = extract_pending_igr_sources(session)
+        print(
+            json.dumps(
+                [
+                    {
+                        "source_document_id": outcome.source_document_id,
+                        "status": outcome.status,
+                        "records_extracted": outcome.records_extracted,
+                        "total_amount": outcome.total_amount,
+                        "error": outcome.error,
+                    }
+                    for outcome in outcomes
+                ],
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        if any(outcome.status == "failed" for outcome in outcomes):
+            raise SystemExit(2)
         return
     if args.command == "approve-source":
         with session_factory() as session:
