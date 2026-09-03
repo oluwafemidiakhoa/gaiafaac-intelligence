@@ -22,7 +22,7 @@ class ExtractedLgaAllocation:
     vat_amount: Decimal | None
     total_net_allocation: Decimal
     originals: dict[str, str | None]
-    page: int
+    page: int | None
 
 
 @dataclass(frozen=True)
