@@ -31,7 +31,9 @@ export async function SiteHeader() {
               <>
                 {' '}
                 · Latest verified {formatDate(data.period.revenue_month)} ·{' '}
-                <span className="font-medium">{data.covered_states}/{data.expected_states} jurisdictions</span>
+                <span className="font-medium">
+                  {data.covered_states}/{data.expected_states} jurisdictions
+                </span>
               </>
             ) : (
               <> · Human review required before publication</>
@@ -39,7 +41,7 @@ export async function SiteHeader() {
           </p>
           <Link
             href="/sources"
-            className="shrink-0 font-medium text-amber-200 hover:text-amber-100 transition-colors"
+            className="shrink-0 font-medium text-amber-200 transition-colors hover:text-amber-100"
           >
             Evidence registry →
           </Link>
@@ -49,17 +51,17 @@ export async function SiteHeader() {
       <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-5 px-5 py-3 lg:px-8">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-3 group"
+          className="group flex shrink-0 items-center gap-3"
           aria-label="Gaia Fiscal Intelligence home"
         >
-          <div className="flex size-10 items-center justify-center rounded-lg bg-amber-400 text-teal-950 font-bold text-sm font-mono group-hover:bg-amber-300 transition-colors">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-amber-400 font-mono text-sm font-bold text-teal-950 transition-colors group-hover:bg-amber-300">
             GF
           </div>
           <span>
             <span className="block font-bold tracking-tight text-white">
               Gaia
             </span>
-            <span className="text-amber-100/80 text-[0.75rem] font-medium">
+            <span className="text-[0.75rem] font-medium text-amber-100/80">
               Fiscal Intelligence
             </span>
           </span>
@@ -73,7 +75,7 @@ export async function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-amber-50/90 hover:text-amber-200 text-sm font-medium whitespace-nowrap transition-colors"
+              className="text-sm font-medium whitespace-nowrap text-amber-50/90 transition-colors hover:text-amber-200"
             >
               {item.label}
             </Link>
@@ -81,17 +83,25 @@ export async function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Button asChild size="sm" className="bg-amber-400 text-teal-950 hover:bg-amber-300 font-medium">
+          <Button
+            asChild
+            size="sm"
+            className="bg-amber-400 font-medium text-teal-950 hover:bg-amber-300"
+          >
             <Link href="/gaia-analyst">Ask Gaia</Link>
           </Button>
-          <Button asChild size="sm" className="bg-teal-800 hover:bg-teal-700 border border-teal-600 text-white">
+          <Button
+            asChild
+            size="sm"
+            className="border border-teal-600 bg-teal-800 text-white hover:bg-teal-700"
+          >
             <Link href="/pilot">Request Watch</Link>
           </Button>
           <ThemeToggle />
         </div>
 
         <details className="relative ml-auto lg:hidden">
-          <summary className="hover:bg-teal-800 flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-teal-600 px-3 text-sm font-medium text-white [&::-webkit-details-marker]:hidden">
+          <summary className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-teal-600 px-3 text-sm font-medium text-white hover:bg-teal-800 [&::-webkit-details-marker]:hidden">
             <Menu className="size-4" aria-hidden="true" />
             Menu
           </summary>
@@ -101,25 +111,25 @@ export async function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="hover:bg-teal-800 rounded-md px-3 py-2 text-sm text-amber-50 transition-colors font-medium"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-amber-50 transition-colors hover:bg-teal-800"
                 >
                   {item.label}
                 </Link>
               ))}
               <Link
                 href="/gaia-analyst"
-                className="hover:bg-teal-800 rounded-md px-3 py-2 text-sm text-amber-50 transition-colors font-medium"
+                className="rounded-md px-3 py-2 text-sm font-medium text-amber-50 transition-colors hover:bg-teal-800"
               >
                 Ask Gaia
               </Link>
               <Link
                 href="/pilot"
-                className="bg-amber-400 text-teal-950 mt-2 rounded-md px-3 py-2 text-center text-sm font-bold"
+                className="mt-2 rounded-md bg-amber-400 px-3 py-2 text-center text-sm font-bold text-teal-950"
               >
                 Request Fiscal Watch
               </Link>
             </nav>
-            <div className="border-teal-700 mt-3 flex justify-end border-t pt-3">
+            <div className="mt-3 flex justify-end border-t border-teal-700 pt-3">
               <ThemeToggle />
             </div>
           </div>

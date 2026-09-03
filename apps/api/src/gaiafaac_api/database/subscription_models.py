@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -108,7 +108,7 @@ class OrganizationSubscription(Base):
 
     def is_active(self) -> bool:
         """Check if subscription is currently active"""
-        return status == SubscriptionStatus.ACTIVE and self.expires_at > datetime.utcnow()
+        return self.status == SubscriptionStatus.ACTIVE and self.expires_at > datetime.utcnow()
 
     def reset_monthly_usage(self) -> None:
         """Reset monthly API/export counters"""

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -31,8 +30,10 @@ from gaiafaac_api.subscription_schemas import (
     PaystackCheckoutResponse,
     PricingPageResponse,
     SubscriptionCheckoutRequest,
-    SubscriptionStatus as SubscriptionStatusSchema,
     SubscriptionTierInfo,
+)
+from gaiafaac_api.subscription_schemas import (
+    SubscriptionStatus as SubscriptionStatusSchema,
 )
 
 router = APIRouter(prefix="/api/v1/billing", tags=["billing"])
@@ -105,7 +106,7 @@ async def initiate_checkout(
             transaction_id="free-tier",
             amount_naira=0,
             tier_name=tier.name,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+            expires_at=datetime.now(UTC) + timedelta(days=30),
         )
 
     # Create Paystack transaction
@@ -147,7 +148,7 @@ async def initiate_checkout(
             transaction_id=transaction_id,
             amount_naira=tier.price_naira,
             tier_name=tier.name,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
 
     except requests.RequestException as e:
@@ -177,7 +178,7 @@ async def get_subscription_status(
         select(SubscriptionTier).where(SubscriptionTier.id == subscription.tier_id)
     ).scalar_one()
 
-    days_until_renewal = (subscription.expires_at - datetime.now(timezone.utc)).days
+    days_until_renewal = (subscription.expires_at - datetime.now(UTC)).days
 
     return SubscriptionStatusSchema(
         organization_id=subscription.organization_id,
@@ -269,7 +270,6 @@ async def create_api_key(
 
     # Generate API key
     raw_key = f"gaia_sk_{secrets.token_urlsafe(32)}"
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
     key_prefix = raw_key[:16]  # gaia_sk_XXXXXXXX
 
     # Store in database (simplified - would need actual API key table)
@@ -281,7 +281,7 @@ async def create_api_key(
         name=request.name,
         key_prefix=key_prefix,
         api_key=raw_key,  # Shown only once!
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
 
 
@@ -308,7 +308,7 @@ async def get_api_usage(
     ).scalar_one()
 
     # Check if monthly reset needed
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if (now - subscription.last_reset_at).days >= 30:
         subscription.reset_monthly_usage()
         session.commit()
@@ -360,6 +360,6 @@ async def generate_decision_packet(
         packet_id=packet_id,
         download_url=f"https://gaiafaac.app/api/v1/decision-packets/{packet_id}/download",
         size_bytes=2_500_000,  # ~2.5MB typical
-        generated_at=datetime.now(timezone.utc),
-        expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+        generated_at=datetime.now(UTC),
+        expires_at=datetime.now(UTC) + timedelta(days=30),
     )

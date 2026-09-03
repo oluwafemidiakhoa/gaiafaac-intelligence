@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Optional
-
 import smtplib
+from dataclasses import dataclass
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
 
 from gaiafaac_api.config import get_settings
 
@@ -21,11 +17,11 @@ class EmailMessage:
     to: str
     subject: str
     body_html: str
-    body_text: Optional[str] = None
+    body_text: str | None = None
     from_email: str = "gaiaassist@gailabai.com"
-    reply_to: Optional[str] = None
-    cc: Optional[list[str]] = None
-    bcc: Optional[list[str]] = None
+    reply_to: str | None = None
+    cc: list[str] | None = None
+    bcc: list[str] | None = None
 
 
 class ZohoEmailService:
@@ -256,7 +252,7 @@ def build_review_notification_email(
 
 
 # Singleton instance
-_email_service: Optional[ZohoEmailService] = None
+_email_service: ZohoEmailService | None = None
 
 
 def get_email_service() -> ZohoEmailService:

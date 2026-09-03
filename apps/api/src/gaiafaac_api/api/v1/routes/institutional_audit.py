@@ -209,7 +209,8 @@ def get_risk_indicators(session: DatabaseSession) -> dict:
     ).all()
 
     # 3. Coverage gaps by jurisdiction/period
-    from datetime import datetime as dt, timedelta
+    from datetime import datetime as dt
+    from datetime import timedelta
 
     now = dt.now()
     last_30_days = now - timedelta(days=30)
@@ -276,7 +277,7 @@ def get_data_lineage(
     - Publication status
     - Any revisions
     """
-    from gaiafaac_api.database.ledger_models import FiscalClaim, ClaimRevision
+    from gaiafaac_api.database.ledger_models import ClaimRevision, FiscalClaim
 
     claim = session.scalar(select(FiscalClaim).where(FiscalClaim.gaia_id == gaia_id))
 

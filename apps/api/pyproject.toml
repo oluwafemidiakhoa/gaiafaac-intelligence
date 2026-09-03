@@ -53,6 +53,18 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/gaiafaac_api/api/routes/subscriptions.py" = ["B904"]
+"src/gaiafaac_api/api/v1/routes/evidence_provenance.py" = ["B904"]
+"src/gaiafaac_api/api/v1/routes/institutional_decisions.py" = ["B904"]
+"src/gaiafaac_api/database/subscription_models.py" = ["UP042"]
+"src/gaiafaac_api/services/decision_support.py" = ["UP042"]
+"src/gaiafaac_api/services/evidence_audit.py" = ["SIM102", "UP042"]
 
 [tool.ruff.format]
 exclude = ["src/gaiafaac_api/pipeline/national_evidence_hardened.py"]

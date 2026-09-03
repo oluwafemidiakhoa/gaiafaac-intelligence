@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,10 +29,10 @@ class BillingService:
         organization_id: uuid.UUID,
         subscription_id: uuid.UUID,
         event_type: str,
-        endpoint: Optional[str] = None,
-        method: Optional[str] = None,
-        response_status: Optional[int] = None,
-        user_id: Optional[str] = None,
+        endpoint: str | None = None,
+        method: str | None = None,
+        response_status: int | None = None,
+        user_id: str | None = None,
     ) -> UsageLog:
         """Log API usage for billing purposes"""
         log = UsageLog(
@@ -55,7 +54,7 @@ class BillingService:
         subscription_id: uuid.UUID,
         event_type: str,
         amount_naira: Decimal,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> BillingEvent:
         """Create a billing event (subscription charge, overage, etc.)"""
         event = BillingEvent(
@@ -84,7 +83,9 @@ class BillingService:
         total = subtotal + tax
 
         # Generate invoice number: INV-YYYYMMDD-ORGID
-        invoice_number = f"INV-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(organization_id)[:8].upper()}"
+        invoice_number = (
+            f"INV-{datetime.now(UTC).strftime('%Y%m%d')}-{str(organization_id)[:8].upper()}"
+        )
 
         # Build line items
         line_items = [
@@ -104,7 +105,7 @@ class BillingService:
             total_naira=total,
             period_start=period_start,
             period_end=period_end,
-            due_date=datetime.now(timezone.utc) + timedelta(days=30),
+            due_date=datetime.now(UTC) + timedelta(days=30),
             status="draft",
             line_items=str(line_items),
         )
@@ -120,21 +121,21 @@ class BillingService:
         return invoice
 
     def get_monthly_usage(
-        self, organization_id: uuid.UUID, month: Optional[int] = None, year: Optional[int] = None
+        self, organization_id: uuid.UUID, month: int | None = None, year: int | None = None
     ) -> dict:
         """Get usage metrics for a specific month"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if month is None:
             month = now.month
         if year is None:
             year = now.year
 
         # Get logs for the month
-        start = datetime(year, month, 1, tzinfo=timezone.utc)
+        start = datetime(year, month, 1, tzinfo=UTC)
         if month == 12:
-            end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+            end = datetime(year + 1, 1, 1, tzinfo=UTC)
         else:
-            end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
+            end = datetime(year, month + 1, 1, tzinfo=UTC)
 
         logs = (
             self.session.execute(
@@ -201,8 +202,7 @@ class BillingService:
 
     def send_invoice_email(self, invoice: Invoice, email: str) -> bool:
         """Send invoice to customer (integrates with Zoho Mail)"""
-        from gaiafaac_api.services.zoho_email import get_email_service
-        from gaiafaac_api.services.zoho_email import EmailMessage
+        from gaiafaac_api.services.zoho_email import EmailMessage, get_email_service
 
         email_service = get_email_service()
 
@@ -257,7 +257,7 @@ class BillingService:
 
         success = email_service.send_email(message)
         if success:
-            invoice.sent_at = datetime.now(timezone.utc)
+            invoice.sent_at = datetime.now(UTC)
             self.session.commit()
 
         return success

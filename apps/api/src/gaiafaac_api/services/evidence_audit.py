@@ -1,7 +1,6 @@
 """Evidence integrity audit and institutional decision support"""
 
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 
 from sqlalchemy import and_, func, select
@@ -45,7 +44,7 @@ class AuditFinding:
         self.affected_gaia_ids = affected_gaia_ids
         self.recommendation = recommendation
         self.auto_fix_available = auto_fix_available
-        self.detected_at = datetime.now(timezone.utc)
+        self.detected_at = datetime.now(UTC)
 
 
 class EvidenceAuditService:
@@ -129,7 +128,7 @@ class EvidenceAuditService:
         all_states = self.session.execute(select(func.distinct(FiscalClaim.jurisdiction))).scalars()
 
         # Get last 12 months
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         months_to_check = [
             (now - timedelta(days=30 * i)).replace(day=1, hour=0, minute=0, second=0)
             for i in range(12)
@@ -199,7 +198,7 @@ class EvidenceAuditService:
         """Check if sources are recent"""
         stale_sources = self.session.scalars(
             select(FiscalClaim).where(
-                FiscalClaim.created_at < datetime.now(timezone.utc) - timedelta(days=30)
+                FiscalClaim.created_at < datetime.now(UTC) - timedelta(days=30)
             )
         ).all()
 
@@ -252,7 +251,7 @@ class EvidenceAuditService:
         )
 
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "integrity_score": integrity_score,
             "findings_summary": {
                 "critical": len(critical),

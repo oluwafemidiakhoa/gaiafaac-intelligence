@@ -1,6 +1,7 @@
 """Institutional decision support endpoints"""
 
 from datetime import datetime
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import and_, func, select
@@ -252,7 +253,8 @@ def get_comparable_jurisdictions(
     - Which peers to benchmark against
     """
     from datetime import datetime as dt
-    from sqlalchemy import select, func, and_
+
+    from sqlalchemy import and_, func, select
 
     try:
         period_date = dt.strptime(period, "%Y-%m")

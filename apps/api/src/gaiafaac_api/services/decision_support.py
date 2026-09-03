@@ -1,6 +1,6 @@
 """Institutional decision support: anomaly detection, recommendations, intelligence"""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 
@@ -49,7 +49,7 @@ class Anomaly:
         self.description = description
         self.recommendation = recommendation
         self.supporting_data = supporting_data
-        self.detected_at = datetime.now(timezone.utc)
+        self.detected_at = datetime.now(UTC)
 
 
 class DecisionSupportService:
@@ -71,7 +71,7 @@ class DecisionSupportService:
         - Actionable recommendations
         """
         self.anomalies = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Get data for analysis
         all_claims = self.session.scalars(
@@ -260,7 +260,7 @@ class DecisionSupportService:
 
     def _detect_data_gaps(self, jurisdiction: str, months_back: int) -> None:
         """Identify missing expected data"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expected_months = set()
 
         for i in range(months_back):
@@ -321,7 +321,7 @@ class DecisionSupportService:
 
         return {
             "jurisdiction": jurisdiction,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "key_metrics": {
                 "total_revenue": str(total_revenue) if total_revenue else "0",
                 "total_faac": str(total_faac) if total_faac else "0",

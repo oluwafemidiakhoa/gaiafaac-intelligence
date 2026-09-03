@@ -4,13 +4,6 @@ import Link from 'next/link'
 import { DataUnavailable } from '@/components/data-unavailable'
 import { PageHeader } from '@/components/page-header'
 import { StatusPill } from '@/components/status-pill'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { getFiscalPulse } from '@/lib/fiscal-pulse-api'
 import { formatNaira } from '@/lib/format'
 
@@ -44,8 +37,8 @@ export default async function DecisionPacketsPage({
         />
       </div>
 
-      <div className="mt-8 rounded-lg bg-teal-50 border border-teal-200 p-6">
-        <h3 className="font-semibold text-teal-950 mb-4">Select Report Year</h3>
+      <div className="mt-8 rounded-lg border border-teal-200 bg-teal-50 p-6">
+        <h3 className="mb-4 font-semibold text-teal-950">Select Report Year</h3>
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label className="grid gap-2">
             <span className="text-sm font-medium text-teal-900">Year</span>
@@ -55,12 +48,12 @@ export default async function DecisionPacketsPage({
               min="2000"
               max="2100"
               defaultValue={year}
-              className="border-teal-300 bg-white h-10 w-32 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="h-10 w-32 rounded-lg border border-teal-300 bg-white px-3 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
             />
           </label>
           <button
             type="submit"
-            className="bg-teal-900 text-white h-10 rounded-lg px-6 text-sm font-semibold hover:bg-teal-800 transition-colors"
+            className="h-10 rounded-lg bg-teal-900 px-6 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
           >
             Load packets
           </button>
@@ -75,11 +68,14 @@ export default async function DecisionPacketsPage({
         </div>
       ) : (
         <>
-          <div className="mt-8 rounded-lg bg-white border border-slate-200 p-5">
-            <h2 className="font-semibold text-slate-950 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+          <div className="mt-8 rounded-lg border border-slate-200 bg-white p-5">
+            <h2
+              className="mb-2 font-semibold text-slate-950"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
               {year} Jurisdiction Packets
             </h2>
-            <p className="text-slate-600 text-sm">{data.coverage_label}</p>
+            <p className="text-sm text-slate-600">{data.coverage_label}</p>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -94,20 +90,20 @@ export default async function DecisionPacketsPage({
                     <p className="font-semibold text-teal-950 group-hover:text-teal-700">
                       {state.state_name}
                     </p>
-                    <p className="text-slate-600 mt-1 text-xs">
+                    <p className="mt-1 text-xs text-slate-600">
                       {state.geopolitical_zone}
                     </p>
                   </div>
-                  <span className="text-slate-500 font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+                  <span className="rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-500">
                     {state.state_code}
                   </span>
                 </div>
 
-                <div className="border-t border-slate-200 mt-4 pt-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-600 font-medium">
+                <div className="mt-4 border-t border-slate-200 pt-4">
+                  <p className="text-xs font-medium tracking-wide text-slate-600 uppercase">
                     Published-Period Net
                   </p>
-                  <p className="font-mono text-lg font-bold text-teal-950 mt-1">
+                  <p className="mt-1 font-mono text-lg font-bold text-teal-950">
                     {formatNaira(state.annual_net)}
                   </p>
                 </div>
@@ -116,7 +112,7 @@ export default async function DecisionPacketsPage({
                   <StatusPill tone="success">
                     {state.evidence_status}
                   </StatusPill>
-                  <span className="text-teal-700 text-sm font-medium group-hover:underline">
+                  <span className="text-sm font-medium text-teal-700 group-hover:underline">
                     Open →
                   </span>
                 </div>

@@ -1,14 +1,13 @@
 """Evidence provenance and audit trail endpoints"""
 
 from datetime import datetime
-from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 
 from gaiafaac_api.customer_auth import DatabaseSession
-from gaiafaac_api.database.ledger_models import FiscalClaim, ClaimRevision
+from gaiafaac_api.database.ledger_models import ClaimRevision, FiscalClaim
 
 router = APIRouter(prefix="/evidence", tags=["evidence provenance"])
 
@@ -182,7 +181,7 @@ def get_audit_trail(
                 "timestamp": claim.reviewed_at,
                 "actor": claim.reviewed_by or "unknown",
                 "action": "REVIEWED",
-                "description": f"Reviewed and verified against source",
+                "description": "Reviewed and verified against source",
                 "notes": claim.review_notes,
                 "status": "in-review",
             }

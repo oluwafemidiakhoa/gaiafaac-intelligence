@@ -11,13 +11,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 
 export const metadata: Metadata = {
   title: 'Institutional Intelligence',
@@ -60,10 +53,13 @@ export default function InstitutionalPage() {
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <section className="grid gap-10 border-b border-teal-900/10 pb-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div className="max-w-4xl">
-          <p className="text-teal-700 font-mono text-xs font-semibold tracking-[0.18em] uppercase">
+          <p className="font-mono text-xs font-semibold tracking-[0.18em] text-teal-700 uppercase">
             Institutional intelligence
           </p>
-          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-balance text-teal-950 sm:text-5xl lg:text-6xl" style={{ fontFamily: 'Georgia, serif' }}>
+          <h1
+            className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-balance text-teal-950 sm:text-5xl lg:text-6xl"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
             Nigerian fiscal evidence, organized for serious financial decisions.
           </h1>
           <p className="mt-6 max-w-3xl text-base leading-8 text-teal-700 sm:text-lg">
@@ -79,7 +75,12 @@ export default function InstitutionalPage() {
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-teal-900 text-teal-900 hover:bg-teal-50">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-teal-900 text-teal-900 hover:bg-teal-50"
+            >
               <Link href="/gaia-analyst">Ask Gaia</Link>
             </Button>
           </div>
@@ -91,12 +92,12 @@ export default function InstitutionalPage() {
             <h3 className="pt-3 text-2xl font-semibold">
               The product is not the public data.
             </h3>
-            <p className="text-amber-50/75 mt-2 text-sm leading-6">
+            <p className="mt-2 text-sm leading-6 text-amber-50/75">
               The value is the governed infrastructure around it: provenance,
               verification, structured history, monitoring, comparison and
               institutional delivery.
             </p>
-            <p className="text-amber-50 mt-4 text-sm leading-7">
+            <p className="mt-4 text-sm leading-7 text-amber-50">
               A decision-maker should be able to move from a fiscal signal to
               the exact source document and know what was published, when it was
               reviewed, and whether the evidence changed later.
@@ -107,10 +108,13 @@ export default function InstitutionalPage() {
 
       <section className="py-12">
         <div className="max-w-3xl">
-          <p className="text-teal-700 font-mono text-xs font-semibold tracking-[0.16em] uppercase">
+          <p className="font-mono text-xs font-semibold tracking-[0.16em] text-teal-700 uppercase">
             The problem
           </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-teal-950" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2
+            className="mt-3 text-3xl font-semibold tracking-tight text-teal-950"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
             Public does not automatically mean decision-ready.
           </h2>
           <p className="mt-4 text-base leading-8 text-teal-700">
@@ -124,10 +128,15 @@ export default function InstitutionalPage() {
 
         <div className="mt-8 grid gap-5 lg:grid-cols-3">
           {useCases.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="rounded-lg border-2 border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+            <div
+              key={title}
+              className="rounded-lg border-2 border-teal-200 bg-white p-6 transition-shadow hover:shadow-lg"
+            >
               <Icon className="size-6 text-teal-900" aria-hidden="true" />
-              <h3 className="pt-3 text-lg font-semibold text-teal-950">{title}</h3>
-              <p className="text-teal-700 mt-2 text-sm leading-6">
+              <h3 className="pt-3 text-lg font-semibold text-teal-950">
+                {title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-teal-700">
                 {description}
               </p>
             </div>
@@ -141,7 +150,10 @@ export default function InstitutionalPage() {
           <p className="mt-5 font-mono text-xs font-semibold tracking-[0.16em] text-amber-300 uppercase">
             Evidence model
           </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2
+            className="mt-3 text-3xl font-semibold tracking-tight"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
             Every governed number should have a defensible evidence trail.
           </h2>
           <p className="mt-4 text-sm leading-7 text-amber-50/75">
@@ -156,8 +168,12 @@ export default function InstitutionalPage() {
               key={item}
               className="rounded-lg border border-amber-400/20 bg-white/5 p-4"
             >
-              <p className="font-mono text-xs text-amber-300 font-semibold">0{index + 1}</p>
-              <p className="mt-2 text-sm leading-6 font-medium text-amber-50">{item}</p>
+              <p className="font-mono text-xs font-semibold text-amber-300">
+                0{index + 1}
+              </p>
+              <p className="mt-2 text-sm leading-6 font-medium text-amber-50">
+                {item}
+              </p>
             </div>
           ))}
         </div>
@@ -170,16 +186,22 @@ export default function InstitutionalPage() {
             <h3 className="pt-3 text-2xl font-semibold text-teal-950">
               What institutions can buy
             </h3>
-            <p className="text-teal-700 mt-2 text-sm">
+            <p className="mt-2 text-sm text-teal-700">
               Commercial value comes from the governed layer around public
               evidence—not ownership of government records.
             </p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-teal-800">
-              <li>✓ Institutional fiscal monitoring and executive intelligence</li>
-              <li>✓ Historical evidence, governed exports and decision packets</li>
+              <li>
+                ✓ Institutional fiscal monitoring and executive intelligence
+              </li>
+              <li>
+                ✓ Historical evidence, governed exports and decision packets
+              </li>
               <li>✓ Higher-volume data and API delivery</li>
               <li>✓ Organization workspaces and custom evidence workflows</li>
-              <li>✓ Research support, integration and permitted downstream use</li>
+              <li>
+                ✓ Research support, integration and permitted downstream use
+              </li>
             </ul>
           </div>
 
@@ -188,19 +210,33 @@ export default function InstitutionalPage() {
             <h3 className="pt-3 text-2xl font-semibold text-teal-950">
               Start by verifying it yourself
             </h3>
-            <p className="text-teal-700 mt-2 text-sm">
-              The strongest introduction to Gaia is not a pitch deck. It is
-              the live evidence, the source registry and an answer you can
-              trace back to its records.
+            <p className="mt-2 text-sm text-teal-700">
+              The strongest introduction to Gaia is not a pitch deck. It is the
+              live evidence, the source registry and an answer you can trace
+              back to its records.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button asChild size="sm" className="bg-teal-900 hover:bg-teal-800">
+              <Button
+                asChild
+                size="sm"
+                className="bg-teal-900 hover:bg-teal-800"
+              >
                 <Link href="/terminal">Open Terminal</Link>
               </Button>
-              <Button asChild size="sm" variant="outline" className="border-teal-900 text-teal-900">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="border-teal-900 text-teal-900"
+              >
                 <Link href="/sources">Inspect evidence</Link>
               </Button>
-              <Button asChild size="sm" variant="outline" className="border-teal-900 text-teal-900">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="border-teal-900 text-teal-900"
+              >
                 <Link href="/pricing">See commercial access</Link>
               </Button>
             </div>
