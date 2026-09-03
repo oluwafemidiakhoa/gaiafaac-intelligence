@@ -30,7 +30,7 @@ jobs:
           python -m pip install -e "apps/api[dev,extraction]"
           npm ci
 
-      - name: Align Ruff policy and fix correctness regressions
+      - name: Align lint policy and fix correctness regressions
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -57,6 +57,19 @@ jobs:
           if old_key_hash not in source:
               raise SystemExit("Expected unused key_hash assignment not found")
           subscriptions.write_text(source.replace(old_key_hash, "", 1))
+
+          main = Path("apps/api/src/gaiafaac_api/main.py")
+          source = main.read_text()
+          old_imports = '''from sqlalchemy.orm import sessionmaker\n\nfrom gaiafaac_api.api.v1.router import router as api_v1_router\nfrom gaiafaac_api.config import get_settings\nfrom gaiafaac_api.database.base import engine\n'''
+          new_imports = '''from gaiafaac_api.api.v1.router import router as api_v1_router\nfrom gaiafaac_api.config import get_settings\nfrom gaiafaac_api.database.session import create_database_engine, create_session_factory\n'''
+          if old_imports not in source:
+              raise SystemExit("Expected stale engine import block not found")
+          source = source.replace(old_imports, new_imports, 1)
+          old_session = '''    SessionLocal = sessionmaker(bind=engine)\n    application.add_middleware(UsageTrackingMiddleware, session_factory=SessionLocal)\n'''
+          new_session = '''    engine = create_database_engine()\n    session_factory = create_session_factory(engine)\n    application.add_middleware(UsageTrackingMiddleware, session_factory=session_factory)\n'''
+          if old_session not in source:
+              raise SystemExit("Expected stale sessionmaker block not found")
+          main.write_text(source.replace(old_session, new_session, 1))
           PY
 
       - name: Apply safe API fixes and formatting
@@ -102,6 +115,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No repair changes to commit"
           else
-            git commit -m "fix(ci): apply verified lint and formatting repair"
+            git commit -m "fix(ci): apply verified lint and runtime repair"
             git push origin HEAD:main
           fi
