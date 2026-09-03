@@ -4,7 +4,9 @@ import {
   CheckCircle2,
   Clock3,
   DatabaseZap,
+  FileBarChart,
   History,
+  Landmark,
   ShieldCheck,
 } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -19,7 +21,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { getPendingDmoReviews } from '@/lib/dmo-review-api'
 import { getPendingNationalReviews } from '@/lib/national-review-api'
+import { getPendingIgrReviews } from '@/lib/nbs-igr-review-api'
 import { getOagfRevisionCases } from '@/lib/oagf-revision-api'
 import { getPendingReviews } from '@/lib/review-api'
 
@@ -27,15 +31,20 @@ export const metadata: Metadata = { title: 'FAAC evidence control' }
 export const dynamic = 'force-dynamic'
 
 export default async function EvidenceControlPage() {
-  const [oagfResult, nationalResult, revisionsResult] = await Promise.all([
-    getPendingReviews(),
-    getPendingNationalReviews(),
-    getOagfRevisionCases(),
-  ])
+  const [oagfResult, nationalResult, revisionsResult, dmoResult, igrResult] =
+    await Promise.all([
+      getPendingReviews(),
+      getPendingNationalReviews(),
+      getOagfRevisionCases(),
+      getPendingDmoReviews(),
+      getPendingIgrReviews(),
+    ])
 
   const oagf = oagfResult.data ?? []
   const national = nationalResult.data ?? []
   const revisions = revisionsResult.data ?? []
+  const dmo = dmoResult.data ?? []
+  const igr = igrResult.data ?? []
 
   const oagfBlocked = oagf.filter((item) => item.blocking_count > 0).length
   const oagfApproved = oagf.filter((item) => item.approved).length
@@ -46,8 +55,14 @@ export default async function EvidenceControlPage() {
   const revisionEscalations = revisions.filter(
     (item) => item.status === 'investigation_required',
   ).length
+  const dmoApproved = dmo.filter((item) => item.approved).length
+  const igrApproved = igr.filter((item) => item.approved).length
   const serviceError =
-    oagfResult.error ?? nationalResult.error ?? revisionsResult.error
+    oagfResult.error ??
+    nationalResult.error ??
+    revisionsResult.error ??
+    dmoResult.error ??
+    igrResult.error
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -170,6 +185,64 @@ export default async function EvidenceControlPage() {
             <Button asChild className="mt-6">
               <Link href="/review/oagf-revisions">
                 Open revision queue
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <Landmark className="text-primary size-5" aria-hidden="true" />
+            <CardTitle className="pt-3">DMO debt evidence</CardTitle>
+            <CardDescription>
+              State and FCT debt stock and debt-service evidence from DMO
+              publications.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div>
+                <dt className="text-muted-foreground">Unpublished</dt>
+                <dd className="mt-1 text-2xl font-semibold">{dmo.length}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Approved</dt>
+                <dd className="mt-1 text-2xl font-semibold">{dmoApproved}</dd>
+              </div>
+            </dl>
+            <Button asChild className="mt-6">
+              <Link href="/review/dmo">
+                Open DMO queue
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <FileBarChart className="text-primary size-5" aria-hidden="true" />
+            <CardTitle className="pt-3">NBS IGR evidence</CardTitle>
+            <CardDescription>
+              State internally generated revenue evidence from NBS annual
+              reports.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div>
+                <dt className="text-muted-foreground">Unpublished</dt>
+                <dd className="mt-1 text-2xl font-semibold">{igr.length}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Approved</dt>
+                <dd className="mt-1 text-2xl font-semibold">{igrApproved}</dd>
+              </div>
+            </dl>
+            <Button asChild className="mt-6">
+              <Link href="/review/nbs-igr">
+                Open NBS IGR queue
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </Button>
