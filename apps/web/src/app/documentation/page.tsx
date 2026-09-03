@@ -82,38 +82,60 @@ export default function DocumentationPage() {
         description="Everything you need to understand and use GaiaFAAC Intelligence."
       />
 
-      <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {docs.map((doc) => (
-          <Card key={doc.title}>
-            <CardHeader>
-              <CardTitle>{doc.title}</CardTitle>
-              <CardDescription>{doc.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <nav className="space-y-2">
-                {doc.links.map((link) => (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    className="block text-sm text-primary hover:underline"
-                  >
-                    {link.label} →
-                  </Link>
-                ))}
-              </nav>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <div className="mt-16 space-y-20">
+        <section>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {docs.map((doc, idx) => (
+              <div key={doc.title} className="group rounded-lg border border-border/50 p-8 hover:border-amber-400/50 hover:bg-muted/30 transition-all">
+                <div className="text-sm font-semibold text-amber-400 tracking-widest mb-3">
+                  {String(idx + 1).padStart(2, '0')}
+                </div>
+                <h3 className="font-semibold text-lg text-foreground mb-2">{doc.title}</h3>
+                <p className="text-sm text-muted-foreground mb-6">{doc.description}</p>
+                <nav className="space-y-2 border-t border-border/30 pt-6">
+                  {doc.links.map((link) => (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className="flex items-center justify-between text-sm text-muted-foreground hover:text-primary transition-colors py-1"
+                    >
+                      <span>{link.label}</span>
+                      <span className="text-xs">→</span>
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <div className="mt-12 rounded-lg border border-border bg-muted/50 p-8">
-        <h2 className="font-bold text-xl mb-4">Can't find what you need?</h2>
-        <p className="text-muted-foreground">
-          Contact our support team for detailed guidance on implementing GaiaFAAC in your workflows.
-        </p>
-        <Link href="/contact" className="text-primary font-medium mt-4 inline-block hover:underline">
-          Get Support →
-        </Link>
+        {/* Search & Navigate */}
+        <section className="border-t border-border pt-16">
+          <h2 className="font-serif text-3xl font-bold mb-12 text-foreground">Navigation Guides</h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            <a href="/methodology" className="group border border-border/50 rounded-lg p-8 hover:border-amber-400/50 hover:bg-muted/30 transition-all">
+              <div className="font-semibold text-foreground mb-3 group-hover:text-amber-600">Methodology & Evidence</div>
+              <p className="text-sm text-muted-foreground mb-4">Learn how we source, verify, reconcile, and publish fiscal data with cryptographic proof and human review.</p>
+              <span className="text-sm text-primary">Read full methodology →</span>
+            </a>
+            <a href="/sources" className="group border border-border/50 rounded-lg p-8 hover:border-amber-400/50 hover:bg-muted/30 transition-all">
+              <div className="font-semibold text-foreground mb-3 group-hover:text-amber-600">Evidence Registry</div>
+              <p className="text-sm text-muted-foreground mb-4">Access primary source documents, publication certificates, revision history, and complete lineage for all published records.</p>
+              <span className="text-sm text-primary">Inspect sources →</span>
+            </a>
+          </div>
+        </section>
+
+        {/* Support */}
+        <section className="bg-muted/40 rounded-lg border border-border p-12 text-center">
+          <h2 className="font-serif text-3xl font-bold mb-4 text-foreground">Need Help?</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+            Can't find what you're looking for? Our support team provides detailed guidance on implementing GaiaFAAC in your workflows, research, or institutional systems.
+          </p>
+          <Link href="/contact" className="text-primary font-medium hover:underline">
+            Contact support →
+          </Link>
+        </section>
       </div>
     </div>
   )

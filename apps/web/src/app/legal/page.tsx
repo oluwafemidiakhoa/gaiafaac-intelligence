@@ -18,26 +18,29 @@ export default function LegalPage() {
         description="Legal framework and privacy policies for Gaia Fiscal Intelligence."
       />
 
-      <div className="mt-12 space-y-12 max-w-4xl">
-        {/* Disclaimer */}
-        <section>
-          <h2 className="font-bold text-2xl mb-4">Important Disclaimer</h2>
-          <div className="rounded-lg border border-amber-200/30 bg-amber-50/30 p-6">
-            <p className="text-sm text-foreground mb-4">
-              <strong>GaiaFAAC Fiscal Intelligence is an independent, non-governmental research platform.</strong> It is not an official government service, and data published here should not be treated as official government financial records without independent verification.
+      <div className="mt-16 space-y-20 max-w-4xl">
+        {/* Disclaimer - Critical Notice */}
+        <section className="rounded-lg border-2 border-amber-400/40 bg-gradient-to-r from-amber-50/50 to-orange-50/30 p-8">
+          <div className="inline-block mb-4 px-3 py-1 bg-amber-400/20 border border-amber-400/50 rounded text-amber-900 text-xs font-bold tracking-widest">
+            IMPORTANT DISCLAIMER
+          </div>
+          <h2 className="font-serif text-2xl font-bold mb-6 text-foreground">Not an Official Government Platform</h2>
+          <div className="space-y-4 text-sm leading-relaxed">
+            <p className="text-foreground">
+              <strong>GaiaFAAC Fiscal Intelligence is an independent, non-governmental research platform.</strong> It is not an official government service, and data published here should not be treated as official government financial records without independent verification against authoritative sources.
             </p>
-            <p className="text-sm text-foreground mb-4">
-              All information on this platform is provided for research, educational, and informational purposes. While we employ rigorous verification, reconciliation, and human review processes, users should always verify critical financial information against official government sources before making institutional decisions.
+            <p className="text-foreground">
+              All information on this platform is provided for research, educational, and informational purposes. While we employ rigorous verification, reconciliation, and human review processes, users must independently verify critical financial information against official government sources before making institutional or investment decisions.
             </p>
-            <p className="text-sm text-foreground">
-              Read our <Link href="/methodology" className="underline text-primary">methodology documentation</Link> to understand how we source, verify, and publish evidence before interpreting any record.
+            <p className="text-foreground">
+              Read our <Link href="/methodology" className="underline text-primary font-medium">methodology documentation</Link> to understand how we source, verify, and publish evidence before interpreting any record.
             </p>
           </div>
         </section>
 
         {/* Terms of Service */}
-        <section>
-          <h2 className="font-bold text-2xl mb-4">Terms of Service</h2>
+        <section className="border-t border-border pt-16">
+          <h2 className="font-serif text-3xl font-bold mb-12 text-foreground">Terms of Service</h2>
 
           <div className="space-y-6 text-sm text-muted-foreground">
             <div>
@@ -106,8 +109,8 @@ export default function LegalPage() {
         </section>
 
         {/* Privacy Policy */}
-        <section>
-          <h2 className="font-bold text-2xl mb-4">Privacy Policy</h2>
+        <section className="border-t border-border pt-16">
+          <h2 className="font-serif text-3xl font-bold mb-12 text-foreground">Privacy Policy</h2>
 
           <div className="space-y-6 text-sm text-muted-foreground">
             <div>
@@ -176,8 +179,8 @@ export default function LegalPage() {
         </section>
 
         {/* Data Attribution */}
-        <section>
-          <h2 className="font-bold text-2xl mb-4">Data Attribution & Sources</h2>
+        <section className="border-t border-border pt-16">
+          <h2 className="font-serif text-3xl font-bold mb-8 text-foreground">Data Attribution & Sources</h2>
 
           <p className="text-sm text-muted-foreground mb-4">
             All fiscal data published on GaiaFAAC is sourced from official government publications and organizations, including:
@@ -196,13 +199,13 @@ export default function LegalPage() {
         </section>
 
         {/* CTA */}
-        <section className="rounded-lg border border-border bg-muted/50 p-8">
-          <h2 className="font-bold text-xl mb-4">Questions About Our Policies?</h2>
-          <p className="text-muted-foreground mb-4">
-            If you have concerns about how we handle data, our evidence standards, or any other legal matter, please contact our team.
+        <section className="border-t border-border pt-16 text-center">
+          <h2 className="font-serif text-3xl font-bold mb-4 text-foreground">Questions or Concerns?</h2>
+          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+            If you have concerns about how we handle data, our evidence standards, legal compliance, or any other matter related to these policies, please contact our team.
           </p>
           <Link href="/contact" className="text-primary font-medium hover:underline">
-            Contact Us →
+            Contact us →
           </Link>
         </section>
       </div>
