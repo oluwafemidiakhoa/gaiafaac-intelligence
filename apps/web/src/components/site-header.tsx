@@ -80,8 +80,8 @@ export function SiteHeader() {
               Governed public evidence
             </span>
             {' '}
-            · Independent Nigerian fiscal intelligence ·{' '}
-            <span className="font-medium">Human review required before publication</span>
+            · Verified FAAC allocations · Real-time fiscal signals · Institutional workflows ·{' '}
+            <span className="font-medium">Four-eyes publication control</span>
           </p>
           <Link
             href="/sources"
