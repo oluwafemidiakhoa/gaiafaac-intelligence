@@ -93,7 +93,7 @@ def _state_candidate(prefix: str) -> str | None:
 
 
 _APPENDIX_ROW_RE = re.compile(
-    r"^(?P<serial>\d{1,2})\s+(?P<state>[A-Za-z][A-Za-z ]*?)\s+"
+    r"^(?:(?P<serial>\d{1,2})\s+)?(?P<state>[A-Za-z][A-Za-z ]*?)\s+"
     r"(?P<tax>[\d,]+\.\d{2}|-)\s+(?P<mda>[\d,]+\.\d{2}|-)\s+(?P<total>[\d,]+\.\d{2})\s*$",
     re.MULTILINE,
 )
@@ -102,11 +102,15 @@ _APPENDIX_ROW_RE = re.compile(
 def _parse_appendix_rows(pages: list[tuple[int, str]]) -> list[ParsedIgrRow]:
     """Some report years render each state's own page as an infographic image with no
     extractable per-state text (verified: pdfplumber returns only a bare page number for
-    those pages). The same annual totals are also published as a plain "SN State Total Tax
-    MDAs Revenue Total" appendix table; this reads that table instead.
+    those pages). The same annual totals are also published as a plain appendix table
+    instead - "SN State Total Tax MDAs Revenue Total" in some years, just
+    "State Total Tax MDAs Revenue Total" (no serial column at all) in others.
     """
     parsed: list[ParsedIgrRow] = []
     for page_number, text in pages:
+        # A footnote-reference asterisk sometimes sits directly on the state name with
+        # no space (e.g. "KADUNA*"), which would otherwise break the row pattern.
+        text = text.replace("*", "")
         for match in _APPENDIX_ROW_RE.finditer(text):
             state_name = match.group("state").strip()
             if state_name.casefold() == "total":

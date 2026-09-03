@@ -44,6 +44,20 @@ def _appendix_pages(*, missing_code: str | None = None) -> list[tuple[int, str]]
     return [(43, "\n".join(lines))]
 
 
+def _appendix_pages_without_serial_column() -> list[tuple[int, str]]:
+    """Some report years' appendix table has no serial-number column at all - just
+    "State Total Tax MDAs Revenue Total" - and a footnote asterisk can sit directly on
+    a state name with no space (observed live: "KADUNA*")."""
+    lines = ["APPENDIX", "STATE TOTAL TAX MDAs REVENUE TOTAL"]
+    for index, (name, _code, *_rest) in enumerate(NIGERIAN_STATES, start=1):
+        tax = f"{index * 800}.00"
+        mda = f"{index * 200}.00"
+        total = f"{index * 1000}.00"
+        display_name = f"{name.upper()}*" if name == "Kaduna" else name.upper()
+        lines.append(f"{display_name} {tax} {mda} {total}")
+    return [(14, "\n".join(lines))]
+
+
 def _source(session, tmp_path, *, year: int = 2023) -> SourceDocument:
     path = tmp_path / "nbs-igr.pdf"
     path.write_bytes(b"%PDF-1.7\nfixture")
@@ -82,6 +96,16 @@ def test_parse_nbs_igr_text_falls_back_to_appendix_table():
     assert by_state["Akwa Ibom"].source_page == 43
     assert by_state["Zamfara"].amount == Decimal(f"{len(NIGERIAN_STATES) * 1000}.00")
     assert "Total" not in by_state
+
+
+def test_parse_nbs_igr_text_reads_appendix_table_with_no_serial_column():
+    rows = parse_nbs_igr_text(_appendix_pages_without_serial_column(), fiscal_year=2022)
+
+    assert len(rows) == 37
+    by_state = {row.state_name: row for row in rows}
+    assert "Total" not in by_state
+    kaduna = next(name for name in by_state if name.upper() == "KADUNA")
+    assert by_state[kaduna].amount is not None
 
 
 def test_extract_nbs_igr_source_stages_all_states_from_appendix_table(session, tmp_path):
