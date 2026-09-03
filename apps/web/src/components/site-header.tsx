@@ -12,7 +12,7 @@ const navigation = [
   { href: '/live', label: 'Live data' },
   { href: '/fiscal-pulse', label: 'Intelligence' },
   { href: '/sources', label: 'Evidence' },
-  { href: '/pilot', label: 'Fiscal Watch' },
+  { href: '/review', label: 'Review' },
 ]
 
 export async function SiteHeader() {
@@ -20,18 +20,18 @@ export async function SiteHeader() {
   const data = overview.data
 
   return (
-    <header className="border-border/80 bg-background/95 sticky top-0 z-50 border-b backdrop-blur">
-      <div className="border-border/70 bg-muted/30 border-b">
-        <div className="text-muted-foreground mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2 text-xs lg:px-8">
-          <p className="min-w-0 truncate">
-            <span className="text-foreground font-medium">
+    <header className="sticky top-0 z-50 border-b border-teal-900/20 bg-gradient-to-r from-teal-950 to-teal-900 text-white">
+      <div className="border-b border-teal-900/50 bg-teal-900/40">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2 text-xs lg:px-8">
+          <p className="min-w-0 truncate text-amber-100">
+            <span className="font-semibold text-amber-50">
               Governed public evidence
             </span>
             {data ? (
               <>
                 {' '}
                 · Latest verified {formatDate(data.period.revenue_month)} ·{' '}
-                {data.covered_states}/{data.expected_states} jurisdictions
+                <span className="font-medium">{data.covered_states}/{data.expected_states} jurisdictions</span>
               </>
             ) : (
               <> · Human review required before publication</>
@@ -39,9 +39,9 @@ export async function SiteHeader() {
           </p>
           <Link
             href="/sources"
-            className="text-foreground hover:text-primary shrink-0 font-medium transition-colors"
+            className="shrink-0 font-medium text-amber-200 hover:text-amber-100 transition-colors"
           >
-            Evidence registry
+            Evidence registry →
           </Link>
         </div>
       </div>
@@ -49,31 +49,31 @@ export async function SiteHeader() {
       <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-5 px-5 py-3 lg:px-8">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-3"
+          className="flex shrink-0 items-center gap-3 group"
           aria-label="Gaia Fiscal Intelligence home"
         >
-          <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md font-mono text-sm font-semibold">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-amber-400 text-teal-950 font-bold text-sm font-mono group-hover:bg-amber-300 transition-colors">
             GF
-          </span>
+          </div>
           <span>
-            <span className="block font-semibold tracking-tight">
-              Gaia Fiscal Intelligence
+            <span className="block font-bold tracking-tight text-white">
+              Gaia
             </span>
-            <span className="text-muted-foreground hidden text-[0.68rem] xl:block">
-              Verified public-finance evidence for Nigeria
+            <span className="text-amber-100/80 text-[0.75rem] font-medium">
+              Fiscal Intelligence
             </span>
           </span>
         </Link>
 
         <nav
-          className="ml-auto hidden items-center gap-5 lg:flex"
+          className="ml-auto hidden items-center gap-6 lg:flex"
           aria-label="Primary navigation"
         >
           {navigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-muted-foreground hover:text-foreground text-sm whitespace-nowrap transition-colors"
+              className="text-amber-50/90 hover:text-amber-200 text-sm font-medium whitespace-nowrap transition-colors"
             >
               {item.label}
             </Link>
@@ -81,45 +81,45 @@ export async function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Button asChild size="sm" variant="outline">
+          <Button asChild size="sm" className="bg-amber-400 text-teal-950 hover:bg-amber-300 font-medium">
             <Link href="/gaia-analyst">Ask Gaia</Link>
           </Button>
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="bg-teal-800 hover:bg-teal-700 border border-teal-600 text-white">
             <Link href="/pilot">Request Watch</Link>
           </Button>
           <ThemeToggle />
         </div>
 
         <details className="relative ml-auto lg:hidden">
-          <summary className="border-border hover:bg-muted flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+          <summary className="hover:bg-teal-800 flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-teal-600 px-3 text-sm font-medium text-white [&::-webkit-details-marker]:hidden">
             <Menu className="size-4" aria-hidden="true" />
             Menu
           </summary>
-          <div className="border-border bg-background absolute right-0 z-50 mt-3 w-72 rounded-lg border p-3 shadow-lg">
+          <div className="absolute right-0 z-50 mt-3 w-72 rounded-lg border border-teal-700 bg-teal-900 p-3 shadow-xl">
             <nav className="grid gap-1" aria-label="Mobile navigation">
               {navigation.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors"
+                  className="hover:bg-teal-800 rounded-md px-3 py-2 text-sm text-amber-50 transition-colors font-medium"
                 >
                   {item.label}
                 </Link>
               ))}
               <Link
                 href="/gaia-analyst"
-                className="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors"
+                className="hover:bg-teal-800 rounded-md px-3 py-2 text-sm text-amber-50 transition-colors font-medium"
               >
                 Ask Gaia
               </Link>
               <Link
                 href="/pilot"
-                className="bg-primary text-primary-foreground mt-2 rounded-md px-3 py-2 text-center text-sm font-medium"
+                className="bg-amber-400 text-teal-950 mt-2 rounded-md px-3 py-2 text-center text-sm font-bold"
               >
                 Request Fiscal Watch
               </Link>
             </nav>
-            <div className="border-border mt-3 flex justify-end border-t pt-3">
+            <div className="border-teal-700 mt-3 flex justify-end border-t pt-3">
               <ThemeToggle />
             </div>
           </div>
