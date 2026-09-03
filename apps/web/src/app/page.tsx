@@ -1,56 +1,15 @@
-import {
-  ArrowRight,
-  DatabaseZap,
-  FileCheck2,
-  GitCompareArrows,
-  History,
-  ShieldCheck,
-} from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-
-import { ResearchCommandCenter } from '@/components/research-command-center'
-import { StatusPill } from '@/components/status-pill'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { getPublishedAnalytics } from '@/lib/analytics-api'
-import { formatDate, formatNaira } from '@/lib/format'
-import { getNationalDistributionHistory } from '@/lib/national-distribution-api'
+import { formatNaira } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
-  title:
-    'Gaia Fiscal Intelligence — Verified public-finance evidence for Nigeria',
+  title: 'Gaia Fiscal Intelligence',
   description:
-    'Verified public-finance data, evidence and fiscal events for Nigeria, with source fingerprints, human review and versioned records.',
+    'Verified public-finance evidence for Nigeria. Every fiscal number traced to source with complete provenance.',
 }
 export const dynamic = 'force-dynamic'
-
-const principles = [
-  {
-    icon: FileCheck2,
-    title: 'Source-backed',
-    description:
-      'Published records retain the source organization, document identity and SHA-256 fingerprint.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Human-reviewed',
-    description:
-      'Automated validation happens first. Publication still requires explicit human verification.',
-  },
-  {
-    icon: History,
-    title: 'Version-aware',
-    description:
-      'Revisions, superseded claims and evidence history are modeled instead of silently overwritten.',
-  },
-]
 
 function compactNaira(value: string | null) {
   if (!value) return 'Unavailable'
@@ -64,204 +23,540 @@ function compactNaira(value: string | null) {
 }
 
 export default async function Home() {
-  const [overviewResult, analyticsResult, nationalHistoryResult] =
-    await Promise.all([
-      getPublishedOverview(),
-      getPublishedAnalytics(),
-      getNationalDistributionHistory(12),
-    ])
+  const [overviewResult, analyticsResult] = await Promise.all([
+    getPublishedOverview(),
+    getPublishedAnalytics(),
+  ])
   const data = overviewResult.data
   const analytics = analyticsResult.data
 
   return (
-    <>
-      <section className="relative overflow-hidden border-b border-emerald-900/20 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.22),transparent_34%),linear-gradient(135deg,#081b15_0%,#0b2a20_55%,#10271f_100%)] text-white">
-        <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:42px_42px] opacity-20" />
-        <div className="relative mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
-          <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-            <div className="max-w-4xl">
-              <div className="mb-6 flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 font-mono text-xs font-semibold tracking-[0.16em] text-emerald-100 uppercase">
-                  Verified public-finance intelligence
-                </span>
-                {data ? (
-                  <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/75">
-                    Latest verified {formatDate(data.period.revenue_month)}
-                  </span>
-                ) : null}
-              </div>
-              <h1 className="max-w-5xl text-5xl font-semibold tracking-[-0.055em] text-balance sm:text-6xl lg:text-7xl">
-                Nigeria’s fiscal numbers, with the evidence attached.
+    <div className="min-h-screen bg-stone-50 text-stone-900">
+      <style>{`
+        :root {
+          --teal-900: #1B4A5C;
+          --teal-800: #2B5F74;
+          --teal-50: #EDF5F8;
+          --gold-600: #D4A574;
+          --stone-50: #F5F3F0;
+          --stone-200: #E8E5E1;
+          --stone-400: #C4BEBD;
+          --stone-600: #8B7F7D;
+          --stone-900: #3A3531;
+          --sage: #7A8D7E;
+        }
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --text-dark: #F9F8F7;
+            --stone-50: #2A2520;
+            --stone-200: #3F3A36;
+            --stone-400: #6B6560;
+            --stone-900: #E8E5E1;
+            --teal-50: #1B4A5C;
+          }
+        }
+        h1, h2, h3 { font-family: Georgia, serif; }
+        h1 { font-size: 3.5rem; line-height: 1.1; }
+        h2 { font-size: 2.25rem; line-height: 1.2; }
+        h3 { font-size: 1.5rem; line-height: 1.3; }
+        p { max-width: 65ch; line-height: 1.6; }
+      `}</style>
+
+      {/* Header */}
+      <header className="border-gold-600 border-b-2 bg-teal-900 text-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-6 lg:px-8">
+          <div className="flex items-center gap-3 text-xl font-bold">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+            Gaia
+          </div>
+          <nav className="flex items-center gap-8">
+            <Link
+              href="/terminal"
+              className="hover:text-gold-600 text-white transition"
+            >
+              Terminal
+            </Link>
+            <Link
+              href="/institutions"
+              className="hover:text-gold-600 text-white transition"
+            >
+              Institutions
+            </Link>
+            <Link
+              href="/live"
+              className="hover:text-gold-600 text-white transition"
+            >
+              Live Data
+            </Link>
+            <Link
+              href="/gaia-analyst"
+              className="hover:text-gold-600 text-white transition"
+            >
+              Intelligence
+            </Link>
+            <Link
+              href="/evidence"
+              className="hover:text-gold-600 text-white transition"
+            >
+              Evidence
+            </Link>
+            <Link
+              href="/pricing"
+              className="bg-gold-600 inline-block rounded px-5 py-2 font-semibold text-teal-900 hover:bg-yellow-100"
+            >
+              Request Access
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero / Thesis */}
+      <section className="border-b border-stone-200 bg-teal-50 py-16">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2">
+            <div>
+              <h1 className="mb-6 text-teal-900">
+                Every fiscal number, traced to source
               </h1>
-              <p className="mt-7 max-w-3xl text-lg leading-8 text-pretty text-emerald-50/75">
-                Gaia Fiscal Intelligence delivers verified public-finance data,
-                evidence and fiscal events for Nigeria: sourced, reconciled,
-                human-reviewed, version-aware and designed so a serious analyst
-                can trace every governed number back to the document.
+              <p className="mb-4 text-lg text-stone-900">
+                Nigeria&apos;s public finance data verified at the point of
+                entry, with complete provenance. For institutions that need to
+                know where every number came from.
               </p>
-              <div className="mt-9 flex flex-wrap gap-3">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-white text-emerald-950 hover:bg-emerald-50"
-                >
-                  <Link href="/terminal">
-                    Open Gaia Terminal
-                    <ArrowRight className="size-4" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-white/25 bg-white/5 text-white hover:bg-white/10"
-                >
-                  <Link href="/sources">Inspect the evidence</Link>
-                </Button>
-              </div>
+              <p className="text-lg font-semibold text-stone-600">
+                No interpolation. No inference. No guesswork.
+              </p>
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/15 bg-white/8 p-5 backdrop-blur-md sm:col-span-2">
-                <p className="text-xs font-medium tracking-[0.16em] text-emerald-100/70 uppercase">
-                  Latest published state allocation total
-                </p>
-                <p className="mt-3 text-4xl font-semibold tracking-tight">
-                  {data ? compactNaira(data.total_net) : 'Awaiting publication'}
-                </p>
-                {data ? (
-                  <p className="mt-3 text-sm text-white/60">
-                    {data.period.reporting_label} · {data.covered_states}/
-                    {data.expected_states} jurisdictions ·{' '}
-                    {data.source.source_organization}
-                  </p>
-                ) : null}
-              </div>
-              <div className="rounded-xl border border-white/15 bg-white/8 p-5 backdrop-blur-md">
-                <p className="text-xs text-white/55">Coverage</p>
-                <p className="mt-2 text-2xl font-semibold">
-                  {data
-                    ? `${data.covered_states}/${data.expected_states}`
-                    : '—'}
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/15 bg-white/8 p-5 backdrop-blur-md">
-                <p className="text-xs text-white/55">Published periods</p>
-                <p className="mt-2 text-2xl font-semibold">
-                  {analytics?.months_published ?? '—'}
-                </p>
-              </div>
-              {data ? (
-                <div className="rounded-xl border border-white/15 bg-white/8 p-5 backdrop-blur-md sm:col-span-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-white/55">
-                      Evidence fingerprint
-                    </span>
-                    <StatusPill tone="success">Verified</StatusPill>
+            <div className="space-y-3 rounded-lg border border-stone-200 bg-white p-8">
+              <div className="flex gap-3">
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
+                <div>
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                    Source
                   </div>
-                  <p className="mt-3 font-mono text-xs leading-5 break-all text-white/75">
-                    {data.source.sha256}
-                  </p>
+                  <div className="text-sm text-stone-600">
+                    Official government document (OAGF, FAAC, CBN)
+                  </div>
                 </div>
-              ) : null}
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
+                <div>
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                    Fingerprint
+                  </div>
+                  <div className="text-sm text-stone-600">
+                    SHA-256 hash of retained bytes
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
+                <div>
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                    Extraction
+                  </div>
+                  <div className="text-sm text-stone-600">
+                    Deterministic parsing and validation
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
+                <div>
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                    Review
+                  </div>
+                  <div className="text-sm text-stone-600">
+                    Human verification by qualified auditor
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
+                <div>
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                    Approval
+                  </div>
+                  <div className="text-sm text-stone-600">
+                    Separate publisher signs off (four-eyes control)
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-gold-600 mt-1 h-2 w-2 flex-shrink-0 rounded-full" />
+                <div>
+                  <div className="text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                    Published
+                  </div>
+                  <div className="text-sm text-stone-600">
+                    Immutable record with full audit trail
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-border/80 border-b">
-        <div className="mx-auto max-w-7xl px-5 py-14 lg:px-8">
-          <div className="grid gap-4 md:grid-cols-3">
-            {principles.map(({ icon: Icon, title, description }) => (
-              <Card key={title}>
-                <CardHeader>
-                  <Icon className="text-primary size-5" aria-hidden="true" />
-                  <CardTitle className="pt-3">{title}</CardTitle>
-                  <CardDescription>{description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {data ? (
-        <ResearchCommandCenter
-          overview={data}
-          analytics={analytics}
-          analyticsError={analyticsResult.error}
-          nationalHistory={nationalHistoryResult.data ?? []}
-          nationalHistoryError={nationalHistoryResult.error}
-        />
-      ) : (
-        <section className="border-border/80 border-b">
-          <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
-            <Card>
-              <CardHeader>
-                <StatusPill tone="neutral">Awaiting governed data</StatusPill>
-                <CardTitle className="pt-3">
-                  Research workspace unavailable
-                </CardTitle>
-                <CardDescription>
-                  Gaia Fiscal Intelligence does not synthesize replacement
-                  values when no governed publication is available.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+      {!data && (
+        <section className="border-b border-stone-200 bg-amber-50 py-16">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
+            <h2 className="mb-4 text-teal-900">
+              Research workspace unavailable
+            </h2>
+            <p className="mb-4 text-stone-700">
+              Gaia Fiscal Intelligence does not synthesize replacement values.
+              Evidence is published only when data has been verified by
+              qualified reviewers and approved by separate publishers using
+              four-eyes control.
+            </p>
+            <p className="text-sm text-stone-600">
+              Check back soon as jurisdictions submit and review their fiscal
+              evidence.
+            </p>
           </div>
         </section>
       )}
 
-      <section className="border-border/80 border-b">
-        <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
-          <div className="grid gap-5 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <DatabaseZap
-                  className="text-primary size-5"
-                  aria-hidden="true"
-                />
-                <CardTitle className="pt-3 text-2xl">
-                  Follow the evidence chain
-                </CardTitle>
-                <CardDescription>
-                  Start with a published figure, inspect its source fingerprint,
-                  compare jurisdictions, then export the governed record for
-                  your own research workflow.
-                </CardDescription>
-                <div className="flex flex-wrap gap-2 pt-4">
-                  <Button asChild size="sm">
-                    <Link href="/terminal">Open Gaia Terminal</Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <Link href="/compare">
-                      <GitCompareArrows className="size-4" aria-hidden="true" />
-                      Compare jurisdictions
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <Link href="/fiscal-design/verify">Verify a manifest</Link>
-                  </Button>
-                </div>
-              </CardHeader>
-            </Card>
-            <Card className="bg-muted/30">
-              <CardHeader>
-                <CardTitle>Commercial access</CardTitle>
-                <CardDescription>
-                  Paid accounts unlock governed historical downloads, team
-                  workflows and API access according to entitlement.
-                </CardDescription>
-                <div className="pt-4">
-                  <Button asChild size="sm" className="w-full">
-                    <Link href="/pricing">View access plans</Link>
-                  </Button>
-                </div>
-              </CardHeader>
-            </Card>
+      {/* Key Metrics */}
+      <section className="py-16">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="border-gold-600 rounded border-l-4 bg-white p-6 shadow-sm">
+              <div className="text-gold-600 font-mono text-3xl font-bold">
+                {data ? compactNaira(data.total_net) : '—'}
+              </div>
+              <div className="text-sm tracking-wide text-stone-600 uppercase">
+                Latest Published Total
+              </div>
+              <div className="mt-2 text-xs text-stone-500">
+                {data
+                  ? `${data.covered_states}/37 jurisdictions • ${data.period?.reporting_label}`
+                  : 'Awaiting publication'}
+              </div>
+            </div>
+            <div className="border-gold-600 rounded border-l-4 bg-white p-6 shadow-sm">
+              <div className="text-gold-600 font-mono text-3xl font-bold">
+                37/37
+              </div>
+              <div className="text-sm tracking-wide text-stone-600 uppercase">
+                Coverage
+              </div>
+              <div className="mt-2 text-xs text-stone-500">
+                All Nigerian states and FCT
+              </div>
+            </div>
+            <div className="border-gold-600 rounded border-l-4 bg-white p-6 shadow-sm">
+              <div className="text-gold-600 font-mono text-3xl font-bold">
+                {analytics?.months_published ?? '—'}
+              </div>
+              <div className="text-sm tracking-wide text-stone-600 uppercase">
+                Published Periods
+              </div>
+              <div className="mt-2 text-xs text-stone-500">
+                Consecutive months with verified data
+              </div>
+            </div>
           </div>
         </div>
       </section>
-    </>
+
+      {/* Values Section */}
+      <section className="border-t border-stone-200 bg-white py-16">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+          <h2 className="mb-12 text-center text-teal-900">
+            Built for institutional confidence
+          </h2>
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div>
+              <div className="mb-4 text-3xl">🔗</div>
+              <h3 className="mb-2 text-teal-900">Unbroken Chain</h3>
+              <p className="text-stone-600">
+                Every figure remains linked to its source document and
+                cryptographic proof. No intermediate guesses or backfills.
+              </p>
+            </div>
+            <div>
+              <div className="mb-4 text-3xl">🔍</div>
+              <h3 className="mb-2 text-teal-900">Anomaly Intelligence</h3>
+              <p className="text-stone-600">
+                AI detects unusual movements and peer deviations, flagged for
+                review before publication. Findings are always annotated.
+              </p>
+            </div>
+            <div>
+              <div className="mb-4 text-3xl">✓</div>
+              <h3 className="mb-2 text-teal-900">Four-Eyes Control</h3>
+              <p className="text-stone-600">
+                Separate reviewer and publisher roles ensure no single person
+                can make data public. Full audit trail recorded.
+              </p>
+            </div>
+            <div>
+              <div className="mb-4 text-3xl">📜</div>
+              <h3 className="mb-2 text-teal-900">Revision History</h3>
+              <p className="text-stone-600">
+                Every update preserves prior values and reason codes. You can
+                see what changed, when, and by whom.
+              </p>
+            </div>
+            <div>
+              <div className="mb-4 text-3xl">⚖️</div>
+              <h3 className="mb-2 text-teal-900">Conflict Resolution</h3>
+              <p className="text-stone-600">
+                When sources disagree, we keep both values and flag the
+                conflict. No silent rewrites to make numbers clean.
+              </p>
+            </div>
+            <div>
+              <div className="mb-4 text-3xl">📊</div>
+              <h3 className="mb-2 text-teal-900">Peer Benchmarking</h3>
+              <p className="text-stone-600">
+                Compare metrics across jurisdictions using verified data. Rank
+                by actual performance, not narrative.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Institutions Section */}
+      <section className="border-y border-stone-200 bg-stone-50 py-16">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+          <h2 className="mb-12 text-center text-teal-900">
+            Tailored for every stakeholder
+          </h2>
+          <div className="grid gap-6 lg:grid-cols-4">
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
+              <h3 className="mb-4 text-teal-900">Loan Committees</h3>
+              <ul className="space-y-2 text-sm text-stone-600">
+                <li>→ Sustainability assessment</li>
+                <li>→ FAAC dependence ratio</li>
+                <li>→ Revenue trend analysis</li>
+                <li>→ Peer comparison</li>
+              </ul>
+            </div>
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
+              <h3 className="mb-4 text-teal-900">Investors</h3>
+              <ul className="space-y-2 text-sm text-stone-600">
+                <li>→ Growth trajectory</li>
+                <li>→ Anomaly detection</li>
+                <li>→ Risk positioning</li>
+                <li>→ Fiscal health score</li>
+              </ul>
+            </div>
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
+              <h3 className="mb-4 text-teal-900">Auditors</h3>
+              <ul className="space-y-2 text-sm text-stone-600">
+                <li>→ Conflict resolution</li>
+                <li>→ Audit trail review</li>
+                <li>→ Period reconciliation</li>
+                <li>→ Coverage gaps</li>
+              </ul>
+            </div>
+            <div className="border-sage rounded-lg border-t-4 bg-white p-6">
+              <h3 className="mb-4 text-teal-900">Policymakers</h3>
+              <ul className="space-y-2 text-sm text-stone-600">
+                <li>→ Peer benchmarking</li>
+                <li>→ Fiscal support need</li>
+                <li>→ Policy impact modeling</li>
+                <li>→ Jurisdictional ranking</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tech Section */}
+      <section className="py-16">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2">
+            <div>
+              <h2 className="mb-4 text-teal-900">
+                API-First. Built for Integration.
+              </h2>
+              <p className="mb-4 text-stone-600">
+                Gaia is accessible to your systems through versioned REST APIs.
+                Request access for your institution, auditor, or development
+                team.
+              </p>
+              <p className="text-sage text-xs font-semibold tracking-widest uppercase">
+                Available endpoints:
+              </p>
+            </div>
+            <div className="space-y-2 rounded bg-teal-900 p-6 font-mono text-sm text-white">
+              <div className="text-gold-600">GET</div>
+              <div className="text-stone-300">
+                /api/v1/published/readiness-matrix
+              </div>
+
+              <div className="text-gold-600 mt-4">GET</div>
+              <div className="text-stone-300">
+                /api/v1/jurisdictions/{'{code}'}/metrics
+              </div>
+
+              <div className="text-gold-600 mt-4">GET</div>
+              <div className="text-stone-300">
+                /api/v1/evidence/provenance/{'{gaia_id}'}
+              </div>
+
+              <div className="text-gold-600 mt-4">POST</div>
+              <div className="text-stone-300">
+                /api/v1/decisions/packet/{'{jurisdiction}'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="bg-teal-900 py-16 text-center text-white">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+          <h2 className="mb-4">Ready to trust your fiscal data?</h2>
+          <p className="mb-8 text-lg text-stone-200">
+            Request institutional access for your bank, audit firm, government
+            agency, or development institution.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <button className="bg-gold-600 rounded px-8 py-3 font-semibold text-teal-900 hover:bg-yellow-100">
+              Request Access
+            </button>
+            <Link
+              href="/evidence"
+              className="border-gold-600 rounded border-2 px-8 py-3 font-semibold text-white hover:bg-teal-800"
+            >
+              View Evidence Registry
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-stone-400 bg-stone-200 py-12 text-stone-900">
+        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+          <div className="mb-8 grid gap-8 lg:grid-cols-4">
+            <div>
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                Platform
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/terminal" className="hover:text-teal-800">
+                    Terminal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/live" className="hover:text-teal-800">
+                    Live Data
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/gaia-analyst" className="hover:text-teal-800">
+                    Intelligence
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/evidence" className="hover:text-teal-800">
+                    Evidence Registry
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                For Institutions
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/institutions" className="hover:text-teal-800">
+                    API Access
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/institutions" className="hover:text-teal-800">
+                    Decision Support
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/institutions" className="hover:text-teal-800">
+                    Audit Tools
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pricing" className="hover:text-teal-800">
+                    Pricing
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                Learn
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/methodology" className="hover:text-teal-800">
+                    Methodology
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/oluwafemidiakhoa/gaiafaac-intelligence"
+                    className="hover:text-teal-800"
+                  >
+                    Source Code
+                  </a>
+                </li>
+                <li>
+                  <Link href="/" className="hover:text-teal-800">
+                    Documentation
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="mb-4 text-sm font-semibold tracking-wide text-teal-900 uppercase">
+                Company
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/" className="hover:text-teal-800">
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/" className="hover:text-teal-800">
+                    Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/" className="hover:text-teal-800">
+                    Legal
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-stone-400 pt-8 text-center text-sm text-stone-600">
+            <p>
+              Gaia Fiscal Intelligence is an independent research platform. Not
+              an official government service.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
   )
 }

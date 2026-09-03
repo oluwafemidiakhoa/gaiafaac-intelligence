@@ -18,7 +18,6 @@ from gaiafaac_api.database.session import get_session
 from gaiafaac_api.database.subscription_models import (
     OrganizationSubscription,
     PaymentRecord,
-    SubscriptionStatus,
     SubscriptionTier,
 )
 from gaiafaac_api.subscription_schemas import (
@@ -28,12 +27,12 @@ from gaiafaac_api.subscription_schemas import (
     BillingDashboardResponse,
     DecisionPacketRequest,
     DecisionPacketResponse,
+    PaymentHistoryItem,
+    PaystackCheckoutResponse,
     PricingPageResponse,
     SubscriptionCheckoutRequest,
     SubscriptionStatus as SubscriptionStatusSchema,
     SubscriptionTierInfo,
-    PaystackCheckoutResponse,
-    PaymentHistoryItem,
 )
 
 router = APIRouter(prefix="/api/v1/billing", tags=["billing"])

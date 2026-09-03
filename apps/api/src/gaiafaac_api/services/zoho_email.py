@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -11,6 +10,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+
+from gaiafaac_api.config import get_settings
 
 
 @dataclass
@@ -36,11 +37,12 @@ class ZohoEmailService:
 
     def __init__(
         self,
-        sender_email: str = os.getenv("ZOHO_SENDER_EMAIL", "gaiaassist@gailabai.com"),
-        sender_password: str = os.getenv("ZOHO_SENDER_PASSWORD", ""),
+        sender_email: str = "",
+        sender_password: str = "",
     ):
-        self.sender_email = sender_email
-        self.sender_password = sender_password
+        settings = get_settings()
+        self.sender_email = sender_email or settings.zoho_sender_email or "gaiaassist@gailabai.com"
+        self.sender_password = sender_password or settings.zoho_sender_password
 
         if not self.sender_password:
             print("⚠️  Warning: ZOHO_SENDER_PASSWORD not configured")

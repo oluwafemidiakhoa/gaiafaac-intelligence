@@ -177,7 +177,9 @@ class UsageLog(Base):
     )
 
     # Usage event details
-    event_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "api_call", "export", "webhook"
+    event_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # "api_call", "export", "webhook"
     endpoint: Mapped[str | None] = mapped_column(String(200))
     method: Mapped[str | None] = mapped_column(String(10))  # GET, POST, etc.
     response_status: Mapped[int | None] = mapped_column(Integer)
@@ -210,7 +212,9 @@ class BillingEvent(Base):
     )
 
     # Event details
-    event_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "subscription_start", "overage", "renewal"
+    event_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # "subscription_start", "overage", "renewal"
     description: Mapped[str | None] = mapped_column(String(500))
     amount_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
 
@@ -254,7 +258,9 @@ class Invoice(Base):
     total_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
 
     # Status
-    status: Mapped[str] = mapped_column(String(20), default="draft")  # "draft", "sent", "paid", "overdue"
+    status: Mapped[str] = mapped_column(
+        String(20), default="draft"
+    )  # "draft", "sent", "paid", "overdue"
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     paid_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

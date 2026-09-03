@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import stripe
 from fastapi import APIRouter, Header, HTTPException, Request, Response, status
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from gaiafaac_api.account_schemas import CheckoutRequest, RedirectResponse
@@ -12,7 +14,13 @@ from gaiafaac_api.config import get_settings
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.database.enums import SubscriptionStatus
 from gaiafaac_api.database.models import Subscription
+from gaiafaac_api.database.subscription_models import (
+    OrganizationSubscription,
+    SubscriptionTier,
+    TierName,
+)
 from gaiafaac_api.services.account import active_subscription, membership_for
+from gaiafaac_api.services.billing import BillingService
 
 router = APIRouter(prefix="/billing", tags=["customer billing"])
 
@@ -224,5 +232,116 @@ async def stripe_webhook(
         "customer.subscription.deleted",
     }:
         _sync_subscription(session, data_object)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class PaystackWebhookData(BaseModel):
+    reference: str
+    customer: dict | None = None
+    authorization: dict | None = None
+    subscription: str | None = None
+
+
+class PaystackWebhookEvent(BaseModel):
+    event: str
+    data: PaystackWebhookData
+
+
+def _verify_paystack_webhook(signature: str, body: bytes, secret: str) -> bool:
+    """Verify Paystack webhook signature"""
+    hash_obj = hashlib.sha512(body + secret.encode())
+    computed_signature = hash_obj.hexdigest()
+    return computed_signature == signature
+
+
+@router.post("/paystack-webhook", status_code=status.HTTP_204_NO_CONTENT)
+async def paystack_webhook(
+    request: Request,
+    session: DatabaseSession,
+    paystack_signature: str | None = Header(default=None, alias="x-paystack-signature"),
+) -> Response:
+    """Handle Paystack payment confirmations and subscription events"""
+    settings = get_settings()
+    if not settings.paystack_secret_key:
+        raise HTTPException(status_code=503, detail="Paystack webhook is not configured.")
+
+    payload = await request.body()
+    if not paystack_signature or not _verify_paystack_webhook(
+        paystack_signature, payload, settings.paystack_secret_key
+    ):
+        raise HTTPException(status_code=400, detail="Invalid Paystack webhook signature.")
+
+    try:
+        import json
+
+        event = json.loads(payload)
+    except (ValueError, json.JSONDecodeError) as error:
+        raise HTTPException(status_code=400, detail="Invalid JSON in Paystack webhook.") from error
+
+    event_type = event.get("event")
+    data = event.get("data", {})
+
+    if event_type == "charge.success":
+        metadata = data.get("metadata", {})
+        organization_id_str = metadata.get("organization_id")
+        plan_code = metadata.get("plan_code")
+
+        if organization_id_str and plan_code:
+            try:
+                organization_id = uuid.UUID(str(organization_id_str))
+            except ValueError:
+                return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+            billing_service = BillingService(session)
+
+            tier_name_map = {
+                "free": TierName.FREE,
+                "professional": TierName.PROFESSIONAL,
+                "enterprise": TierName.ENTERPRISE,
+            }
+
+            tier_name = tier_name_map.get(str(plan_code).lower())
+            if not tier_name:
+                return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+            tier = session.scalar(
+                select(SubscriptionTier).where(SubscriptionTier.name == tier_name.value)
+            )
+            if not tier:
+                return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+            existing_sub = session.scalar(
+                select(OrganizationSubscription).where(
+                    OrganizationSubscription.organization_id == organization_id
+                )
+            )
+
+            if existing_sub:
+                existing_sub.status = "active"
+                existing_sub.expires_at = datetime.now(UTC) + timedelta(days=30)
+                existing_sub.renewed_at = datetime.now(UTC)
+                session.commit()
+            else:
+                auth_code = data.get("authorization", {}).get("authorization_code")
+                subscription = OrganizationSubscription(
+                    organization_id=organization_id,
+                    tier_id=tier.id,
+                    tier_name=tier.name,
+                    status="active",
+                    paystack_subscription_id=data.get("reference"),
+                    paystack_authorization_code=auth_code,
+                    expires_at=datetime.now(UTC) + timedelta(days=30),
+                )
+                session.add(subscription)
+                session.commit()
+
+                billing_service.create_billing_event(
+                    organization_id=organization_id,
+                    subscription_id=subscription.id,
+                    event_type="subscription_start",
+                    amount_naira=tier.price_naira,
+                    description=f"{tier.name} subscription activated",
+                )
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

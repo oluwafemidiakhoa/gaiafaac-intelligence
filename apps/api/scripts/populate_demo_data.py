@@ -71,7 +71,7 @@ def generate_dmo_debt_demo(session: Session, states: list[State]) -> int:
                 as_of_date=as_of_date,
                 amount=amount,
                 amount_original=f"₦{amount:,.0f}",
-                source_organization=f"DMO (Demo - Not Verified)",
+                source_organization="DMO (Demo - Not Verified)",
                 source_url="https://www.dmo.gov.ng/debt-profile/sub-national-debts (demo)",
                 processing_status=ProcessingStatus.PUBLISHED,
                 verification_status=VerificationStatus.DEMO,
@@ -114,13 +114,13 @@ def main() -> None:
             print(f"✅ Successfully generated {total} demo records")
             print(f"   - NBS IGR 2024:        {igr_count} records")
             print(f"   - DMO Debt Sept 2024:  {debt_count} records")
-            print(f"\n⚠️  All records marked as (Demo) - NOT verified real data")
-            print(f"    These are for UI/API testing only")
-            print(f"\n💡 Next steps:")
-            print(f"   1. Visit https://gaiafaac-web.up.railway.app")
-            print(f"   2. See demo records in Evidence Network")
-            print(f"   3. Test watchlists and exports with demo data")
-            print(f"   4. Pricing/signup ready at /pricing")
+            print("\n⚠️  All records marked as (Demo) - NOT verified real data")
+            print("    These are for UI/API testing only")
+            print("\n💡 Next steps:")
+            print("   1. Visit https://gaiafaac-web.up.railway.app")
+            print("   2. See demo records in Evidence Network")
+            print("   3. Test watchlists and exports with demo data")
+            print("   4. Pricing/signup ready at /pricing")
             print("=" * 70 + "\n")
 
     except Exception as e:

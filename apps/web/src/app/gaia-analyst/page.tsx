@@ -50,11 +50,13 @@ export default async function GaiaAnalystPage({
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow="Ask Gaia"
-        title="Evidence-led answers for fiscal decisions"
-        description="Ask Gaia answers from verified FAAC, IGR and Fiscal State evidence. It calculates clearly, shows the proof behind each answer, and refuses to invent facts, forecasts or ratings."
-      />
+      <div style={{ fontFamily: 'Georgia, serif' }}>
+        <PageHeader
+          eyebrow="Ask Gaia"
+          title="Evidence-led answers for fiscal decisions"
+          description="Ask Gaia answers from verified FAAC, IGR and Fiscal State evidence. It calculates clearly, shows the proof behind each answer, and refuses to invent facts, forecasts or ratings."
+        />
+      </div>
 
       <Card className="mt-8">
         <CardHeader>
@@ -96,7 +98,7 @@ export default async function GaiaAnalystPage({
             <div className="flex items-end">
               <button
                 type="submit"
-                className="bg-primary text-primary-foreground h-11 w-full rounded-md px-5 text-sm font-medium"
+                className="h-11 w-full rounded-md bg-teal-900 px-5 text-sm font-medium text-white hover:bg-teal-800"
               >
                 Ask Gaia
               </button>
@@ -184,7 +186,7 @@ export default async function GaiaAnalystPage({
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="bg-muted rounded-full px-2 py-1 text-xs font-medium tracking-wide uppercase">
+                            <span className="rounded-full bg-teal-100 px-2 py-1 text-xs font-medium tracking-wide text-teal-900 uppercase">
                               {item.evidence_domain}
                             </span>
                             {item.period_label ? (
@@ -265,7 +267,7 @@ export default async function GaiaAnalystPage({
                       {item.reference_path && item.reference_label ? (
                         <Link
                           href={item.reference_path}
-                          className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+                          className="mt-3 inline-block text-sm font-medium text-teal-900 hover:underline"
                         >
                           {item.reference_label} →
                         </Link>

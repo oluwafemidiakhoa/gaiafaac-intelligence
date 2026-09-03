@@ -84,9 +84,7 @@ class BillingService:
         total = subtotal + tax
 
         # Generate invoice number: INV-YYYYMMDD-ORGID
-        invoice_number = (
-            f"INV-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(organization_id)[:8].upper()}"
-        )
+        invoice_number = f"INV-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(organization_id)[:8].upper()}"
 
         # Build line items
         line_items = [
@@ -138,15 +136,19 @@ class BillingService:
         else:
             end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
 
-        logs = self.session.execute(
-            select(UsageLog)
-            .where(
-                UsageLog.organization_id == organization_id,
-                UsageLog.created_at >= start,
-                UsageLog.created_at < end,
+        logs = (
+            self.session.execute(
+                select(UsageLog)
+                .where(
+                    UsageLog.organization_id == organization_id,
+                    UsageLog.created_at >= start,
+                    UsageLog.created_at < end,
+                )
+                .order_by(UsageLog.event_type)
             )
-            .order_by(UsageLog.event_type)
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         # Aggregate by event type
         usage_by_type = {}
@@ -162,7 +164,10 @@ class BillingService:
         }
 
     def check_usage_limits(
-        self, organization_id: uuid.UUID, subscription: OrganizationSubscription, tier: SubscriptionTier
+        self,
+        organization_id: uuid.UUID,
+        subscription: OrganizationSubscription,
+        tier: SubscriptionTier,
     ) -> dict:
         """Check if organization has exceeded usage limits"""
         # Get this month's usage
@@ -187,9 +192,7 @@ class BillingService:
             },
         }
 
-    def calculate_overage_charges(
-        self, api_overage: int, export_overage: int
-    ) -> Decimal:
+    def calculate_overage_charges(self, api_overage: int, export_overage: int) -> Decimal:
         """Calculate charges for usage overages"""
         # Pricing: ₦50 per extra API call, ₦5,000 per extra export
         api_cost = Decimal(str(api_overage)) * Decimal("50")
@@ -208,10 +211,10 @@ class BillingService:
         <html>
             <body style="font-family: Arial, sans-serif;">
                 <h2>Invoice {invoice.invoice_number}</h2>
-                <p>Invoice Date: {invoice.created_at.strftime('%Y-%m-%d')}</p>
-                <p>Due Date: {invoice.due_date.strftime('%Y-%m-%d')}</p>
+                <p>Invoice Date: {invoice.created_at.strftime("%Y-%m-%d")}</p>
+                <p>Due Date: {invoice.due_date.strftime("%Y-%m-%d")}</p>
 
-                <h3>Billing Period: {invoice.period_start.strftime('%Y-%m-%d')} to {invoice.period_end.strftime('%Y-%m-%d')}</h3>
+                <h3>Billing Period: {invoice.period_start.strftime("%Y-%m-%d")} to {invoice.period_end.strftime("%Y-%m-%d")}</h3>
 
                 <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                     <tr style="border-bottom: 1px solid #ccc;">

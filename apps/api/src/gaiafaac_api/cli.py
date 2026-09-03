@@ -155,6 +155,10 @@ def build_parser() -> argparse.ArgumentParser:
     api_key.add_argument("--org-name")
     api_key.add_argument("--name", required=True)
     api_key.add_argument("--plan", default="api", choices=[p.value for p in PlanCode])
+
+    commands.add_parser("generate-invoices", help="Generate invoices for all active subscriptions")
+    commands.add_parser("check-overdue", help="Check for overdue invoices and send reminders")
+
     return parser
 
 
@@ -393,6 +397,16 @@ def main() -> None:
                 "Store it now - it will not be shown again:"
             )
             print(raw)
+        elif args.command == "generate-invoices":
+            from gaiafaac_api.services.invoice_scheduler import generate_monthly_invoices
+
+            result = generate_monthly_invoices(session)
+            print(json.dumps(result, indent=2))
+        elif args.command == "check-overdue":
+            from gaiafaac_api.services.invoice_scheduler import check_overdue_invoices
+
+            result = check_overdue_invoices(session)
+            print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
