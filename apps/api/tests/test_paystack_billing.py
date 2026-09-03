@@ -10,7 +10,7 @@ from gaiafaac_api.api.v1.routes.billing import (
     _record_paystack_payment,
     _verify_paystack_webhook,
 )
-from gaiafaac_api.database.models import Subscription
+from gaiafaac_api.database.models import Organization, Subscription
 from gaiafaac_api.database.subscription_models import PaymentRecord
 
 
@@ -25,6 +25,17 @@ def _successful_payment(organization_id: uuid.UUID, reference: str = "gfi-test-r
             "gaia_reference": reference,
         },
     }
+
+
+def _organization(session) -> Organization:
+    organization = Organization(
+        name="Revenue Engine Test",
+        slug=f"revenue-engine-{uuid.uuid4().hex[:12]}",
+    )
+    session.add(organization)
+    session.commit()
+    session.refresh(organization)
+    return organization
 
 
 def test_paystack_webhook_uses_hmac_sha512():
@@ -44,8 +55,8 @@ def test_paystack_webhook_rejects_modified_payload():
 
 
 def test_paystack_activation_is_idempotent_for_same_reference(session):
-    organization_id = uuid.uuid4()
-    data = _successful_payment(organization_id)
+    organization = _organization(session)
+    data = _successful_payment(organization.id)
 
     first = _activate_paystack_subscription(session, data)
     assert first is not None
@@ -61,8 +72,8 @@ def test_paystack_activation_is_idempotent_for_same_reference(session):
 
 
 def test_paystack_payment_record_is_idempotent_and_keeps_receipt(session):
-    organization_id = uuid.uuid4()
-    data = _successful_payment(organization_id)
+    organization = _organization(session)
+    data = _successful_payment(organization.id)
     subscription = _activate_paystack_subscription(session, data)
     assert subscription is not None
 
