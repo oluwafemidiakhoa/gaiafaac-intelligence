@@ -88,6 +88,34 @@ jobs:
                   raise SystemExit(f"Expected schema test anchor not found: {anchor.strip()}")
               source = source.replace(anchor, anchor + addition, 1)
           schema_test.write_text(source)
+
+          card_import = '''import {\n  Card,\n  CardContent,\n  CardDescription,\n  CardHeader,\n  CardTitle,\n} from '@/components/ui/card'\n'''
+          for relative in (
+              "apps/web/src/app/decision-packets/page.tsx",
+              "apps/web/src/app/institutional/page.tsx",
+              "apps/web/src/app/review/page.tsx",
+              "apps/web/src/app/review/pending/page.tsx",
+          ):
+              path = Path(relative)
+              source = path.read_text()
+              if card_import not in source:
+                  raise SystemExit(f"Expected stale Card import not found: {relative}")
+              path.write_text(source.replace(card_import, "", 1))
+
+          review = Path("apps/web/src/app/review/page.tsx")
+          source = review.read_text()
+          source = source.replace("import { Button } from '@/components/ui/button'\n", "", 1)
+          stale_revision = '''  const revisionEscalations = revisions.filter(\n    (item) => item.status === 'investigation_required',\n  ).length\n'''
+          if stale_revision not in source:
+              raise SystemExit("Expected stale revisionEscalations calculation not found")
+          review.write_text(source.replace(stale_revision, "", 1))
+
+          pending = Path("apps/web/src/app/review/pending/page.tsx")
+          source = pending.read_text()
+          stale_status = "import { StatusPill } from '@/components/status-pill'\n"
+          if stale_status not in source:
+              raise SystemExit("Expected stale StatusPill import not found")
+          pending.write_text(source.replace(stale_status, "", 1))
           PY
 
       - name: Apply safe API fixes and formatting
