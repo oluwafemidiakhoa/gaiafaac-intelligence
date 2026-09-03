@@ -181,11 +181,16 @@ def publish_igr_source(
 ) -> IgrApprovalResult:
     """Publish approved annual NBS IGR observations into immutable governed claims."""
 
-    source, reviewer, records, fiscal_year = _context(
+    source, publisher, records, fiscal_year = _context(
         session,
         source_document_id=source_document_id,
         reviewer_id=reviewer_id,
     )
+
+    if publisher.role is not UserRole.ADMINISTRATOR:
+        raise ApprovalError("Publishing requires an active administrator")
+    if any(record.reviewed_by == publisher.id for record in records):
+        raise ApprovalError("The human reviewer cannot publish the same source")
 
     if source.source_status is not SourceStatus.APPROVED:
         raise ApprovalError("Only approved NBS IGR sources can be published")
@@ -236,7 +241,7 @@ def publish_igr_source(
 
         session.add(
             AuditLog(
-                actor_user_id=reviewer.id,
+                actor_user_id=publisher.id,
                 action="igr.published",
                 entity_type="source_document",
                 entity_id=source.id,
