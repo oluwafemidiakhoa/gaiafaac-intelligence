@@ -50,12 +50,13 @@ export default async function GaiaAnalystPage({
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow="Ask Gaia"
-        title="Evidence-led answers for fiscal decisions"
-        description="Ask Gaia answers from verified FAAC, IGR and Fiscal State evidence. It calculates clearly, shows the proof behind each answer, and refuses to invent facts, forecasts or ratings."
-        styles={{ title: { fontFamily: 'Georgia, serif' } }}
-      />
+      <div style={{ fontFamily: 'Georgia, serif' }}>
+        <PageHeader
+          eyebrow="Ask Gaia"
+          title="Evidence-led answers for fiscal decisions"
+          description="Ask Gaia answers from verified FAAC, IGR and Fiscal State evidence. It calculates clearly, shows the proof behind each answer, and refuses to invent facts, forecasts or ratings."
+        />
+      </div>
 
       <Card className="mt-8">
         <CardHeader>
