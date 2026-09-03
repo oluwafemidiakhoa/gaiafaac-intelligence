@@ -10,7 +10,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import {
-  Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
@@ -158,7 +157,7 @@ export function EvidenceBadge({
 
   return (
     <TooltipProvider>
-      <Tooltip>
+      <div className="relative inline-flex">
         <TooltipTrigger asChild>
           <div
             className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-help ${config.color} ${className}`}
@@ -170,7 +169,7 @@ export function EvidenceBadge({
         <TooltipContent className="bg-slate-900 text-white border-slate-700 max-w-xs">
           {tooltipContent}
         </TooltipContent>
-      </Tooltip>
+      </div>
     </TooltipProvider>
   );
 }
