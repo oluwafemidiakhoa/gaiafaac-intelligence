@@ -118,6 +118,57 @@ def test_real_layout_examples_match_dmo_semantics():
     assert external[-1].amount == Decimal("26798042.48")
 
 
+def test_parse_debt_rows_handles_serial_with_no_space_before_name():
+    """Some external-debt report layouts render with no space between the serial
+    number and the state name (e.g. "1Abia ..." instead of "1 Abia ...")."""
+    rows = parse_dmo_debt_text(
+        [
+            (
+                1,
+                "\n".join(
+                    [
+                        "1Abia 107,163,236.46 - - - - 107,163,236.46",
+                        *[
+                            f"{index}State {index} {index * 100:,.2f} - - - - {index * 100:,.2f}"
+                            for index in range(2, 37)
+                        ],
+                        "37FCT 26,798,042.48 - - - - 26,798,042.48",
+                    ]
+                ),
+            )
+        ],
+        debt_kind=DebtKind.EXTERNAL,
+    )
+
+    assert len(rows) == 37
+    assert rows[0].state_name == "Abia"
+    assert rows[0].amount == Decimal("107163236.46")
+
+
+def test_parse_debt_rows_repairs_stray_space_before_thousands_comma():
+    """pdfplumber sometimes inserts a stray space between a digit and the thousands-
+    separator comma that follows it (observed live: "17 JIGAWA 1 ,600,000,000.05")."""
+    rows = parse_dmo_debt_text(
+        [
+            (
+                1,
+                "\n".join(
+                    [
+                        "1 ABIA 1 ,600,000,000.05",
+                        *[f"{index} State {index} {index * 1000:,.2f}" for index in range(2, 37)],
+                        "37 FCT 389,875,138,075.16",
+                    ]
+                ),
+            )
+        ],
+        debt_kind=DebtKind.DOMESTIC,
+    )
+
+    assert len(rows) == 37
+    assert rows[0].state_name == "ABIA"
+    assert rows[0].amount == Decimal("1600000000.05")
+
+
 def test_extract_dmo_source_stages_exact_state_fct_coverage(session, tmp_path):
     seed_states(session)
     states = list(session.scalars(select(State).order_by(State.name)))
