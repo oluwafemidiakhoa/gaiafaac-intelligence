@@ -70,6 +70,24 @@ jobs:
           if old_session not in source:
               raise SystemExit("Expected stale sessionmaker block not found")
           main.write_text(source.replace(old_session, new_session, 1))
+
+          schema_test = Path("apps/api/tests/test_database_schema.py")
+          source = schema_test.read_text()
+          additions = {
+              '    "billing_events",\n': '    "audit_logs",\n',
+              '    "invoices",\n': '    "generated_insights",\n',
+              '    "organization_subscriptions",\n': '    "organization_memberships",\n',
+              '    "payment_records",\n': '    "organizations",\n',
+              '    "subscription_tiers",\n': '    "states",\n',
+              '    "usage_logs",\n': '    "subscriptions",\n',
+          }
+          for addition, anchor in additions.items():
+              if addition in source:
+                  continue
+              if anchor not in source:
+                  raise SystemExit(f"Expected schema test anchor not found: {anchor.strip()}")
+              source = source.replace(anchor, anchor + addition, 1)
+          schema_test.write_text(source)
           PY
 
       - name: Apply safe API fixes and formatting
