@@ -28,7 +28,8 @@ export const metadata: Metadata = {
 const plans = [
   {
     name: 'Free',
-    price: '$0',
+    price: '₦0',
+    period: 'Forever free',
     tagline: 'Verify the latest governed public evidence.',
     features: [
       'Latest verified FAAC month',
@@ -41,48 +42,40 @@ const plans = [
     featured: false,
   },
   {
-    name: 'Analyst',
-    price: '$49',
+    name: 'Professional',
+    price: '₦50,000',
+    period: '/month',
     tagline:
-      'For individual researchers who need governed historical evidence.',
+      'For individual researchers and analysts who need historical evidence.',
     features: [
       'Published historical FAAC access',
       'Self-service CSV and XLSX exports',
       'Source-linked evidence and proof objects',
       'Single-user research workspace',
+      '100,000 API requests/month',
     ],
-    cta: 'Start Analyst',
-    href: '/account/signup?plan=analyst',
+    cta: 'Start Free Trial',
+    href: '/account/signup?plan=professional',
     featured: true,
   },
   {
-    name: 'Team',
-    price: '$199',
+    name: 'Enterprise',
+    price: '₦500,000',
+    period: '/month',
     tagline:
-      'For research, policy and advisory teams working from one evidence base.',
+      'For institutions, governments and APIs needing programmatic access.',
     features: [
-      'Everything in Analyst',
-      'Up to 10 organization members',
-      'Self-service invitations and team administration',
+      'Everything in Professional',
+      'Unlimited organization members',
+      'Custom team administration',
       'Shared governed evidence workflow',
+      'Unlimited API requests',
+      'Decision Packets (unlimited)',
+      'Webhook integrations',
+      'Priority support',
     ],
-    cta: 'Start Team',
-    href: '/account/signup?plan=team',
-    featured: false,
-  },
-  {
-    name: 'API',
-    price: '$299',
-    tagline:
-      'For products and analysts that need governed data programmatically.',
-    features: [
-      'Everything in Team',
-      'Self-service API key creation and revocation',
-      'Published months and allocation endpoints',
-      '5,000 authenticated requests per rolling 24 hours',
-    ],
-    cta: 'Start API',
-    href: '/account/signup?plan=api',
+    cta: 'Contact Sales',
+    href: '/account/signup?plan=enterprise',
     featured: false,
   },
 ]
@@ -189,14 +182,16 @@ export default function PricingPage() {
               </div>
               <CardTitle className="flex items-baseline justify-between gap-3">
                 <span>{plan.name}</span>
-                <span className="text-2xl font-semibold">
-                  {plan.price}
-                  {plan.price !== '$0' ? (
+                <div className="text-right">
+                  <span className="text-2xl font-semibold">
+                    {plan.price}
+                  </span>
+                  {plan.period && (
                     <span className="text-muted-foreground text-sm font-normal">
-                      /mo
+                      {plan.period}
                     </span>
-                  ) : null}
-                </span>
+                  )}
+                </div>
               </CardTitle>
               <CardDescription>{plan.tagline}</CardDescription>
             </CardHeader>
@@ -340,9 +335,9 @@ export default function PricingPage() {
 
       <div className="text-muted-foreground mt-10 max-w-4xl space-y-2 text-sm leading-6">
         <p>
-          Monthly self-service prices are in USD. Checkout, billing management
-          and plan entitlements are handled through the GaiaFAAC customer
-          account.
+          Monthly self-service prices are in Nigerian Naira (₦). Checkout, billing
+          management and plan entitlements are handled through the GaiaFAAC
+          customer account with Paystack.
         </p>
         <p>
           GaiaFAAC is an independent research platform, not a government
