@@ -38,7 +38,9 @@ jobs:
             apps/web/src/components/metric-card.tsx \
             apps/web/src/components/page-header.tsx \
             apps/web/src/components/site-footer.tsx \
-            apps/web/src/components/ui/card.tsx
+            apps/web/src/components/ui/card.tsx \
+            e2e/control-plane.spec.mjs \
+            playwright.config.mjs
 
       - name: Verify formatting
         run: npm run format
@@ -59,10 +61,12 @@ jobs:
             apps/web/src/components/metric-card.tsx \
             apps/web/src/components/page-header.tsx \
             apps/web/src/components/site-footer.tsx \
-            apps/web/src/components/ui/card.tsx
+            apps/web/src/components/ui/card.tsx \
+            e2e/control-plane.spec.mjs \
+            playwright.config.mjs
           if git diff --cached --quiet; then
             echo "No formatting changes required"
           else
-            git commit -m "style(web): format Control Plane v2"
+            git commit -m "style(web): format Control Plane v2 and Playwright"
             git push origin HEAD:feat/gaia-control-plane-v2
           fi
