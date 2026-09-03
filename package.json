@@ -16,7 +16,7 @@
   "scripts": {
     "build": "npm run build --workspace @gaiafaac/web",
     "dev": "npm run dev --workspace @gaiafaac/web",
-    "format": "prettier --write apps/web/src/app/account/billing/page.tsx apps/web/src/app/fiscal-pulse/page.tsx apps/web/src/app/globals.css apps/web/src/app/institutional/page.tsx apps/web/src/app/pricing/page.tsx apps/web/src/app/review/page.tsx apps/web/src/app/terminal/page.tsx apps/web/src/components/metric-card.tsx apps/web/src/components/page-header.tsx apps/web/src/components/site-footer.tsx apps/web/src/components/ui/card.tsx && for f in apps/web/src/app/account/billing/page.tsx apps/web/src/app/fiscal-pulse/page.tsx apps/web/src/app/globals.css apps/web/src/app/institutional/page.tsx apps/web/src/app/pricing/page.tsx apps/web/src/app/review/page.tsx apps/web/src/app/terminal/page.tsx apps/web/src/components/metric-card.tsx apps/web/src/components/page-header.tsx apps/web/src/components/site-footer.tsx apps/web/src/components/ui/card.tsx; do echo __GAIA_FILE__:$f; base64 -w0 $f; echo; done; exit 1",
+    "format": "prettier --check .",
     "format:write": "prettier --write .",
     "lint": "npm run lint --workspace @gaiafaac/web",
     "test": "npm run test --workspace @gaiafaac/web",
