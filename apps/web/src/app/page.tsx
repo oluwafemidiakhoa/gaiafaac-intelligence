@@ -210,6 +210,26 @@ export default async function Home() {
         </div>
       </section>
 
+      {!data && (
+        <section className="border-b border-stone-200 bg-amber-50 py-16">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
+            <h2 className="mb-4 text-teal-900">
+              Research workspace unavailable
+            </h2>
+            <p className="mb-4 text-stone-700">
+              Gaia Fiscal Intelligence does not synthesize replacement values.
+              Evidence is published only when data has been verified by
+              qualified reviewers and approved by separate publishers using
+              four-eyes control.
+            </p>
+            <p className="text-sm text-stone-600">
+              Check back soon as jurisdictions submit and review their fiscal
+              evidence.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Key Metrics */}
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
