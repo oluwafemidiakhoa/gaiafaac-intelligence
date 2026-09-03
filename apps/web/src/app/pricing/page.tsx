@@ -148,12 +148,20 @@ export default function PricingPage() {
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Public</p>
-                <p className="mt-2 text-sm font-semibold text-emerald-100">Verify current evidence</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Public
+                </p>
+                <p className="mt-2 text-sm font-semibold text-emerald-100">
+                  Verify current evidence
+                </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Paid</p>
-                <p className="mt-2 text-sm font-semibold text-amber-200">Operational leverage</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Paid
+                </p>
+                <p className="mt-2 text-sm font-semibold text-amber-200">
+                  Operational leverage
+                </p>
               </div>
             </div>
           </div>
@@ -176,9 +184,11 @@ export default function PricingPage() {
               ) : null}
               <CardHeader>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="gaia-kicker">{plan.featured ? 'Recommended' : 'Access tier'}</p>
+                  <p className="gaia-kicker">
+                    {plan.featured ? 'Recommended' : 'Access tier'}
+                  </p>
                   {plan.featured ? (
-                    <span className="rounded-full bg-primary/10 px-2.5 py-1 font-mono text-[0.58rem] font-bold tracking-[0.12em] text-primary uppercase">
+                    <span className="bg-primary/10 text-primary rounded-full px-2.5 py-1 font-mono text-[0.58rem] font-bold tracking-[0.12em] uppercase">
                       Start here
                     </span>
                   ) : null}
@@ -189,7 +199,9 @@ export default function PricingPage() {
                     {plan.price}
                   </span>
                   {plan.period ? (
-                    <span className="text-muted-foreground text-xs">{plan.period}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {plan.period}
+                    </span>
                   ) : null}
                 </div>
                 <CardDescription>{plan.tagline}</CardDescription>
@@ -198,7 +210,7 @@ export default function PricingPage() {
                 <ul className="space-y-3 text-sm">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5">
-                      <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <div className="bg-primary/10 mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full">
                         <Check className="text-primary size-3" />
                       </div>
                       <span>{feature}</span>
@@ -230,31 +242,48 @@ export default function PricingPage() {
               </h2>
               <p className="mt-5 max-w-2xl leading-7 text-white/55">
                 Institution-wide deployment, redistribution rights, custom data
-                delivery and dedicated evidence operations are scoped separately.
+                delivery and dedicated evidence operations are scoped
+                separately.
               </p>
             </div>
 
             <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              {institutionalProducts.map(({ icon: Icon, name, buyer, description }) => (
-                <article key={name} className="rounded-2xl border border-white/10 bg-white/[0.035] p-6">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-300/[0.08]">
-                    <Icon className="size-5 text-emerald-300" />
-                  </div>
-                  <h3 className="mt-6 text-lg font-semibold">{name}</h3>
-                  <p className="mt-2 text-sm font-medium text-emerald-100/60">{buyer}</p>
-                  <p className="mt-4 text-sm leading-6 text-white/50">{description}</p>
-                </article>
-              ))}
+              {institutionalProducts.map(
+                ({ icon: Icon, name, buyer, description }) => (
+                  <article
+                    key={name}
+                    className="rounded-2xl border border-white/10 bg-white/[0.035] p-6"
+                  >
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-300/[0.08]">
+                      <Icon className="size-5 text-emerald-300" />
+                    </div>
+                    <h3 className="mt-6 text-lg font-semibold">{name}</h3>
+                    <p className="mt-2 text-sm font-medium text-emerald-100/60">
+                      {buyer}
+                    </p>
+                    <p className="mt-4 text-sm leading-6 text-white/50">
+                      {description}
+                    </p>
+                  </article>
+                ),
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-5 border-t border-white/10 pt-7">
               <div>
-                <p className="font-semibold">Need organization-wide deployment?</p>
+                <p className="font-semibold">
+                  Need organization-wide deployment?
+                </p>
                 <p className="mt-1 text-sm text-white/45">
-                  Scope workflow, permitted use, data volume and support before pricing the contract.
+                  Scope workflow, permitted use, data volume and support before
+                  pricing the contract.
                 </p>
               </div>
-              <Button asChild size="lg" className="rounded-full bg-amber-300 font-bold text-teal-950 hover:bg-amber-200">
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full bg-amber-300 font-bold text-teal-950 hover:bg-amber-200"
+              >
                 <Link href="/pilot?plan=team#request-form">
                   Request institutional pilot <ArrowRight className="size-4" />
                 </Link>
@@ -269,9 +298,16 @@ export default function PricingPage() {
               <CardTitle>What the customer buys</CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
-              <p>Human-reviewed publication controls and retained provenance.</p>
-              <p>Historical evidence structured for repeatable research and export.</p>
-              <p>Licensed workflow, delivery and API access according to plan.</p>
+              <p>
+                Human-reviewed publication controls and retained provenance.
+              </p>
+              <p>
+                Historical evidence structured for repeatable research and
+                export.
+              </p>
+              <p>
+                Licensed workflow, delivery and API access according to plan.
+              </p>
             </CardContent>
           </Card>
           <Card>

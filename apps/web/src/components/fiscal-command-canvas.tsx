@@ -1,6 +1,12 @@
 'use client'
 
-import { Activity, Fingerprint, Radio, ShieldCheck, Sparkles } from 'lucide-react'
+import {
+  Activity,
+  Fingerprint,
+  Radio,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 interface StateSignal {
@@ -40,7 +46,10 @@ export function FiscalCommandCanvas({
   topStates,
 }: FiscalCommandCanvasProps) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const nodes = useMemo(() => Array.from({ length: nodeCount }, (_, i) => i), [])
+  const nodes = useMemo(
+    () => Array.from({ length: nodeCount }, (_, i) => i),
+    [],
+  )
   const activeState = topStates.length
     ? topStates[activeIndex % topStates.length]
     : null
@@ -66,7 +75,9 @@ export function FiscalCommandCanvas({
             <p className="text-[0.65rem] font-bold tracking-[0.18em] text-emerald-200/60 uppercase">
               Gaia command mesh
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-white">Live governed signal</p>
+            <p className="mt-0.5 text-sm font-semibold text-white">
+              Live governed signal
+            </p>
           </div>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-[0.68rem] font-bold text-emerald-100">
@@ -79,15 +90,25 @@ export function FiscalCommandCanvas({
         <div className="relative min-h-[390px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#03110f]/70">
           <div className="absolute inset-x-5 top-5 z-10 grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 backdrop-blur">
-              <p className="text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Published</p>
-              <p className="mt-1 font-mono text-lg font-semibold text-white">{total}</p>
+              <p className="text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                Published
+              </p>
+              <p className="mt-1 font-mono text-lg font-semibold text-white">
+                {total}
+              </p>
             </div>
             <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 backdrop-blur">
-              <p className="text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Coverage</p>
-              <p className="mt-1 font-mono text-lg font-semibold text-white">{coverage}</p>
+              <p className="text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                Coverage
+              </p>
+              <p className="mt-1 font-mono text-lg font-semibold text-white">
+                {coverage}
+              </p>
             </div>
             <div className="col-span-2 rounded-xl border border-white/10 bg-black/20 px-3 py-3 backdrop-blur sm:col-span-1">
-              <p className="text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Momentum</p>
+              <p className="text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                Momentum
+              </p>
               <p className="mt-1 font-mono text-lg font-semibold text-white">
                 {nationalChange === null
                   ? 'Awaiting'
@@ -96,7 +117,7 @@ export function FiscalCommandCanvas({
             </div>
           </div>
 
-          <div className="absolute inset-x-0 bottom-7 top-24 flex items-center justify-center">
+          <div className="absolute inset-x-0 top-24 bottom-7 flex items-center justify-center">
             <div className="relative size-[270px] sm:size-[300px]">
               <div className="absolute inset-0 rounded-full border border-emerald-300/10" />
               <div className="absolute inset-7 rounded-full border border-dashed border-emerald-300/15" />
@@ -116,12 +137,15 @@ export function FiscalCommandCanvas({
                         ? 'border-amber-200 bg-amber-300 shadow-[0_0_22px_rgba(252,211,77,.75)]'
                         : 'border-emerald-200/25 bg-emerald-300/25'
                     }`}
-                    style={{ left: `${(x / 300) * 100}%`, top: `${(y / 300) * 100}%` }}
+                    style={{
+                      left: `${(x / 300) * 100}%`,
+                      top: `${(y / 300) * 100}%`,
+                    }}
                   />
                 )
               })}
 
-              <div className="absolute left-1/2 top-1/2 flex size-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[2rem] border border-emerald-200/25 bg-[#0b2a23] shadow-[0_0_80px_rgba(52,211,153,.12)]">
+              <div className="absolute top-1/2 left-1/2 flex size-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[2rem] border border-emerald-200/25 bg-[#0b2a23] shadow-[0_0_80px_rgba(52,211,153,.12)]">
                 <div className="text-center">
                   <Fingerprint className="mx-auto size-8 text-emerald-200" />
                   <span className="mt-1 block text-[0.55rem] font-bold tracking-[0.16em] text-emerald-100/60 uppercase">
@@ -130,14 +154,22 @@ export function FiscalCommandCanvas({
                 </div>
               </div>
 
-              <div className="absolute left-1/2 top-[7%] -translate-x-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">SOURCE</div>
-              <div className="absolute right-[2%] top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">REVIEW</div>
-              <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">PUBLISH</div>
-              <div className="absolute left-[1%] top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">HASH</div>
+              <div className="absolute top-[7%] left-1/2 -translate-x-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">
+                SOURCE
+              </div>
+              <div className="absolute top-1/2 right-[2%] -translate-y-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">
+                REVIEW
+              </div>
+              <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">
+                PUBLISH
+              </div>
+              <div className="absolute top-1/2 left-[1%] -translate-y-1/2 rounded-full border border-white/10 bg-[#061a16] px-2.5 py-1 text-[0.56rem] font-semibold text-white/55">
+                HASH
+              </div>
             </div>
           </div>
 
-          <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-[0.65rem] text-white/40">
+          <div className="absolute right-4 bottom-3 left-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-[0.65rem] text-white/40">
             <span className="truncate">{period}</span>
             <span className="flex items-center gap-1.5 text-emerald-200/60">
               <ShieldCheck className="size-3" /> immutable trail

@@ -35,7 +35,8 @@ const workflows = [
   {
     href: '/gaia-analyst',
     title: 'Ask Gaia',
-    description: 'Interrogate governed fiscal evidence and inspect the source trail.',
+    description:
+      'Interrogate governed fiscal evidence and inspect the source trail.',
     icon: Sparkles,
   },
   {
@@ -47,7 +48,8 @@ const workflows = [
   {
     href: '/decision-packets',
     title: 'Decision Packets',
-    description: 'Turn verified evidence into a review-ready institutional brief.',
+    description:
+      'Turn verified evidence into a review-ready institutional brief.',
     icon: FileCheck2,
   },
 ] as const
@@ -96,8 +98,8 @@ export default async function GaiaTerminalPage() {
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-emerald-50/65">
               Search the governed ledger, inspect source coverage, ask Gaia, and
-              move from a fiscal signal to a review-ready decision without losing
-              provenance.
+              move from a fiscal signal to a review-ready decision without
+              losing provenance.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -122,19 +124,27 @@ export default async function GaiaTerminalPage() {
                 <p className="font-mono text-[0.62rem] font-semibold tracking-[0.16em] text-emerald-200/45 uppercase">
                   Governed ledger
                 </p>
-                <h2 className="mt-2 text-xl font-semibold">OAGF / FAAC allocation</h2>
+                <h2 className="mt-2 text-xl font-semibold">
+                  OAGF / FAAC allocation
+                </h2>
               </div>
               <ShieldCheck className="size-6 text-amber-300" />
             </div>
             <div className="relative mt-7 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Coverage</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Coverage
+                </p>
                 <p className="mt-2 font-mono text-2xl font-semibold">
-                  {data ? `${data.covered_states}/${data.expected_states}` : '—'}
+                  {data
+                    ? `${data.covered_states}/${data.expected_states}`
+                    : '—'}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Published total</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Published total
+                </p>
                 <p className="mt-2 font-mono text-2xl font-semibold">
                   {data ? compactNaira(data.total_net) : '—'}
                 </p>
@@ -143,9 +153,13 @@ export default async function GaiaTerminalPage() {
             <div className="relative mt-3 rounded-2xl border border-white/10 bg-black/10 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Publication state</p>
+                  <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                    Publication state
+                  </p>
                   <p className="mt-2 text-sm font-semibold text-emerald-200">
-                    {data ? 'Source-linked and published' : 'Awaiting governed publication'}
+                    {data
+                      ? 'Source-linked and published'
+                      : 'Awaiting governed publication'}
                   </p>
                 </div>
                 <FileCheck2 className="size-5 text-emerald-300" />
@@ -161,21 +175,34 @@ export default async function GaiaTerminalPage() {
             <section className="grid gap-4 md:grid-cols-3">
               <div className="gaia-panel p-6">
                 <p className="gaia-data-label">Latest verified allocation</p>
-                <p className="gaia-data-value mt-4">{formatDate(data.period.revenue_month)}</p>
-                <p className="text-muted-foreground mt-2 text-sm leading-6">{data.period.reporting_label}</p>
+                <p className="gaia-data-value mt-4">
+                  {formatDate(data.period.revenue_month)}
+                </p>
+                <p className="text-muted-foreground mt-2 text-sm leading-6">
+                  {data.period.reporting_label}
+                </p>
               </div>
               <div className="gaia-panel p-6">
                 <p className="gaia-data-label">State ledger total</p>
-                <p className="gaia-data-value mt-4">{compactNaira(data.total_net)}</p>
-                <p className="text-muted-foreground mt-2 text-sm leading-6">Published state and FCT net allocations</p>
+                <p className="gaia-data-value mt-4">
+                  {compactNaira(data.total_net)}
+                </p>
+                <p className="text-muted-foreground mt-2 text-sm leading-6">
+                  Published state and FCT net allocations
+                </p>
               </div>
               <div className="gaia-panel p-6">
                 <p className="gaia-data-label">Evidence state</p>
                 <div className="mt-4 flex items-center gap-2">
                   <FileCheck2 className="text-primary size-5" />
-                  <p className="text-xl font-semibold tracking-tight">Source-linked</p>
+                  <p className="text-xl font-semibold tracking-tight">
+                    Source-linked
+                  </p>
                 </div>
-                <Link href="/sources" className="text-primary mt-3 inline-flex items-center gap-1.5 text-sm font-semibold">
+                <Link
+                  href="/sources"
+                  className="text-primary mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"
+                >
                   Verify fingerprint <ArrowUpRight className="size-3.5" />
                 </Link>
               </div>
@@ -184,8 +211,12 @@ export default async function GaiaTerminalPage() {
             <section className="mt-8 overflow-hidden rounded-3xl border border-white/8 bg-[#061d19] p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,.15)] sm:p-7">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="font-mono text-[0.64rem] font-semibold tracking-[0.18em] text-amber-200/55 uppercase">Research command bar</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em]">Find the evidence. Then decide.</h2>
+                  <p className="font-mono text-[0.64rem] font-semibold tracking-[0.18em] text-amber-200/55 uppercase">
+                    Research command bar
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em]">
+                    Find the evidence. Then decide.
+                  </h2>
                 </div>
                 <BarChart3 className="size-6 text-amber-300" />
               </div>
@@ -201,45 +232,69 @@ export default async function GaiaTerminalPage() {
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="gaia-kicker">Evidence network</p>
-                  <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">A fiscal picture built source by source.</h2>
+                  <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">
+                    A fiscal picture built source by source.
+                  </h2>
                 </div>
                 <p className="text-muted-foreground max-w-md text-sm leading-6">
-                  If Gaia cannot verify a source lane, it remains unavailable instead of being inferred.
+                  If Gaia cannot verify a source lane, it remains unavailable
+                  instead of being inferred.
                 </p>
               </div>
 
               {evidenceLanes ? (
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                   {evidenceLanes.map((lane) => (
-                    <article key={lane.authority} className="gaia-panel group p-5">
+                    <article
+                      key={lane.authority}
+                      className="gaia-panel group p-5"
+                    >
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex size-9 items-center justify-center rounded-xl bg-primary/[0.07]">
+                        <div className="bg-primary/[0.07] flex size-9 items-center justify-center rounded-xl">
                           <Landmark className="text-primary size-4" />
                         </div>
-                        <StatusPill tone={lane.state === 'Live' ? 'success' : 'neutral'}>
+                        <StatusPill
+                          tone={lane.state === 'Live' ? 'success' : 'neutral'}
+                        >
                           {lane.state}
                         </StatusPill>
                       </div>
-                      <p className="mt-5 font-semibold tracking-tight">{lane.authority}</p>
-                      <p className="text-primary mt-1 text-sm font-medium">{lane.label}</p>
-                      <p className="text-muted-foreground mt-3 text-sm leading-6">{lane.description}</p>
-                      <div className="border-border mt-5 border-t pt-3 font-mono text-[0.66rem] leading-5 text-muted-foreground uppercase">
+                      <p className="mt-5 font-semibold tracking-tight">
+                        {lane.authority}
+                      </p>
+                      <p className="text-primary mt-1 text-sm font-medium">
+                        {lane.label}
+                      </p>
+                      <p className="text-muted-foreground mt-3 text-sm leading-6">
+                        {lane.description}
+                      </p>
+                      <div className="border-border text-muted-foreground mt-5 border-t pt-3 font-mono text-[0.66rem] leading-5 uppercase">
                         <p>{lane.publishedRecordCount} verified records</p>
-                        {lane.latestPeriod ? <p>Latest: {lane.latestPeriod}</p> : null}
+                        {lane.latestPeriod ? (
+                          <p>Latest: {lane.latestPeriod}</p>
+                        ) : null}
                       </div>
                     </article>
                   ))}
                 </div>
               ) : (
                 <div className="mt-6">
-                  <DataUnavailable message={evidenceNetwork.error ?? 'The evidence-status service is unavailable.'} />
+                  <DataUnavailable
+                    message={
+                      evidenceNetwork.error ??
+                      'The evidence-status service is unavailable.'
+                    }
+                  />
                 </div>
               )}
             </section>
           </>
         ) : (
           <DataUnavailable
-            message={overview.error ?? 'No governed published jurisdiction ledger is available for Gaia Terminal.'}
+            message={
+              overview.error ??
+              'No governed published jurisdiction ledger is available for Gaia Terminal.'
+            }
           />
         )}
 
@@ -247,28 +302,39 @@ export default async function GaiaTerminalPage() {
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="gaia-kicker">Decision workflow</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">From fiscal signal to evidence-backed action.</h2>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">
+                From fiscal signal to evidence-backed action.
+              </h2>
             </div>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {workflows.map((workflow, index) => {
               const Icon = workflow.icon
               return (
-                <Link key={workflow.href} href={workflow.href} className="group">
+                <Link
+                  key={workflow.href}
+                  href={workflow.href}
+                  className="group"
+                >
                   <Card className="h-full transition group-hover:-translate-y-1">
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-primary/[0.07]">
+                        <div className="bg-primary/[0.07] flex size-10 items-center justify-center rounded-xl">
                           <Icon className="text-primary size-5" />
                         </div>
-                        <p className="font-mono text-xs text-muted-foreground">0{index + 1}</p>
+                        <p className="text-muted-foreground font-mono text-xs">
+                          0{index + 1}
+                        </p>
                       </div>
-                      <CardTitle className="pt-5 text-lg">{workflow.title}</CardTitle>
+                      <CardTitle className="pt-5 text-lg">
+                        {workflow.title}
+                      </CardTitle>
                       <CardDescription>{workflow.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <span className="text-primary inline-flex items-center gap-1.5 text-sm font-semibold">
-                        Open workflow <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                        Open workflow{' '}
+                        <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-1" />
                       </span>
                     </CardContent>
                   </Card>

@@ -11,7 +11,7 @@ export function MetricCard({
 }) {
   return (
     <Card className="group relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="via-primary/40 absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <CardHeader className="pb-3">
         <CardTitle className="gaia-data-label">{label}</CardTitle>
       </CardHeader>

@@ -130,7 +130,9 @@ export default async function EvidenceControlPage() {
                 <p className="font-mono text-[0.64rem] font-semibold tracking-[0.16em] text-white/40 uppercase">
                   Publication gate
                 </p>
-                <p className="mt-2 text-xl font-semibold">Evidence operations</p>
+                <p className="mt-2 text-xl font-semibold">
+                  Evidence operations
+                </p>
               </div>
               <div className="flex size-11 items-center justify-center rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.08]">
                 <ShieldCheck className="size-5 text-emerald-300" />
@@ -139,16 +141,28 @@ export default async function EvidenceControlPage() {
 
             <div className="mt-7 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.035]">
               <div className="p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Pending</p>
-                <p className="mt-2 font-mono text-2xl font-semibold">{totalPending}</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Pending
+                </p>
+                <p className="mt-2 font-mono text-2xl font-semibold">
+                  {totalPending}
+                </p>
               </div>
               <div className="p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Approved</p>
-                <p className="mt-2 font-mono text-2xl font-semibold text-emerald-200">{totalApproved}</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Approved
+                </p>
+                <p className="mt-2 font-mono text-2xl font-semibold text-emerald-200">
+                  {totalApproved}
+                </p>
               </div>
               <div className="p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Blocking</p>
-                <p className="mt-2 font-mono text-2xl font-semibold text-amber-200">{totalBlocking}</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Blocking
+                </p>
+                <p className="mt-2 font-mono text-2xl font-semibold text-amber-200">
+                  {totalBlocking}
+                </p>
               </div>
             </div>
 
@@ -243,10 +257,10 @@ export default async function EvidenceControlPage() {
                   className="gaia-panel group flex min-h-64 flex-col p-6 transition hover:-translate-y-1"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex size-11 items-center justify-center rounded-2xl border border-primary/10 bg-primary/[0.07]">
+                    <div className="border-primary/10 bg-primary/[0.07] flex size-11 items-center justify-center rounded-2xl border">
                       <Icon className="text-primary size-5" />
                     </div>
-                    <span className="rounded-full border border-border bg-muted/50 px-2.5 py-1 font-mono text-xs font-semibold">
+                    <span className="border-border bg-muted/50 rounded-full border px-2.5 py-1 font-mono text-xs font-semibold">
                       {queue.count}
                     </span>
                   </div>
@@ -280,8 +294,8 @@ export default async function EvidenceControlPage() {
               </h2>
               <p className="mt-4 text-sm leading-7 text-white/55">
                 Gaia preserves the operational path from collection through
-                human approval and publication so institutional users can inspect
-                not just the number, but how it became publishable.
+                human approval and publication so institutional users can
+                inspect not just the number, but how it became publishable.
               </p>
             </div>
 
@@ -311,7 +325,9 @@ export default async function EvidenceControlPage() {
                     {number}
                   </p>
                   <h3 className="mt-8 font-semibold">{title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-white/50">{detail}</p>
+                  <p className="mt-3 text-sm leading-6 text-white/50">
+                    {detail}
+                  </p>
                 </div>
               ))}
             </div>

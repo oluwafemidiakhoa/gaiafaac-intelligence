@@ -144,7 +144,7 @@ export default function BillingPage() {
       <div className="gaia-shell gaia-section">
         <div className="gaia-panel flex min-h-48 items-center justify-center p-8">
           <div className="text-center">
-            <div className="mx-auto size-8 animate-pulse rounded-full border border-primary/20 bg-primary/10" />
+            <div className="border-primary/20 bg-primary/10 mx-auto size-8 animate-pulse rounded-full border" />
             <p className="text-muted-foreground mt-4 text-sm">
               Verifying billing state…
             </p>
@@ -182,7 +182,11 @@ export default function BillingPage() {
                 dates and receipts stay tied to your organization.
               </p>
             </div>
-            <Button asChild variant="outline" className="border-white/15 bg-white/[0.04] text-white hover:bg-white/[0.08] hover:text-white">
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/15 bg-white/[0.04] text-white hover:bg-white/[0.08] hover:text-white"
+            >
               <Link href="/pricing">Compare plans</Link>
             </Button>
           </div>
@@ -197,7 +201,9 @@ export default function BillingPage() {
                 <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-300" />
               </div>
               <div>
-                <p className="font-semibold">Payment confirmed. Access is active.</p>
+                <p className="font-semibold">
+                  Payment confirmed. Access is active.
+                </p>
                 <p className="text-muted-foreground mt-1 text-sm leading-6">
                   {verification.plan_code.toUpperCase()} ·{' '}
                   {naira(verification.amount_naira)} · Receipt{' '}
@@ -218,7 +224,9 @@ export default function BillingPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardDescription className="gaia-data-label">Current plan</CardDescription>
+                <CardDescription className="gaia-data-label">
+                  Current plan
+                </CardDescription>
                 <Sparkles className="text-primary/55 size-4" />
               </div>
               <CardTitle className="pt-3 text-3xl capitalize">
@@ -233,7 +241,9 @@ export default function BillingPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardDescription className="gaia-data-label">Access through</CardDescription>
+                <CardDescription className="gaia-data-label">
+                  Access through
+                </CardDescription>
                 <ShieldCheck className="text-primary/55 size-4" />
               </div>
               <CardTitle className="pt-3 text-2xl">
@@ -248,7 +258,9 @@ export default function BillingPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardDescription className="gaia-data-label">Verified payments</CardDescription>
+                <CardDescription className="gaia-data-label">
+                  Verified payments
+                </CardDescription>
                 <ReceiptText className="text-primary/55 size-4" />
               </div>
               <CardTitle className="pt-3 text-3xl">
@@ -271,7 +283,7 @@ export default function BillingPage() {
         </div>
 
         <Card className="mt-6 overflow-hidden">
-          <CardHeader className="border-border/70 border-b bg-muted/20">
+          <CardHeader className="border-border/70 bg-muted/20 border-b">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 flex size-11 items-center justify-center rounded-2xl">
                 <ReceiptText className="text-primary size-5" />
@@ -279,7 +291,8 @@ export default function BillingPage() {
               <div>
                 <CardTitle>Verified payment ledger</CardTitle>
                 <CardDescription>
-                  Paystack-confirmed transactions recorded by Gaia and tied to this organization.
+                  Paystack-confirmed transactions recorded by Gaia and tied to
+                  this organization.
                 </CardDescription>
               </div>
             </div>
@@ -289,7 +302,8 @@ export default function BillingPage() {
               <div className="py-8 text-center">
                 <ReceiptText className="text-muted-foreground/40 mx-auto size-7" />
                 <p className="text-muted-foreground mt-3 text-sm">
-                  No verified payments have been recorded for this organization yet.
+                  No verified payments have been recorded for this organization
+                  yet.
                 </p>
               </div>
             ) : (

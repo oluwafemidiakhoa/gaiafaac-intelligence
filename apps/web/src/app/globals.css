@@ -65,10 +65,25 @@
   body {
     @apply bg-background text-foreground antialiased;
     background-image:
-      radial-gradient(circle at 8% -5%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 30%),
-      linear-gradient(to right, color-mix(in oklab, var(--border) 16%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklab, var(--border) 14%, transparent) 1px, transparent 1px);
-    background-size: auto, 44px 44px, 44px 44px;
+      radial-gradient(
+        circle at 8% -5%,
+        color-mix(in oklab, var(--primary) 12%, transparent),
+        transparent 30%
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--border) 16%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--border) 14%, transparent) 1px,
+        transparent 1px
+      );
+    background-size:
+      auto,
+      44px 44px,
+      44px 44px;
     background-attachment: fixed;
   }
 

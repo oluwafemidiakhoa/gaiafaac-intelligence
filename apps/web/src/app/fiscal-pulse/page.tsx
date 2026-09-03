@@ -101,7 +101,9 @@ export default async function FiscalPulsePage() {
                 <p className="font-mono text-[0.65rem] font-semibold tracking-[0.16em] text-white/40 uppercase">
                   Intelligence confidence
                 </p>
-                <p className="mt-2 text-xl font-semibold">Published-evidence scope</p>
+                <p className="mt-2 text-xl font-semibold">
+                  Published-evidence scope
+                </p>
               </div>
               <div className="flex size-11 items-center justify-center rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.08]">
                 <ShieldCheck className="size-5 text-emerald-300" />
@@ -109,16 +111,28 @@ export default async function FiscalPulsePage() {
             </div>
             <div className="mt-7 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.035]">
               <div className="p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Months</p>
-                <p className="mt-2 font-mono text-xl font-semibold">{data.months_published}/{data.expected_months}</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Months
+                </p>
+                <p className="mt-2 font-mono text-xl font-semibold">
+                  {data.months_published}/{data.expected_months}
+                </p>
               </div>
               <div className="p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Verified</p>
-                <p className="mt-2 font-mono text-xl font-semibold">{completeStates}</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Verified
+                </p>
+                <p className="mt-2 font-mono text-xl font-semibold">
+                  {completeStates}
+                </p>
               </div>
               <div className="p-4">
-                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">Mode</p>
-                <p className="mt-2 text-sm font-semibold text-emerald-200">Evidence bound</p>
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Mode
+                </p>
+                <p className="mt-2 text-sm font-semibold text-emerald-200">
+                  Evidence bound
+                </p>
               </div>
             </div>
             <p className="mt-5 text-xs leading-5 text-white/45">
@@ -134,7 +148,9 @@ export default async function FiscalPulsePage() {
           <div className="mb-8 flex gap-4 rounded-2xl border border-amber-300/35 bg-amber-100/45 p-5 text-sm leading-6 dark:bg-amber-300/[0.07]">
             <Activity className="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300" />
             <div>
-              <p className="font-semibold">Partial-year intelligence boundary</p>
+              <p className="font-semibold">
+                Partial-year intelligence boundary
+              </p>
               <p className="text-muted-foreground mt-1">
                 {data.coverage_label}. Every total below represents only the
                 published months and is not a complete annual 2024 total.
@@ -168,12 +184,14 @@ export default async function FiscalPulsePage() {
 
         <div className="mt-8 grid gap-5 xl:grid-cols-[1fr_300px]">
           <Card className="overflow-hidden">
-            <CardHeader className="border-border/70 border-b bg-muted/20">
+            <CardHeader className="border-border/70 bg-muted/20 border-b">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <BarChart3 className="text-primary size-5" />
-                    <CardTitle className="text-xl">State intelligence matrix</CardTitle>
+                    <CardTitle className="text-xl">
+                      State intelligence matrix
+                    </CardTitle>
                   </div>
                   <CardDescription className="mt-2 max-w-2xl">
                     {periodLabel} signals derived only from governed published
@@ -190,9 +208,15 @@ export default async function FiscalPulsePage() {
                 <thead>
                   <tr className="border-border text-muted-foreground border-b">
                     <th className="py-4 pr-4 font-medium">Jurisdiction</th>
-                    <th className="py-4 pr-4 text-right font-medium">Published-period net</th>
-                    <th className="py-4 pr-4 text-right font-medium">Deduction burden</th>
-                    <th className="py-4 pr-4 text-right font-medium">Net retention</th>
+                    <th className="py-4 pr-4 text-right font-medium">
+                      Published-period net
+                    </th>
+                    <th className="py-4 pr-4 text-right font-medium">
+                      Deduction burden
+                    </th>
+                    <th className="py-4 pr-4 text-right font-medium">
+                      Net retention
+                    </th>
                     <th className="py-4 pr-4 font-medium">Momentum</th>
                     <th className="py-4 pr-4 font-medium">Volatility</th>
                     <th className="py-4 font-medium">Evidence</th>
@@ -202,12 +226,12 @@ export default async function FiscalPulsePage() {
                   {data.states.map((state) => (
                     <tr
                       key={state.state_slug}
-                      className="border-border/70 group border-b transition-colors last:border-0 hover:bg-primary/[0.025]"
+                      className="border-border/70 group hover:bg-primary/[0.025] border-b transition-colors last:border-0"
                     >
                       <td className="py-4 pr-4">
                         <Link
                           href={`/states/${state.state_slug}`}
-                          className="font-semibold tracking-tight hover:text-primary"
+                          className="hover:text-primary font-semibold tracking-tight"
                         >
                           {state.state_name}
                         </Link>
@@ -250,7 +274,9 @@ export default async function FiscalPulsePage() {
             <Card>
               <CardHeader>
                 <TrendingUp className="text-primary size-5" />
-                <CardTitle className="mt-4 text-lg">Signal interpretation</CardTitle>
+                <CardTitle className="mt-4 text-lg">
+                  Signal interpretation
+                </CardTitle>
                 <CardDescription>
                   Momentum compares the latest three available monthly net
                   allocations with the preceding three. Volatility uses
@@ -262,7 +288,10 @@ export default async function FiscalPulsePage() {
                   These metrics do not measure creditworthiness, solvency,
                   corruption, governance quality or default risk.
                 </p>
-                <Link href="/methodology" className="text-foreground inline-flex items-center gap-1.5 font-semibold">
+                <Link
+                  href="/methodology"
+                  className="text-foreground inline-flex items-center gap-1.5 font-semibold"
+                >
                   Read methodology <ArrowRight className="size-3.5" />
                 </Link>
               </CardContent>
@@ -280,14 +309,19 @@ export default async function FiscalPulsePage() {
                 Historical intelligence, controlled exports, organization
                 analysis and API access are available through commercial plans.
               </p>
-              <Button asChild className="mt-5 w-full bg-amber-300 font-bold text-teal-950 hover:bg-amber-200">
+              <Button
+                asChild
+                className="mt-5 w-full bg-amber-300 font-bold text-teal-950 hover:bg-amber-200"
+              >
                 <Link href="/pricing">Explore access</Link>
               </Button>
             </div>
           </div>
         </div>
 
-        <p className="text-muted-foreground mt-8 text-xs leading-5">{data.note}</p>
+        <p className="text-muted-foreground mt-8 text-xs leading-5">
+          {data.note}
+        </p>
       </div>
     </div>
   )
