@@ -20,7 +20,13 @@ from gaiafaac_api.pipeline.states import StateNormalizer
 from gaiafaac_api.services.object_storage import source_local_copy
 
 _ROW_RE = re.compile(r"^\s*(?P<serial>\d{1,2})\s*(?P<body>.+?)\s*$")
-_STRAY_SPACE_BEFORE_COMMA_RE = re.compile(r"(?<=\d)\s+(?=,\d{3}\b)")
+# pdfplumber sometimes splits a right-aligned money column's leading digit(s) away
+# from the rest of the number in dense multi-column reports (observed live, all in
+# amount columns since no Nigerian state/FCT name contains a digit): "1 05,824,..."
+# instead of "105,824,...", or "1 ,600,000..." instead of "1,600,000...". Removing
+# whitespace strictly between a digit and a following digit-or-comma is safe because
+# state names never contain a digit.
+_STRAY_DIGIT_SPLIT_RE = re.compile(r"(?<=\d)\s+(?=[\d,])")
 _MONEY_RE = re.compile(r"(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2}")
 _VERSION_RE = re.compile(r"^(domestic|external)-(\d{4}-\d{2}-\d{2})$")
 _TOTAL_RE = re.compile(r"^\s*total\b", re.IGNORECASE)
@@ -90,10 +96,7 @@ def parse_dmo_debt_text(
     seen_serials: set[int] = set()
     for page_number, text in pages:
         for source_line in text.splitlines():
-            # pdfplumber sometimes inserts a stray space between a digit and the
-            # thousands-separator comma that follows it (e.g. "1 ,600,000,000.05"),
-            # which would otherwise break the digit and the amount apart.
-            raw_line = _STRAY_SPACE_BEFORE_COMMA_RE.sub("", source_line)
+            raw_line = _STRAY_DIGIT_SPLIT_RE.sub("", source_line)
             if _TOTAL_RE.match(raw_line):
                 # The "Total" row marks the end of the numbered state table. Footnotes
                 # below it (e.g. "2 The Domestic Debt Stock...") can themselves start
