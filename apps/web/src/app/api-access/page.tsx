@@ -13,182 +13,132 @@ export const metadata: Metadata = {
 export default function APIAccessPage() {
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow="Developer Access"
-        title="Integrate verified fiscal data via API"
-        description="Build institutional workflows and applications with governed evidence from GaiaFAAC."
-      />
+      <div className="mt-8 space-y-20">
+        {/* Hero */}
+        <section className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+          <div>
+            <h1 className="font-serif text-5xl lg:text-6xl font-bold leading-tight mb-6 text-foreground">
+              Integrate verified fiscal data
+            </h1>
+            <p className="text-lg text-muted-foreground mb-4 leading-relaxed">
+              Build institutional workflows and applications with governed evidence from GaiaFAAC. REST API, data exports, and webhooks with full audit lineage.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="border-l-4 border-teal-600 pl-6 py-4">
+              <div className="text-xs font-bold text-teal-600 tracking-widest mb-2">REST API</div>
+              <div className="text-2xl font-bold text-foreground mb-1">Real-time</div>
+              <div className="text-sm text-muted-foreground">JSON endpoints with lineage tracking</div>
+            </div>
+            <div className="border-l-4 border-teal-600 pl-6 py-4">
+              <div className="text-xs font-bold text-teal-600 tracking-widest mb-2">DATA EXPORTS</div>
+              <div className="text-2xl font-bold text-foreground mb-1">CSV & Excel</div>
+              <div className="text-sm text-muted-foreground">Historical snapshots with verification</div>
+            </div>
+            <div className="border-l-4 border-teal-600 pl-6 py-4">
+              <div className="text-xs font-bold text-teal-600 tracking-widest mb-2">WEBHOOKS</div>
+              <div className="text-2xl font-bold text-foreground mb-1">Event streams</div>
+              <div className="text-sm text-muted-foreground">Subscriptions for new allocations</div>
+            </div>
+          </div>
+        </section>
 
-      <div className="mt-16 space-y-20">
-        {/* API Methods */}
+        {/* Integration Methods */}
         <section>
-          <h2 className="font-serif text-3xl font-bold mb-12 text-foreground">Integration Methods</h2>
-
+          <div className="mb-12">
+            <div className="text-xs font-bold text-amber-400 tracking-widest mb-3">METHODS</div>
+            <h2 className="font-serif text-4xl font-bold leading-tight text-foreground">
+              Access options
+            </h2>
+          </div>
           <div className="grid gap-8 md:grid-cols-2">
-            <div className="border border-border rounded-lg p-8 hover:border-amber-400/50 transition-colors">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h3 className="font-semibold text-xl text-foreground">REST API</h3>
-                  <p className="text-xs text-muted-foreground mt-1">JSON endpoints</p>
-                </div>
-                <div className="text-3xl text-amber-400 font-bold opacity-20">◇</div>
-              </div>
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                Query published FAAC allocations, state profiles, fiscal events, and institutional evidence through comprehensive REST endpoints with full lineage tracking.
+            <div className="border-l-4 border-blue-500 pl-6 py-6">
+              <div className="text-sm font-bold text-blue-600 tracking-widest mb-3">REST API</div>
+              <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                Query published FAAC allocations, state profiles, fiscal events, and institutional evidence through comprehensive REST endpoints with pagination, filtering, and full audit trail lineage.
               </p>
-              <ul className="space-y-2 text-sm mb-8">
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">Real-time verified data access with pagination</span>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span className="text-muted-foreground">Real-time verified data</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">Full audit trail and source lineage included</span>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span className="text-muted-foreground">Complete audit lineage</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">Advanced filtering and date range support</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">Webhook subscriptions for event notifications</span>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span className="text-muted-foreground">Webhook subscriptions</span>
                 </li>
               </ul>
-              <Button asChild>
-                <Link href="/documentation">View Endpoints</Link>
-              </Button>
             </div>
-
-            <div className="border border-border rounded-lg p-8 hover:border-amber-400/50 transition-colors">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h3 className="font-semibold text-xl text-foreground">Data Exports</h3>
-                  <p className="text-xs text-muted-foreground mt-1">CSV & Excel</p>
-                </div>
-                <div className="text-3xl text-amber-400 font-bold opacity-20">▦</div>
-              </div>
-              <p className="text-muted-foreground mb-6 leading-relaxed">
+            <div className="border-l-4 border-amber-400 pl-6 py-6">
+              <div className="text-sm font-bold text-amber-600 tracking-widest mb-3">DATA EXPORTS</div>
+              <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
                 Download complete datasets in CSV and Excel formats for offline analysis, institutional reporting, and historical research with verified integrity.
               </p>
-              <ul className="space-y-2 text-sm mb-8">
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">Historical data snapshots by period</span>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span className="text-muted-foreground">Historical snapshots</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">Custom date ranges and jurisdiction filters</span>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span className="text-muted-foreground">Custom date ranges</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">Evidence metadata and revision history included</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-emerald-600 font-bold text-lg leading-none">✓</span>
-                  <span className="text-muted-foreground">SHA-256 verification for data integrity</span>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <span className="text-muted-foreground">SHA-256 verification</span>
                 </li>
               </ul>
-              <Button asChild variant="outline">
-                <Link href="/pilot">Request Export Access</Link>
-              </Button>
             </div>
           </div>
         </section>
 
-        {/* Authentication & Security */}
+        {/* Security */}
         <section className="border-t border-border pt-16">
-          <h2 className="font-serif text-3xl font-bold mb-12 text-foreground">Authentication & Security</h2>
-
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="space-y-4">
-              <div className="text-2xl font-bold text-amber-400">01</div>
-              <h3 className="font-semibold text-foreground">API Keys</h3>
+          <div className="mb-12">
+            <div className="text-xs font-bold text-amber-400 tracking-widest mb-3">SECURITY</div>
+            <h2 className="font-serif text-4xl font-bold leading-tight text-foreground">
+              Authentication & rate limits
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="border-l-4 border-teal-600 pl-6 py-4">
+              <div className="text-xs font-bold text-teal-600 tracking-widest mb-2">API KEYS</div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Request API credentials through our institutional access program. Keys are issued with scoped permissions and usage limits.
+                Request credentials through institutional access program. Keys issued with scoped permissions.
               </p>
             </div>
-            <div className="space-y-4">
-              <div className="text-2xl font-bold text-amber-400">02</div>
-              <h3 className="font-semibold text-foreground">Rate Limiting</h3>
+            <div className="border-l-4 border-teal-600 pl-6 py-4">
+              <div className="text-xs font-bold text-teal-600 tracking-widest mb-2">RATE LIMITS</div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Standard tier: 100 requests/minute. Enterprise tier: custom limits. All requests include usage headers and quota tracking.
+                Standard: 100 req/min. Enterprise: custom. All requests tracked with usage headers.
               </p>
             </div>
-            <div className="space-y-4">
-              <div className="text-2xl font-bold text-amber-400">03</div>
-              <h3 className="font-semibold text-foreground">HTTPS & Verification</h3>
+            <div className="border-l-4 border-teal-600 pl-6 py-4">
+              <div className="text-xs font-bold text-teal-600 tracking-widest mb-2">ENCRYPTION</div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                All API traffic encrypted over TLS 1.3. Response payloads include cryptographic proof of source and publication authority.
+                TLS 1.3 for all traffic. Responses include cryptographic proof of source and authority.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Example Usage */}
-        <section className="bg-muted/40 rounded-lg border border-border p-12">
-          <h2 className="font-serif text-2xl font-bold mb-6 text-foreground">Example: Query FAAC Allocations</h2>
-          <div className="bg-foreground/5 rounded border border-border/50 p-6 font-mono text-xs overflow-x-auto">
-            <code className="text-muted-foreground">
-              <div>curl -H "Authorization: Bearer YOUR_API_KEY" \</div>
-              <div>  "https://api.gaiafaac.org/v1/allocations?period=2024-06&state=Lagos"</div>
-              <div className="mt-4 text-emerald-600">
-                <div>{"{"}</div>
-                <div>  "allocations": [</div>
-                <div>    {"{"}</div>
-                <div>      "state": "Lagos",</div>
-                <div>      "period": "2024-06",</div>
-                <div>      "amount": 15700000000,</div>
-                <div>      "source_url": "https://...",</div>
-                <div>      "sha256": "abc123...",</div>
-                <div>      "published_at": "2024-06-15T10:30:00Z",</div>
-                <div>      "reviewer": "team@gaiafaac.org"</div>
-                <div>    {"}"}</div>
-                <div>  ]</div>
-                <div>{"}"}</div>
-              </div>
-            </code>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="border-t border-b border-border py-16">
+        {/* CTA */}
+        <section className="border-t border-b border-border py-12">
           <div className="text-center space-y-6">
             <h2 className="font-serif text-3xl font-bold text-foreground">Ready to integrate?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Request API credentials and receive dedicated developer support for your institution. We provide documentation, sandbox environments, and implementation assistance.
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Request API credentials and receive dedicated developer support for your institution.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Button asChild size="lg">
+              <Button asChild>
                 <Link href="/pilot">Request API Access</Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/documentation">View Full Docs</Link>
+              <Button asChild variant="outline">
+                <Link href="/documentation">View Docs</Link>
               </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Support */}
-        <section>
-          <h2 className="font-serif text-3xl font-bold mb-8 text-foreground">Technical Support</h2>
-          <div className="grid gap-8 md:grid-cols-2">
-            <div className="border border-border/50 rounded p-8">
-              <h3 className="font-semibold text-foreground mb-4">Developer Documentation</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Complete API reference, code examples in multiple languages, and integration guides available on our documentation site.
-              </p>
-              <Link href="/documentation" className="text-sm text-primary font-medium hover:underline">
-                Read documentation →
-              </Link>
-            </div>
-            <div className="border border-border/50 rounded p-8">
-              <h3 className="font-semibold text-foreground mb-4">Get Help</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Contact our support team for questions, troubleshooting, or implementation guidance.
-              </p>
-              <a href="mailto:support@gaiafaac.org" className="text-sm text-primary font-medium hover:underline">
-                Email support@gaiafaac.org →
-              </a>
             </div>
           </div>
         </section>

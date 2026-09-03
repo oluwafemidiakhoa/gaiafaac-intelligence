@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { PageHeader } from '@/components/page-header'
-
 export const metadata: Metadata = {
   title: 'Legal',
   description:
@@ -12,197 +10,131 @@ export const metadata: Metadata = {
 export default function LegalPage() {
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow="Legal"
-        title="Terms & Policies"
-        description="Legal framework and privacy policies for Gaia Fiscal Intelligence."
-      />
-
-      <div className="mt-16 space-y-20 max-w-4xl">
-        {/* Disclaimer - Critical Notice */}
+      <div className="mt-8 space-y-20 max-w-4xl">
+        {/* Critical Disclaimer */}
         <section className="rounded-lg border-2 border-amber-400/40 bg-gradient-to-r from-amber-50/50 to-orange-50/30 p-8">
-          <div className="inline-block mb-4 px-3 py-1 bg-amber-400/20 border border-amber-400/50 rounded text-amber-900 text-xs font-bold tracking-widest">
-            IMPORTANT DISCLAIMER
-          </div>
-          <h2 className="font-serif text-2xl font-bold mb-6 text-foreground">Not an Official Government Platform</h2>
-          <div className="space-y-4 text-sm leading-relaxed">
-            <p className="text-foreground">
-              <strong>GaiaFAAC Fiscal Intelligence is an independent, non-governmental research platform.</strong> It is not an official government service, and data published here should not be treated as official government financial records without independent verification against authoritative sources.
-            </p>
-            <p className="text-foreground">
-              All information on this platform is provided for research, educational, and informational purposes. While we employ rigorous verification, reconciliation, and human review processes, users must independently verify critical financial information against official government sources before making institutional or investment decisions.
-            </p>
-            <p className="text-foreground">
-              Read our <Link href="/methodology" className="underline text-primary font-medium">methodology documentation</Link> to understand how we source, verify, and publish evidence before interpreting any record.
-            </p>
-          </div>
+          <div className="text-xs font-bold text-amber-400 tracking-widest mb-4">IMPORTANT DISCLAIMER</div>
+          <h1 className="font-serif text-4xl font-bold mb-6 text-foreground">
+            Not an official government platform
+          </h1>
+          <p className="text-muted-foreground mb-4 leading-relaxed">
+            <strong>GaiaFAAC Fiscal Intelligence is an independent, non-governmental research platform.</strong> It is not an official government service, and data published here should not be treated as official government financial records without independent verification against authoritative sources.
+          </p>
+          <p className="text-muted-foreground mb-4 leading-relaxed">
+            All information is provided for research, educational, and informational purposes. Users must independently verify critical financial information against official government sources before making institutional or investment decisions.
+          </p>
+          <p className="text-muted-foreground leading-relaxed">
+            Read our <Link href="/methodology" className="underline text-primary font-medium">methodology documentation</Link> before interpreting any record.
+          </p>
         </section>
 
-        {/* Terms of Service */}
-        <section className="border-t border-border pt-16">
-          <h2 className="font-serif text-3xl font-bold mb-12 text-foreground">Terms of Service</h2>
-
-          <div className="space-y-6 text-sm text-muted-foreground">
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">1. Acceptance of Terms</h3>
-              <p>
-                By accessing and using GaiaFAAC Fiscal Intelligence, you agree to be bound by these terms and conditions. If you do not agree to any part of these terms, please do not use this platform.
+        {/* Terms Overview */}
+        <section>
+          <div className="mb-8">
+            <div className="text-xs font-bold text-amber-400 tracking-widest mb-3">LEGAL FRAMEWORK</div>
+            <h2 className="font-serif text-4xl font-bold leading-tight text-foreground">
+              Terms & policies
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="border-l-4 border-teal-600 pl-6 py-6">
+              <div className="text-sm font-bold text-teal-600 tracking-widest mb-3">TERMS OF SERVICE</div>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                By using GaiaFAAC, you agree to our terms. We grant a license for personal, non-commercial use. All materials provided on "as is" basis. We make no warranties about accuracy, completeness, or fitness for purpose.
               </p>
+              <div className="text-xs text-muted-foreground">Governed by laws of Nigeria</div>
             </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">2. Use License</h3>
-              <p>
-                Permission is granted to temporarily access and view the materials (information and content) on GaiaFAAC for lawful purposes only. This is the grant of a license, not a transfer of title, and under this license you may not:
+            <div className="border-l-4 border-teal-600 pl-6 py-6">
+              <div className="text-sm font-bold text-teal-600 tracking-widest mb-3">PRIVACY POLICY</div>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                We collect information about platform usage (IP, browser, pages visited). For API and institutional accounts, we collect contact information and usage metrics. All data is protected with industry-standard security measures.
               </p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Modify or copy the materials</li>
-                <li>Use the materials for any commercial purpose or for any public display</li>
-                <li>Attempt to decompile or reverse engineer any software contained on the platform</li>
-                <li>Remove any copyright or other proprietary notations from the materials</li>
-                <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">3. Disclaimer</h3>
-              <p>
-                The materials on GaiaFAAC are provided on an "as is" basis. GaiaFAAC makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">4. Limitations</h3>
-              <p>
-                In no event shall GaiaFAAC or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on the platform.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">5. Accuracy of Materials</h3>
-              <p>
-                While GaiaFAAC employs rigorous verification and review processes, we do not warrant that the materials on our platform are accurate, complete, or current. Materials may be outdated and we are under no obligation to update them.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">6. Links</h3>
-              <p>
-                GaiaFAAC has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by GaiaFAAC of the site. Use of any such linked website is at the user's own risk.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">7. Modifications</h3>
-              <p>
-                GaiaFAAC may revise these terms and conditions without notice at any time. By using this website, you are agreeing to be bound by the then-current version of these terms and conditions.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">8. Governing Law</h3>
-              <p>
-                These terms and conditions are governed by and construed in accordance with the laws of Nigeria, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.
-              </p>
+              <div className="text-xs text-muted-foreground">privacy@gaiafaac.org for inquiries</div>
             </div>
           </div>
         </section>
 
-        {/* Privacy Policy */}
-        <section className="border-t border-border pt-16">
-          <h2 className="font-serif text-3xl font-bold mb-12 text-foreground">Privacy Policy</h2>
-
-          <div className="space-y-6 text-sm text-muted-foreground">
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Information We Collect</h3>
-              <p>
-                When you use GaiaFAAC, we may collect information about how you access and use the platform, including your IP address, browser type, pages visited, and search queries. For API access and institutional accounts, we collect contact information and usage metrics.
+        {/* Key Provisions */}
+        <section className="border-t border-b border-border py-16">
+          <div className="mb-12">
+            <div className="text-xs font-bold text-amber-400 tracking-widest mb-3">PROVISIONS</div>
+            <h2 className="font-serif text-4xl font-bold leading-tight text-foreground">
+              Key terms
+            </h2>
+          </div>
+          <div className="space-y-6">
+            <div className="border-l-4 border-amber-400/30 pl-6 py-4">
+              <div className="text-sm font-semibold text-foreground mb-2">Use License</div>
+              <p className="text-sm text-muted-foreground">
+                Personal, non-commercial use only. No modification, copying, decompilation, or redistribution. No commercial display or resale of materials.
               </p>
             </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">How We Use Your Information</h3>
-              <p>
-                We use the information we collect to:
-              </p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Improve and maintain our platform</li>
-                <li>Provide customer support and respond to inquiries</li>
-                <li>Monitor and analyze platform usage trends and patterns</li>
-                <li>Detect and prevent fraudulent or unauthorized access</li>
-                <li>Comply with applicable laws and regulations</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Data Security</h3>
-              <p>
-                We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the Internet is 100% secure.
+            <div className="border-l-4 border-amber-400/30 pl-6 py-4">
+              <div className="text-sm font-semibold text-foreground mb-2">Disclaimer</div>
+              <p className="text-sm text-muted-foreground">
+                Materials provided "as is." GaiaFAAC makes no warranties about accuracy, merchantability, fitness for purpose, or non-infringement. Materials may be outdated.
               </p>
             </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Third-Party Services</h3>
-              <p>
-                GaiaFAAC may use third-party services for analytics, hosting, and other functions. These third parties are contractually obligated to use your personal information only as necessary to provide services to GaiaFAAC.
+            <div className="border-l-4 border-amber-400/30 pl-6 py-4">
+              <div className="text-sm font-semibold text-foreground mb-2">Limitations</div>
+              <p className="text-sm text-muted-foreground">
+                GaiaFAAC is not liable for damages from use or inability to use platform materials, including loss of data or profit, or business interruption.
               </p>
             </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Cookies</h3>
-              <p>
-                We use cookies and similar tracking technologies to enhance your experience on our platform. You can control cookie settings through your browser preferences, though some platform features may not function properly if cookies are disabled.
+            <div className="border-l-4 border-amber-400/30 pl-6 py-4">
+              <div className="text-sm font-semibold text-foreground mb-2">Data Retention</div>
+              <p className="text-sm text-muted-foreground">
+                Personal information retained only as long as necessary for services and legal compliance. Request deletion by contacting privacy@gaiafaac.org.
               </p>
             </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Data Retention</h3>
-              <p>
-                We retain personal information only for as long as necessary to provide our services and comply with applicable laws. You may request deletion of your account and associated personal information by contacting us.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Changes to This Policy</h3>
-              <p>
-                GaiaFAAC reserves the right to modify this privacy policy at any time. Changes will be effective immediately upon posting to the website. Your continued use of the platform constitutes your acceptance of the updated privacy policy.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Contact Us</h3>
-              <p>
-                If you have questions about this privacy policy or our privacy practices, please contact us at privacy@gaiafaac.org.
+            <div className="border-l-4 border-amber-400/30 pl-6 py-4">
+              <div className="text-sm font-semibold text-foreground mb-2">Modifications</div>
+              <p className="text-sm text-muted-foreground">
+                GaiaFAAC may revise terms at any time. Continued use constitutes acceptance of current terms. Check this page regularly for updates.
               </p>
             </div>
           </div>
         </section>
 
         {/* Data Attribution */}
-        <section className="border-t border-border pt-16">
-          <h2 className="font-serif text-3xl font-bold mb-8 text-foreground">Data Attribution & Sources</h2>
-
-          <p className="text-sm text-muted-foreground mb-4">
-            All fiscal data published on GaiaFAAC is sourced from official government publications and organizations, including:
+        <section>
+          <div className="mb-8">
+            <div className="text-xs font-bold text-amber-400 tracking-widest mb-3">SOURCES</div>
+            <h2 className="font-serif text-3xl font-bold text-foreground">
+              Data attribution
+            </h2>
+          </div>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            All fiscal data published on GaiaFAAC is sourced from official government publications and organizations:
           </p>
-
-          <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
-            <li>Federal Account Allocation Committee (FAAC) official distributions</li>
-            <li>Office of the Accountant General of the Federation (OAGF) records</li>
-            <li>State and local government financial disclosures</li>
-            <li>Official government statistical agencies and registries</li>
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            <li className="flex items-start gap-3">
+              <span className="text-amber-400 font-bold">•</span>
+              <span>Federal Account Allocation Committee (FAAC) official distributions</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-amber-400 font-bold">•</span>
+              <span>Office of the Accountant General of the Federation (OAGF) records</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-amber-400 font-bold">•</span>
+              <span>State and local government financial disclosures</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-amber-400 font-bold">•</span>
+              <span>Official government statistical agencies and registries</span>
+            </li>
           </ul>
-
-          <p className="text-sm text-muted-foreground mt-4">
-            Detailed source attribution is preserved with every published record. See our <Link href="/sources" className="underline text-primary">Evidence Registry</Link> for complete lineage documentation.
+          <p className="text-sm text-muted-foreground mt-6">
+            Detailed source attribution preserved with every record. See our <Link href="/sources" className="underline text-primary">Evidence Registry</Link> for complete lineage.
           </p>
         </section>
 
-        {/* CTA */}
+        {/* Contact */}
         <section className="border-t border-border pt-16 text-center">
-          <h2 className="font-serif text-3xl font-bold mb-4 text-foreground">Questions or Concerns?</h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            If you have concerns about how we handle data, our evidence standards, legal compliance, or any other matter related to these policies, please contact our team.
+          <h2 className="font-serif text-3xl font-bold mb-4 text-foreground">Questions or concerns?</h2>
+          <p className="text-muted-foreground mb-6">
+            Contact us about legal, privacy, evidence standards, or any policy matters.
           </p>
           <Link href="/contact" className="text-primary font-medium hover:underline">
             Contact us →
