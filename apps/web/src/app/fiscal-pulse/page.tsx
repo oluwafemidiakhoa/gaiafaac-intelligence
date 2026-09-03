@@ -38,11 +38,13 @@ export default async function FiscalPulsePage() {
   if (!data || data.months_published === 0) {
     return (
       <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-        <PageHeader
-          eyebrow="Fiscal Pulse"
-          title="Verified fiscal intelligence for Nigerian states"
-          description="Derived only from published, human-approved allocation records."
-        />
+        <div style={{ fontFamily: 'Georgia, serif' }}>
+          <PageHeader
+            eyebrow="Fiscal Pulse"
+            title="Verified fiscal intelligence for Nigerian states"
+            description="Derived only from published, human-approved allocation records."
+          />
+        </div>
         <div className="mt-10">
           <DataUnavailable
             message={result.error ?? 'No verified 2024 data is available.'}
@@ -68,11 +70,13 @@ export default async function FiscalPulsePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow={`GaiaFAAC Fiscal Pulse · ${periodLabel}`}
-        title="Verified fiscal intelligence for every Nigerian state"
-        description="Compare published-period allocations, deduction burden, net retention, momentum and allocation volatility—with evidence status attached to every signal."
-      />
+      <div style={{ fontFamily: 'Georgia, serif' }}>
+        <PageHeader
+          eyebrow={`GaiaFAAC Fiscal Pulse · ${periodLabel}`}
+          title="Verified fiscal intelligence for every Nigerian state"
+          description="Compare published-period allocations, deduction burden, net retention, momentum and allocation volatility—with evidence status attached to every signal."
+        />
+      </div>
 
       {!completeYear ? (
         <div className="border-primary/30 bg-primary/5 mt-8 rounded-lg border p-5 text-sm leading-6">

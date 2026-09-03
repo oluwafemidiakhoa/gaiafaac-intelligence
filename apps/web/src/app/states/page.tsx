@@ -28,11 +28,13 @@ export default async function StatesPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow="36 states + FCT"
-        title="State directory"
-        description="Every jurisdiction in the latest verified FAAC month. Each figure traces to the official OAGF source; unavailable values are left blank, never inferred."
-      />
+      <div style={{ fontFamily: 'Georgia, serif' }}>
+        <PageHeader
+          eyebrow="36 states + FCT"
+          title="State directory"
+          description="Every jurisdiction in the latest verified FAAC month. Each figure traces to the official OAGF source; unavailable values are left blank, never inferred."
+        />
+      </div>
 
       {data === null ? (
         <div className="mt-10">

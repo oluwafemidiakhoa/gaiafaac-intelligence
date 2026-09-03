@@ -30,11 +30,13 @@ export default async function FiscalWatchPage() {
   if (!data) {
     return (
       <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-        <PageHeader
-          eyebrow="Fiscal Watch"
-          title="Evidence-linked monitoring for Nigerian state allocations"
-          description="Deterministic alerts over published, human-approved GaiaFAAC records."
-        />
+        <div style={{ fontFamily: 'Georgia, serif' }}>
+          <PageHeader
+            eyebrow="Fiscal Watch"
+            title="Evidence-linked monitoring for Nigerian state allocations"
+            description="Deterministic alerts over published, human-approved GaiaFAAC records."
+          />
+        </div>
         <div className="mt-10">
           <DataUnavailable
             message={result.error ?? 'Fiscal Watch is unavailable.'}
@@ -56,11 +58,13 @@ export default async function FiscalWatchPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow={`GaiaFAAC Fiscal Watch · ${data.year}`}
-        title="What changed in the latest published FAAC data?"
-        description="Fiscal Watch turns verified monthly allocations into evidence-linked monitoring signals. Every event points back to a Fiscal Proof."
-      />
+      <div style={{ fontFamily: 'Georgia, serif' }}>
+        <PageHeader
+          eyebrow={`GaiaFAAC Fiscal Watch · ${data.year}`}
+          title="What changed in the latest published FAAC data?"
+          description="Fiscal Watch turns verified monthly allocations into evidence-linked monitoring signals. Every event points back to a Fiscal Proof."
+        />
+      </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
