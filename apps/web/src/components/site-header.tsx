@@ -53,7 +53,7 @@ function NavLink({
   )
 }
 
-export function SiteHeader({ publishedData }: { publishedData?: any }) {
+export function SiteHeader() {
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
@@ -79,18 +79,9 @@ export function SiteHeader({ publishedData }: { publishedData?: any }) {
             <span className="font-semibold text-amber-50">
               Governed public evidence
             </span>
-            {publishedData ? (
-              <>
-                {' '}
-                · Latest verified {publishedData.period_label} ·{' '}
-                <span className="font-medium">
-                  {publishedData.covered_states}/{publishedData.expected_states}{' '}
-                  jurisdictions
-                </span>
-              </>
-            ) : (
-              <> · Human review required before publication</>
-            )}
+            {' '}
+            · Independent Nigerian fiscal intelligence ·{' '}
+            <span className="font-medium">Human review required before publication</span>
           </p>
           <Link
             href="/sources"
@@ -207,7 +198,7 @@ export function SiteHeader({ publishedData }: { publishedData?: any }) {
                           onClick={() =>
                             setOpenSubmenu(isOpen ? null : item.label)
                           }
-                          className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
+                          className={`w-full text-left rounded-md px-3 py-2 text-sm font-medium transition-colors flex items-center justify-between ${
                             submenuActive
                               ? 'bg-amber-400 text-teal-950'
                               : 'text-amber-50 hover:bg-teal-800'
@@ -215,7 +206,9 @@ export function SiteHeader({ publishedData }: { publishedData?: any }) {
                         >
                           {item.label}
                           <ChevronDown
-                            className={`size-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            className={`size-4 transition-transform ${
+                              isOpen ? 'rotate-180' : ''
+                            }`}
                           />
                         </button>
                         {isOpen && (
@@ -242,7 +235,7 @@ export function SiteHeader({ publishedData }: { publishedData?: any }) {
                     <Link
                       key={item.href!}
                       href={item.href!}
-                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`rounded-md px-3 py-2 text-sm transition-colors font-medium ${
                         isActive(item.href!)
                           ? 'bg-amber-400 text-teal-950'
                           : 'text-amber-50 hover:bg-teal-800'
@@ -254,18 +247,18 @@ export function SiteHeader({ publishedData }: { publishedData?: any }) {
                 })}
               <Link
                 href="/gaia-analyst"
-                className="rounded-md px-3 py-2 text-sm font-medium text-amber-50 transition-colors hover:bg-teal-800"
+                className="hover:bg-teal-800 rounded-md px-3 py-2 text-sm text-amber-50 transition-colors font-medium"
               >
                 Ask Gaia
               </Link>
               <Link
                 href="/pilot"
-                className="mt-2 rounded-md bg-amber-400 px-3 py-2 text-center text-sm font-bold text-teal-950"
+                className="bg-amber-400 text-teal-950 mt-2 rounded-md px-3 py-2 text-center text-sm font-bold"
               >
                 Request Fiscal Watch
               </Link>
             </nav>
-            <div className="mt-3 flex justify-end border-t border-teal-700 pt-3">
+            <div className="border-teal-700 mt-3 flex justify-end border-t pt-3">
               <ThemeToggle />
             </div>
           </div>
