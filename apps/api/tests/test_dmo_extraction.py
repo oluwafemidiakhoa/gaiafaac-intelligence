@@ -18,14 +18,13 @@ from gaiafaac_api.pipeline.errors import ImportContractError
 
 
 def _domestic_text() -> str:
-    rows = [f"{index} State {index} {index * 1000:,.2f}" for index in range(1, 38)]
+    rows = [f"{index} State {index * 1000:,.2f}" for index in range(1, 38)]
     return "SN STATE DEBT STOCK (N)\n" + "\n".join(rows)
 
 
 def _external_text() -> str:
     rows = [
-        f"{index} State {index} {index * 100:,.2f} - - - - {index * 100:,.2f}"
-        for index in range(1, 38)
+        f"{index} State {index * 100:,.2f} - - - - {index * 100:,.2f}" for index in range(1, 38)
     ]
     return "S/No States and FGN Multilateral Total\n" + "\n".join(rows)
 
@@ -34,7 +33,7 @@ def test_parse_domestic_debt_rows_requires_all_37_serials():
     rows = parse_dmo_debt_text([(1, _domestic_text())], debt_kind=DebtKind.DOMESTIC)
 
     assert len(rows) == 37
-    assert rows[0].state_name == "State 1"
+    assert rows[0].state_name == "State"
     assert rows[0].amount == Decimal("1000.00")
     assert rows[-1].serial == 37
     assert rows[-1].source_page == 1
@@ -85,7 +84,7 @@ def test_real_layout_examples_match_dmo_semantics():
                 "\n".join(
                     [
                         "1 ABIA 48,319,385,321.00",
-                        *[f"{index} State {index} {index * 1000:,.2f}" for index in range(2, 37)],
+                        *[f"{index} State {index * 1000:,.2f}" for index in range(2, 37)],
                         "37 FCT 389,875,138,075.16",
                     ]
                 ),
@@ -101,7 +100,7 @@ def test_real_layout_examples_match_dmo_semantics():
                     [
                         "1 Abia 107,163,236.46 - - - - 107,163,236.46",
                         *[
-                            f"{index} State {index} {index * 100:,.2f} - - - - {index * 100:,.2f}"
+                            f"{index} State {index * 100:,.2f} - - - - {index * 100:,.2f}"
                             for index in range(2, 37)
                         ],
                         "37 FCT 26,798,042.48 - - - - 26,798,042.48",
@@ -129,7 +128,7 @@ def test_parse_debt_rows_handles_serial_with_no_space_before_name():
                     [
                         "1Abia 107,163,236.46 - - - - 107,163,236.46",
                         *[
-                            f"{index}State {index} {index * 100:,.2f} - - - - {index * 100:,.2f}"
+                            f"{index}State {index * 100:,.2f} - - - - {index * 100:,.2f}"
                             for index in range(2, 37)
                         ],
                         "37FCT 26,798,042.48 - - - - 26,798,042.48",
@@ -145,9 +144,12 @@ def test_parse_debt_rows_handles_serial_with_no_space_before_name():
     assert rows[0].amount == Decimal("107163236.46")
 
 
-def test_parse_debt_rows_repairs_stray_space_before_thousands_comma():
-    """pdfplumber sometimes inserts a stray space between a digit and the thousands-
-    separator comma that follows it (observed live: "17 JIGAWA 1 ,600,000,000.05")."""
+def test_parse_debt_rows_repairs_stray_digit_splits():
+    """pdfplumber sometimes splits a right-aligned money column's leading digit(s)
+    away from the rest of the number in dense multi-column reports - observed live
+    both before a thousands comma ("17 JIGAWA 1 ,600,000,000.05") and between two
+    plain digits ("3 AKWA IBOM 1 05,824,394,610.86"). Safe to repair unconditionally
+    since no Nigerian state/FCT name contains a digit."""
     rows = parse_dmo_debt_text(
         [
             (
@@ -155,7 +157,8 @@ def test_parse_debt_rows_repairs_stray_space_before_thousands_comma():
                 "\n".join(
                     [
                         "1 ABIA 1 ,600,000,000.05",
-                        *[f"{index} State {index} {index * 1000:,.2f}" for index in range(2, 37)],
+                        "2 ADAMAWA 1 05,824,394,610.86",
+                        *[f"{index} State {index * 1000:,.2f}" for index in range(3, 37)],
                         "37 FCT 389,875,138,075.16",
                     ]
                 ),
@@ -167,6 +170,38 @@ def test_parse_debt_rows_repairs_stray_space_before_thousands_comma():
     assert len(rows) == 37
     assert rows[0].state_name == "ABIA"
     assert rows[0].amount == Decimal("1600000000.05")
+    assert rows[1].state_name == "ADAMAWA"
+    assert rows[1].amount == Decimal("105824394610.86")
+
+
+def test_parse_debt_rows_repairs_stray_digit_splits_across_external_components():
+    """The same artifact observed across multiple component columns in one row, live:
+    "1Abia 9 3,538,421.74 3 ,745,350.03 - - - 9 7,283,771.77"."""
+    rows = parse_dmo_debt_text(
+        [
+            (
+                1,
+                "\n".join(
+                    [
+                        "1Abia 9 3,538,421.74 3 ,745,350.03 - - - 9 7,283,771.77",
+                        *[
+                            f"{index} State {index * 100:,.2f} - - - - {index * 100:,.2f}"
+                            for index in range(2, 37)
+                        ],
+                        "37 FCT 26,798,042.48 - - - - 26,798,042.48",
+                    ]
+                ),
+            )
+        ],
+        debt_kind=DebtKind.EXTERNAL,
+    )
+
+    assert rows[0].state_name == "Abia"
+    assert rows[0].amount == Decimal("97283771.77")
+    assert rows[0].components == {
+        "reported_component_1": "93,538,421.74",
+        "reported_component_2": "3,745,350.03",
+    }
 
 
 def test_extract_dmo_source_stages_exact_state_fct_coverage(session, tmp_path):
