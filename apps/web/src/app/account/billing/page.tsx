@@ -1,6 +1,13 @@
 'use client'
 
-import { ArrowLeft, CheckCircle2, CreditCard, ReceiptText } from 'lucide-react'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  CreditCard,
+  ReceiptText,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -110,7 +117,6 @@ export default function BillingPage() {
   }
 
   useEffect(() => {
-    // Billing hydration verifies a Paystack return before loading entitlement state.
     void (async () => {
       await verifyReturnedPayment()
       await loadHistory()
@@ -135,162 +141,190 @@ export default function BillingPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-5 py-16 text-sm">
-        Verifying billing state…
+      <div className="gaia-shell gaia-section">
+        <div className="gaia-panel flex min-h-48 items-center justify-center p-8">
+          <div className="text-center">
+            <div className="mx-auto size-8 animate-pulse rounded-full border border-primary/20 bg-primary/10" />
+            <p className="text-muted-foreground mt-4 text-sm">
+              Verifying billing state…
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
-      <Link
-        href="/account"
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm font-medium"
-      >
-        <ArrowLeft className="size-4" />
-        Back to account
-      </Link>
+    <div className="pb-8">
+      <section className="border-b border-white/8 bg-[#041915] text-white">
+        <div className="gaia-shell py-12 lg:py-16">
+          <Link
+            href="/account"
+            className="inline-flex items-center gap-2 text-sm font-medium text-white/55 transition hover:text-white"
+          >
+            <ArrowLeft className="size-4" />
+            Back to account
+          </Link>
 
-      <div className="mt-8 flex flex-wrap items-end justify-between gap-5">
-        <div>
-          <p className="text-primary font-mono text-xs font-semibold tracking-[0.18em] uppercase">
-            Revenue engine
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-            Billing & access
-          </h1>
-          <p className="text-muted-foreground mt-3 max-w-2xl leading-7">
-            Payments, entitlement activation, renewal dates and receipts are
-            tied to your organization and verified against Paystack.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/pricing">Compare plans</Link>
-        </Button>
-      </div>
-
-      {verification ? (
-        <div className="mt-8 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <p className="font-semibold">
-                Payment confirmed. Access is active.
-              </p>
-              <p className="text-muted-foreground mt-1 text-sm leading-6">
-                {verification.plan_code.toUpperCase()} ·{' '}
-                {naira(verification.amount_naira)} · Receipt{' '}
-                {verification.invoice_number ?? verification.reference}
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-3 py-1.5">
+                <CreditCard className="size-3.5 text-emerald-300" />
+                <span className="font-mono text-[0.65rem] font-bold tracking-[0.18em] text-emerald-100 uppercase">
+                  Account / Billing Control Plane
+                </span>
+              </div>
+              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+                Billing, access and verified payment history.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-emerald-50/60">
+                Paystack-confirmed payments, entitlement activation, renewal
+                dates and receipts stay tied to your organization.
               </p>
             </div>
+            <Button asChild variant="outline" className="border-white/15 bg-white/[0.04] text-white hover:bg-white/[0.08] hover:text-white">
+              <Link href="/pricing">Compare plans</Link>
+            </Button>
           </div>
         </div>
-      ) : null}
+      </section>
 
-      {message ? (
-        <p className="border-border bg-muted/30 mt-6 rounded-md border p-4 text-sm">
-          {message}
-        </p>
-      ) : null}
+      <div className="gaia-shell gaia-section">
+        {verification ? (
+          <div className="mb-8 overflow-hidden rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.08] p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
+                <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-300" />
+              </div>
+              <div>
+                <p className="font-semibold">Payment confirmed. Access is active.</p>
+                <p className="text-muted-foreground mt-1 text-sm leading-6">
+                  {verification.plan_code.toUpperCase()} ·{' '}
+                  {naira(verification.amount_naira)} · Receipt{' '}
+                  {verification.invoice_number ?? verification.reference}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
-      <div className="mt-8 grid gap-5 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardDescription>Current plan</CardDescription>
-            <CardTitle className="text-3xl capitalize">
-              {billing?.plan_code ?? 'Free'}
-            </CardTitle>
+        {message ? (
+          <p className="border-border bg-muted/40 mb-6 rounded-2xl border p-4 text-sm">
+            {message}
+          </p>
+        ) : null}
+
+        <div className="grid gap-5 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardDescription className="gaia-data-label">Current plan</CardDescription>
+                <Sparkles className="text-primary/55 size-4" />
+              </div>
+              <CardTitle className="pt-3 text-3xl capitalize">
+                {billing?.plan_code ?? 'Free'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground text-sm">
+              Status: {billing?.subscription_status ?? 'No paid subscription'}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardDescription className="gaia-data-label">Access through</CardDescription>
+                <ShieldCheck className="text-primary/55 size-4" />
+              </div>
+              <CardTitle className="pt-3 text-2xl">
+                {date(billing?.current_period_end ?? null)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground text-sm">
+              Paid access expires unless renewed.
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardDescription className="gaia-data-label">Verified payments</CardDescription>
+                <ReceiptText className="text-primary/55 size-4" />
+              </div>
+              <CardTitle className="pt-3 text-3xl">
+                {billing?.payments.length ?? 0}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {billing?.subscription_status ? (
+                <Button onClick={renew} disabled={renewing} className="w-full">
+                  <CreditCard className="size-4" />
+                  {renewing ? 'Opening Paystack…' : 'Renew 30 days'}
+                </Button>
+              ) : (
+                <Button asChild className="w-full">
+                  <Link href="/pricing">Choose a paid plan</Link>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="mt-6 overflow-hidden">
+          <CardHeader className="border-border/70 border-b bg-muted/20">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 flex size-11 items-center justify-center rounded-2xl">
+                <ReceiptText className="text-primary size-5" />
+              </div>
+              <div>
+                <CardTitle>Verified payment ledger</CardTitle>
+                <CardDescription>
+                  Paystack-confirmed transactions recorded by Gaia and tied to this organization.
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            Status: {billing?.subscription_status ?? 'No paid subscription'}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardDescription>Access through</CardDescription>
-            <CardTitle className="text-2xl">
-              {date(billing?.current_period_end ?? null)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            Paid access expires unless renewed.
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardDescription>Verified payments</CardDescription>
-            <CardTitle className="text-3xl">
-              {billing?.payments.length ?? 0}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {billing?.subscription_status ? (
-              <Button onClick={renew} disabled={renewing} className="w-full">
-                <CreditCard className="size-4" />
-                {renewing ? 'Opening Paystack…' : 'Renew 30 days'}
-              </Button>
+          <CardContent className="pt-2">
+            {!billing?.payments.length ? (
+              <div className="py-8 text-center">
+                <ReceiptText className="text-muted-foreground/40 mx-auto size-7" />
+                <p className="text-muted-foreground mt-3 text-sm">
+                  No verified payments have been recorded for this organization yet.
+                </p>
+              </div>
             ) : (
-              <Button asChild className="w-full">
-                <Link href="/pricing">Choose a paid plan</Link>
-              </Button>
+              <div className="divide-border divide-y">
+                {billing.payments.map((payment) => (
+                  <div
+                    key={payment.reference ?? payment.invoice_number}
+                    className="grid gap-2 py-5 text-sm sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-8"
+                  >
+                    <div>
+                      <p className="font-semibold tracking-tight">
+                        {payment.invoice_number ?? 'Gaia payment'}
+                      </p>
+                      <p className="text-muted-foreground mt-1 font-mono text-xs">
+                        {payment.reference ?? 'Reference unavailable'}
+                      </p>
+                    </div>
+                    <div className="sm:text-right">
+                      <p className="font-mono font-semibold">
+                        {naira(payment.amount_naira)}
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs capitalize">
+                        {payment.status}
+                      </p>
+                    </div>
+                    <p className="text-muted-foreground sm:text-right">
+                      {date(payment.completed_at)}
+                    </p>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 flex size-10 items-center justify-center rounded-xl">
-              <ReceiptText className="text-primary size-5" />
-            </div>
-            <div>
-              <CardTitle>Payment receipts</CardTitle>
-              <CardDescription>
-                Paystack-confirmed transactions recorded by Gaia.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!billing?.payments.length ? (
-            <p className="text-muted-foreground text-sm">
-              No verified payments have been recorded for this organization yet.
-            </p>
-          ) : (
-            <div className="divide-border divide-y">
-              {billing.payments.map((payment) => (
-                <div
-                  key={payment.reference ?? payment.invoice_number}
-                  className="grid gap-2 py-4 text-sm sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-6"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {payment.invoice_number ?? 'Gaia payment'}
-                    </p>
-                    <p className="text-muted-foreground mt-1 font-mono text-xs">
-                      {payment.reference ?? 'Reference unavailable'}
-                    </p>
-                  </div>
-                  <div className="sm:text-right">
-                    <p className="font-semibold">
-                      {naira(payment.amount_naira)}
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-xs capitalize">
-                      {payment.status}
-                    </p>
-                  </div>
-                  <p className="text-muted-foreground sm:text-right">
-                    {date(payment.completed_at)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }
