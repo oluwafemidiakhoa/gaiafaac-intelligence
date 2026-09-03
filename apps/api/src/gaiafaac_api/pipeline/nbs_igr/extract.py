@@ -82,6 +82,37 @@ def _state_candidate(prefix: str) -> str | None:
     return None
 
 
+_APPENDIX_ROW_RE = re.compile(
+    r"^(?P<serial>\d{1,2})\s+(?P<state>[A-Za-z][A-Za-z ]*?)\s+"
+    r"(?P<tax>[\d,]+\.\d{2}|-)\s+(?P<mda>[\d,]+\.\d{2}|-)\s+(?P<total>[\d,]+\.\d{2})\s*$",
+    re.MULTILINE,
+)
+
+
+def _parse_appendix_rows(pages: list[tuple[int, str]]) -> list[ParsedIgrRow]:
+    """Some report years render each state's own page as an infographic image with no
+    extractable per-state text (verified: pdfplumber returns only a bare page number for
+    those pages). The same annual totals are also published as a plain "SN State Total Tax
+    MDAs Revenue Total" appendix table; this reads that table instead.
+    """
+    parsed: list[ParsedIgrRow] = []
+    for page_number, text in pages:
+        for match in _APPENDIX_ROW_RE.finditer(text):
+            state_name = match.group("state").strip()
+            if state_name.casefold() == "total":
+                continue
+            original = match.group("total")
+            parsed.append(
+                ParsedIgrRow(
+                    state_name=state_name,
+                    amount=_money(original, state_name=state_name),
+                    amount_original=original,
+                    source_page=page_number,
+                )
+            )
+    return parsed
+
+
 def parse_nbs_igr_text(
     pages: list[tuple[int, str]],
     *,
@@ -89,10 +120,22 @@ def parse_nbs_igr_text(
 ) -> list[ParsedIgrRow]:
     """Parse annual state/FCT total IGR observations from the archived NBS report.
 
-    The parser intentionally targets only the report's per-jurisdiction infographic pattern
-    for the requested fiscal year. It does not infer missing jurisdictions or reuse prior years.
+    Tries the report's per-jurisdiction infographic pattern for the requested fiscal year
+    first; if no page matches that pattern at all (some years render per-state pages as
+    images with no extractable text), falls back to the report's plain-text appendix table.
+    Never infers missing jurisdictions or reuses prior years.
     """
+    infographic_rows = _parse_infographic_rows(pages, fiscal_year=fiscal_year)
+    if infographic_rows:
+        return infographic_rows
+    return _parse_appendix_rows(pages)
 
+
+def _parse_infographic_rows(
+    pages: list[tuple[int, str]],
+    *,
+    fiscal_year: int,
+) -> list[ParsedIgrRow]:
     target = re.compile(
         rf"(?<!\d){fiscal_year}(?!\d)\s+Total\s+IGR\s+"
         rf"(?P<value>[N₦]\s*\d[\d,]*\.\d{{2}})",

@@ -23,6 +23,23 @@ def _pages(*, year: int = 2023, missing_code: str | None = None) -> list[tuple[i
     return pages
 
 
+def _appendix_pages(*, missing_code: str | None = None) -> list[tuple[int, str]]:
+    """Some report years render each state's own page as an infographic image with no
+    extractable text; the same totals are published as a plain appendix table instead."""
+    lines = ["APPENDIX", "SN State Total Tax MDAs Revenue Total"]
+    serial = 1
+    for index, (name, code, *_rest) in enumerate(NIGERIAN_STATES, start=1):
+        if code == missing_code:
+            continue
+        total = f"{index * 1000}.00"
+        tax = "-" if index == 1 else f"{index * 900}.00"
+        mda = "-" if index != 1 else total
+        lines.append(f"{serial} {name} {tax} {mda} {total}")
+        serial += 1
+    lines.append("Total 9,999.00 9,999.00 9,999.00")
+    return [(43, "\n".join(lines))]
+
+
 def _source(session, tmp_path, *, year: int = 2023) -> SourceDocument:
     path = tmp_path / "nbs-igr.pdf"
     path.write_bytes(b"%PDF-1.7\nfixture")
@@ -50,6 +67,36 @@ def test_parse_nbs_igr_text_reads_annual_state_totals():
     assert rows[0].state_name == "Abia"
     assert rows[0].amount == Decimal("1000.00")
     assert rows[-1].state_name == "Zamfara"
+
+
+def test_parse_nbs_igr_text_falls_back_to_appendix_table():
+    rows = parse_nbs_igr_text(_appendix_pages(), fiscal_year=2023)
+
+    assert len(rows) == 37
+    by_state = {row.state_name: row for row in rows}
+    assert by_state["Abia"].amount == Decimal("1000.00")
+    assert by_state["Akwa Ibom"].source_page == 43
+    assert by_state["Zamfara"].amount == Decimal(f"{len(NIGERIAN_STATES) * 1000}.00")
+    assert "Total" not in by_state
+
+
+def test_extract_nbs_igr_source_stages_all_states_from_appendix_table(session, tmp_path):
+    seed_states(session)
+    source = _source(session, tmp_path)
+
+    result = extract_nbs_igr_source(
+        session,
+        source_document_id=source.id,
+        text_reader=lambda _path: _appendix_pages(),
+    )
+
+    records = list(
+        session.scalars(
+            select(StateIgrRecord).where(StateIgrRecord.source_document_id == source.id)
+        )
+    )
+    assert result.records_extracted == 37
+    assert len(records) == 37
 
 
 def test_extract_nbs_igr_source_stages_all_states_for_review(session, tmp_path):
