@@ -112,9 +112,12 @@ export default async function Home() {
             >
               Evidence
             </Link>
-            <button className="rounded bg-gold-600 px-5 py-2 font-semibold text-teal-900 hover:bg-yellow-100">
+            <Link
+              href="/pricing"
+              className="rounded bg-gold-600 px-5 py-2 font-semibold text-teal-900 hover:bg-yellow-100 inline-block"
+            >
               Request Access
-            </button>
+            </Link>
           </nav>
         </div>
       </header>
