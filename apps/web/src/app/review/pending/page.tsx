@@ -38,194 +38,174 @@ export default async function PendingReviewPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
-      <PageHeader
-        eyebrow="OAGF evidence control"
-        title="Jurisdiction evidence awaiting human action"
-        description="New OAGF evidence lands here after collection, extraction and automated validation. Approval and publication are separate controlled actions."
-      />
-
-      <div className="mt-8 grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <Clock3 className="text-primary size-5" aria-hidden="true" />
-            <CardTitle className="pt-3 text-2xl">{reviews.length}</CardTitle>
-            <CardDescription>Unpublished packets</CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CheckCircle2 className="text-primary size-5" aria-hidden="true" />
-            <CardTitle className="pt-3 text-2xl">{readyForReview}</CardTitle>
-            <CardDescription>Ready for review</CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <ShieldCheck className="text-primary size-5" aria-hidden="true" />
-            <CardTitle className="pt-3 text-2xl">{approved}</CardTitle>
-            <CardDescription>Approved, awaiting publication</CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <AlertTriangle
-              className="size-5 text-amber-700"
-              aria-hidden="true"
-            />
-            <CardTitle className="pt-3 text-2xl">{blocked}</CardTitle>
-            <CardDescription>Requiring investigation</CardDescription>
-          </CardHeader>
-        </Card>
+      <div style={{ fontFamily: 'Georgia, serif' }}>
+        <PageHeader
+          eyebrow="OAGF evidence control"
+          title="Review Queue: OAGF Jurisdiction Evidence"
+          description="New allocation evidence lands here after automated collection and validation. Human reviewers verify sources, coverage, and findings. Approval unlocks publication, which requires a different administrator."
+        />
       </div>
 
-      <Card className="bg-muted/30 mt-6">
-        <CardHeader>
-          <div className="flex items-start gap-3">
-            <ShieldCheck
-              className="text-primary mt-0.5 size-5"
-              aria-hidden="true"
-            />
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5">
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Review protocol</CardTitle>
-              <CardDescription className="mt-2 max-w-3xl leading-6">
-                Confirm the official source and reporting period, verify
-                complete 37-jurisdiction coverage, investigate validation
-                findings, then record the actual reviewer. Publication is
-                unlocked only after approval and must be performed by a
-                different active administrator.
-              </CardDescription>
+              <p className="text-xs font-medium uppercase tracking-wide text-teal-700">Unpublished</p>
+              <p className="mt-2 text-3xl font-bold text-teal-950">{reviews.length}</p>
             </div>
+            <Clock3 className="size-8 text-teal-300" aria-hidden="true" />
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+        <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-blue-700">Ready to Review</p>
+              <p className="mt-2 text-3xl font-bold text-blue-950">{readyForReview}</p>
+            </div>
+            <CheckCircle2 className="size-8 text-blue-300" aria-hidden="true" />
+          </div>
+        </div>
+        <div className="rounded-lg border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Approved</p>
+              <p className="mt-2 text-3xl font-bold text-emerald-950">{approved}</p>
+            </div>
+            <ShieldCheck className="size-8 text-emerald-300" aria-hidden="true" />
+          </div>
+        </div>
+        <div className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-amber-700">Blocking Issues</p>
+              <p className="mt-2 text-3xl font-bold text-amber-950">{blocked}</p>
+            </div>
+            <AlertTriangle className="size-8 text-amber-300" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 rounded-lg bg-slate-50 p-5 border border-slate-200">
+        <h3 className="font-semibold text-slate-950 flex items-center gap-2">
+          <ShieldCheck className="size-5 text-teal-700" />
+          Review Checklist
+        </h3>
+        <ol className="text-slate-700 mt-4 space-y-2 text-sm">
+          <li>✓ Confirm official source and reporting period</li>
+          <li>✓ Verify complete 37-jurisdiction coverage</li>
+          <li>✓ Review automated validation findings and blocking items</li>
+          <li>✓ Record reviewer identity and approval time</li>
+          <li>✓ Publication unlocked (must be performed by different admin)</li>
+        </ol>
+      </div>
 
       {result.error ? (
-        <Card className="mt-8 border-dashed">
-          <CardContent className="pt-6">
-            <p className="font-medium">Review service unavailable</p>
-            <p className="text-muted-foreground mt-2 text-sm">
-              {result.error} No review state has been inferred.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="mt-8 rounded-lg border border-red-300 bg-red-50 p-4">
+          <p className="font-semibold text-red-900">Review service unavailable</p>
+          <p className="text-red-800 mt-2 text-sm">{result.error}</p>
+        </div>
       ) : reviews.length > 0 ? (
         <div className="mt-8 space-y-4">
           {reviews.map((item) => {
             const complete = item.covered_states === item.expected_states
             const hasBlocking = item.blocking_count > 0
-            const status = item.approved
-              ? 'Approved · publish next'
+            const statusColor = item.approved
+              ? 'emerald'
               : hasBlocking
-                ? 'Investigation required'
+                ? 'amber'
                 : complete
-                  ? 'Ready for human review'
-                  : 'Incomplete evidence'
+                  ? 'teal'
+                  : 'slate'
 
             return (
-              <Card key={item.run_id}>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <CardTitle>{item.reporting_label}</CardTitle>
-                      <CardDescription className="mt-2">
-                        {item.source_organization} · reporting period{' '}
-                        {formatDate(item.revenue_month)}
-                      </CardDescription>
-                    </div>
-                    <StatusPill
-                      tone={
-                        item.approved || (complete && !hasBlocking)
-                          ? 'success'
-                          : 'neutral'
-                      }
-                    >
-                      {status}
-                    </StatusPill>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <dl className="grid gap-5 text-sm sm:grid-cols-2 lg:grid-cols-5">
-                    <div>
-                      <dt className="text-muted-foreground">Coverage</dt>
-                      <dd className="mt-1 font-mono font-semibold">
-                        {item.covered_states} / {item.expected_states}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground">Findings</dt>
-                      <dd className="mt-1 font-semibold">
-                        {item.finding_count}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground">Blocking</dt>
-                      <dd
-                        className={
-                          hasBlocking
-                            ? 'mt-1 font-semibold text-amber-800'
-                            : 'mt-1 font-semibold'
-                        }
-                      >
-                        {item.blocking_count}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground">Pipeline</dt>
-                      <dd className="mt-1 font-medium">{item.status}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground">Approval</dt>
-                      <dd className="mt-1 font-medium">
-                        {item.approved ? 'Human verified' : 'Pending'}
-                      </dd>
-                    </div>
-                  </dl>
-                  <div className="border-border mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                    <div>
-                      <p className="text-muted-foreground text-xs">
-                        Queued{' '}
-                        {item.created_at
-                          ? new Intl.DateTimeFormat('en-NG', {
-                              dateStyle: 'medium',
-                              timeStyle: 'short',
-                              timeZone: 'UTC',
-                            }).format(new Date(item.created_at))
-                          : 'time unavailable'}
-                        {item.created_at ? ' UTC' : ''}
-                      </p>
-                      <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
-                        Run {item.run_id}
-                      </p>
-                    </div>
-                    <Button asChild size="sm">
-                      <Link href={`/review/pending/${item.run_id}`}>
+              <div
+                key={item.run_id}
+                className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold text-slate-950">
+                        {item.reporting_label}
+                      </h3>
+                      <span className={`rounded-full px-2 py-1 text-xs font-bold text-white ${
+                        statusColor === 'emerald' ? 'bg-emerald-600' :
+                        statusColor === 'amber' ? 'bg-amber-600' :
+                        statusColor === 'teal' ? 'bg-teal-600' :
+                        'bg-slate-600'
+                      }`}>
                         {item.approved
-                          ? 'Open publication packet'
-                          : 'Open review packet'}
-                        <ArrowRight className="size-4" aria-hidden="true" />
-                      </Link>
-                    </Button>
+                          ? 'Approved'
+                          : hasBlocking
+                            ? 'Blocked'
+                            : complete
+                              ? 'Ready'
+                              : 'Incomplete'}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 mt-1 text-sm">
+                      {item.source_organization} • {formatDate(item.revenue_month)}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                  <Button asChild>
+                    <Link href={`/review/pending/${item.run_id}`}>
+                      {item.approved ? 'Publish' : 'Review'} <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                </div>
+
+                <div className="mt-4 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-5 text-sm">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Coverage</p>
+                    <p className="mt-1 font-mono font-bold text-slate-950">
+                      {item.covered_states}/{item.expected_states}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Findings</p>
+                    <p className="mt-1 font-bold text-slate-950">{item.finding_count}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Blocking</p>
+                    <p className={`mt-1 font-bold ${hasBlocking ? 'text-amber-700' : 'text-slate-950'}`}>
+                      {item.blocking_count}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Status</p>
+                    <p className="mt-1 font-medium text-slate-950">{item.status}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Approval</p>
+                    <p className="mt-1 font-medium text-slate-950">
+                      {item.approved ? 'Verified' : 'Pending'}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-slate-500 mt-3 text-xs">
+                  Queued {item.created_at
+                    ? new Intl.DateTimeFormat('en-NG', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                        timeZone: 'UTC',
+                      }).format(new Date(item.created_at))
+                    : 'time unavailable'} • Run {item.run_id}
+                </p>
+              </div>
             )
           })}
         </div>
       ) : (
-        <Card className="mt-8 border-dashed">
-          <CardContent className="pt-6">
-            <CheckCircle2 className="text-primary size-5" aria-hidden="true" />
-            <p className="mt-3 font-medium">OAGF queue clear</p>
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-              There are no unpublished OAGF months awaiting human action. Newly
-              collected evidence will appear here automatically.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="mt-8 rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50 p-8 text-center">
+          <CheckCircle2 className="size-8 text-emerald-600 mx-auto" />
+          <p className="mt-3 font-semibold text-emerald-900">OAGF Queue Clear</p>
+          <p className="text-emerald-700 mt-2 text-sm">No unpublished evidence awaiting action. New evidence will appear automatically.</p>
+        </div>
       )}
 
       <Button asChild variant="outline" className="mt-8">
-        <Link href="/review">Back to evidence control</Link>
+        <Link href="/review">← Back to Evidence Control</Link>
       </Button>
     </div>
   )
