@@ -170,35 +170,47 @@ export default function PricingPage() {
           </h2>
           <p className="mt-4 leading-7 text-teal-50/70">
             Institution-wide deployment, redistribution rights, custom data
-            delivery and dedicated evidence operations are contracted separately.
+            delivery and dedicated evidence operations are contracted
+            separately.
           </p>
         </div>
 
         <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {institutionalProducts.map(({ icon: Icon, name, buyer, description }) => (
-            <article
-              key={name}
-              className="rounded-2xl border border-white/10 bg-white/[0.05] p-6"
-            >
-              <Icon className="size-5 text-emerald-300" />
-              <h3 className="mt-5 text-lg font-semibold">{name}</h3>
-              <p className="mt-2 text-sm font-medium text-teal-100/70">{buyer}</p>
-              <p className="mt-4 text-sm leading-6 text-teal-50/65">
-                {description}
-              </p>
-            </article>
-          ))}
+          {institutionalProducts.map(
+            ({ icon: Icon, name, buyer, description }) => (
+              <article
+                key={name}
+                className="rounded-2xl border border-white/10 bg-white/[0.05] p-6"
+              >
+                <Icon className="size-5 text-emerald-300" />
+                <h3 className="mt-5 text-lg font-semibold">{name}</h3>
+                <p className="mt-2 text-sm font-medium text-teal-100/70">
+                  {buyer}
+                </p>
+                <p className="mt-4 text-sm leading-6 text-teal-50/65">
+                  {description}
+                </p>
+              </article>
+            ),
+          )}
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-5 border-t border-white/10 pt-7">
           <div>
             <p className="font-semibold">Need organization-wide use?</p>
             <p className="mt-1 text-sm text-teal-50/60">
-              Scope the workflow, permitted use, data volume and support before pricing the contract.
+              Scope the workflow, permitted use, data volume and support before
+              pricing the contract.
             </p>
           </div>
-          <Button asChild size="lg" className="bg-amber-300 text-teal-950 hover:bg-amber-200">
-            <Link href="/pilot?plan=team#request-form">Request institutional pilot</Link>
+          <Button
+            asChild
+            size="lg"
+            className="bg-amber-300 text-teal-950 hover:bg-amber-200"
+          >
+            <Link href="/pilot?plan=team#request-form">
+              Request institutional pilot
+            </Link>
           </Button>
         </div>
       </section>
@@ -210,7 +222,9 @@ export default function PricingPage() {
           </CardHeader>
           <CardContent className="text-muted-foreground space-y-2 text-sm leading-6">
             <p>Human-reviewed publication controls and retained provenance.</p>
-            <p>Historical evidence structured for repeatable research and export.</p>
+            <p>
+              Historical evidence structured for repeatable research and export.
+            </p>
             <p>Licensed workflow, delivery and API access according to plan.</p>
           </CardContent>
         </Card>
@@ -219,7 +233,9 @@ export default function PricingPage() {
             <CardTitle>Commercial boundary</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground text-sm leading-6">
-            Public-source facts remain attributable to their publishers. Gaia charges for verification, structuring, monitoring, workflow, delivery and licensed use around those facts.
+            Public-source facts remain attributable to their publishers. Gaia
+            charges for verification, structuring, monitoring, workflow,
+            delivery and licensed use around those facts.
           </CardContent>
         </Card>
       </div>

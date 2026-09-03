@@ -176,7 +176,9 @@ def _initialize_paystack_checkout(
         with urlopen(request, timeout=12) as response:  # noqa: S310 - fixed trusted host
             payload = json.loads(response.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
-        raise HTTPException(status_code=502, detail="Payment gateway is temporarily unavailable.") from error
+        raise HTTPException(
+            status_code=502, detail="Payment gateway is temporarily unavailable."
+        ) from error
 
     authorization_url = (payload.get("data") or {}).get("authorization_url")
     if not payload.get("status") or not authorization_url:
@@ -228,7 +230,9 @@ def create_checkout(
         allow_promotion_codes=True,
     )
     if not checkout.url:
-        raise HTTPException(status_code=502, detail="Billing provider did not return a checkout URL.")
+        raise HTTPException(
+            status_code=502, detail="Billing provider did not return a checkout URL."
+        )
     return RedirectResponse(url=checkout.url)
 
 
@@ -244,8 +248,12 @@ def create_billing_portal(
     if subscription is None:
         raise HTTPException(status_code=404, detail="No active subscription was found.")
 
-    if subscription.external_subscription_id and subscription.external_subscription_id.startswith("gfi-"):
-        return RedirectResponse(url=f"{settings.customer_app_url.rstrip('/')}/account?billing=paystack")
+    if subscription.external_subscription_id and subscription.external_subscription_id.startswith(
+        "gfi-"
+    ):
+        return RedirectResponse(
+            url=f"{settings.customer_app_url.rstrip('/')}/account?billing=paystack"
+        )
 
     settings = _stripe_ready()
     if not subscription.external_customer_id:
