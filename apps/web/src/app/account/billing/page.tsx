@@ -111,7 +111,6 @@ export default function BillingPage() {
 
   useEffect(() => {
     // Billing hydration verifies a Paystack return before loading entitlement state.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void (async () => {
       await verifyReturnedPayment()
       await loadHistory()
