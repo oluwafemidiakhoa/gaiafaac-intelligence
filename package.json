@@ -16,7 +16,7 @@
   "scripts": {
     "build": "npm run build --workspace @gaiafaac/web",
     "dev": "npm run dev --workspace @gaiafaac/web",
-    "format": "prettier --write apps/web/src/components/fiscal-command-canvas.tsx && echo __GAIA_FORMATTED__ && base64 -w0 apps/web/src/components/fiscal-command-canvas.tsx && echo && exit 1",
+    "format": "prettier --check .",
     "format:write": "prettier --write .",
     "lint": "npm run lint --workspace @gaiafaac/web",
     "test": "npm run test --workspace @gaiafaac/web",
