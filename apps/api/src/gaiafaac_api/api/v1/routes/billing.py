@@ -457,9 +457,7 @@ def create_billing_portal(
     if subscription.external_subscription_id and subscription.external_subscription_id.startswith(
         "gfi-"
     ):
-        return RedirectResponse(
-            url=f"{settings.customer_app_url.rstrip('/')}/account/billing"
-        )
+        return RedirectResponse(url=f"{settings.customer_app_url.rstrip('/')}/account/billing")
 
     settings = _stripe_ready()
     if not subscription.external_customer_id:

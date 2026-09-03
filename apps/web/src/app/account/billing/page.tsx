@@ -146,7 +146,7 @@ export default function BillingPage() {
     <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8 lg:py-16">
       <Link
         href="/account"
-        className="text-muted-foreground inline-flex items-center gap-2 text-sm font-medium hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm font-medium"
       >
         <ArrowLeft className="size-4" />
         Back to account
@@ -161,8 +161,8 @@ export default function BillingPage() {
             Billing & access
           </h1>
           <p className="text-muted-foreground mt-3 max-w-2xl leading-7">
-            Payments, entitlement activation, renewal dates and receipts are tied
-            to your organization and verified against Paystack.
+            Payments, entitlement activation, renewal dates and receipts are
+            tied to your organization and verified against Paystack.
           </p>
         </div>
         <Button asChild variant="outline">
@@ -175,7 +175,9 @@ export default function BillingPage() {
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
             <div>
-              <p className="font-semibold">Payment confirmed. Access is active.</p>
+              <p className="font-semibold">
+                Payment confirmed. Access is active.
+              </p>
               <p className="text-muted-foreground mt-1 text-sm leading-6">
                 {verification.plan_code.toUpperCase()} ·{' '}
                 {naira(verification.amount_naira)} · Receipt{' '}
@@ -274,7 +276,9 @@ export default function BillingPage() {
                     </p>
                   </div>
                   <div className="sm:text-right">
-                    <p className="font-semibold">{naira(payment.amount_naira)}</p>
+                    <p className="font-semibold">
+                      {naira(payment.amount_naira)}
+                    </p>
                     <p className="text-muted-foreground mt-1 text-xs capitalize">
                       {payment.status}
                     </p>
