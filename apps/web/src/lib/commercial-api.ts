@@ -10,13 +10,17 @@ const pilotLeadSchema = z.object({
   plan_interest: z.string(),
   use_case: z.string(),
   states_or_periods: z.string().nullable(),
+  requested_evidence_domains: z.string().nullable(),
   preferred_format: z.string().nullable(),
   expected_users: z.number().int().nullable(),
+  buying_timeline: z.string().nullable(),
+  source_page: z.string().nullable(),
   status: z.string(),
   source: z.string(),
   owner_name: z.string().nullable(),
   next_action: z.string().nullable(),
   next_action_at: z.string().nullable(),
+  internal_notes: z.string().nullable(),
   closed_reason: z.string().nullable(),
   converted_organization_id: z.string().uuid().nullable(),
   status_changed_at: z.string().nullable(),
@@ -107,9 +111,13 @@ export async function updatePilotLead(
   leadId: string,
   payload: {
     status?: string
+    requested_evidence_domains?: string | null
+    buying_timeline?: string | null
+    source_page?: string | null
     owner_name?: string | null
     next_action?: string | null
     next_action_at?: string | null
+    internal_notes?: string | null
     closed_reason?: string | null
   },
 ): Promise<{ ok: boolean; error: string | null }> {
