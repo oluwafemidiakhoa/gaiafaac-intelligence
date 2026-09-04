@@ -58,6 +58,13 @@ class Settings(BaseSettings):
     paystack_price_team: int = Field(default=200_000, ge=100)
     paystack_price_api: int = Field(default=300_000, ge=100)
 
+    # Optional one-time product prices. Zero means the product is visible in the
+    # catalog but checkout stays disabled until an operator approves/configures a price.
+    paystack_price_decision_pack: int = Field(default=0, ge=0)
+    paystack_price_multi_state_comparison_pack: int = Field(default=0, ge=0)
+    paystack_price_historical_evidence_export: int = Field(default=0, ge=0)
+    paystack_price_due_diligence_snapshot: int = Field(default=0, ge=0)
+
     # Invoice delivery (Zoho Mail).
     zoho_sender_email: str = ""
     zoho_sender_password: str = ""
