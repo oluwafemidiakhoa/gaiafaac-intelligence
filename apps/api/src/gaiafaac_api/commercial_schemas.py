@@ -18,6 +18,12 @@ PilotLeadStatus = Literal[
     "won",
     "lost",
 ]
+OneTimeProductCode = Literal[
+    "decision_pack",
+    "multi_state_comparison_pack",
+    "historical_evidence_export",
+    "due_diligence_snapshot",
+]
 _EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
@@ -130,6 +136,35 @@ class PilotLeadUpdate(BaseModel):
         return value
 
 
+class OneTimePurchaseCheckoutRequest(BaseModel):
+    product_code: OneTimeProductCode
+    context: dict = Field(default_factory=dict)
+
+
+class OneTimePurchaseResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    product_code: str
+    provider: str
+    provider_reference: str
+    amount_naira: str
+    currency: str
+    status: str
+    fulfillment_status: str
+    fulfillment_reference: str | None
+    completed_at: datetime | None
+    fulfilled_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class OneTimePurchaseCheckoutResponse(BaseModel):
+    purchase: OneTimePurchaseResponse
+    url: str
+
+
 class CommercialAnalytics(BaseModel):
     generated_at: datetime
     signups_total: int
@@ -146,6 +181,7 @@ class CommercialAnalytics(BaseModel):
     failed_payment_count: int
     expired_or_canceled_subscriptions: int
     one_time_purchases: int | None
+    one_time_purchase_revenue_naira: str | None = None
     one_time_purchase_note: str
     decision_rooms_total: int
     fiscal_receipts_total: int
