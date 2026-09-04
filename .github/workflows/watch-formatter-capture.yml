@@ -1,0 +1,24 @@
+name: Watch formatter capture
+
+on:
+  push:
+    branches:
+      - feat/watch-delivery-escalation
+
+permissions:
+  contents: read
+
+jobs:
+  format-capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Capture exact Prettier diff
+        run: |
+          npx prettier --write apps/web/src/components/fiscal-watch-contracts-workspace.tsx
+          git diff -- apps/web/src/components/fiscal-watch-contracts-workspace.tsx
