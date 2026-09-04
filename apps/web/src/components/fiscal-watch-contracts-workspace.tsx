@@ -201,9 +201,7 @@ export function FiscalWatchContractsWorkspace() {
     setSelected(contract)
     try {
       const [matchRows, reviewRows] = await Promise.all([
-        request<WatchMatch[]>(
-          `/fiscal-watch-contracts/${contract.id}/matches`,
-        ),
+        request<WatchMatch[]>(`/fiscal-watch-contracts/${contract.id}/matches`),
         request<OperationalReview[]>(
           `/fiscal-watch-contracts/${contract.id}/reviews`,
         ),
@@ -354,7 +352,9 @@ export function FiscalWatchContractsWorkspace() {
       setError(null)
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : 'Unable to escalate reviews.',
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to escalate reviews.',
       )
     } finally {
       setBusy(false)
@@ -470,8 +470,8 @@ export function FiscalWatchContractsWorkspace() {
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-2 text-xs">
-                    {contract.match_count} matches · {contract.minimum_severity}+ ·
-                    SLA {slaLabel(contract.escalation_after_minutes)}
+                    {contract.match_count} matches · {contract.minimum_severity}
+                    + · SLA {slaLabel(contract.escalation_after_minutes)}
                   </p>
                 </button>
               ))
@@ -518,9 +518,7 @@ export function FiscalWatchContractsWorkspace() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline">
-                      <Link
-                        href={`/decision-rooms/${selected.room_id}/review`}
-                      >
+                      <Link href={`/decision-rooms/${selected.room_id}/review`}>
                         Decision Review
                       </Link>
                     </Button>
@@ -589,10 +587,10 @@ export function FiscalWatchContractsWorkspace() {
                   <div>
                     <CardTitle>Operational review queue</CardTitle>
                     <CardDescription className="mt-2 max-w-3xl">
-                      Each new governed Watch match enters the organization inbox
-                      once. Acknowledge and resolve operational handling here.
-                      Evidence re-review remains open in the Decision Room until
-                      a successor Fiscal Receipt is issued.
+                      Each new governed Watch match enters the organization
+                      inbox once. Acknowledge and resolve operational handling
+                      here. Evidence re-review remains open in the Decision Room
+                      until a successor Fiscal Receipt is issued.
                     </CardDescription>
                   </div>
                   <Button
@@ -647,8 +645,7 @@ export function FiscalWatchContractsWorkspace() {
                                 <span>{review.state_code}</span>
                                 <span>{review.severity}</span>
                                 <span>
-                                  Due{' '}
-                                  {new Date(review.due_at).toLocaleString()}
+                                  Due {new Date(review.due_at).toLocaleString()}
                                 </span>
                                 <span>
                                   {delivered
