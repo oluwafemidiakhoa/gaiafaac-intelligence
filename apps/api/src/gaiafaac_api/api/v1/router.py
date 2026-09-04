@@ -27,6 +27,7 @@ from gaiafaac_api.api.v1.routes.national_distribution import (
 from gaiafaac_api.api.v1.routes.national_review import router as national_review_router
 from gaiafaac_api.api.v1.routes.nbs_igr_review import router as nbs_igr_review_router
 from gaiafaac_api.api.v1.routes.oagf_revisions import router as oagf_revisions_router
+from gaiafaac_api.api.v1.routes.one_time_billing import router as one_time_billing_router
 from gaiafaac_api.api.v1.routes.published_data import router as published_data_router
 from gaiafaac_api.api.v1.routes.review import router as review_router
 from gaiafaac_api.api.v1.routes.temporal import router as temporal_router
@@ -47,6 +48,7 @@ router.include_router(data_api_router)
 router.include_router(commercial_router)
 router.include_router(account_router)
 router.include_router(billing_router)
+router.include_router(one_time_billing_router)
 router.include_router(billing_dashboard_router)
 router.include_router(watchlists_router)
 router.include_router(watch_contracts_router)
