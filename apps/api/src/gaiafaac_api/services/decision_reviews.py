@@ -9,6 +9,33 @@ from gaiafaac_api.database.evidence_room_models import EvidenceRoom, FiscalRecei
 from gaiafaac_api.decision_review_schemas import DecisionReviewState
 
 
+def _latest_receipt(
+    session: Session,
+    organization_id: uuid.UUID,
+    room_id: uuid.UUID,
+) -> FiscalReceipt | None:
+    rows = list(
+        session.scalars(
+            select(FiscalReceipt)
+            .where(
+                FiscalReceipt.organization_id == organization_id,
+                FiscalReceipt.room_id == room_id,
+            )
+            .order_by(FiscalReceipt.created_at.desc())
+        )
+    )
+    if not rows:
+        return None
+
+    predecessor_ids = {
+        row.predecessor_receipt_id
+        for row in rows
+        if row.predecessor_receipt_id is not None
+    }
+    tails = [row for row in rows if row.id not in predecessor_ids]
+    return tails[0] if tails else rows[0]
+
+
 def get_decision_review_state(
     session: Session,
     organization_id: uuid.UUID,
@@ -23,14 +50,7 @@ def get_decision_review_state(
     if room is None:
         return None
 
-    latest = session.scalar(
-        select(FiscalReceipt)
-        .where(
-            FiscalReceipt.organization_id == organization_id,
-            FiscalReceipt.room_id == room_id,
-        )
-        .order_by(FiscalReceipt.created_at.desc(), FiscalReceipt.id.desc())
-    )
+    latest = _latest_receipt(session, organization_id, room_id)
 
     return DecisionReviewState(
         room_id=room.id,
