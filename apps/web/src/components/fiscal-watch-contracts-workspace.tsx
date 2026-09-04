@@ -101,7 +101,8 @@ export function FiscalWatchContractsWorkspace() {
     setRooms(roomRows)
     setContracts(contractRows)
     if (selected) {
-      const current = contractRows.find((item) => item.id === selected.id) ?? null
+      const current =
+        contractRows.find((item) => item.id === selected.id) ?? null
       setSelected(current)
     }
   }
@@ -119,7 +120,11 @@ export function FiscalWatchContractsWorkspace() {
       })
       .catch((caught: unknown) => {
         if (cancelled) return
-        setError(caught instanceof Error ? caught.message : 'Watch Contracts are unavailable.')
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Watch Contracts are unavailable.',
+        )
       })
     return () => {
       cancelled = true
@@ -129,10 +134,18 @@ export function FiscalWatchContractsWorkspace() {
   async function openContract(contract: WatchContract) {
     setSelected(contract)
     try {
-      setMatches(await request<WatchMatch[]>(`/fiscal-watch-contracts/${contract.id}/matches`))
+      setMatches(
+        await request<WatchMatch[]>(
+          `/fiscal-watch-contracts/${contract.id}/matches`,
+        ),
+      )
       setError(null)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load contract matches.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to load contract matches.',
+      )
     }
   }
 
@@ -147,7 +160,8 @@ export function FiscalWatchContractsWorkspace() {
         body: JSON.stringify({
           name: String(form.get('name') ?? '').trim(),
           room_id: String(form.get('room_id') ?? ''),
-          baseline_receipt_id: String(form.get('baseline_receipt_id') ?? '').trim() || null,
+          baseline_receipt_id:
+            String(form.get('baseline_receipt_id') ?? '').trim() || null,
           state_codes: csv(form.get('state_codes')),
           event_types: csv(form.get('event_types')),
           minimum_severity: String(form.get('minimum_severity') ?? 'watch'),
@@ -157,7 +171,11 @@ export function FiscalWatchContractsWorkspace() {
       await refresh()
       await openContract(created)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to create Watch Contract.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to create Watch Contract.',
+      )
     } finally {
       setBusy(false)
     }
@@ -176,7 +194,11 @@ export function FiscalWatchContractsWorkspace() {
       await refresh()
       setError(null)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to evaluate Watch Contract.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to evaluate Watch Contract.',
+      )
     } finally {
       setBusy(false)
     }
@@ -194,7 +216,11 @@ export function FiscalWatchContractsWorkspace() {
       await refresh()
       setError(null)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to update contract status.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to update contract status.',
+      )
     } finally {
       setBusy(false)
     }
@@ -272,7 +298,9 @@ export function FiscalWatchContractsWorkspace() {
         <Card>
           <CardHeader>
             <CardTitle>Active mandates</CardTitle>
-            <CardDescription>{contracts.length} organization contracts</CardDescription>
+            <CardDescription>
+              {contracts.length} organization contracts
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {contracts.length === 0 ? (
@@ -292,7 +320,8 @@ export function FiscalWatchContractsWorkspace() {
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-2 text-xs">
-                    {contract.match_count} matches · {contract.minimum_severity}+
+                    {contract.match_count} matches · {contract.minimum_severity}
+                    +
                   </p>
                 </button>
               ))
@@ -311,9 +340,12 @@ export function FiscalWatchContractsWorkspace() {
         {!selected ? (
           <Card>
             <CardHeader>
-              <CardTitle>Monitoring tied to a decision, not a dashboard.</CardTitle>
+              <CardTitle>
+                Monitoring tied to a decision, not a dashboard.
+              </CardTitle>
               <CardDescription>
-                Select a Watch Contract to evaluate governed changes against its declared mandate.
+                Select a Watch Contract to evaluate governed changes against its
+                declared mandate.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -326,13 +358,18 @@ export function FiscalWatchContractsWorkspace() {
                     <p className="font-mono text-xs tracking-[0.15em] text-emerald-700 uppercase">
                       Fiscal Watch Contract · {selected.status}
                     </p>
-                    <CardTitle className="mt-2 text-2xl">{selected.name}</CardTitle>
+                    <CardTitle className="mt-2 text-2xl">
+                      {selected.name}
+                    </CardTitle>
                     <CardDescription className="mt-2">
                       Linked Decision Room {selected.room_id}
                     </CardDescription>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button disabled={busy || selected.status !== 'active'} onClick={() => void evaluate()}>
+                    <Button
+                      disabled={busy || selected.status !== 'active'}
+                      onClick={() => void evaluate()}
+                    >
                       Evaluate now
                     </Button>
                     <Button
@@ -356,21 +393,29 @@ export function FiscalWatchContractsWorkspace() {
                 <div>
                   <p className="text-muted-foreground text-xs">Jurisdictions</p>
                   <p className="mt-1 text-sm font-medium">
-                    {selected.state_codes.join(', ') || 'All shared watchlist jurisdictions'}
+                    {selected.state_codes.join(', ') ||
+                      'All shared watchlist jurisdictions'}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Event types</p>
                   <p className="mt-1 text-sm font-medium">
-                    {selected.event_types.join(', ') || 'All governed event types'}
+                    {selected.event_types.join(', ') ||
+                      'All governed event types'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Minimum severity</p>
-                  <p className="mt-1 text-sm font-medium capitalize">{selected.minimum_severity}</p>
+                  <p className="text-muted-foreground text-xs">
+                    Minimum severity
+                  </p>
+                  <p className="mt-1 text-sm font-medium capitalize">
+                    {selected.minimum_severity}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Last evaluated</p>
+                  <p className="text-muted-foreground text-xs">
+                    Last evaluated
+                  </p>
                   <p className="mt-1 text-sm font-medium">
                     {selected.last_evaluated_at
                       ? new Date(selected.last_evaluated_at).toLocaleString()
@@ -384,12 +429,16 @@ export function FiscalWatchContractsWorkspace() {
               <CardHeader>
                 <CardTitle>Matched governed changes</CardTitle>
                 <CardDescription>
-                  These are persisted matches to organization alerts generated from published Fiscal Watch signals and immutable Fiscal Events.
+                  These are persisted matches to organization alerts generated
+                  from published Fiscal Watch signals and immutable Fiscal
+                  Events.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {matches.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No governed changes match this contract yet.</p>
+                  <p className="text-muted-foreground text-sm">
+                    No governed changes match this contract yet.
+                  </p>
                 ) : (
                   <div className="divide-border border-border divide-y rounded-xl border">
                     {matches.map((match) => (
@@ -397,10 +446,14 @@ export function FiscalWatchContractsWorkspace() {
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
                             <p className="font-semibold">{match.headline}</p>
-                            <p className="text-muted-foreground mt-1 text-sm">{match.detail}</p>
+                            <p className="text-muted-foreground mt-1 text-sm">
+                              {match.detail}
+                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-mono text-xs uppercase">{match.state_code} · {match.severity}</p>
+                            <p className="font-mono text-xs uppercase">
+                              {match.state_code} · {match.severity}
+                            </p>
                             <p className="text-muted-foreground mt-1 text-xs">
                               {new Date(match.occurred_at).toLocaleString()}
                             </p>
