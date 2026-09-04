@@ -16,8 +16,15 @@ WatchContractSeverity = Literal[
     "critical",
 ]
 WatchContractReviewStatus = Literal["open", "acknowledged", "resolved"]
-WatchContractDeliveryChannel = Literal["in_app"]
-WatchContractDeliveryStatus = Literal["delivered", "failed"]
+WatchContractDeliveryChannel = Literal["in_app", "email", "webhook"]
+WatchContractDeliveryStatus = Literal[
+    "pending",
+    "delivered",
+    "retrying",
+    "dead_letter",
+    "deferred",
+    "failed",
+]
 
 
 class FiscalWatchContractCreateRequest(BaseModel):
@@ -81,17 +88,39 @@ class FiscalWatchContractMatchResponse(BaseModel):
     matched_at: datetime
 
 
+class FiscalWatchContractDeliveryAttemptResponse(BaseModel):
+    id: uuid.UUID
+    delivery_id: uuid.UUID
+    attempt_number: int
+    attempted_at: datetime
+    response_status: int | None
+    response_body_excerpt: str | None
+    error: str | None
+
+
 class FiscalWatchContractDeliveryResponse(BaseModel):
     id: uuid.UUID
     review_id: uuid.UUID
     match_id: uuid.UUID
     contract_id: uuid.UUID
     recipient_user_id: uuid.UUID | None
+    endpoint_id: uuid.UUID | None
     channel: WatchContractDeliveryChannel
+    destination_key: str
+    recipient_address: str | None
     status: WatchContractDeliveryStatus
+    attempt_count: int
+    next_attempt_at: datetime | None
+    last_attempt_at: datetime | None
+    response_status: int | None
+    response_body_excerpt: str | None
+    last_error: str | None
+    payload_sha256: str | None
     details: dict
     delivered_at: datetime | None
     created_at: datetime
+    updated_at: datetime
+    attempts: list[FiscalWatchContractDeliveryAttemptResponse] = Field(default_factory=list)
 
 
 class FiscalWatchContractReviewResponse(BaseModel):
@@ -132,6 +161,16 @@ class FiscalWatchContractReviewResolveRequest(BaseModel):
 class FiscalWatchContractEscalationResponse(BaseModel):
     escalated_count: int
     reviews: list[FiscalWatchContractReviewResponse]
+
+
+class FiscalWatchDeliveryRunResponse(BaseModel):
+    reviews_checked: int
+    deliveries_created: int
+    delivered: int
+    retrying: int
+    dead_letter: int
+    deferred: int
+    failed: int
 
 
 class FiscalWatchContractEvaluationResponse(BaseModel):

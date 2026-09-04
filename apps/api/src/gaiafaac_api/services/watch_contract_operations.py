@@ -11,10 +11,12 @@ from gaiafaac_api.database.models import State, User
 from gaiafaac_api.database.watch_contract_models import (
     FiscalWatchContract,
     FiscalWatchContractDelivery,
+    FiscalWatchContractDeliveryAttempt,
     FiscalWatchContractMatch,
     FiscalWatchContractReview,
 )
 from gaiafaac_api.watch_contract_schemas import (
+    FiscalWatchContractDeliveryAttemptResponse,
     FiscalWatchContractDeliveryResponse,
     FiscalWatchContractReviewResponse,
 )
@@ -24,18 +26,50 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def _delivery_response(row: FiscalWatchContractDelivery) -> FiscalWatchContractDeliveryResponse:
+def _delivery_response(
+    session: Session, row: FiscalWatchContractDelivery
+) -> FiscalWatchContractDeliveryResponse:
+    attempts = list(
+        session.scalars(
+            select(FiscalWatchContractDeliveryAttempt)
+            .where(FiscalWatchContractDeliveryAttempt.delivery_id == row.id)
+            .order_by(FiscalWatchContractDeliveryAttempt.attempt_number)
+        )
+    )
     return FiscalWatchContractDeliveryResponse(
         id=row.id,
         review_id=row.review_id,
         match_id=row.match_id,
         contract_id=row.contract_id,
         recipient_user_id=row.recipient_user_id,
+        endpoint_id=row.endpoint_id,
         channel=row.channel,
+        destination_key=row.destination_key,
+        recipient_address=row.recipient_address,
         status=row.status,
+        attempt_count=row.attempt_count,
+        next_attempt_at=row.next_attempt_at,
+        last_attempt_at=row.last_attempt_at,
+        response_status=row.response_status,
+        response_body_excerpt=row.response_body_excerpt,
+        last_error=row.last_error,
+        payload_sha256=row.payload_sha256,
         details=dict(row.details or {}),
         delivered_at=row.delivered_at,
         created_at=row.created_at,
+        updated_at=row.updated_at,
+        attempts=[
+            FiscalWatchContractDeliveryAttemptResponse(
+                id=attempt.id,
+                delivery_id=attempt.delivery_id,
+                attempt_number=attempt.attempt_number,
+                attempted_at=attempt.attempted_at,
+                response_status=attempt.response_status,
+                response_body_excerpt=attempt.response_body_excerpt,
+                error=attempt.error,
+            )
+            for attempt in attempts
+        ],
     )
 
 
@@ -112,7 +146,7 @@ def _review_response(
         headline=str(payload.get("headline") or alert.event_type.replace("_", " ")),
         detail=str(payload.get("detail") or "Recorded governed fiscal event."),
         occurred_at=alert.occurred_at,
-        deliveries=[_delivery_response(item) for item in deliveries],
+        deliveries=[_delivery_response(session, item) for item in deliveries],
     )
 
 
@@ -162,6 +196,7 @@ def ensure_operational_reviews(
                 organization_id=contract.organization_id,
                 recipient_user_id=assignee,
                 channel="in_app",
+                destination_key="organization_watch_inbox",
                 status="delivered",
                 details={
                     "destination": "organization_watch_inbox",

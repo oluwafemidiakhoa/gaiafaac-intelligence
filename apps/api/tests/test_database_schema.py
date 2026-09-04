@@ -37,6 +37,7 @@ EXPECTED_TABLES = {
     "fiscal_receipts",
     "fiscal_states",
     "fiscal_watch_contract_deliveries",
+    "fiscal_watch_contract_delivery_attempts",
     "fiscal_watch_contract_matches",
     "fiscal_watch_contract_reviews",
     "fiscal_watch_contracts",

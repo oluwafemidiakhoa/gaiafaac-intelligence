@@ -6,8 +6,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
 
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.services.account import current_plan, membership_for
+from gaiafaac_api.services.watch_contract_delivery import run_watch_delivery
 from gaiafaac_api.services.watch_contract_operations import (
     acknowledge_operational_review,
     assign_operational_review,
@@ -32,6 +34,7 @@ from gaiafaac_api.watch_contract_schemas import (
     FiscalWatchContractReviewResolveRequest,
     FiscalWatchContractReviewResponse,
     FiscalWatchContractStatusUpdate,
+    FiscalWatchDeliveryRunResponse,
 )
 
 router = APIRouter(prefix="/fiscal-watch-contracts", tags=["fiscal watch contracts"])
@@ -243,3 +246,17 @@ def escalate_watch_reviews(
         escalated_count=len(reviews),
         reviews=reviews,
     )
+
+
+@router.post("/deliveries/run", response_model=FiscalWatchDeliveryRunResponse)
+def run_watch_deliveries(
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> FiscalWatchDeliveryRunResponse:
+    organization_id = _require_watch_contract_admin(session, user)
+    summary = run_watch_delivery(
+        session,
+        get_settings(),
+        organization_id=organization_id,
+    )
+    return FiscalWatchDeliveryRunResponse(**summary.__dict__)

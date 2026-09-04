@@ -55,7 +55,7 @@ test.describe('Gaia Control Plane', () => {
     })
   }
 
-  test('Watch Contracts expose the operational monitoring surface', async ({
+  test('Watch Contracts expose the operational monitoring and outbound delivery surface', async ({
     page,
   }) => {
     const response = await page.goto('/watch-contracts', {
@@ -68,6 +68,11 @@ test.describe('Gaia Control Plane', () => {
     ).toBeVisible()
     await expect(
       page.getByText('Decision infrastructure · continuous monitoring'),
+    ).toBeVisible()
+    await expect(
+      page.getByText(
+        /auditable in-app, opted-in email and institutional webhook delivery/i,
+      ),
     ).toBeVisible()
   })
 
