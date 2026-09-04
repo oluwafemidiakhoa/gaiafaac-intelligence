@@ -12,6 +12,7 @@ from gaiafaac_api.api.v1.routes.evidence_provenance import router as evidence_pr
 from gaiafaac_api.api.v1.routes.evidence_rooms import router as evidence_rooms_router
 from gaiafaac_api.api.v1.routes.fiscal_claims import router as fiscal_claims_router
 from gaiafaac_api.api.v1.routes.fiscal_ledger import router as fiscal_ledger_router
+from gaiafaac_api.api.v1.routes.fiscal_receipts import router as fiscal_receipts_router
 from gaiafaac_api.api.v1.routes.health import router as health_router
 from gaiafaac_api.api.v1.routes.institutional_audit import router as institutional_audit_router
 from gaiafaac_api.api.v1.routes.institutional_decisions import (
@@ -48,6 +49,7 @@ router.include_router(billing_dashboard_router)
 router.include_router(watchlists_router)
 router.include_router(evidence_provenance_router)
 router.include_router(evidence_rooms_router)
+router.include_router(fiscal_receipts_router)
 router.include_router(institutional_audit_router)
 router.include_router(institutional_decisions_router)
 router.include_router(webhook_router)
