@@ -225,9 +225,21 @@ def evaluate_contract(
         )
         existing.add(alert.id)
 
+    evaluated_at = datetime.now(UTC)
     if pending:
         session.add_all(pending)
-    contract.last_evaluated_at = datetime.now(UTC)
+        session.flush()
+        room = session.scalar(
+            select(EvidenceRoom).where(
+                EvidenceRoom.id == contract.room_id,
+                EvidenceRoom.organization_id == organization_id,
+            )
+        )
+        if room is not None:
+            room.review_required = True
+            room.review_trigger_match_id = pending[-1].id
+            room.review_required_at = evaluated_at
+    contract.last_evaluated_at = evaluated_at
     session.commit()
 
     matches = list_contract_matches(session, organization_id, contract_id)
@@ -238,7 +250,8 @@ def evaluate_contract(
         matches=matches,
         note=(
             "Matches are deterministic references to governed organization alerts. "
-            "They do not constitute a credit rating, solvency assessment, or prediction."
+            "New matches mark the linked Decision Room for review. They do not constitute "
+            "a credit rating, solvency assessment, or prediction."
         ),
     )
 
