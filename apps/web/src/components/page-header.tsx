@@ -8,7 +8,7 @@ export function PageHeader({
   description: string
 }) {
   return (
-    <header className="max-w-4xl">
+    <div className="max-w-4xl">
       <div className="border-primary/15 bg-primary/[0.06] inline-flex items-center gap-2 rounded-full border px-3 py-1.5">
         <span className="bg-primary size-1.5 rounded-full shadow-[0_0_10px_color-mix(in_oklab,var(--primary)_65%,transparent)]" />
         <p className="gaia-kicker">{eyebrow}</p>
@@ -17,6 +17,6 @@ export function PageHeader({
       <p className="text-muted-foreground mt-6 max-w-3xl text-lg leading-8 text-pretty sm:text-xl">
         {description}
       </p>
-    </header>
+    </div>
   )
 }
