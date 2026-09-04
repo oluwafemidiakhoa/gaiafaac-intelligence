@@ -131,7 +131,9 @@ def set_contract_status(
     return _contract_response(session, row)
 
 
-def _matches_contract(contract: FiscalWatchContract, alert: OrganizationAlert, state: State) -> bool:
+def _matches_contract(
+    contract: FiscalWatchContract, alert: OrganizationAlert, state: State
+) -> bool:
     state_codes = {str(item).upper() for item in (contract.state_codes or [])}
     if state_codes and state.code.upper() not in state_codes:
         return False
@@ -248,7 +250,10 @@ def list_contract_matches(
 ) -> list[FiscalWatchContractMatchResponse]:
     rows = session.execute(
         select(FiscalWatchContractMatch, OrganizationAlert, State)
-        .join(OrganizationAlert, OrganizationAlert.id == FiscalWatchContractMatch.organization_alert_id)
+        .join(
+            OrganizationAlert,
+            OrganizationAlert.id == FiscalWatchContractMatch.organization_alert_id,
+        )
         .join(State, State.id == OrganizationAlert.state_id)
         .where(
             FiscalWatchContractMatch.organization_id == organization_id,
