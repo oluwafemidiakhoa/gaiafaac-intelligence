@@ -199,7 +199,8 @@ def extract_oagf_table_iv_excel(path: Path) -> ExtractedLgaTable:
                     seen.add(key)
 
                     originals = {
-                        "net_statutory_allocation": _clean(_value(row, panel.net_statutory)) or None,
+                        "net_statutory_allocation": _clean(_value(row, panel.net_statutory))
+                        or None,
                         "deduction_amount": _clean(_value(row, panel.deduction)) or None,
                         "ecology_share": _clean(_value(row, panel.ecology_share)) or None,
                         "ecology_transfer": _clean(_value(row, panel.ecology_transfer)) or None,
