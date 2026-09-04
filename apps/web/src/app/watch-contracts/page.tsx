@@ -33,9 +33,9 @@ export default async function FiscalWatchContractsPage() {
               Monitoring tied to a decision, not a dashboard.
             </h2>
             <p className="text-muted-foreground mt-3 max-w-3xl text-sm leading-6">
-              Watch Contracts are organization-scoped. Sign in before Gaia
-              loads private Decision Rooms, monitoring mandates, operational
-              reviews or outbound-delivery history.
+              Watch Contracts are organization-scoped. Sign in before Gaia loads
+              private Decision Rooms, monitoring mandates, operational reviews
+              or outbound-delivery history.
             </p>
             <Link
               href="/account/login"
