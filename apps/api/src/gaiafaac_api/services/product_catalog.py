@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from enum import StrEnum
 
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.enums import PlanCode
 from gaiafaac_api.entitlements import PLAN_ENTITLEMENTS
 
@@ -110,11 +111,26 @@ PRODUCT_CATALOG: tuple[CommercialProduct, ...] = (
 )
 
 
+def _configured_product(product: CommercialProduct) -> CommercialProduct:
+    if product.billing_mode != ProductBillingMode.ONE_TIME:
+        return product
+    settings = get_settings()
+    prices = {
+        "decision_pack": settings.paystack_price_decision_pack,
+        "multi_state_comparison_pack": settings.paystack_price_multi_state_comparison_pack,
+        "historical_evidence_export": settings.paystack_price_historical_evidence_export,
+        "due_diligence_snapshot": settings.paystack_price_due_diligence_snapshot,
+    }
+    configured_price = prices.get(product.code, 0)
+    return replace(product, price_naira=configured_price or None)
+
+
 def product_by_code(code: str) -> CommercialProduct | None:
     normalized = code.strip().lower()
-    return next((product for product in PRODUCT_CATALOG if product.code == normalized), None)
+    product = next((item for item in PRODUCT_CATALOG if item.code == normalized), None)
+    return _configured_product(product) if product is not None else None
 
 
 def public_product_catalog() -> list[dict]:
-    """Return catalog configuration without inventing unapproved one-time/enterprise prices."""
-    return [product.public_dict() for product in PRODUCT_CATALOG]
+    """Return only approved/configured prices; zero-valued one-time prices stay unavailable."""
+    return [_configured_product(product).public_dict() for product in PRODUCT_CATALOG]
