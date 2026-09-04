@@ -13,6 +13,10 @@ branch_labels = None
 depends_on = None
 
 
+def _has_table(name: str) -> bool:
+    return sa.inspect(op.get_bind()).has_table(name)
+
+
 def upgrade() -> None:
     with op.batch_alter_table("pilot_leads") as batch:
         batch.add_column(sa.Column("requested_evidence_domains", sa.Text(), nullable=True))
@@ -87,31 +91,38 @@ def upgrade() -> None:
         ["subject_type", "subject_id"],
     )
 
-    with op.batch_alter_table("payment_records") as batch:
-        batch.add_column(sa.Column("canonical_subscription_id", sa.Uuid(), nullable=True))
-        batch.create_foreign_key(
-            "fk_payment_records_canonical_subscription",
-            "subscriptions",
+    # payment_records belongs to the older billing generation and is not present in
+    # every clean canonical migration history. Alter it only where that historical
+    # table already exists; current entitlements remain sourced from subscriptions.
+    if _has_table("payment_records"):
+        with op.batch_alter_table("payment_records") as batch:
+            batch.add_column(sa.Column("canonical_subscription_id", sa.Uuid(), nullable=True))
+            batch.create_foreign_key(
+                "fk_payment_records_canonical_subscription",
+                "subscriptions",
+                ["canonical_subscription_id"],
+                ["id"],
+                ondelete="SET NULL",
+            )
+        op.create_index(
+            "ix_payment_records_canonical_subscription",
+            "payment_records",
             ["canonical_subscription_id"],
-            ["id"],
-            ondelete="SET NULL",
         )
-    op.create_index(
-        "ix_payment_records_canonical_subscription",
-        "payment_records",
-        ["canonical_subscription_id"],
-    )
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_payment_records_canonical_subscription", table_name="payment_records"
-    )
-    with op.batch_alter_table("payment_records") as batch:
-        batch.drop_constraint(
-            "fk_payment_records_canonical_subscription", type_="foreignkey"
-        )
-        batch.drop_column("canonical_subscription_id")
+    if _has_table("payment_records"):
+        columns = {column["name"] for column in sa.inspect(op.get_bind()).get_columns("payment_records")}
+        if "canonical_subscription_id" in columns:
+            op.drop_index(
+                "ix_payment_records_canonical_subscription", table_name="payment_records"
+            )
+            with op.batch_alter_table("payment_records") as batch:
+                batch.drop_constraint(
+                    "fk_payment_records_canonical_subscription", type_="foreignkey"
+                )
+                batch.drop_column("canonical_subscription_id")
 
     op.drop_index("ix_commercial_events_subject", table_name="commercial_events")
     op.drop_index("ix_commercial_events_org_occurred", table_name="commercial_events")
