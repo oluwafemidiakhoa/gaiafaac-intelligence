@@ -137,16 +137,16 @@ def test_changed_evidence_creates_predecessor_receipt_lineage(session):
         assert second.status_code == 201
         assert second.json()["id"] != first.json()["id"]
         assert second.json()["predecessor_receipt_id"] == first.json()["id"]
-        assert second.json()["manifest"]["lineage"]["predecessor_receipt_sha256"] == first.json()[
-            "receipt_sha256"
-        ]
-        assert second.json()["manifest"]["content_sha256"] != first.json()["manifest"][
-            "content_sha256"
-        ]
-
-        verified = client.get(
-            f"/api/v1/fiscal-receipts/{second.json()['id']}/verify"
+        assert (
+            second.json()["manifest"]["lineage"]["predecessor_receipt_sha256"]
+            == first.json()["receipt_sha256"]
         )
+        assert (
+            second.json()["manifest"]["content_sha256"]
+            != first.json()["manifest"]["content_sha256"]
+        )
+
+        verified = client.get(f"/api/v1/fiscal-receipts/{second.json()['id']}/verify")
         assert verified.status_code == 200
         assert verified.json()["predecessor_receipt_id"] == first.json()["id"]
         assert verified.json()["predecessor_receipt_sha256"] == first.json()["receipt_sha256"]
