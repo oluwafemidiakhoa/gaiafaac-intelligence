@@ -14,9 +14,9 @@ from sqlalchemy import (
     Text,
     Uuid,
     event,
+    func,
     select,
     update,
-    func,
 )
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Mapped, Mapper, mapped_column
