@@ -16,125 +16,110 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "evidence_rooms",
-        sa.Column("review_required", sa.Boolean(), nullable=False, server_default=sa.false()),
-    )
-    op.add_column(
-        "evidence_rooms",
-        sa.Column("review_trigger_match_id", sa.Uuid(), nullable=True),
-    )
-    op.add_column(
-        "evidence_rooms",
-        sa.Column("review_required_at", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.add_column(
-        "evidence_rooms",
-        sa.Column("last_reviewed_at", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.add_column(
-        "evidence_rooms",
-        sa.Column("reviewed_by_user_id", sa.Uuid(), nullable=True),
-    )
-    op.create_foreign_key(
-        "fk_evidence_rooms_review_trigger_match",
-        "evidence_rooms",
-        "fiscal_watch_contract_matches",
-        ["review_trigger_match_id"],
-        ["id"],
-        ondelete="SET NULL",
-    )
-    op.create_foreign_key(
-        "fk_evidence_rooms_reviewed_by_user",
-        "evidence_rooms",
-        "users",
-        ["reviewed_by_user_id"],
-        ["id"],
-        ondelete="SET NULL",
-    )
-    op.create_index(
-        "ix_evidence_rooms_review_trigger_match_id",
-        "evidence_rooms",
-        ["review_trigger_match_id"],
-    )
-    op.create_index(
-        "ix_evidence_rooms_reviewed_by_user_id",
-        "evidence_rooms",
-        ["reviewed_by_user_id"],
-    )
-    op.create_index(
-        "ix_evidence_rooms_review_required",
-        "evidence_rooms",
-        ["organization_id", "review_required"],
-    )
+    with op.batch_alter_table("evidence_rooms") as batch_op:
+        batch_op.add_column(
+            sa.Column(
+                "review_required",
+                sa.Boolean(),
+                nullable=False,
+                server_default=sa.false(),
+            )
+        )
+        batch_op.add_column(
+            sa.Column("review_trigger_match_id", sa.Uuid(), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("review_required_at", sa.DateTime(timezone=True), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("last_reviewed_at", sa.DateTime(timezone=True), nullable=True)
+        )
+        batch_op.add_column(sa.Column("reviewed_by_user_id", sa.Uuid(), nullable=True))
+        batch_op.create_foreign_key(
+            "fk_evidence_rooms_review_trigger_match",
+            "fiscal_watch_contract_matches",
+            ["review_trigger_match_id"],
+            ["id"],
+            ondelete="SET NULL",
+        )
+        batch_op.create_foreign_key(
+            "fk_evidence_rooms_reviewed_by_user",
+            "users",
+            ["reviewed_by_user_id"],
+            ["id"],
+            ondelete="SET NULL",
+        )
+        batch_op.create_index(
+            "ix_evidence_rooms_review_trigger_match_id",
+            ["review_trigger_match_id"],
+        )
+        batch_op.create_index(
+            "ix_evidence_rooms_reviewed_by_user_id",
+            ["reviewed_by_user_id"],
+        )
+        batch_op.create_index(
+            "ix_evidence_rooms_review_required",
+            ["organization_id", "review_required"],
+        )
 
-    op.add_column(
-        "fiscal_receipts",
-        sa.Column("predecessor_receipt_id", sa.Uuid(), nullable=True),
-    )
-    op.add_column(
-        "fiscal_receipts",
-        sa.Column("triggering_match_id", sa.Uuid(), nullable=True),
-    )
-    op.create_foreign_key(
-        "fk_fiscal_receipts_predecessor",
-        "fiscal_receipts",
-        "fiscal_receipts",
-        ["predecessor_receipt_id"],
-        ["id"],
-        ondelete="RESTRICT",
-    )
-    op.create_foreign_key(
-        "fk_fiscal_receipts_trigger_match",
-        "fiscal_receipts",
-        "fiscal_watch_contract_matches",
-        ["triggering_match_id"],
-        ["id"],
-        ondelete="RESTRICT",
-    )
-    op.create_index(
-        "ix_fiscal_receipts_predecessor",
-        "fiscal_receipts",
-        ["predecessor_receipt_id"],
-    )
-    op.create_index(
-        "ix_fiscal_receipts_trigger_match",
-        "fiscal_receipts",
-        ["triggering_match_id"],
-    )
+    with op.batch_alter_table("fiscal_receipts") as batch_op:
+        batch_op.add_column(
+            sa.Column("predecessor_receipt_id", sa.Uuid(), nullable=True)
+        )
+        batch_op.add_column(sa.Column("triggering_match_id", sa.Uuid(), nullable=True))
+        batch_op.create_foreign_key(
+            "fk_fiscal_receipts_predecessor",
+            "fiscal_receipts",
+            ["predecessor_receipt_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
+        batch_op.create_foreign_key(
+            "fk_fiscal_receipts_trigger_match",
+            "fiscal_watch_contract_matches",
+            ["triggering_match_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
+        batch_op.create_index(
+            "ix_fiscal_receipts_predecessor",
+            ["predecessor_receipt_id"],
+        )
+        batch_op.create_index(
+            "ix_fiscal_receipts_trigger_match",
+            ["triggering_match_id"],
+        )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_fiscal_receipts_trigger_match", table_name="fiscal_receipts")
-    op.drop_index("ix_fiscal_receipts_predecessor", table_name="fiscal_receipts")
-    op.drop_constraint(
-        "fk_fiscal_receipts_trigger_match",
-        "fiscal_receipts",
-        type_="foreignkey",
-    )
-    op.drop_constraint(
-        "fk_fiscal_receipts_predecessor",
-        "fiscal_receipts",
-        type_="foreignkey",
-    )
-    op.drop_column("fiscal_receipts", "triggering_match_id")
-    op.drop_column("fiscal_receipts", "predecessor_receipt_id")
+    with op.batch_alter_table("fiscal_receipts") as batch_op:
+        batch_op.drop_index("ix_fiscal_receipts_trigger_match")
+        batch_op.drop_index("ix_fiscal_receipts_predecessor")
+        batch_op.drop_constraint(
+            "fk_fiscal_receipts_trigger_match",
+            type_="foreignkey",
+        )
+        batch_op.drop_constraint(
+            "fk_fiscal_receipts_predecessor",
+            type_="foreignkey",
+        )
+        batch_op.drop_column("triggering_match_id")
+        batch_op.drop_column("predecessor_receipt_id")
 
-    op.drop_index("ix_evidence_rooms_review_required", table_name="evidence_rooms")
-    op.drop_index("ix_evidence_rooms_reviewed_by_user_id", table_name="evidence_rooms")
-    op.drop_index("ix_evidence_rooms_review_trigger_match_id", table_name="evidence_rooms")
-    op.drop_constraint(
-        "fk_evidence_rooms_reviewed_by_user",
-        "evidence_rooms",
-        type_="foreignkey",
-    )
-    op.drop_constraint(
-        "fk_evidence_rooms_review_trigger_match",
-        "evidence_rooms",
-        type_="foreignkey",
-    )
-    op.drop_column("evidence_rooms", "reviewed_by_user_id")
-    op.drop_column("evidence_rooms", "last_reviewed_at")
-    op.drop_column("evidence_rooms", "review_required_at")
-    op.drop_column("evidence_rooms", "review_trigger_match_id")
-    op.drop_column("evidence_rooms", "review_required")
+    with op.batch_alter_table("evidence_rooms") as batch_op:
+        batch_op.drop_index("ix_evidence_rooms_review_required")
+        batch_op.drop_index("ix_evidence_rooms_reviewed_by_user_id")
+        batch_op.drop_index("ix_evidence_rooms_review_trigger_match_id")
+        batch_op.drop_constraint(
+            "fk_evidence_rooms_reviewed_by_user",
+            type_="foreignkey",
+        )
+        batch_op.drop_constraint(
+            "fk_evidence_rooms_review_trigger_match",
+            type_="foreignkey",
+        )
+        batch_op.drop_column("reviewed_by_user_id")
+        batch_op.drop_column("last_reviewed_at")
+        batch_op.drop_column("review_required_at")
+        batch_op.drop_column("review_trigger_match_id")
+        batch_op.drop_column("review_required")
