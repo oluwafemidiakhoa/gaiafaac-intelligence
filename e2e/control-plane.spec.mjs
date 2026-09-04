@@ -207,7 +207,10 @@ test.describe('Gaia four-width release gate', () => {
 
       for (const path of releaseRoutes) {
         const response = await page.goto(path, { waitUntil: 'networkidle' })
-        expect(response, `${path} should return an HTTP response`).not.toBeNull()
+        expect(
+          response,
+          `${path} should return an HTTP response`,
+        ).not.toBeNull()
         expect(response.status(), `${path} should not be 5xx`).toBeLessThan(500)
         await expect(page.locator('body')).toBeVisible()
 

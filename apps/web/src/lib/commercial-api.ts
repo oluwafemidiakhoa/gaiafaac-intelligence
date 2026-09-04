@@ -91,10 +91,13 @@ export async function getCommercialAnalytics(): Promise<{
   error: string | null
 }> {
   try {
-    const response = await fetch(`${apiBaseUrl()}/api/v1/commercial/analytics`, {
-      cache: 'no-store',
-      headers: adminHeaders(),
-    })
+    const response = await fetch(
+      `${apiBaseUrl()}/api/v1/commercial/analytics`,
+      {
+        cache: 'no-store',
+        headers: adminHeaders(),
+      },
+    )
     if (!response.ok) {
       return { data: null, error: 'Commercial analytics are unavailable.' }
     }

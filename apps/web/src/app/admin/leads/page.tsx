@@ -69,9 +69,7 @@ export default async function CommercialLeadsPage() {
             </p>
             <p className="text-muted-foreground mt-2 text-xs">
               {Object.entries(analytics.leads_by_status)
-                .map(
-                  ([stage, count]) => `${displayStage(stage)} ${count}`,
-                )
+                .map(([stage, count]) => `${displayStage(stage)} ${count}`)
                 .join(' · ') || 'No lead stages yet'}
             </p>
           </div>
@@ -114,7 +112,7 @@ export default async function CommercialLeadsPage() {
               No device IDs, fingerprinting or third-party analytics.
             </p>
           </div>
-          <p className="text-muted-foreground sm:col-span-2 xl:col-span-4 text-xs">
+          <p className="text-muted-foreground text-xs sm:col-span-2 xl:col-span-4">
             {analytics.statement}
           </p>
         </section>

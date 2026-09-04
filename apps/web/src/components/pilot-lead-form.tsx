@@ -146,11 +146,7 @@ export function PilotLeadForm() {
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Buying / evaluation timeline
-          <select
-            className={fieldClass}
-            name="buying_timeline"
-            defaultValue=""
-          >
+          <select className={fieldClass} name="buying_timeline" defaultValue="">
             <option value="">Not specified</option>
             <option value="immediate">Immediate / active decision</option>
             <option value="30_days">Within 30 days</option>
