@@ -177,7 +177,7 @@ def test_one_time_purchase_is_persisted_and_verified_once(session, monkeypatch):
         assert checkout.status_code == 200
         body = checkout.json()
         assert body["url"] == "https://checkout.example/order"
-        assert body["purchase"]["amount_naira"] == "75000"
+        assert body["purchase"]["amount_naira"] == "75000.00"
         purchase_id = body["purchase"]["id"]
         reference = body["purchase"]["provider_reference"]
 
