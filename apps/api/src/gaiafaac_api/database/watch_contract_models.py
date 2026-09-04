@@ -275,9 +275,57 @@ class FiscalWatchContractDeliveryAttempt(Base):
     )
 
 
-def _immutable_attempt(_mapper: Mapper[Any], _connection: Any, _target: Any) -> None:
-    raise ValueError("Watch delivery attempt records are immutable.")
+class FiscalWatchContractDeliveryRecovery(Base):
+    """Append-only operator audit record for a dead-letter delivery recovery cycle."""
+
+    __tablename__ = "fiscal_watch_contract_delivery_recoveries"
+    __table_args__ = (
+        CheckConstraint(
+            "previous_status IN ('dead_letter', 'failed')",
+            name="ck_fiscal_watch_contract_delivery_recovery_previous_status",
+        ),
+        CheckConstraint(
+            "previous_attempt_count >= 0",
+            name="ck_fiscal_watch_contract_delivery_recovery_attempt_count",
+        ),
+        Index(
+            "ix_fiscal_watch_contract_delivery_recoveries_delivery_requested",
+            "delivery_id",
+            "requested_at",
+        ),
+        Index(
+            "ix_fiscal_watch_contract_delivery_recoveries_org_requested",
+            "organization_id",
+            "requested_at",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    delivery_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fiscal_watch_contract_deliveries.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    requested_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    previous_status: Mapped[str] = mapped_column(String(24), nullable=False)
+    previous_attempt_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    previous_error: Mapped[str | None] = mapped_column(String(500))
+    reason: Mapped[str] = mapped_column(String(1000), nullable=False)
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
 
-event.listen(FiscalWatchContractDeliveryAttempt, "before_update", _immutable_attempt)
-event.listen(FiscalWatchContractDeliveryAttempt, "before_delete", _immutable_attempt)
+def _immutable_delivery_audit(_mapper: Mapper[Any], _connection: Any, _target: Any) -> None:
+    raise ValueError("Watch delivery audit records are immutable.")
+
+
+event.listen(FiscalWatchContractDeliveryAttempt, "before_update", _immutable_delivery_audit)
+event.listen(FiscalWatchContractDeliveryAttempt, "before_delete", _immutable_delivery_audit)
+event.listen(FiscalWatchContractDeliveryRecovery, "before_update", _immutable_delivery_audit)
+event.listen(FiscalWatchContractDeliveryRecovery, "before_delete", _immutable_delivery_audit)
