@@ -132,12 +132,26 @@ class PilotLeadUpdate(BaseModel):
 
 class CommercialAnalytics(BaseModel):
     generated_at: datetime
+    signups_total: int
+    active_users_total: int
     leads_total: int
     leads_by_status: dict[str, int]
     leads_by_plan: dict[str, int]
+    won_lead_conversion_rate_pct: float | None
     active_subscriptions_total: int
     active_subscriptions_by_plan: dict[str, int]
+    configured_mrr_naira: str
     successful_payment_count: int
     successful_payment_revenue_naira: str
+    failed_payment_count: int
+    expired_or_canceled_subscriptions: int
+    one_time_purchases: int | None
+    one_time_purchase_note: str
+    decision_rooms_total: int
+    fiscal_receipts_total: int
+    watchlists_total: int
+    watch_contracts_total: int
+    api_requests_total: int
+    exports_total: int
     events_last_30_days: dict[str, int]
     statement: str
