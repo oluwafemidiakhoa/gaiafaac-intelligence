@@ -114,7 +114,9 @@ class OneTimePurchase(Base):
 
     __tablename__ = "one_time_purchases"
     __table_args__ = (
-        UniqueConstraint("provider", "provider_reference", name="uq_one_time_purchase_provider_reference"),
+        UniqueConstraint(
+            "provider", "provider_reference", name="uq_one_time_purchase_provider_reference"
+        ),
         Index("ix_one_time_purchases_org_created", "organization_id", "created_at"),
         Index("ix_one_time_purchases_status_created", "status", "created_at"),
         Index("ix_one_time_purchases_product_status", "product_code", "status"),
