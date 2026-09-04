@@ -55,6 +55,7 @@ EXPECTED_TABLES = {
     "oagf_discovery_records",
     "oagf_revision_cases",
     "oagf_sync_runs",
+    "one_time_purchases",
     "organization_alert_receipts",
     "organization_alerts",
     "organization_invites",
@@ -100,6 +101,11 @@ def test_money_columns_are_fixed_precision() -> None:
 
     component = Base.metadata.tables["state_allocation_components"]
     assert {"gross_amount", "deduction_amount", "net_amount"} <= set(component.c.keys())
+
+    purchase = Base.metadata.tables["one_time_purchases"]
+    purchase_amount_type = purchase.c["amount_naira"].type
+    assert isinstance(purchase_amount_type, Numeric)
+    assert (purchase_amount_type.precision, purchase_amount_type.scale) == (18, 2)
 
 
 def test_database_rejects_published_demo_period(session: Session) -> None:
