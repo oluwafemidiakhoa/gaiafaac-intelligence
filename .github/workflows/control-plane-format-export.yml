@@ -1,27 +1,29 @@
-name: Control Plane format export
+name: Control Plane canonical formatter
 
 on:
   push:
     branches: [feat/gaia-control-plane-v2]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  format-export:
+  format-and-commit:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: feat/gaia-control-plane-v2
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Format current CI blockers
+      - name: Apply canonical formatting
         run: |
           npx prettier --write \
-            'apps/web/src/app/jurisdictions/[code]/local-governments/page.tsx' \
             'apps/web/src/app/verify/[receiptId]/page.tsx' \
             apps/web/src/components/evidence-rooms-workspace.tsx \
             apps/web/src/lib/fiscal-receipt-api.ts \
@@ -29,20 +31,19 @@ jobs:
             e2e/control-plane.spec.mjs
       - name: Verify repository formatting
         run: npm run format
-      - name: Bundle canonical files
+      - name: Commit canonical formatting
         run: |
-          mkdir -p /tmp/control-plane-format
-          cp --parents \
-            'apps/web/src/app/jurisdictions/[code]/local-governments/page.tsx' \
+          if git diff --quiet; then
+            echo 'No formatting changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
             'apps/web/src/app/verify/[receiptId]/page.tsx' \
             apps/web/src/components/evidence-rooms-workspace.tsx \
             apps/web/src/lib/fiscal-receipt-api.ts \
             docs/COMMERCIAL_PRODUCT_AUDIT.md \
-            e2e/control-plane.spec.mjs \
-            /tmp/control-plane-format/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: control-plane-canonical-format
-          path: /tmp/control-plane-format
-          if-no-files-found: error
-          retention-days: 1
+            e2e/control-plane.spec.mjs
+          git commit -m 'style(web): finish canonical Control Plane formatting'
+          git push origin HEAD:feat/gaia-control-plane-v2
