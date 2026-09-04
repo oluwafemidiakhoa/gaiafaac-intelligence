@@ -1,0 +1,44 @@
+name: Format Commercial PR
+
+on:
+  push:
+    branches: [feat/commercial-revenue-completion-v1]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/commercial-revenue-completion-v1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Apply repository Prettier configuration
+        run: >-
+          npx prettier --write
+          apps/web/src/app/admin/commercial/page.tsx
+          apps/web/src/app/credit-committee-pack/page.tsx
+          apps/web/src/components/gaia-workflow-actions.tsx
+          apps/web/src/app/decision-rooms/page.tsx
+          apps/web/src/app/watch-contracts/page.tsx
+
+      - name: Commit formatting only when needed
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/src/app/admin/commercial/page.tsx apps/web/src/app/credit-committee-pack/page.tsx apps/web/src/components/gaia-workflow-actions.tsx apps/web/src/app/decision-rooms/page.tsx apps/web/src/app/watch-contracts/page.tsx
+          git commit -m "style(web): apply Prettier to commercial release"
+          git push origin HEAD:feat/commercial-revenue-completion-v1
