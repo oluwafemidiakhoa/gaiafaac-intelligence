@@ -10,10 +10,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 PilotPlan = Literal["analyst", "team", "api"]
 PilotLeadStatus = Literal[
     "new",
-    "contacted",
     "qualified",
-    "pilot",
-    "proposal",
+    "discovery",
+    "pilot_proposed",
+    "pilot_active",
+    "commercial_review",
     "won",
     "lost",
 ]
@@ -29,8 +30,11 @@ class PilotLeadCreate(BaseModel):
     plan_interest: PilotPlan
     use_case: str = Field(min_length=20, max_length=4000)
     states_or_periods: str | None = Field(default=None, max_length=2000)
+    requested_evidence_domains: str | None = Field(default=None, max_length=2000)
     preferred_format: str | None = Field(default=None, max_length=80)
     expected_users: int | None = Field(default=None, ge=1, le=10000)
+    buying_timeline: str | None = Field(default=None, max_length=240)
+    source_page: str | None = Field(default=None, max_length=500)
     website: str | None = Field(default=None, max_length=200)
 
     @field_validator(
@@ -41,7 +45,10 @@ class PilotLeadCreate(BaseModel):
         "country",
         "use_case",
         "states_or_periods",
+        "requested_evidence_domains",
         "preferred_format",
+        "buying_timeline",
+        "source_page",
         "website",
         mode="before",
     )
@@ -76,13 +83,17 @@ class PilotLeadAdminItem(BaseModel):
     plan_interest: str
     use_case: str
     states_or_periods: str | None
+    requested_evidence_domains: str | None = None
     preferred_format: str | None
     expected_users: int | None
+    buying_timeline: str | None = None
+    source_page: str | None = None
     status: str
     source: str
     owner_name: str | None = None
     next_action: str | None = None
     next_action_at: datetime | None = None
+    internal_notes: str | None = None
     closed_reason: str | None = None
     converted_organization_id: uuid.UUID | None = None
     status_changed_at: datetime | None = None
@@ -92,13 +103,26 @@ class PilotLeadAdminItem(BaseModel):
 
 class PilotLeadUpdate(BaseModel):
     status: PilotLeadStatus | None = None
+    requested_evidence_domains: str | None = Field(default=None, max_length=2000)
+    buying_timeline: str | None = Field(default=None, max_length=240)
+    source_page: str | None = Field(default=None, max_length=500)
     owner_name: str | None = Field(default=None, max_length=200)
     next_action: str | None = Field(default=None, max_length=500)
     next_action_at: datetime | None = None
+    internal_notes: str | None = Field(default=None, max_length=8000)
     closed_reason: str | None = Field(default=None, max_length=1000)
     converted_organization_id: uuid.UUID | None = None
 
-    @field_validator("owner_name", "next_action", "closed_reason", mode="before")
+    @field_validator(
+        "requested_evidence_domains",
+        "buying_timeline",
+        "source_page",
+        "owner_name",
+        "next_action",
+        "internal_notes",
+        "closed_reason",
+        mode="before",
+    )
     @classmethod
     def normalize_optional_text(cls, value: object) -> object:
         if isinstance(value, str):
