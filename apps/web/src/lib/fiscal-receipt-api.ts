@@ -12,6 +12,10 @@ const verificationSchema = z.object({
   source_sha256s: z.array(z.string().length(64)),
   evidence_record_sha256s: z.array(z.string().length(64)),
   evidence_kinds: z.array(z.string()),
+  predecessor_receipt_id: z.string().uuid().nullable(),
+  predecessor_receipt_sha256: z.string().length(64).nullable(),
+  triggering_match_id: z.string().uuid().nullable(),
+  content_sha256: z.string().length(64).nullable(),
   statement: z.string(),
   limitations: z.array(z.string()),
 })
