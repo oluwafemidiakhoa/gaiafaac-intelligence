@@ -28,9 +28,7 @@ def _latest_receipt(
         return None
 
     predecessor_ids = {
-        row.predecessor_receipt_id
-        for row in rows
-        if row.predecessor_receipt_id is not None
+        row.predecessor_receipt_id for row in rows if row.predecessor_receipt_id is not None
     }
     tails = [row for row in rows if row.id not in predecessor_ids]
     return tails[0] if tails else rows[0]
