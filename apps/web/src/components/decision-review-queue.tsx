@@ -81,6 +81,9 @@ export function DecisionReviewQueue() {
           ),
         )
       })
+      .catch(() => {
+        if (!cancelled) setItems([])
+      })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
