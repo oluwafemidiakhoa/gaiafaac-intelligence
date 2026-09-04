@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     JSON,
@@ -13,9 +14,10 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     Uuid,
+    event,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, Mapper, mapped_column
 
 from gaiafaac_api.database.base import Base
 
@@ -161,27 +163,33 @@ class FiscalWatchContractReview(Base):
 
 
 class FiscalWatchContractDelivery(Base):
-    """Auditable delivery record proving a Watch match entered the organization inbox."""
+    """Durable delivery state for one operational review and one destination."""
 
     __tablename__ = "fiscal_watch_contract_deliveries"
     __table_args__ = (
         CheckConstraint(
-            "channel IN ('in_app')",
+            "channel IN ('in_app', 'email', 'webhook')",
             name="ck_fiscal_watch_contract_delivery_channel",
         ),
         CheckConstraint(
-            "status IN ('delivered', 'failed')",
+            "status IN ('pending', 'delivered', 'retrying', 'dead_letter', 'deferred', 'failed')",
             name="ck_fiscal_watch_contract_delivery_status",
         ),
         UniqueConstraint(
             "review_id",
             "channel",
-            name="uq_fiscal_watch_contract_delivery_review_channel",
+            "destination_key",
+            name="uq_fiscal_watch_contract_delivery_destination",
         ),
         Index(
             "ix_fiscal_watch_contract_deliveries_org_created",
             "organization_id",
             "created_at",
+        ),
+        Index(
+            "ix_fiscal_watch_contract_deliveries_status_next",
+            "status",
+            "next_attempt_at",
         ),
     )
 
@@ -205,10 +213,71 @@ class FiscalWatchContractDelivery(Base):
     recipient_user_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    endpoint_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organization_webhook_endpoints.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     channel: Mapped[str] = mapped_column(String(24), nullable=False, default="in_app")
+    destination_key: Mapped[str] = mapped_column(
+        String(200), nullable=False, default="organization_watch_inbox"
+    )
+    recipient_address: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="delivered")
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    response_status: Mapped[int | None] = mapped_column(Integer)
+    response_body_excerpt: Mapped[str | None] = mapped_column(String(1000))
+    last_error: Mapped[str | None] = mapped_column(String(500))
+    payload_sha256: Mapped[str | None] = mapped_column(String(64))
+    payload: Mapped[dict | None] = mapped_column(JSON)
     details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class FiscalWatchContractDeliveryAttempt(Base):
+    """Append-only record of one actual outbound Watch delivery attempt."""
+
+    __tablename__ = "fiscal_watch_contract_delivery_attempts"
+    __table_args__ = (
+        UniqueConstraint(
+            "delivery_id",
+            "attempt_number",
+            name="uq_fiscal_watch_contract_delivery_attempt_number",
+        ),
+        Index(
+            "ix_fiscal_watch_contract_delivery_attempts_delivery",
+            "delivery_id",
+            "attempt_number",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    delivery_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fiscal_watch_contract_deliveries.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    response_status: Mapped[int | None] = mapped_column(Integer)
+    response_body_excerpt: Mapped[str | None] = mapped_column(String(1000))
+    error: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+def _immutable_attempt(_mapper: Mapper[Any], _connection: Any, _target: Any) -> None:
+    raise ValueError("Watch delivery attempt records are immutable.")
+
+
+event.listen(FiscalWatchContractDeliveryAttempt, "before_update", _immutable_attempt)
+event.listen(FiscalWatchContractDeliveryAttempt, "before_delete", _immutable_attempt)
