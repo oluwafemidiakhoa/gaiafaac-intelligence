@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
@@ -62,9 +63,9 @@ def _room(client: TestClient, headers: dict[str, str]) -> str:
         "/api/v1/evidence-rooms",
         headers=headers,
         json={
-            "title": "Edo treasury monitoring decision",
+            "title": "Treasury monitoring decision",
             "decision_question": "Should this decision remain current after governed changes?",
-            "jurisdictions": ["Edo"],
+            "jurisdictions": ["Test jurisdiction"],
             "evidence_domains": ["FAAC"],
             "baseline_date": "2026-09-04",
         },
@@ -92,8 +93,8 @@ def test_watch_operational_review_is_idempotent_tenant_scoped_and_does_not_clear
             headers=_headers(owner_token),
             json={
                 "room_id": room_id,
-                "name": "Edo treasury SLA",
-                "state_codes": ["ED"],
+                "name": "Treasury SLA",
+                "state_codes": ["ZZ"],
                 "event_types": ["source_revised"],
                 "minimum_severity": "watch",
                 "escalation_after_minutes": 60,
@@ -103,11 +104,11 @@ def test_watch_operational_review_is_idempotent_tenant_scoped_and_does_not_clear
         contract_id = created.json()["id"]
 
         state = State(
-            name="Edo Test Operations",
-            code="ED",
-            slug="edo-test-operations",
-            geopolitical_zone="South South",
-            capital="Benin City",
+            name="Watch Operations Test State",
+            code="ZZ",
+            slug="watch-operations-test-state",
+            geopolitical_zone="Test Zone",
+            capital="Test Capital",
             is_fct=False,
         )
         session.add(state)
@@ -124,7 +125,7 @@ def test_watch_operational_review_is_idempotent_tenant_scoped_and_does_not_clear
         )
         session.add(alert)
         session.flush()
-        contract = session.get(FiscalWatchContract, contract_id)
+        contract = session.get(FiscalWatchContract, uuid.UUID(contract_id))
         assert contract is not None
         match = FiscalWatchContractMatch(
             contract_id=contract.id,
@@ -167,7 +168,7 @@ def test_watch_operational_review_is_idempotent_tenant_scoped_and_does_not_clear
         )
         assert bad_assignment.status_code == 422
 
-        review_row = session.get(FiscalWatchContractReview, review["id"])
+        review_row = session.get(FiscalWatchContractReview, uuid.UUID(review["id"]))
         assert review_row is not None
         review_row.due_at = datetime.now(UTC) - timedelta(minutes=1)
         session.commit()
