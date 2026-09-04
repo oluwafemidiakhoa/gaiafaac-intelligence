@@ -32,8 +32,11 @@ export function PilotLeadForm() {
       plan_interest: data.get('plan_interest'),
       use_case: data.get('use_case'),
       states_or_periods: data.get('states_or_periods'),
+      requested_evidence_domains: data.get('requested_evidence_domains'),
       preferred_format: data.get('preferred_format'),
       expected_users: users ? Number(users) : null,
+      buying_timeline: data.get('buying_timeline'),
+      source_page: '/pilot',
       website: data.get('website'),
     }
 
@@ -90,37 +93,45 @@ export function PilotLeadForm() {
           <input className={fieldClass} name="country" />
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          Pilot
+          Commercial path
           <select
             className={fieldClass}
             name="plan_interest"
             defaultValue="analyst"
           >
             <option value="analyst">Analyst Pilot</option>
-            <option value="team">Team Pilot</option>
-            <option value="api">API Evaluation</option>
+            <option value="team">Team / Institutional Pilot</option>
+            <option value="api">API / Data Evaluation</option>
           </select>
         </label>
       </div>
 
       <label className="grid gap-2 text-sm font-medium">
-        What are you trying to accomplish?
+        Decision or workflow you need to support
         <textarea
           className={textAreaClass}
           name="use_case"
           required
           minLength={20}
-          placeholder="Describe the report, research, publication, or integration you need."
+          placeholder="Describe the lending, diligence, monitoring, research, audit, advisory, or integration workflow."
         />
       </label>
 
-      <div className="grid gap-5 sm:grid-cols-3">
-        <label className="grid gap-2 text-sm font-medium sm:col-span-2">
-          States or periods of interest
+      <div className="grid gap-5 sm:grid-cols-2">
+        <label className="grid gap-2 text-sm font-medium">
+          Jurisdictions or periods of interest
           <input
             className={fieldClass}
             name="states_or_periods"
-            placeholder="For example: Edo and Delta, January–December 2024"
+            placeholder="For example: Edo, Delta and Rivers; 2024–2026"
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Governed evidence domains requested
+          <input
+            className={fieldClass}
+            name="requested_evidence_domains"
+            placeholder="For example: FAAC, IGR, debt, budgets"
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">
@@ -132,6 +143,20 @@ export function PilotLeadForm() {
             min={1}
             max={10000}
           />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Buying / evaluation timeline
+          <select
+            className={fieldClass}
+            name="buying_timeline"
+            defaultValue=""
+          >
+            <option value="">Not specified</option>
+            <option value="immediate">Immediate / active decision</option>
+            <option value="30_days">Within 30 days</option>
+            <option value="this_quarter">This quarter</option>
+            <option value="later">Later / exploratory</option>
+          </select>
         </label>
       </div>
 
