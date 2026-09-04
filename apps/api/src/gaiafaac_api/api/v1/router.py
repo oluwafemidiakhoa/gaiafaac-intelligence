@@ -6,6 +6,7 @@ from gaiafaac_api.api.v1.routes.billing import router as billing_router
 from gaiafaac_api.api.v1.routes.billing_dashboard import router as billing_dashboard_router
 from gaiafaac_api.api.v1.routes.commercial import router as commercial_router
 from gaiafaac_api.api.v1.routes.data_api import router as data_api_router
+from gaiafaac_api.api.v1.routes.decision_reviews import router as decision_reviews_router
 from gaiafaac_api.api.v1.routes.demo_data import router as demo_data_router
 from gaiafaac_api.api.v1.routes.dmo_review import router as dmo_review_router
 from gaiafaac_api.api.v1.routes.evidence_provenance import router as evidence_provenance_router
@@ -51,6 +52,7 @@ router.include_router(watchlists_router)
 router.include_router(watch_contracts_router)
 router.include_router(evidence_provenance_router)
 router.include_router(evidence_rooms_router)
+router.include_router(decision_reviews_router)
 router.include_router(fiscal_receipts_router)
 router.include_router(institutional_audit_router)
 router.include_router(institutional_decisions_router)
