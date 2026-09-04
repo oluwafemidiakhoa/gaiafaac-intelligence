@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
@@ -10,8 +11,10 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
     event,
     func,
@@ -103,6 +106,46 @@ class CommercialEvent(Base):
     event_metadata: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class OneTimePurchase(Base):
+    """Canonical persisted order/payment record for configured one-time products."""
+
+    __tablename__ = "one_time_purchases"
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_reference", name="uq_one_time_purchase_provider_reference"),
+        Index("ix_one_time_purchases_org_created", "organization_id", "created_at"),
+        Index("ix_one_time_purchases_status_created", "status", "created_at"),
+        Index("ix_one_time_purchases_product_status", "product_code", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    product_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    provider: Mapped[str] = mapped_column(String(40), nullable=False, default="paystack")
+    provider_reference: Mapped[str] = mapped_column(String(160), nullable=False)
+    amount_naira: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False, default="NGN")
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="pending")
+    fulfillment_status: Mapped[str] = mapped_column(String(40), nullable=False, default="pending")
+    fulfillment_reference: Mapped[str | None] = mapped_column(String(200))
+    purchase_metadata: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fulfilled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
 
