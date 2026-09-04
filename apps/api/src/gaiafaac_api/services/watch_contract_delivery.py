@@ -68,6 +68,14 @@ def _smtp_ready(settings: Settings) -> bool:
     )
 
 
+def _utc_datetime(value: datetime) -> datetime:
+    """Normalize persisted timestamps to aware UTC before canonical hashing."""
+
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
 def _review_rows(session: Session, organization_id: uuid.UUID | None = None):
     statement = (
         select(
@@ -112,7 +120,7 @@ def _watch_payload(
         {
             "id": str(delivery_id),
             "type": "watch_contract_match",
-            "created_at": review.created_at,
+            "created_at": _utc_datetime(review.created_at),
             "data": {
                 "review_id": str(review.id),
                 "match_id": str(match.id),
@@ -127,9 +135,9 @@ def _watch_payload(
                 "severity": str(alert.severity),
                 "headline": headline,
                 "detail": detail,
-                "occurred_at": alert.occurred_at,
-                "matched_at": match.matched_at,
-                "review_due_at": review.due_at,
+                "occurred_at": _utc_datetime(alert.occurred_at),
+                "matched_at": _utc_datetime(match.matched_at),
+                "review_due_at": _utc_datetime(review.due_at),
                 "decision_review_url": (
                     f"{settings.customer_app_url.rstrip('/')}/decision-rooms/{review.room_id}/review"
                 ),
