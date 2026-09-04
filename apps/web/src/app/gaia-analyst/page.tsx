@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { DataUnavailable } from '@/components/data-unavailable'
+import { GaiaWorkflowActions } from '@/components/gaia-workflow-actions'
 import { PageHeader } from '@/components/page-header'
 import { StatusPill } from '@/components/status-pill'
 import {
@@ -48,13 +49,19 @@ export default async function GaiaAnalystPage({
     'How much debt does Lagos carry relative to revenue?',
   ]
 
+  const workflowStates = data
+    ? data.evidence
+        .map((item) => item.state_slug)
+        .filter((value): value is string => Boolean(value))
+    : []
+
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <div style={{ fontFamily: 'Georgia, serif' }}>
         <PageHeader
           eyebrow="Ask Gaia"
           title="Evidence-led answers for fiscal decisions"
-          description="Ask Gaia answers from verified FAAC, IGR and Fiscal State evidence. It calculates clearly, shows the proof behind each answer, and refuses to invent facts, forecasts or ratings."
+          description="Ask Gaia answers from verified FAAC, IGR and Fiscal State evidence. It calculates clearly, shows the proof behind each answer, refuses to invent facts, forecasts or ratings, and routes supported answers into the next institutional workflow."
         />
       </div>
 
@@ -160,6 +167,13 @@ export default async function GaiaAnalystPage({
               <p className="max-w-4xl text-base leading-7">{data.answer}</p>
             </CardContent>
           </Card>
+
+          <GaiaWorkflowActions
+            question={question}
+            year={data.year}
+            stateSlugs={workflowStates}
+            hasEvidence={data.evidence.length > 0}
+          />
 
           <Card>
             <CardHeader>
