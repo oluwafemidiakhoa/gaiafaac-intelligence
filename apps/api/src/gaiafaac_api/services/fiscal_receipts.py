@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -21,7 +21,8 @@ from gaiafaac_api.fiscal_receipt_schemas import (
 )
 from gaiafaac_api.services.evidence_rooms import get_room_row
 
-_METHODOLOGY_VERSION = "fiscal-receipt-v1"
+_METHODOLOGY_VERSION = "fiscal-receipt-v2"
+_CONTENT_SCHEMA = "fiscal-receipt-content-v1"
 
 
 def _canonical_json(value: dict[str, Any]) -> bytes:
@@ -44,6 +45,8 @@ def _receipt_response(row: FiscalReceipt) -> FiscalReceiptResponse:
         room_id=row.room_id,
         organization_id=row.organization_id,
         created_by_user_id=row.created_by_user_id,
+        predecessor_receipt_id=row.predecessor_receipt_id,
+        triggering_match_id=row.triggering_match_id,
         evidence_cutoff=row.evidence_cutoff,
         methodology_version=row.methodology_version,
         receipt_sha256=row.receipt_sha256,
@@ -57,6 +60,8 @@ def _summary(row: FiscalReceipt) -> FiscalReceiptSummary:
     return FiscalReceiptSummary(
         id=row.id,
         room_id=row.room_id,
+        predecessor_receipt_id=row.predecessor_receipt_id,
+        triggering_match_id=row.triggering_match_id,
         evidence_cutoff=row.evidence_cutoff,
         methodology_version=row.methodology_version,
         receipt_sha256=row.receipt_sha256,
@@ -78,6 +83,31 @@ def _evidence_rows(
             statement.order_by(EvidenceRoomEvidence.captured_at, EvidenceRoomEvidence.id)
         )
     )
+
+
+def _latest_receipt(
+    session: Session,
+    organization_id: uuid.UUID,
+    room_id: uuid.UUID,
+) -> FiscalReceipt | None:
+    rows = list(
+        session.scalars(
+            select(FiscalReceipt)
+            .where(
+                FiscalReceipt.organization_id == organization_id,
+                FiscalReceipt.room_id == room_id,
+            )
+            .order_by(FiscalReceipt.created_at.desc())
+        )
+    )
+    if not rows:
+        return None
+
+    predecessor_ids = {
+        row.predecessor_receipt_id for row in rows if row.predecessor_receipt_id is not None
+    }
+    tails = [row for row in rows if row.id not in predecessor_ids]
+    return tails[0] if tails else rows[0]
 
 
 def generate_receipt(
@@ -111,8 +141,8 @@ def generate_receipt(
     record_hashes = [row.record_sha256 for row in rows]
     evidence_kinds = [row.reference_kind for row in rows]
 
-    manifest = {
-        "schema": _METHODOLOGY_VERSION,
+    content = {
+        "schema": _CONTENT_SCHEMA,
         "decision_room_id": str(room.id),
         "decision_room_title": room.title,
         "decision_question": room.decision_question,
@@ -127,7 +157,31 @@ def generate_receipt(
         "evidence_record_sha256s": record_hashes,
         "missing_evidence": [],
         "assumptions": [],
+    }
+    content_sha256 = _sha256(content)
+    predecessor = _latest_receipt(session, organization_id, room.id)
+
+    if (
+        predecessor is not None
+        and not room.review_required
+        and str(predecessor.manifest.get("content_sha256") or "") == content_sha256
+    ):
+        return _receipt_response(predecessor)
+
+    triggering_match_id = room.review_trigger_match_id if room.review_required else None
+    lineage = {
+        "predecessor_receipt_id": str(predecessor.id) if predecessor else None,
+        "predecessor_receipt_sha256": predecessor.receipt_sha256 if predecessor else None,
+        "triggering_watch_contract_match_id": (
+            str(triggering_match_id) if triggering_match_id else None
+        ),
+    }
+    manifest = {
+        **content,
+        "schema": _METHODOLOGY_VERSION,
         "methodology_version": _METHODOLOGY_VERSION,
+        "content_sha256": content_sha256,
+        "lineage": lineage,
     }
     receipt_sha256 = _sha256(manifest)
 
@@ -149,11 +203,17 @@ def generate_receipt(
         "source_sha256s": source_hashes,
         "evidence_record_sha256s": record_hashes,
         "evidence_kinds": evidence_kinds,
+        "content_sha256": content_sha256,
+        "predecessor_receipt_id": lineage["predecessor_receipt_id"],
+        "predecessor_receipt_sha256": lineage["predecessor_receipt_sha256"],
+        "triggering_watch_contract_match_id": lineage["triggering_watch_contract_match_id"],
     }
     row = FiscalReceipt(
         organization_id=organization_id,
         room_id=room.id,
         created_by_user_id=user.id,
+        predecessor_receipt_id=predecessor.id if predecessor else None,
+        triggering_match_id=triggering_match_id,
         evidence_cutoff=effective_cutoff,
         methodology_version=_METHODOLOGY_VERSION,
         manifest=manifest,
@@ -161,6 +221,12 @@ def generate_receipt(
         receipt_sha256=receipt_sha256,
     )
     session.add(row)
+
+    if room.review_required:
+        room.review_required = False
+        room.last_reviewed_at = datetime.now(UTC)
+        room.reviewed_by_user_id = user.id
+
     session.commit()
     session.refresh(row)
     return _receipt_response(row)
@@ -207,6 +273,8 @@ def verify_receipt(
     if row is None:
         return None
     public = dict(row.public_manifest)
+    predecessor_id = public.get("predecessor_receipt_id")
+    triggering_match_id = public.get("triggering_watch_contract_match_id")
     return FiscalReceiptVerification(
         id=row.id,
         receipt_sha256=row.receipt_sha256,
@@ -219,10 +287,14 @@ def verify_receipt(
         source_sha256s=list(public.get("source_sha256s") or []),
         evidence_record_sha256s=list(public.get("evidence_record_sha256s") or []),
         evidence_kinds=list(public.get("evidence_kinds") or []),
+        predecessor_receipt_id=(uuid.UUID(predecessor_id) if predecessor_id else None),
+        predecessor_receipt_sha256=public.get("predecessor_receipt_sha256"),
+        triggering_match_id=(uuid.UUID(triggering_match_id) if triggering_match_id else None),
+        content_sha256=public.get("content_sha256"),
         statement=(
             "This Fiscal Receipt identifies the Gaia evidence records captured at the "
-            "stated evidence boundary and the SHA-256 digest of the resulting canonical "
-            "manifest."
+            "stated evidence boundary, the SHA-256 digest of the canonical manifest, "
+            "and any declared predecessor/monitoring lineage."
         ),
         limitations=[
             (

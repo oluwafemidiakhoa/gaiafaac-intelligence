@@ -83,6 +83,11 @@ class EvidenceRoomSummary(BaseModel):
     baseline_date: date | None = None
     evidence_cutoff: datetime | None = None
     status: Literal["open", "closed", "archived"]
+    review_required: bool = False
+    review_trigger_match_id: uuid.UUID | None = None
+    review_required_at: datetime | None = None
+    last_reviewed_at: datetime | None = None
+    reviewed_by_user_id: uuid.UUID | None = None
     created_by_user_id: uuid.UUID | None
     created_at: datetime
     updated_at: datetime
