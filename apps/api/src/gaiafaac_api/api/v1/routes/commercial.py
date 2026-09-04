@@ -56,7 +56,9 @@ def _notify_pilot_lead(lead: PilotLead) -> None:
         f"Organization: {lead.organization or 'Not provided'}\n"
         f"Role: {lead.role or 'Not provided'}\n"
         f"Expected users: {lead.expected_users or 'Not provided'}\n"
-        f"Jurisdictions / periods: {lead.states_or_periods or 'Not provided'}\n\n"
+        f"Jurisdictions / periods: {lead.states_or_periods or 'Not provided'}\n"
+        f"Evidence domains: {lead.requested_evidence_domains or 'Not provided'}\n"
+        f"Buying timeline: {lead.buying_timeline or 'Not provided'}\n\n"
         f"Use case:\n{lead.use_case}\n\n"
         "Review the lead in Gaia Fiscal Intelligence before activating a customer workspace.\n"
     )
@@ -92,8 +94,11 @@ def create_pilot_lead(
         plan_interest=payload.plan_interest,
         use_case=payload.use_case,
         states_or_periods=payload.states_or_periods or None,
+        requested_evidence_domains=payload.requested_evidence_domains or None,
         preferred_format=payload.preferred_format or None,
         expected_users=payload.expected_users,
+        buying_timeline=payload.buying_timeline or None,
+        source_page=payload.source_page or None,
         source="website",
         # Do not persist IP address, user agent, device identifiers, or fingerprints.
         ip_address=None,
@@ -104,7 +109,7 @@ def create_pilot_lead(
     session.flush()
     record_commercial_event(
         session,
-        event_name="pilot_lead_submitted",
+        event_name="institutional_lead_created",
         subject_type="pilot_lead",
         subject_id=str(lead.id),
         metadata={"plan_interest": lead.plan_interest, "source": lead.source},
@@ -157,9 +162,9 @@ def update_pilot_lead(
 
     record_commercial_event(
         session,
-        event_name="pilot_lead_stage_changed"
+        event_name="institutional_lead_stage_changed"
         if lead.status != previous_status
-        else "pilot_lead_updated",
+        else "institutional_lead_updated",
         organization_id=lead.converted_organization_id,
         subject_type="pilot_lead",
         subject_id=str(lead.id),
