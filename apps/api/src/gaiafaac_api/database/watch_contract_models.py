@@ -187,10 +187,14 @@ class FiscalWatchContractDelivery(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     review_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("fiscal_watch_contract_reviews.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("fiscal_watch_contract_reviews.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     match_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("fiscal_watch_contract_matches.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("fiscal_watch_contract_matches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     contract_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("fiscal_watch_contracts.id", ondelete="CASCADE"), nullable=False, index=True
