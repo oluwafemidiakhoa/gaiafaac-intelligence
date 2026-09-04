@@ -21,6 +21,8 @@ class FiscalReceiptResponse(BaseModel):
     room_id: uuid.UUID
     organization_id: uuid.UUID
     created_by_user_id: uuid.UUID | None
+    predecessor_receipt_id: uuid.UUID | None = None
+    triggering_match_id: uuid.UUID | None = None
     evidence_cutoff: datetime | None
     methodology_version: str
     receipt_sha256: str = Field(min_length=64, max_length=64)
@@ -31,6 +33,8 @@ class FiscalReceiptResponse(BaseModel):
 class FiscalReceiptSummary(BaseModel):
     id: uuid.UUID
     room_id: uuid.UUID
+    predecessor_receipt_id: uuid.UUID | None = None
+    triggering_match_id: uuid.UUID | None = None
     evidence_cutoff: datetime | None
     methodology_version: str
     receipt_sha256: str = Field(min_length=64, max_length=64)
@@ -50,5 +54,9 @@ class FiscalReceiptVerification(BaseModel):
     source_sha256s: list[str]
     evidence_record_sha256s: list[str]
     evidence_kinds: list[str]
+    predecessor_receipt_id: uuid.UUID | None = None
+    predecessor_receipt_sha256: str | None = None
+    triggering_match_id: uuid.UUID | None = None
+    content_sha256: str | None = None
     statement: str
     limitations: list[str]
