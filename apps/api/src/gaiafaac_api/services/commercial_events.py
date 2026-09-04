@@ -150,9 +150,7 @@ def commercial_analytics(session: Session) -> dict:
         session,
         Subscription,
         or_(
-            Subscription.status.in_(
-                [SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED]
-            ),
+            Subscription.status.in_([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED]),
             Subscription.current_period_end <= now,
         ),
     )
