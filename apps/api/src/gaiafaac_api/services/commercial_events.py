@@ -8,7 +8,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.config import get_settings
-from gaiafaac_api.database.commercial_models import CommercialEvent, PilotLead
+from gaiafaac_api.database.commercial_models import CommercialEvent, OneTimePurchase, PilotLead
 from gaiafaac_api.database.customer_models import CustomerWatchlist, OrganizationWatchlist
 from gaiafaac_api.database.enums import SubscriptionStatus
 from gaiafaac_api.database.evidence_room_models import EvidenceRoom, FiscalReceipt
@@ -105,6 +105,12 @@ def commercial_analytics(session: Session) -> dict:
         ).where(PaymentRecord.status == "success")
     ).one()
     failed_payment_count = _count(session, PaymentRecord, PaymentRecord.status == "failed")
+    one_time_purchase_count, one_time_purchase_revenue = session.execute(
+        select(
+            func.count(OneTimePurchase.id),
+            func.coalesce(func.sum(OneTimePurchase.amount_naira), Decimal("0")),
+        ).where(OneTimePurchase.status == "success")
+    ).one()
 
     now = datetime.now(UTC)
     active_subscription_rows = session.execute(
@@ -170,10 +176,10 @@ def commercial_analytics(session: Session) -> dict:
         "successful_payment_revenue_naira": str(successful_payment_revenue or Decimal("0")),
         "failed_payment_count": failed_payment_count,
         "expired_or_canceled_subscriptions": expired_or_canceled,
-        "one_time_purchases": None,
+        "one_time_purchases": int(one_time_purchase_count or 0),
+        "one_time_purchase_revenue_naira": str(one_time_purchase_revenue or Decimal("0")),
         "one_time_purchase_note": (
-            "Unavailable until Gaia has a canonical persisted one-time purchase ledger; "
-            "no value is synthesized from quote requests."
+            "Counts only persisted one_time_purchases with status=success; quote requests and pending checkouts are excluded."
         ),
         "decision_rooms_total": _count(session, EvidenceRoom),
         "fiscal_receipts_total": _count(session, FiscalReceipt),
@@ -185,6 +191,7 @@ def commercial_analytics(session: Session) -> dict:
         "events_last_30_days": events_last_30_days,
         "statement": (
             "Metrics are computed from persisted Gaia records only. Configured MRR uses current "
-            "Paystack plan prices and active canonical subscriptions; it is not booked revenue."
+            "Paystack plan prices and active canonical subscriptions; it is not booked revenue. "
+            "One-time revenue includes only verified successful purchase ledger rows."
         ),
     }
