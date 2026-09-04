@@ -159,8 +159,27 @@ export function EvidenceRoomsWorkspace() {
   )
 
   useEffect(() => {
-    void loadRooms()
-  }, [loadRooms])
+    let cancelled = false
+
+    void jsonRequest<RoomSummary[]>('/evidence-rooms')
+      .then((result) => {
+        if (cancelled) return
+        setRooms(result)
+        setError(null)
+      })
+      .catch((caught: unknown) => {
+        if (cancelled) return
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Decision Rooms are unavailable.',
+        )
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function createRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
