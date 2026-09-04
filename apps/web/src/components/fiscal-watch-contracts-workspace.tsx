@@ -14,6 +14,14 @@ import {
 
 type ContractStatus = 'active' | 'paused' | 'archived'
 type ReviewStatus = 'open' | 'acknowledged' | 'resolved'
+type DeliveryChannel = 'in_app' | 'email' | 'webhook'
+type DeliveryStatus =
+  | 'pending'
+  | 'delivered'
+  | 'retrying'
+  | 'dead_letter'
+  | 'deferred'
+  | 'failed'
 
 interface DecisionRoom {
   id: string
@@ -51,17 +59,39 @@ interface WatchMatch {
   matched_at: string
 }
 
+interface WatchDeliveryAttempt {
+  id: string
+  delivery_id: string
+  attempt_number: number
+  attempted_at: string
+  response_status: number | null
+  response_body_excerpt: string | null
+  error: string | null
+}
+
 interface WatchDelivery {
   id: string
   review_id: string
   match_id: string
   contract_id: string
   recipient_user_id: string | null
-  channel: 'in_app'
-  status: 'delivered' | 'failed'
+  endpoint_id: string | null
+  channel: DeliveryChannel
+  destination_key: string
+  recipient_address: string | null
+  status: DeliveryStatus
+  attempt_count: number
+  next_attempt_at: string | null
+  last_attempt_at: string | null
+  response_status: number | null
+  response_body_excerpt: string | null
+  last_error: string | null
+  payload_sha256: string | null
   details: Record<string, unknown>
   delivered_at: string | null
   created_at: string
+  updated_at: string
+  attempts: WatchDeliveryAttempt[]
 }
 
 interface OperationalReview {
@@ -98,6 +128,16 @@ interface Evaluation {
   matches: WatchMatch[]
   operational_review_count: number
   note: string
+}
+
+interface DeliveryRun {
+  reviews_checked: number
+  deliveries_created: number
+  delivered: number
+  retrying: number
+  dead_letter: number
+  deferred: number
+  failed: number
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -142,6 +182,11 @@ function slaLabel(minutes: number) {
   return `${minutes}m`
 }
 
+function deliveryLabel(delivery: WatchDelivery) {
+  const destination = delivery.recipient_address ?? delivery.destination_key
+  return `${delivery.channel} · ${delivery.status} · ${destination}`
+}
+
 export function FiscalWatchContractsWorkspace() {
   const [rooms, setRooms] = useState<DecisionRoom[]>([])
   const [contracts, setContracts] = useState<WatchContract[]>([])
@@ -149,6 +194,7 @@ export function FiscalWatchContractsWorkspace() {
   const [matches, setMatches] = useState<WatchMatch[]>([])
   const [reviews, setReviews] = useState<OperationalReview[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   async function refresh() {
@@ -264,12 +310,39 @@ export function FiscalWatchContractsWorkspace() {
       setSelected(result.contract)
       setMatches(result.matches)
       await Promise.all([refresh(), refreshReviews(selected.id)])
+      setNotice(
+        `${result.new_match_count} new matches · ${result.operational_review_count} operational reviews created.`,
+      )
       setError(null)
     } catch (caught) {
       setError(
         caught instanceof Error
           ? caught.message
           : 'Unable to evaluate Watch Contract.',
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function runOutboundDelivery() {
+    if (!selected) return
+    setBusy(true)
+    try {
+      const result = await request<DeliveryRun>(
+        '/fiscal-watch-contracts/deliveries/run',
+        { method: 'POST' },
+      )
+      await refreshReviews(selected.id)
+      setNotice(
+        `Outbound delivery: ${result.delivered} delivered · ${result.retrying} retrying · ${result.dead_letter} dead-letter · ${result.deferred} deferred.`,
+      )
+      setError(null)
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to run outbound delivery.',
       )
     } finally {
       setBusy(false)
@@ -486,6 +559,11 @@ export function FiscalWatchContractsWorkspace() {
             {error}
           </div>
         ) : null}
+        {notice ? (
+          <div className="border-border bg-muted/30 rounded-xl border p-4 text-sm">
+            {notice}
+          </div>
+        ) : null}
 
         {!selected ? (
           <Card>
@@ -527,6 +605,13 @@ export function FiscalWatchContractsWorkspace() {
                       onClick={() => void evaluate()}
                     >
                       Evaluate now
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => void runOutboundDelivery()}
+                    >
+                      Run outbound delivery
                     </Button>
                     <Button
                       variant="outline"
@@ -588,9 +673,9 @@ export function FiscalWatchContractsWorkspace() {
                     <CardTitle>Operational review queue</CardTitle>
                     <CardDescription className="mt-2 max-w-3xl">
                       Each new governed Watch match enters the organization
-                      inbox once. Acknowledge and resolve operational handling
-                      here. Evidence re-review remains open in the Decision Room
-                      until a successor Fiscal Receipt is issued.
+                      inbox once. Opted-in members may receive email, and
+                      API-entitled webhook endpoints receive matching governed
+                      event classes. Every network attempt is retained below.
                     </CardDescription>
                   </div>
                   <Button
@@ -612,7 +697,7 @@ export function FiscalWatchContractsWorkspace() {
                   <div className="space-y-3">
                     {reviews.map((review) => {
                       const overdue = isOverdue(review)
-                      const delivered = review.deliveries.some(
+                      const inAppDelivered = review.deliveries.some(
                         (item) =>
                           item.channel === 'in_app' &&
                           item.status === 'delivered',
@@ -648,9 +733,9 @@ export function FiscalWatchContractsWorkspace() {
                                   Due {new Date(review.due_at).toLocaleString()}
                                 </span>
                                 <span>
-                                  {delivered
+                                  {inAppDelivered
                                     ? 'In-app delivered'
-                                    : 'Delivery pending'}
+                                    : 'In-app pending'}
                                 </span>
                               </div>
                             </div>
@@ -678,6 +763,65 @@ export function FiscalWatchContractsWorkspace() {
                               ) : null}
                             </div>
                           </div>
+
+                          <div className="mt-4 space-y-2">
+                            <p className="text-xs font-semibold tracking-wide uppercase">
+                              Delivery ledger
+                            </p>
+                            {review.deliveries.map((delivery) => (
+                              <div
+                                key={delivery.id}
+                                className="bg-muted/20 rounded-lg border p-3 text-xs"
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="font-mono font-medium">
+                                    {deliveryLabel(delivery)}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {delivery.attempt_count} attempts
+                                  </span>
+                                </div>
+                                {delivery.payload_sha256 ? (
+                                  <p className="text-muted-foreground mt-2 font-mono break-all">
+                                    SHA-256 {delivery.payload_sha256}
+                                  </p>
+                                ) : null}
+                                {delivery.last_error ? (
+                                  <p className="text-destructive mt-2">
+                                    {delivery.last_error}
+                                  </p>
+                                ) : null}
+                                {delivery.next_attempt_at ? (
+                                  <p className="text-muted-foreground mt-1">
+                                    Next retry{' '}
+                                    {new Date(
+                                      delivery.next_attempt_at,
+                                    ).toLocaleString()}
+                                  </p>
+                                ) : null}
+                                {delivery.attempts.length ? (
+                                  <div className="mt-2 space-y-1 border-t pt-2">
+                                    {delivery.attempts.map((attempt) => (
+                                      <p
+                                        key={attempt.id}
+                                        className="text-muted-foreground font-mono"
+                                      >
+                                        #{attempt.attempt_number}{' '}
+                                        {new Date(
+                                          attempt.attempted_at,
+                                        ).toLocaleString()}{' '}
+                                        ·{' '}
+                                        {attempt.response_status
+                                          ? `HTTP ${attempt.response_status}`
+                                          : attempt.error || 'completed'}
+                                      </p>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+
                           {review.resolution_note ? (
                             <div className="bg-muted/30 mt-4 rounded-lg border p-3 text-sm">
                               <span className="font-medium">Resolution:</span>{' '}
