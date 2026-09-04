@@ -1,0 +1,63 @@
+name: Patch Billing Onboarding
+
+on:
+  push:
+    branches: [feat/commercial-revenue-completion-v1]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/commercial-revenue-completion-v1
+
+      - name: Integrate verified payment onboarding and funnel events
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('apps/api/src/gaiafaac_api/api/v1/routes/billing.py')
+          text = path.read_text()
+
+          old = 'from gaiafaac_api.services.account import active_subscription, membership_for\n'
+          new = old + 'from gaiafaac_api.services.commercial_events import (\n    record_commercial_event,\n    record_commercial_event_once,\n)\nfrom gaiafaac_api.services.payment_onboarding import deliver_payment_onboarding\n'
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''    if settings.paystack_secret_key:\n        return _initialize_paystack_checkout(\n            email=user.email,\n            organization_id=user.organization_id,\n            plan_code=payload.plan_code,\n        )\n'''
+          new = '''    if settings.paystack_secret_key:\n        redirect = _initialize_paystack_checkout(\n            email=user.email,\n            organization_id=user.organization_id,\n            plan_code=payload.plan_code,\n        )\n        record_commercial_event(\n            session,\n            event_name="checkout_started",\n            organization_id=user.organization_id,\n            user_id=user.id,\n            subject_type="organization",\n            subject_id=str(user.organization_id),\n            metadata={"plan_code": payload.plan_code, "provider": "paystack"},\n        )\n        return redirect\n'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''    if not checkout.url:\n        raise HTTPException(\n            status_code=502, detail="Billing provider did not return a checkout URL."\n        )\n    return RedirectResponse(url=checkout.url)\n'''
+          new = '''    if not checkout.url:\n        raise HTTPException(\n            status_code=502, detail="Billing provider did not return a checkout URL."\n        )\n    record_commercial_event(\n        session,\n        event_name="checkout_started",\n        organization_id=user.organization_id,\n        user_id=user.id,\n        subject_type="stripe_checkout",\n        subject_id=_as_id(checkout) or str(user.organization_id),\n        metadata={"plan_code": payload.plan_code, "provider": "stripe"},\n    )\n    return RedirectResponse(url=checkout.url)\n'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''    payment = _record_paystack_payment(session, data, subscription)\n    if payment is None:\n        raise HTTPException(status_code=409, detail="Payment amount is invalid.")\n    return {\n'''
+          new = '''    payment = _record_paystack_payment(session, data, subscription)\n    if payment is None:\n        raise HTTPException(status_code=409, detail="Payment amount is invalid.")\n    deliver_payment_onboarding(\n        session,\n        payment=payment,\n        subscription=subscription,\n        email=user.email,\n    )\n    record_commercial_event_once(\n        session,\n        event_name="checkout_completed",\n        organization_id=subscription.organization_id,\n        user_id=user.id,\n        subject_type="payment_record",\n        subject_id=str(payment.id),\n        metadata={"plan_code": subscription.plan_code, "provider": "paystack"},\n    )\n    record_commercial_event_once(\n        session,\n        event_name="entitlement_activated",\n        organization_id=subscription.organization_id,\n        user_id=user.id,\n        subject_type="payment_record",\n        subject_id=str(payment.id),\n        metadata={"plan_code": subscription.plan_code},\n    )\n    return {\n'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''    if event.get("event") == "charge.success":\n        data = event.get("data") or {}\n        subscription = _activate_paystack_subscription(session, data)\n        if subscription is not None:\n            _record_paystack_payment(session, data, subscription)\n\n    return Response(status_code=status.HTTP_204_NO_CONTENT)\n'''
+          new = '''    if event.get("event") == "charge.success":\n        data = event.get("data") or {}\n        subscription = _activate_paystack_subscription(session, data)\n        if subscription is not None:\n            payment = _record_paystack_payment(session, data, subscription)\n            if payment is not None:\n                customer = data.get("customer") or {}\n                customer_email = customer.get("email") if isinstance(customer, dict) else None\n                deliver_payment_onboarding(\n                    session,\n                    payment=payment,\n                    subscription=subscription,\n                    email=customer_email,\n                )\n                record_commercial_event_once(\n                    session,\n                    event_name="checkout_completed",\n                    organization_id=subscription.organization_id,\n                    subject_type="payment_record",\n                    subject_id=str(payment.id),\n                    metadata={"plan_code": subscription.plan_code, "provider": "paystack"},\n                )\n                record_commercial_event_once(\n                    session,\n                    event_name="entitlement_activated",\n                    organization_id=subscription.organization_id,\n                    subject_type="payment_record",\n                    subject_id=str(payment.id),\n                    metadata={"plan_code": subscription.plan_code},\n                )\n\n    return Response(status_code=status.HTTP_204_NO_CONTENT)\n'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+
+          rm .github/workflows/patch-billing-onboarding.yml
+
+      - name: Commit billing integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api/src/gaiafaac_api/api/v1/routes/billing.py .github/workflows/patch-billing-onboarding.yml
+          git commit -m "feat(billing): complete verified payment onboarding lifecycle"
+          git push origin HEAD:feat/commercial-revenue-completion-v1
