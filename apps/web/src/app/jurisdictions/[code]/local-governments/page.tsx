@@ -170,7 +170,8 @@ export default async function LocalGovernmentsPage({
               <CardTitle>Available state evidence</CardTitle>
               <CardDescription>
                 Verified state-level FAAC evidence remains available while the
-                local-government Table IV batch completes its governed publication path.
+                local-government Table IV batch completes its governed
+                publication path.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -195,9 +196,9 @@ export default async function LocalGovernmentsPage({
               <div className="flex items-start gap-3 rounded-xl border p-4">
                 <ShieldCheck className="text-primary mt-0.5 size-5 shrink-0" />
                 <p className="text-muted-foreground text-sm leading-6">
-                  State-level evidence does not substitute for missing LGA evidence.
-                  Gaia does not derive individual local-government allocations from the
-                  state total.
+                  State-level evidence does not substitute for missing LGA
+                  evidence. Gaia does not derive individual local-government
+                  allocations from the state total.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
