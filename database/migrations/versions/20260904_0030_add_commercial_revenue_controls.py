@@ -15,9 +15,13 @@ depends_on = None
 
 def upgrade() -> None:
     with op.batch_alter_table("pilot_leads") as batch:
+        batch.add_column(sa.Column("requested_evidence_domains", sa.Text(), nullable=True))
+        batch.add_column(sa.Column("buying_timeline", sa.String(length=240), nullable=True))
+        batch.add_column(sa.Column("source_page", sa.String(length=500), nullable=True))
         batch.add_column(sa.Column("owner_name", sa.String(length=200), nullable=True))
         batch.add_column(sa.Column("next_action", sa.String(length=500), nullable=True))
         batch.add_column(sa.Column("next_action_at", sa.DateTime(timezone=True), nullable=True))
+        batch.add_column(sa.Column("internal_notes", sa.Text(), nullable=True))
         batch.add_column(sa.Column("closed_reason", sa.String(length=1000), nullable=True))
         batch.add_column(sa.Column("status_changed_at", sa.DateTime(timezone=True), nullable=True))
         batch.add_column(sa.Column("converted_organization_id", sa.Uuid(), nullable=True))
@@ -28,6 +32,9 @@ def upgrade() -> None:
             ["id"],
             ondelete="SET NULL",
         )
+    op.execute("UPDATE pilot_leads SET status = 'discovery' WHERE status = 'contacted'")
+    op.execute("UPDATE pilot_leads SET status = 'pilot_active' WHERE status = 'pilot'")
+    op.execute("UPDATE pilot_leads SET status = 'commercial_review' WHERE status = 'proposal'")
     op.create_index(
         "ix_pilot_leads_next_action",
         "pilot_leads",
@@ -124,6 +131,10 @@ def downgrade() -> None:
         batch.drop_column("converted_organization_id")
         batch.drop_column("status_changed_at")
         batch.drop_column("closed_reason")
+        batch.drop_column("internal_notes")
         batch.drop_column("next_action_at")
         batch.drop_column("next_action")
         batch.drop_column("owner_name")
+        batch.drop_column("source_page")
+        batch.drop_column("buying_timeline")
+        batch.drop_column("requested_evidence_domains")
