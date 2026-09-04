@@ -8,6 +8,15 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 PilotPlan = Literal["analyst", "team", "api"]
+PilotLeadStatus = Literal[
+    "new",
+    "contacted",
+    "qualified",
+    "pilot",
+    "proposal",
+    "won",
+    "lost",
+]
 _EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
@@ -71,4 +80,40 @@ class PilotLeadAdminItem(BaseModel):
     expected_users: int | None
     status: str
     source: str
+    owner_name: str | None = None
+    next_action: str | None = None
+    next_action_at: datetime | None = None
+    closed_reason: str | None = None
+    converted_organization_id: uuid.UUID | None = None
+    status_changed_at: datetime | None = None
     created_at: datetime
+    updated_at: datetime
+
+
+class PilotLeadUpdate(BaseModel):
+    status: PilotLeadStatus | None = None
+    owner_name: str | None = Field(default=None, max_length=200)
+    next_action: str | None = Field(default=None, max_length=500)
+    next_action_at: datetime | None = None
+    closed_reason: str | None = Field(default=None, max_length=1000)
+    converted_organization_id: uuid.UUID | None = None
+
+    @field_validator("owner_name", "next_action", "closed_reason", mode="before")
+    @classmethod
+    def normalize_optional_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
+
+
+class CommercialAnalytics(BaseModel):
+    generated_at: datetime
+    leads_total: int
+    leads_by_status: dict[str, int]
+    leads_by_plan: dict[str, int]
+    active_subscriptions_total: int
+    active_subscriptions_by_plan: dict[str, int]
+    successful_payment_count: int
+    successful_payment_revenue_naira: str
+    events_last_30_days: dict[str, int]
+    statement: str
