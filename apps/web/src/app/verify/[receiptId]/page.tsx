@@ -1,9 +1,4 @@
-import {
-  CheckCircle2,
-  Fingerprint,
-  GitBranch,
-  ShieldCheck,
-} from 'lucide-react'
+import { CheckCircle2, Fingerprint, GitBranch, ShieldCheck } from 'lucide-react'
 import type { Metadata } from 'next'
 
 import { DataUnavailable } from '@/components/data-unavailable'
@@ -70,7 +65,9 @@ export default async function VerifyFiscalReceiptPage({
 
       <div className="mt-7 flex flex-wrap items-center gap-3">
         <StatusPill tone="success">Receipt found</StatusPill>
-        {hasLineage ? <StatusPill tone="warning">Successor receipt</StatusPill> : null}
+        {hasLineage ? (
+          <StatusPill tone="warning">Successor receipt</StatusPill>
+        ) : null}
         <span className="text-muted-foreground font-mono text-xs">
           {receipt.methodology_version}
         </span>
@@ -200,13 +197,16 @@ export default async function VerifyFiscalReceiptPage({
         <Card className="mt-5">
           <CardHeader>
             <div className="flex items-start gap-3">
-              <GitBranch className="mt-0.5 size-5 text-emerald-700" aria-hidden="true" />
+              <GitBranch
+                className="mt-0.5 size-5 text-emerald-700"
+                aria-hidden="true"
+              />
               <div>
                 <CardTitle>Receipt lineage</CardTitle>
                 <CardDescription>
-                  This receipt records continuity with a prior evidence boundary and,
-                  when present, the governed Watch Contract match that triggered
-                  institutional re-review.
+                  This receipt records continuity with a prior evidence boundary
+                  and, when present, the governed Watch Contract match that
+                  triggered institutional re-review.
                 </CardDescription>
               </div>
             </div>
