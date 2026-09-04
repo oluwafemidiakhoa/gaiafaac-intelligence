@@ -6,6 +6,20 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class DecisionReviewTrigger(BaseModel):
+    match_id: uuid.UUID
+    contract_id: uuid.UUID
+    contract_name: str
+    state_code: str
+    state_name: str
+    event_type: str
+    severity: str
+    headline: str
+    detail: str
+    occurred_at: datetime
+    matched_at: datetime
+
+
 class DecisionReviewState(BaseModel):
     room_id: uuid.UUID
     review_required: bool
@@ -18,3 +32,4 @@ class DecisionReviewState(BaseModel):
     latest_receipt_created_at: datetime | None
     predecessor_receipt_id: uuid.UUID | None
     triggering_match_id: uuid.UUID | None
+    trigger: DecisionReviewTrigger | None = None

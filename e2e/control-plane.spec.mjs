@@ -55,7 +55,7 @@ test.describe('Gaia Control Plane', () => {
     })
   }
 
-  test('Decision Rooms present the institutional evidence-boundary workflow', async ({
+  test('Decision Rooms present the institutional evidence-boundary and review workflow', async ({
     page,
   }) => {
     await page.goto('/decision-rooms', { waitUntil: 'domcontentloaded' })
@@ -67,6 +67,29 @@ test.describe('Gaia Control Plane', () => {
     await expect(
       page.getByText('Institutional decision infrastructure'),
     ).toBeVisible()
+    await expect(page.getByText('Institutional review queue')).toBeVisible()
+    await expect(
+      page.getByRole('heading', {
+        name: 'Decisions reopened by governed change',
+      }),
+    ).toBeVisible()
+  })
+
+  test('Decision Review route fails closed for an unknown room', async ({
+    page,
+  }) => {
+    const response = await page.goto(
+      '/decision-rooms/00000000-0000-4000-8000-000000000001/review',
+      { waitUntil: 'domcontentloaded' },
+    )
+    expect(response).not.toBeNull()
+    expect(response.status()).toBeLessThan(500)
+    await expect(
+      page.getByRole('heading', {
+        name: 'See what changed before the institution changes its decision.',
+      }),
+    ).toBeVisible()
+    await expect(page.locator('header')).toHaveCount(1)
   })
 
   test('public Fiscal Receipt verifier fails closed for an unknown receipt', async ({
