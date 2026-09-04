@@ -156,7 +156,9 @@ class FiscalReceipt(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     evidence_cutoff: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    methodology_version: Mapped[str] = mapped_column(String(80), nullable=False, default="fiscal-receipt-v1")
+    methodology_version: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="fiscal-receipt-v1"
+    )
     manifest: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     public_manifest: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
