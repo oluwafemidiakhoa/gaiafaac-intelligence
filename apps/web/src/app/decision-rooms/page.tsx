@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { DecisionReviewQueue } from '@/components/decision-review-queue'
 import { EvidenceRoomsWorkspace } from '@/components/evidence-rooms-workspace'
 import { PageHeader } from '@/components/page-header'
 
@@ -18,6 +19,9 @@ export default function DecisionRoomsPage() {
         description="A Gaia Fiscal Decision Room binds the decision question, jurisdictions, evidence boundary, governed source records, review notes and Fiscal Receipts into one durable workspace. Evidence remains evidence; interpretation remains interpretation."
       />
       <div className="mt-8">
+        <DecisionReviewQueue />
+      </div>
+      <div className="mt-6">
         <EvidenceRoomsWorkspace />
       </div>
     </div>
