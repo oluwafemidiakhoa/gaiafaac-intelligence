@@ -11,6 +11,15 @@ const productRoutes = [
   ['/pricing', 'Pricing'],
 ]
 
+const releaseViewports = [
+  { width: 1440, height: 1000 },
+  { width: 1024, height: 900 },
+  { width: 768, height: 1024 },
+  { width: 390, height: 844 },
+]
+
+const releaseRoutes = ['/', '/decision-rooms', '/watch-contracts', '/pricing']
+
 test.describe('Gaia Control Plane', () => {
   test('keeps the full product navigation visible on desktop', async ({
     page,
@@ -174,6 +183,67 @@ test.describe('Gaia Control Plane', () => {
       expect(overflow, `${path} has horizontal overflow`).toBeLessThanOrEqual(2)
     }
   })
+})
+
+test.describe('Gaia four-width release gate', () => {
+  for (const viewport of releaseViewports) {
+    test(`${viewport.width}px captures critical surfaces without browser/network failures`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize(viewport)
+      const pageErrors = []
+      const consoleErrors = []
+      const failedRequests = []
+
+      page.on('pageerror', (error) => pageErrors.push(error.message))
+      page.on('console', (message) => {
+        if (message.type() === 'error') consoleErrors.push(message.text())
+      })
+      page.on('requestfailed', (request) => {
+        failedRequests.push(
+          `${request.method()} ${request.url()} :: ${request.failure()?.errorText ?? 'failed'}`,
+        )
+      })
+
+      for (const path of releaseRoutes) {
+        const response = await page.goto(path, { waitUntil: 'networkidle' })
+        expect(response, `${path} should return an HTTP response`).not.toBeNull()
+        expect(response.status(), `${path} should not be 5xx`).toBeLessThan(500)
+        await expect(page.locator('body')).toBeVisible()
+
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth,
+        )
+        expect(
+          overflow,
+          `${path} overflows at ${viewport.width}px`,
+        ).toBeLessThanOrEqual(2)
+
+        await testInfo.attach(
+          `control-plane-${viewport.width}-${path === '/' ? 'home' : path.slice(1).replaceAll('/', '-')}.png`,
+          {
+            body: await page.screenshot({ fullPage: true }),
+            contentType: 'image/png',
+          },
+        )
+      }
+
+      await testInfo.attach(`browser-audit-${viewport.width}.txt`, {
+        body: Buffer.from(
+          [
+            `page errors: ${JSON.stringify(pageErrors)}`,
+            `console errors: ${JSON.stringify(consoleErrors)}`,
+            `failed requests: ${JSON.stringify(failedRequests)}`,
+          ].join('\n'),
+        ),
+        contentType: 'text/plain',
+      })
+
+      expect(pageErrors, 'uncaught browser errors').toEqual([])
+      expect(failedRequests, 'failed network requests').toEqual([])
+      expect(consoleErrors, 'browser console errors').toEqual([])
+    })
+  }
 })
 
 test.describe('Gaia Control Plane mobile navigation', () => {
