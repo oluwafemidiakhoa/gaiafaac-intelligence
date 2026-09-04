@@ -1,7 +1,7 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { FormEvent, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -130,7 +130,10 @@ function csv(value: FormDataEntryValue | null) {
 }
 
 function isOverdue(review: OperationalReview) {
-  return review.status !== 'resolved' && new Date(review.due_at).getTime() < Date.now()
+  return (
+    review.status !== 'resolved' &&
+    new Date(review.due_at).getTime() < Date.now()
+  )
 }
 
 function slaLabel(minutes: number) {
@@ -156,7 +159,8 @@ export function FiscalWatchContractsWorkspace() {
     setRooms(roomRows)
     setContracts(contractRows)
     if (selected) {
-      const current = contractRows.find((item) => item.id === selected.id) ?? null
+      const current =
+        contractRows.find((item) => item.id === selected.id) ?? null
       setSelected(current)
     }
   }
@@ -197,7 +201,9 @@ export function FiscalWatchContractsWorkspace() {
     setSelected(contract)
     try {
       const [matchRows, reviewRows] = await Promise.all([
-        request<WatchMatch[]>(`/fiscal-watch-contracts/${contract.id}/matches`),
+        request<WatchMatch[]>(
+          `/fiscal-watch-contracts/${contract.id}/matches`,
+        ),
         request<OperationalReview[]>(
           `/fiscal-watch-contracts/${contract.id}/reviews`,
         ),
@@ -305,7 +311,9 @@ export function FiscalWatchContractsWorkspace() {
       setError(null)
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : 'Unable to acknowledge review.',
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to acknowledge review.',
       )
     } finally {
       setBusy(false)
@@ -462,8 +470,8 @@ export function FiscalWatchContractsWorkspace() {
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-2 text-xs">
-                    {contract.match_count} matches · {contract.minimum_severity}+ · SLA{' '}
-                    {slaLabel(contract.escalation_after_minutes)}
+                    {contract.match_count} matches · {contract.minimum_severity}+ ·
+                    SLA {slaLabel(contract.escalation_after_minutes)}
                   </p>
                 </button>
               ))
@@ -482,10 +490,13 @@ export function FiscalWatchContractsWorkspace() {
         {!selected ? (
           <Card>
             <CardHeader>
-              <CardTitle>Monitoring tied to a decision, not a dashboard.</CardTitle>
+              <CardTitle>
+                Monitoring tied to a decision, not a dashboard.
+              </CardTitle>
               <CardDescription>
                 Select a Watch Contract to evaluate governed changes against its
-                declared mandate and manage the resulting organization review queue.
+                declared mandate and manage the resulting organization review
+                queue.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -498,14 +509,18 @@ export function FiscalWatchContractsWorkspace() {
                     <p className="font-mono text-xs tracking-[0.15em] text-emerald-700 uppercase">
                       Fiscal Watch Contract · {selected.status}
                     </p>
-                    <CardTitle className="mt-2 text-2xl">{selected.name}</CardTitle>
+                    <CardTitle className="mt-2 text-2xl">
+                      {selected.name}
+                    </CardTitle>
                     <CardDescription className="mt-2">
                       Linked Decision Room {selected.room_id}
                     </CardDescription>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline">
-                      <Link href={`/decision-rooms/${selected.room_id}/review`}>
+                      <Link
+                        href={`/decision-rooms/${selected.room_id}/review`}
+                      >
                         Decision Review
                       </Link>
                     </Button>
@@ -543,17 +558,22 @@ export function FiscalWatchContractsWorkspace() {
                 <div>
                   <p className="text-muted-foreground text-xs">Event types</p>
                   <p className="mt-1 text-sm font-medium">
-                    {selected.event_types.join(', ') || 'All governed event types'}
+                    {selected.event_types.join(', ') ||
+                      'All governed event types'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Operational SLA</p>
+                  <p className="text-muted-foreground text-xs">
+                    Operational SLA
+                  </p>
                   <p className="mt-1 text-sm font-medium">
                     Escalate after {slaLabel(selected.escalation_after_minutes)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Last evaluated</p>
+                  <p className="text-muted-foreground text-xs">
+                    Last evaluated
+                  </p>
                   <p className="mt-1 text-sm font-medium">
                     {selected.last_evaluated_at
                       ? new Date(selected.last_evaluated_at).toLocaleString()
@@ -569,13 +589,17 @@ export function FiscalWatchContractsWorkspace() {
                   <div>
                     <CardTitle>Operational review queue</CardTitle>
                     <CardDescription className="mt-2 max-w-3xl">
-                      Each new governed Watch match enters the organization inbox once.
-                      Acknowledge and resolve operational handling here. Evidence re-review
-                      remains open in the Decision Room until a successor Fiscal Receipt is
-                      issued.
+                      Each new governed Watch match enters the organization inbox
+                      once. Acknowledge and resolve operational handling here.
+                      Evidence re-review remains open in the Decision Room until
+                      a successor Fiscal Receipt is issued.
                     </CardDescription>
                   </div>
-                  <Button variant="outline" disabled={busy} onClick={() => void escalateOverdue()}>
+                  <Button
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => void escalateOverdue()}
+                  >
                     Escalate overdue
                   </Button>
                 </div>
@@ -583,21 +607,26 @@ export function FiscalWatchContractsWorkspace() {
               <CardContent>
                 {reviews.length === 0 ? (
                   <p className="text-muted-foreground text-sm">
-                    No operational reviews have been created for this contract yet.
+                    No operational reviews have been created for this contract
+                    yet.
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {reviews.map((review) => {
                       const overdue = isOverdue(review)
                       const delivered = review.deliveries.some(
-                        (item) => item.channel === 'in_app' && item.status === 'delivered',
+                        (item) =>
+                          item.channel === 'in_app' &&
+                          item.status === 'delivered',
                       )
                       return (
                         <div key={review.id} className="rounded-xl border p-4">
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div className="max-w-3xl">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-semibold">{review.headline}</span>
+                                <span className="font-semibold">
+                                  {review.headline}
+                                </span>
                                 <span className="rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold uppercase">
                                   {review.status}
                                 </span>
@@ -617,8 +646,15 @@ export function FiscalWatchContractsWorkspace() {
                               <div className="text-muted-foreground mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
                                 <span>{review.state_code}</span>
                                 <span>{review.severity}</span>
-                                <span>Due {new Date(review.due_at).toLocaleString()}</span>
-                                <span>{delivered ? 'In-app delivered' : 'Delivery pending'}</span>
+                                <span>
+                                  Due{' '}
+                                  {new Date(review.due_at).toLocaleString()}
+                                </span>
+                                <span>
+                                  {delivered
+                                    ? 'In-app delivered'
+                                    : 'Delivery pending'}
+                                </span>
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -627,7 +663,9 @@ export function FiscalWatchContractsWorkspace() {
                                   size="sm"
                                   variant="outline"
                                   disabled={busy}
-                                  onClick={() => void acknowledgeReview(review.id)}
+                                  onClick={() =>
+                                    void acknowledgeReview(review.id)
+                                  }
                                 >
                                   Acknowledge
                                 </Button>
@@ -661,8 +699,8 @@ export function FiscalWatchContractsWorkspace() {
               <CardHeader>
                 <CardTitle>Matched governed changes</CardTitle>
                 <CardDescription>
-                  Persisted matches to organization alerts generated from published Fiscal
-                  Watch signals and immutable Fiscal Events.
+                  Persisted matches to organization alerts generated from
+                  published Fiscal Watch signals and immutable Fiscal Events.
                 </CardDescription>
               </CardHeader>
               <CardContent>
