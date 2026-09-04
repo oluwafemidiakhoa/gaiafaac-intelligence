@@ -1,4 +1,9 @@
-import { CheckCircle2, Fingerprint, ShieldCheck } from 'lucide-react'
+import {
+  CheckCircle2,
+  Fingerprint,
+  GitBranch,
+  ShieldCheck,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 
 import { DataUnavailable } from '@/components/data-unavailable'
@@ -18,7 +23,7 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Verify Fiscal Receipt | Gaia Fiscal Intelligence',
   description:
-    'Verify the evidence manifest and SHA-256 digest recorded by a Gaia Fiscal Receipt.',
+    'Verify the evidence manifest, lineage and SHA-256 digest recorded by a Gaia Fiscal Receipt.',
 }
 
 function shortHash(value: string) {
@@ -51,17 +56,21 @@ export default async function VerifyFiscalReceiptPage({
   }
 
   const receipt = result.data
+  const hasLineage = Boolean(
+    receipt.predecessor_receipt_id || receipt.triggering_match_id,
+  )
 
   return (
     <div className="gaia-shell py-12 lg:py-16">
       <PageHeader
         eyebrow="Fiscal Receipt · evidence manifest"
         title="Evidence boundary verified"
-        description="This page verifies the recorded evidence manifest behind a Gaia analysis. It does not certify the quality of a lending, investment, procurement or policy decision."
+        description="This page verifies the recorded evidence manifest and declared lineage behind a Gaia analysis. It does not certify the quality of a lending, investment, procurement or policy decision."
       />
 
       <div className="mt-7 flex flex-wrap items-center gap-3">
         <StatusPill tone="success">Receipt found</StatusPill>
+        {hasLineage ? <StatusPill tone="warning">Successor receipt</StatusPill> : null}
         <span className="text-muted-foreground font-mono text-xs">
           {receipt.methodology_version}
         </span>
@@ -98,6 +107,16 @@ export default async function VerifyFiscalReceiptPage({
                 {receipt.receipt_sha256}
               </p>
             </div>
+            {receipt.content_sha256 ? (
+              <div>
+                <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                  Evidence-content SHA-256
+                </p>
+                <p className="mt-1 font-mono text-sm break-all">
+                  {receipt.content_sha256}
+                </p>
+              </div>
+            ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
@@ -176,6 +195,51 @@ export default async function VerifyFiscalReceiptPage({
           </CardContent>
         </Card>
       </div>
+
+      {hasLineage ? (
+        <Card className="mt-5">
+          <CardHeader>
+            <div className="flex items-start gap-3">
+              <GitBranch className="mt-0.5 size-5 text-emerald-700" aria-hidden="true" />
+              <div>
+                <CardTitle>Receipt lineage</CardTitle>
+                <CardDescription>
+                  This receipt records continuity with a prior evidence boundary and,
+                  when present, the governed Watch Contract match that triggered
+                  institutional re-review.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-5 md:grid-cols-2">
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                Predecessor receipt
+              </p>
+              <p className="mt-2 font-mono text-sm break-all">
+                {receipt.predecessor_receipt_id ?? 'No predecessor declared'}
+              </p>
+              {receipt.predecessor_receipt_sha256 ? (
+                <p
+                  className="text-muted-foreground mt-2 font-mono text-xs"
+                  title={receipt.predecessor_receipt_sha256}
+                >
+                  SHA-256 {shortHash(receipt.predecessor_receipt_sha256)}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                Monitoring trigger
+              </p>
+              <p className="mt-2 font-mono text-sm break-all">
+                {receipt.triggering_match_id ??
+                  'Evidence changed without a declared Watch Contract trigger'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="mt-5">
         <CardHeader>
