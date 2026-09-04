@@ -43,6 +43,40 @@ def record_commercial_event(
     return row
 
 
+def record_commercial_event_once(
+    session: Session,
+    *,
+    event_name: str,
+    subject_type: str,
+    subject_id: str,
+    organization_id: uuid.UUID | None = None,
+    user_id: uuid.UUID | None = None,
+    metadata: dict | None = None,
+    commit: bool = True,
+) -> CommercialEvent:
+    """Record an idempotent server event for a stable commercial subject."""
+
+    existing = session.scalar(
+        select(CommercialEvent).where(
+            CommercialEvent.event_name == event_name,
+            CommercialEvent.subject_type == subject_type,
+            CommercialEvent.subject_id == subject_id,
+        )
+    )
+    if existing is not None:
+        return existing
+    return record_commercial_event(
+        session,
+        event_name=event_name,
+        organization_id=organization_id,
+        user_id=user_id,
+        subject_type=subject_type,
+        subject_id=subject_id,
+        metadata=metadata,
+        commit=commit,
+    )
+
+
 def commercial_analytics(session: Session) -> dict:
     """Return database-backed commercial metrics only; no modeled/demo KPIs."""
 
