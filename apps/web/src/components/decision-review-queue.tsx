@@ -77,7 +77,8 @@ export function DecisionReviewQueue() {
         if (cancelled) return
         setItems(
           states.filter(
-            (item): item is ReviewItem => item !== null && item.review.review_required,
+            (item): item is ReviewItem =>
+              item !== null && item.review.review_required,
           ),
         )
       })
@@ -101,25 +102,34 @@ export function DecisionReviewQueue() {
             <p className="font-mono text-[0.65rem] font-semibold tracking-[0.16em] text-amber-700 uppercase">
               Institutional review queue
             </p>
-            <CardTitle className="mt-2">Decisions reopened by governed change</CardTitle>
+            <CardTitle className="mt-2">
+              Decisions reopened by governed change
+            </CardTitle>
             <CardDescription className="mt-2 max-w-3xl">
-              A Watch Contract match never silently rewrites a decision. It reopens the linked Decision Room for human review and preserves the trigger until a successor Fiscal Receipt is issued.
+              A Watch Contract match never silently rewrites a decision. It
+              reopens the linked Decision Room for human review and preserves
+              the trigger until a successor Fiscal Receipt is issued.
             </CardDescription>
           </div>
-          <div className="rounded-full border border-amber-500/20 bg-background px-3 py-1 font-mono text-xs">
+          <div className="bg-background rounded-full border border-amber-500/20 px-3 py-1 font-mono text-xs">
             {loading ? 'Checking…' : `${items.length} require review`}
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-5">
         {loading ? (
-          <p className="text-muted-foreground text-sm">Loading decision review state…</p>
+          <p className="text-muted-foreground text-sm">
+            Loading decision review state…
+          </p>
         ) : items.length === 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="font-medium">No Decision Room currently requires re-review.</p>
+              <p className="font-medium">
+                No Decision Room currently requires re-review.
+              </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Watch Contracts remain active and will reopen only the decisions whose declared monitoring rules match governed changes.
+                Watch Contracts remain active and will reopen only the decisions
+                whose declared monitoring rules match governed changes.
               </p>
             </div>
             <Button asChild variant="outline">
@@ -132,11 +142,13 @@ export function DecisionReviewQueue() {
               <Link
                 key={room.id}
                 href={`/decision-rooms/${room.id}/review`}
-                className="group rounded-xl border border-amber-500/20 bg-background p-4 transition hover:border-amber-500/40"
+                className="group bg-background rounded-xl border border-amber-500/20 p-4 transition hover:border-amber-500/40"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold group-hover:underline">{room.title}</p>
+                    <p className="font-semibold group-hover:underline">
+                      {room.title}
+                    </p>
                     <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
                       {review.trigger?.headline ??
                         room.decision_question ??
