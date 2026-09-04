@@ -16,6 +16,7 @@ EXPECTED_TABLES = {
     "audit_logs",
     "billing_events",
     "claim_revisions",
+    "commercial_events",
     "customer_alert_deliveries",
     "customer_alerts",
     "customer_notification_preferences",
