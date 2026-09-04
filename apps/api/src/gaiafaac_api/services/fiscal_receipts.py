@@ -90,14 +90,26 @@ def _latest_receipt(
     organization_id: uuid.UUID,
     room_id: uuid.UUID,
 ) -> FiscalReceipt | None:
-    return session.scalar(
-        select(FiscalReceipt)
-        .where(
-            FiscalReceipt.organization_id == organization_id,
-            FiscalReceipt.room_id == room_id,
+    rows = list(
+        session.scalars(
+            select(FiscalReceipt)
+            .where(
+                FiscalReceipt.organization_id == organization_id,
+                FiscalReceipt.room_id == room_id,
+            )
+            .order_by(FiscalReceipt.created_at.desc())
         )
-        .order_by(FiscalReceipt.created_at.desc(), FiscalReceipt.id.desc())
     )
+    if not rows:
+        return None
+
+    predecessor_ids = {
+        row.predecessor_receipt_id
+        for row in rows
+        if row.predecessor_receipt_id is not None
+    }
+    tails = [row for row in rows if row.id not in predecessor_ids]
+    return tails[0] if tails else rows[0]
 
 
 def generate_receipt(
