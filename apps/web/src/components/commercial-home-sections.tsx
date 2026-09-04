@@ -74,7 +74,7 @@ export function CommercialDecisionChain() {
           {decisionChain.map(({ label, icon: Icon }, index) => (
             <li
               key={label}
-              className="border-slate-200 bg-slate-50/70 relative rounded-xl border p-4 dark:border-white/10 dark:bg-white/[0.035]"
+              className="relative rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-white/[0.035]"
             >
               <div className="flex items-center justify-between gap-3">
                 <Icon className="size-4 text-emerald-700 dark:text-emerald-300" />
