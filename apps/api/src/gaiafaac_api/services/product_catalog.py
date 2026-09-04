@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 
-from gaiafaac_api.entitlements import PLAN_ENTITLEMENTS
 from gaiafaac_api.database.enums import PlanCode
+from gaiafaac_api.entitlements import PLAN_ENTITLEMENTS
 
 
 class ProductBillingMode(StrEnum):
