@@ -195,7 +195,9 @@ def test_watch_operational_review_is_idempotent_tenant_scoped_and_does_not_clear
         resolved = client.post(
             f"/api/v1/fiscal-watch-contracts/reviews/{review['id']}/resolve",
             headers=_headers(owner_token),
-            json={"resolution_note": "Operations reviewed the delivery and routed the decision for re-review."},
+            json={
+                "resolution_note": "Operations reviewed the delivery and routed the decision for re-review."
+            },
         )
         assert resolved.status_code == 200
         assert resolved.json()["status"] == "resolved"
