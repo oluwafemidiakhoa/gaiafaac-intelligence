@@ -194,8 +194,12 @@ def test_watch_outbound_materializes_and_delivers_email_and_webhook_once(session
         monkeypatch.setattr(delivery, "_send_email", fake_email)
         monkeypatch.setattr(delivery, "_post_https", fake_post)
 
-        first = delivery.run_watch_delivery(session, _settings(), organization_id=user.organization_id)
-        second = delivery.run_watch_delivery(session, _settings(), organization_id=user.organization_id)
+        first = delivery.run_watch_delivery(
+            session, _settings(), organization_id=user.organization_id
+        )
+        second = delivery.run_watch_delivery(
+            session, _settings(), organization_id=user.organization_id
+        )
 
         assert first.deliveries_created == 2
         assert first.delivered == 2
@@ -306,7 +310,9 @@ def test_watch_email_is_not_backfilled_before_explicit_opt_in(session, monkeypat
         session.commit()
         monkeypatch.setattr(delivery, "_send_email", lambda settings, row: (True, None))
 
-        result = delivery.run_watch_delivery(session, _settings(), organization_id=user.organization_id)
+        result = delivery.run_watch_delivery(
+            session, _settings(), organization_id=user.organization_id
+        )
         email_delivery = session.scalar(
             select(FiscalWatchContractDelivery).where(
                 FiscalWatchContractDelivery.organization_id == user.organization_id,

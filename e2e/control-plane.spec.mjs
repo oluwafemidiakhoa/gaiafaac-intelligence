@@ -70,7 +70,9 @@ test.describe('Gaia Control Plane', () => {
       page.getByText('Decision infrastructure · continuous monitoring'),
     ).toBeVisible()
     await expect(
-      page.getByText(/auditable in-app, opted-in email and institutional webhook delivery/i),
+      page.getByText(
+        /auditable in-app, opted-in email and institutional webhook delivery/i,
+      ),
     ).toBeVisible()
   })
 

@@ -317,7 +317,9 @@ def materialize_watch_deliveries(
     return len(rows), created
 
 
-def _send_email(settings: Settings, delivery: FiscalWatchContractDelivery) -> tuple[bool, str | None]:
+def _send_email(
+    settings: Settings, delivery: FiscalWatchContractDelivery
+) -> tuple[bool, str | None]:
     payload = delivery.payload if isinstance(delivery.payload, dict) else {}
     recipient = delivery.recipient_address
     if not recipient:
@@ -395,7 +397,9 @@ def run_watch_delivery(
     if organization_id is not None:
         statement = statement.where(FiscalWatchContractDelivery.organization_id == organization_id)
     deliveries = list(
-        session.scalars(statement.order_by(FiscalWatchContractDelivery.created_at).limit(max_deliveries))
+        session.scalars(
+            statement.order_by(FiscalWatchContractDelivery.created_at).limit(max_deliveries)
+        )
     )
 
     delivered = retrying = dead_letter = deferred = failed = 0
@@ -409,18 +413,26 @@ def run_watch_delivery(
             continue
 
         if delivery.channel == "email":
-            user = session.get(User, delivery.recipient_user_id) if delivery.recipient_user_id else None
+            user = (
+                session.get(User, delivery.recipient_user_id)
+                if delivery.recipient_user_id
+                else None
+            )
             preference = (
                 session.get(CustomerNotificationPreference, delivery.recipient_user_id)
                 if delivery.recipient_user_id
                 else None
             )
-            membership = session.scalar(
-                select(OrganizationMembership).where(
-                    OrganizationMembership.organization_id == delivery.organization_id,
-                    OrganizationMembership.user_id == delivery.recipient_user_id,
+            membership = (
+                session.scalar(
+                    select(OrganizationMembership).where(
+                        OrganizationMembership.organization_id == delivery.organization_id,
+                        OrganizationMembership.user_id == delivery.recipient_user_id,
+                    )
                 )
-            ) if delivery.recipient_user_id else None
+                if delivery.recipient_user_id
+                else None
+            )
             if (
                 user is None
                 or not user.is_active
@@ -456,15 +468,20 @@ def run_watch_delivery(
                 dead_letter += 1
             else:
                 delivery.status = "retrying"
-                delivery.next_attempt_at = attempted_at + _RETRY_DELAYS[
-                    min(delivery.attempt_count - 1, len(_RETRY_DELAYS) - 1)
-                ]
+                delivery.next_attempt_at = (
+                    attempted_at
+                    + _RETRY_DELAYS[min(delivery.attempt_count - 1, len(_RETRY_DELAYS) - 1)]
+                )
                 retrying += 1
                 failed += 1
             session.commit()
             continue
 
-        endpoint = session.get(OrganizationWebhookEndpoint, delivery.endpoint_id) if delivery.endpoint_id else None
+        endpoint = (
+            session.get(OrganizationWebhookEndpoint, delivery.endpoint_id)
+            if delivery.endpoint_id
+            else None
+        )
         _plan_code, entitlements, _subscription = current_plan(session, delivery.organization_id)
         if endpoint is None or not endpoint.enabled or not entitlements.api_access:
             _defer(delivery, "Webhook endpoint is disabled, missing, or no longer entitled.")
@@ -479,7 +496,9 @@ def run_watch_delivery(
 
         body_text = canonical_json(delivery.payload or {})
         timestamp = int(datetime.now(UTC).timestamp())
-        secret_version = int((delivery.details or {}).get("signing_secret_version") or endpoint.secret_version)
+        secret_version = int(
+            (delivery.details or {}).get("signing_secret_version") or endpoint.secret_version
+        )
         secret = derive_signing_secret(
             settings,
             endpoint_id=endpoint.id,
@@ -538,9 +557,10 @@ def run_watch_delivery(
             failed += 1
         else:
             delivery.status = "retrying"
-            delivery.next_attempt_at = attempted_at + _RETRY_DELAYS[
-                min(delivery.attempt_count - 1, len(_RETRY_DELAYS) - 1)
-            ]
+            delivery.next_attempt_at = (
+                attempted_at
+                + _RETRY_DELAYS[min(delivery.attempt_count - 1, len(_RETRY_DELAYS) - 1)]
+            )
             retrying += 1
             failed += 1
         session.commit()
