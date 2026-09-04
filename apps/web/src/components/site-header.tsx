@@ -8,6 +8,7 @@ import { getPublishedOverview } from '@/lib/published-api'
 
 const productNavigation = [
   { href: '/terminal', label: 'Terminal' },
+  { href: '/decision-rooms', label: 'Rooms' },
   { href: '/live', label: 'Live' },
   { href: '/fiscal-pulse', label: 'Intelligence' },
   { href: '/sources', label: 'Evidence' },
@@ -67,7 +68,7 @@ export async function SiteHeader() {
         </div>
       </div>
 
-      <div className="gaia-shell flex min-h-[72px] items-center gap-4 py-3">
+      <div className="gaia-shell flex min-h-[72px] items-center gap-3 py-3">
         <Link
           href="/"
           className="group flex shrink-0 items-center gap-3"
@@ -76,7 +77,7 @@ export async function SiteHeader() {
           <div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl border border-amber-200/20 bg-amber-300 font-mono text-xs font-black text-teal-950 shadow-[0_8px_30px_rgba(251,191,36,0.15)] transition-transform group-hover:-translate-y-0.5">
             GF
           </div>
-          <span className="hidden xl:block">
+          <span className="hidden 2xl:block">
             <span className="block text-sm font-bold tracking-tight text-white">
               Gaia Fiscal Intelligence
             </span>
@@ -87,14 +88,14 @@ export async function SiteHeader() {
         </Link>
 
         <nav
-          className="ml-auto hidden items-center gap-1 lg:flex"
+          className="ml-auto hidden items-center gap-0.5 lg:flex"
           aria-label="Primary product navigation"
         >
           {productNavigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-white/72 transition hover:bg-white/[0.07] hover:text-white"
+              className="rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap text-white/72 transition hover:bg-white/[0.07] hover:text-white"
             >
               {item.label}
             </Link>
@@ -142,7 +143,7 @@ export async function SiteHeader() {
                   href={item.href}
                   className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
                 >
-                  {item.label}
+                  {item.label === 'Rooms' ? 'Decision Rooms' : item.label}
                 </Link>
               ))}
             </nav>
