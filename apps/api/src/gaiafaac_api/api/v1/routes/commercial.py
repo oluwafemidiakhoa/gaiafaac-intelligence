@@ -154,7 +154,9 @@ def update_pilot_lead(
 
     record_commercial_event(
         session,
-        event_name="pilot_lead_stage_changed" if lead.status != previous_status else "pilot_lead_updated",
+        event_name="pilot_lead_stage_changed"
+        if lead.status != previous_status
+        else "pilot_lead_updated",
         organization_id=lead.converted_organization_id,
         subject_type="pilot_lead",
         subject_id=str(lead.id),
