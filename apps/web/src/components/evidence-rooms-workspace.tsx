@@ -119,7 +119,11 @@ export function EvidenceRoomsWorkspace() {
       setRooms(result)
       setError(null)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Decision Rooms are unavailable.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Decision Rooms are unavailable.',
+      )
     }
   }, [])
 
@@ -137,12 +141,18 @@ export function EvidenceRoomsWorkspace() {
   const openRoom = useCallback(
     async (roomId: string) => {
       try {
-        const detail = await jsonRequest<RoomDetail>(`/evidence-rooms/${roomId}`)
+        const detail = await jsonRequest<RoomDetail>(
+          `/evidence-rooms/${roomId}`,
+        )
         setSelected(detail)
         await loadReceipts(roomId)
         setError(null)
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : 'Decision Room is unavailable.')
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Decision Room is unavailable.',
+        )
       }
     },
     [loadReceipts],
@@ -165,7 +175,8 @@ export function EvidenceRoomsWorkspace() {
         body: JSON.stringify({
           title,
           description: String(form.get('description') ?? '').trim() || null,
-          decision_question: String(form.get('decision_question') ?? '').trim() || null,
+          decision_question:
+            String(form.get('decision_question') ?? '').trim() || null,
           jurisdictions: commaList(form.get('jurisdictions')),
           evidence_domains: commaList(form.get('evidence_domains')),
           baseline_date: String(form.get('baseline_date') ?? '') || null,
@@ -175,7 +186,11 @@ export function EvidenceRoomsWorkspace() {
       await loadRooms()
       await openRoom(room.id)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to create Decision Room.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to create Decision Room.',
+      )
     } finally {
       setBusy(false)
     }
@@ -190,7 +205,8 @@ export function EvidenceRoomsWorkspace() {
       await jsonRequest(`/evidence-rooms/${selected.id}/decision-context`, {
         method: 'PATCH',
         body: JSON.stringify({
-          decision_question: String(form.get('decision_question') ?? '').trim() || null,
+          decision_question:
+            String(form.get('decision_question') ?? '').trim() || null,
           jurisdictions: commaList(form.get('jurisdictions')),
           evidence_domains: commaList(form.get('evidence_domains')),
           baseline_date: String(form.get('baseline_date') ?? '') || null,
@@ -200,7 +216,11 @@ export function EvidenceRoomsWorkspace() {
       await openRoom(selected.id)
       await loadRooms()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to save decision context.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to save decision context.',
+      )
     } finally {
       setBusy(false)
     }
@@ -231,7 +251,11 @@ export function EvidenceRoomsWorkspace() {
       await openRoom(selected.id)
       await loadRooms()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to capture evidence.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to capture evidence.',
+      )
     } finally {
       setBusy(false)
     }
@@ -248,7 +272,11 @@ export function EvidenceRoomsWorkspace() {
       await loadReceipts(selected.id)
       window.location.assign(`/verify/${receipt.id}`)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to generate Fiscal Receipt.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to generate Fiscal Receipt.',
+      )
     } finally {
       setBusy(false)
     }
@@ -288,7 +316,11 @@ export function EvidenceRoomsWorkspace() {
       await openRoom(selected.id)
       await loadRooms()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to update room status.')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Unable to update room status.',
+      )
     } finally {
       setBusy(false)
     }
@@ -301,7 +333,8 @@ export function EvidenceRoomsWorkspace() {
           <CardHeader>
             <CardTitle>Start a Decision Room</CardTitle>
             <CardDescription>
-              Freeze the context around an expensive decision before the evidence changes.
+              Freeze the context around an expensive decision before the
+              evidence changes.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -312,31 +345,31 @@ export function EvidenceRoomsWorkspace() {
                 maxLength={200}
                 required
                 placeholder="Edo infrastructure facility · FY2026"
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="border-input bg-background h-10 rounded-md border px-3 text-sm"
               />
               <textarea
                 name="decision_question"
                 maxLength={5000}
                 rows={3}
                 placeholder="What decision must this evidence support?"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="border-input bg-background rounded-md border px-3 py-2 text-sm"
               />
               <input
                 name="jurisdictions"
                 placeholder="Jurisdictions: Edo, Delta"
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="border-input bg-background h-10 rounded-md border px-3 text-sm"
               />
               <input
                 name="evidence_domains"
                 placeholder="Domains: FAAC, IGR, debt"
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="border-input bg-background h-10 rounded-md border px-3 text-sm"
               />
-              <label className="grid gap-1 text-xs text-muted-foreground">
+              <label className="text-muted-foreground grid gap-1 text-xs">
                 Baseline date
                 <input
                   name="baseline_date"
                   type="date"
-                  className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                  className="border-input bg-background text-foreground h-10 rounded-md border px-3 text-sm"
                 />
               </label>
               <textarea
@@ -344,7 +377,7 @@ export function EvidenceRoomsWorkspace() {
                 maxLength={5000}
                 rows={2}
                 placeholder="Internal purpose or mandate"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="border-input bg-background rounded-md border px-3 py-2 text-sm"
               />
               <Button disabled={busy} type="submit">
                 Create Decision Room
@@ -356,26 +389,30 @@ export function EvidenceRoomsWorkspace() {
         <Card>
           <CardHeader>
             <CardTitle>Organization rooms</CardTitle>
-            <CardDescription>{rooms.length} durable decision case files</CardDescription>
+            <CardDescription>
+              {rooms.length} durable decision case files
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {rooms.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No Decision Rooms yet.</p>
+              <p className="text-muted-foreground text-sm">
+                No Decision Rooms yet.
+              </p>
             ) : (
               rooms.map((room) => (
                 <button
                   key={room.id}
                   type="button"
                   onClick={() => void openRoom(room.id)}
-                  className="w-full rounded-lg border border-border p-3 text-left transition-colors hover:bg-muted/50"
+                  className="border-border hover:bg-muted/50 w-full rounded-lg border p-3 text-left transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className="font-medium leading-5">{room.title}</span>
-                    <span className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                    <span className="leading-5 font-medium">{room.title}</span>
+                    <span className="text-muted-foreground text-[0.65rem] font-semibold tracking-wide uppercase">
                       {room.status}
                     </span>
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="text-muted-foreground mt-2 text-xs">
                     {room.evidence_count} evidence · {room.note_count} notes
                   </p>
                 </button>
@@ -387,7 +424,7 @@ export function EvidenceRoomsWorkspace() {
 
       <section className="min-w-0">
         {error ? (
-          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          <div className="border-destructive/30 bg-destructive/5 text-destructive mb-4 rounded-lg border p-4 text-sm">
             {error}
           </div>
         ) : null}
@@ -397,8 +434,9 @@ export function EvidenceRoomsWorkspace() {
             <CardHeader>
               <CardTitle>Preserve what the institution knew.</CardTitle>
               <CardDescription>
-                Select a room or create one. A Decision Room keeps governed evidence,
-                human interpretation and later Fiscal Receipts structurally separate.
+                Select a room or create one. A Decision Room keeps governed
+                evidence, human interpretation and later Fiscal Receipts
+                structurally separate.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -411,7 +449,9 @@ export function EvidenceRoomsWorkspace() {
                     <p className="font-mono text-[0.65rem] font-semibold tracking-[0.16em] text-emerald-700 uppercase">
                       Decision Room · {selected.status}
                     </p>
-                    <CardTitle className="mt-2 text-2xl">{selected.title}</CardTitle>
+                    <CardTitle className="mt-2 text-2xl">
+                      {selected.title}
+                    </CardTitle>
                     <CardDescription className="mt-2">
                       {selected.decision_question ??
                         'No formal decision question has been declared yet.'}
@@ -451,25 +491,31 @@ export function EvidenceRoomsWorkspace() {
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-4">
                   <div>
-                    <p className="text-xs text-muted-foreground">Jurisdictions</p>
+                    <p className="text-muted-foreground text-xs">
+                      Jurisdictions
+                    </p>
                     <p className="mt-1 text-sm font-medium">
                       {selected.jurisdictions.join(', ') || 'Not declared'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Evidence domains</p>
+                    <p className="text-muted-foreground text-xs">
+                      Evidence domains
+                    </p>
                     <p className="mt-1 text-sm font-medium">
                       {selected.evidence_domains.join(', ') || 'Not declared'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Baseline</p>
+                    <p className="text-muted-foreground text-xs">Baseline</p>
                     <p className="mt-1 text-sm font-medium">
                       {selected.baseline_date ?? 'Not declared'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Evidence captured</p>
+                    <p className="text-muted-foreground text-xs">
+                      Evidence captured
+                    </p>
                     <p className="mt-1 font-mono text-lg font-semibold">
                       {selected.evidence.length}
                     </p>
@@ -494,32 +540,35 @@ export function EvidenceRoomsWorkspace() {
                       rows={3}
                       maxLength={5000}
                       placeholder="Decision question"
-                      className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="border-input bg-background rounded-md border px-3 py-2 text-sm"
                     />
                     <div className="grid gap-3 sm:grid-cols-2">
                       <input
                         name="jurisdictions"
                         defaultValue={selected.jurisdictions.join(', ')}
                         placeholder="Edo, Delta"
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                       />
                       <input
                         name="evidence_domains"
                         defaultValue={selected.evidence_domains.join(', ')}
                         placeholder="FAAC, IGR, debt"
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                       />
                     </div>
-                    <label className="grid gap-1 text-xs text-muted-foreground">
+                    <label className="text-muted-foreground grid gap-1 text-xs">
                       Baseline date
                       <input
                         name="baseline_date"
                         type="date"
                         defaultValue={selected.baseline_date ?? ''}
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                        className="border-input bg-background text-foreground h-10 rounded-md border px-3 text-sm"
                       />
                     </label>
-                    <Button disabled={busy || selected.status === 'archived'} type="submit">
+                    <Button
+                      disabled={busy || selected.status === 'archived'}
+                      type="submit"
+                    >
                       Save decision boundary
                     </Button>
                   </form>
@@ -530,8 +579,9 @@ export function EvidenceRoomsWorkspace() {
                 <CardHeader>
                   <CardTitle>Fiscal Receipt</CardTitle>
                   <CardDescription>
-                    Generate a reproducible SHA-256 manifest from the evidence captured in
-                    this room. Private notes are excluded from public verification.
+                    Generate a reproducible SHA-256 manifest from the evidence
+                    captured in this room. Private notes are excluded from
+                    public verification.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -549,24 +599,24 @@ export function EvidenceRoomsWorkspace() {
                         <Link
                           key={receipt.id}
                           href={`/verify/${receipt.id}`}
-                          className="block rounded-lg border border-border p-3 transition hover:bg-muted/50"
+                          className="border-border hover:bg-muted/50 block rounded-lg border p-3 transition"
                         >
                           <div className="flex items-center justify-between gap-3">
                             <span className="font-mono text-xs">
                               {shortHash(receipt.receipt_sha256)}
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-muted-foreground text-xs">
                               {receipt.evidence_count} records
                             </span>
                           </div>
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="text-muted-foreground mt-1 text-xs">
                             {new Date(receipt.created_at).toISOString()}
                           </p>
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       No Fiscal Receipt has been generated for this room yet.
                     </p>
                   )}
@@ -578,18 +628,24 @@ export function EvidenceRoomsWorkspace() {
               <CardHeader>
                 <CardTitle>Capture governed evidence</CardTitle>
                 <CardDescription>
-                  Add existing Gaia evidence objects. Each reference is snapshotted and
-                  hashed at capture time and cannot later be edited.
+                  Add existing Gaia evidence objects. Each reference is
+                  snapshotted and hashed at capture time and cannot later be
+                  edited.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="grid gap-3 md:grid-cols-2" onSubmit={addEvidence}>
+                <form
+                  className="grid gap-3 md:grid-cols-2"
+                  onSubmit={addEvidence}
+                >
                   <select
                     name="reference_kind"
                     defaultValue="fiscal_event"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                   >
-                    <option value="organization_alert">Organization alert</option>
+                    <option value="organization_alert">
+                      Organization alert
+                    </option>
                     <option value="fiscal_event">Fiscal Event</option>
                     <option value="fiscal_proof">Fiscal Proof</option>
                     <option value="decision_packet">Decision Packet</option>
@@ -599,17 +655,17 @@ export function EvidenceRoomsWorkspace() {
                     name="reference_id"
                     required
                     placeholder="Event ID, proof ID, packet ID or source SHA"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                   />
                   <input
                     name="state_slug"
                     placeholder="State slug when required"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                   />
                   <input
                     name="revenue_month"
                     type="date"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                   />
                   <input
                     name="year"
@@ -617,9 +673,12 @@ export function EvidenceRoomsWorkspace() {
                     min="2000"
                     max="2100"
                     placeholder="Year when required"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                   />
-                  <Button disabled={busy || selected.status === 'archived'} type="submit">
+                  <Button
+                    disabled={busy || selected.status === 'archived'}
+                    type="submit"
+                  >
                     Capture evidence
                   </Button>
                 </form>
@@ -630,33 +689,35 @@ export function EvidenceRoomsWorkspace() {
               <CardHeader>
                 <CardTitle>Evidence manifest</CardTitle>
                 <CardDescription>
-                  {selected.evidence.length} immutable references currently inside the
-                  decision boundary.
+                  {selected.evidence.length} immutable references currently
+                  inside the decision boundary.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {selected.evidence.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No evidence captured yet.</p>
+                  <p className="text-muted-foreground text-sm">
+                    No evidence captured yet.
+                  </p>
                 ) : (
-                  <div className="divide-y divide-border rounded-xl border border-border">
+                  <div className="divide-border border-border divide-y rounded-xl border">
                     {selected.evidence.map((item) => (
                       <div key={item.id} className="p-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-sm font-semibold capitalize">
                             {item.reference_kind.replaceAll('_', ' ')}
                           </span>
-                          <span className="font-mono text-xs text-muted-foreground">
+                          <span className="text-muted-foreground font-mono text-xs">
                             {new Date(item.captured_at).toISOString()}
                           </span>
                         </div>
-                        <p className="mt-2 font-mono text-xs break-all text-muted-foreground">
+                        <p className="text-muted-foreground mt-2 font-mono text-xs break-all">
                           Reference {item.reference_id}
                         </p>
                         <p className="mt-1 font-mono text-xs break-all">
                           Record SHA-256 {item.record_sha256}
                         </p>
                         {item.source_sha256 ? (
-                          <p className="mt-1 font-mono text-xs break-all text-muted-foreground">
+                          <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
                             Source SHA-256 {item.source_sha256}
                           </p>
                         ) : null}
@@ -671,34 +732,47 @@ export function EvidenceRoomsWorkspace() {
               <CardHeader>
                 <CardTitle>Human review notes</CardTitle>
                 <CardDescription>
-                  Interpretation remains explicitly separate from governed evidence and is
-                  never included in the public receipt verifier.
+                  Interpretation remains explicitly separate from governed
+                  evidence and is never included in the public receipt verifier.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <form className="flex flex-col gap-3 sm:flex-row" onSubmit={addNote}>
+                <form
+                  className="flex flex-col gap-3 sm:flex-row"
+                  onSubmit={addNote}
+                >
                   <textarea
                     name="body"
                     required
                     rows={2}
                     placeholder="Analyst interpretation, committee question or review note"
-                    className="min-h-20 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="border-input bg-background min-h-20 flex-1 rounded-md border px-3 py-2 text-sm"
                   />
-                  <Button disabled={busy || selected.status === 'archived'} type="submit">
+                  <Button
+                    disabled={busy || selected.status === 'archived'}
+                    type="submit"
+                  >
                     Add note
                   </Button>
                 </form>
                 {selected.notes.length ? (
                   selected.notes.map((note) => (
-                    <div key={note.id} className="rounded-lg border border-border p-4">
-                      <p className="text-sm leading-6 whitespace-pre-wrap">{note.body}</p>
-                      <p className="mt-2 text-xs text-muted-foreground">
+                    <div
+                      key={note.id}
+                      className="border-border rounded-lg border p-4"
+                    >
+                      <p className="text-sm leading-6 whitespace-pre-wrap">
+                        {note.body}
+                      </p>
+                      <p className="text-muted-foreground mt-2 text-xs">
                         Updated {new Date(note.updated_at).toISOString()}
                       </p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No human notes yet.</p>
+                  <p className="text-muted-foreground text-sm">
+                    No human notes yet.
+                  </p>
                 )}
               </CardContent>
             </Card>

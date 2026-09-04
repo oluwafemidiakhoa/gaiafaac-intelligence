@@ -181,14 +181,14 @@ Pilot leads are stored with organization/person/use-case context and can trigger
 
 Scores are hypotheses based on repository capability, not proven market validation. `Regulatory risk` uses **10 = highest risk**, so lower is preferable.
 
-| Primitive | Pain | WTP | Differentiation | Data readiness | Feasibility | Defensibility | Regulatory risk | Recurring revenue |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Decision Room + Fiscal Receipt + revision replay | 9 | 9 | 10 | 8 | 8 | 9 | 3 | 9 |
-| Customer-defined Fiscal Watch Contract | 8 | 8 | 8 | 8 | 8 | 8 | 2 | 10 |
-| Credit Committee Evidence Pack | 9 | 9 | 8 | 8 | 8 | 8 | 4 | 7 |
-| Governed Evidence API + Receipt Verification | 8 | 8 | 8 | 8 | 9 | 8 | 2 | 9 |
-| Due-Diligence Evidence Snapshot / transactional pack | 8 | 7 | 7 | 9 | 9 | 7 | 2 | 6 |
-| Scenario Lab with explicit assumptions + receipts | 7 | 7 | 7 | 8 | 8 | 7 | 3 | 6 |
+| Primitive                                            | Pain | WTP | Differentiation | Data readiness | Feasibility | Defensibility | Regulatory risk | Recurring revenue |
+| ---------------------------------------------------- | ---: | --: | --------------: | -------------: | ----------: | ------------: | --------------: | ----------------: |
+| Decision Room + Fiscal Receipt + revision replay     |    9 |   9 |              10 |              8 |           8 |             9 |               3 |                 9 |
+| Customer-defined Fiscal Watch Contract               |    8 |   8 |               8 |              8 |           8 |             8 |               2 |                10 |
+| Credit Committee Evidence Pack                       |    9 |   9 |               8 |              8 |           8 |             8 |               4 |                 7 |
+| Governed Evidence API + Receipt Verification         |    8 |   8 |               8 |              8 |           9 |             8 |               2 |                 9 |
+| Due-Diligence Evidence Snapshot / transactional pack |    8 |   7 |               7 |              9 |           9 |             7 |               2 |                 6 |
+| Scenario Lab with explicit assumptions + receipts    |    7 |   7 |               7 |              8 |           8 |             7 |               3 |                 6 |
 
 ## Selected product
 

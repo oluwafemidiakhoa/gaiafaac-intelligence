@@ -44,7 +44,10 @@ export async function verifyFiscalReceipt(receiptId: string) {
             : 'Fiscal Receipt verification is temporarily unavailable.',
       }
     }
-    return { data: verificationSchema.parse(await response.json()), error: null }
+    return {
+      data: verificationSchema.parse(await response.json()),
+      error: null,
+    }
   } catch {
     return {
       data: null,

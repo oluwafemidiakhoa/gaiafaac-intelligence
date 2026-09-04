@@ -12,7 +12,9 @@ const productRoutes = [
 ]
 
 test.describe('Gaia Control Plane', () => {
-  test('keeps the full product navigation visible on desktop', async ({ page }) => {
+  test('keeps the full product navigation visible on desktop', async ({
+    page,
+  }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     const primaryNavigation = page.getByRole('navigation', {
@@ -27,24 +29,27 @@ test.describe('Gaia Control Plane', () => {
       ).toHaveAttribute('href', href)
     }
 
-    await expect(page.getByRole('link', { name: 'Pricing' }).first()).toHaveAttribute(
-      'href',
-      '/pricing',
-    )
-    await expect(page.getByRole('link', { name: 'Account' }).first()).toHaveAttribute(
-      'href',
-      '/account',
-    )
+    await expect(
+      page.getByRole('link', { name: 'Pricing' }).first(),
+    ).toHaveAttribute('href', '/pricing')
+    await expect(
+      page.getByRole('link', { name: 'Account' }).first(),
+    ).toHaveAttribute('href', '/account')
 
     await expect(page.locator('header')).toHaveCount(1)
   })
 
   for (const [path, label] of productRoutes) {
-    test(`${label} route renders without a server failure`, async ({ page }) => {
+    test(`${label} route renders without a server failure`, async ({
+      page,
+    }) => {
       const response = await page.goto(path, { waitUntil: 'domcontentloaded' })
 
       expect(response, `${path} should return an HTTP response`).not.toBeNull()
-      expect(response.status(), `${path} should not be a 5xx response`).toBeLessThan(500)
+      expect(
+        response.status(),
+        `${path} should not be a 5xx response`,
+      ).toBeLessThan(500)
       await expect(page.locator('body')).toBeVisible()
       await expect(page.locator('header')).toHaveCount(1)
     })
@@ -59,7 +64,9 @@ test.describe('Gaia Control Plane', () => {
         name: 'Preserve what your institution knew when it made the decision.',
       }),
     ).toBeVisible()
-    await expect(page.getByText('Institutional decision infrastructure')).toBeVisible()
+    await expect(
+      page.getByText('Institutional decision infrastructure'),
+    ).toBeVisible()
   })
 
   test('public Fiscal Receipt verifier fails closed for an unknown receipt', async ({
@@ -76,7 +83,9 @@ test.describe('Gaia Control Plane', () => {
     ).toBeVisible()
   })
 
-  test('Review remains a first-class evidence-control surface', async ({ page }) => {
+  test('Review remains a first-class evidence-control surface', async ({
+    page,
+  }) => {
     await page.goto('/review', { waitUntil: 'domcontentloaded' })
 
     await expect(
@@ -88,7 +97,9 @@ test.describe('Gaia Control Plane', () => {
     await expect(page.getByText('Evidence lanes')).toBeVisible()
   })
 
-  test('Intelligence remains reachable from the primary navigation', async ({ page }) => {
+  test('Intelligence remains reachable from the primary navigation', async ({
+    page,
+  }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     const intelligenceLink = page
@@ -100,7 +111,9 @@ test.describe('Gaia Control Plane', () => {
     await expect(page.locator('h1').first()).toBeVisible()
   })
 
-  test('critical desktop surfaces do not overflow horizontally', async ({ page }) => {
+  test('critical desktop surfaces do not overflow horizontally', async ({
+    page,
+  }) => {
     for (const path of [
       '/',
       '/terminal',
@@ -125,7 +138,9 @@ test.describe('Gaia Control Plane mobile navigation', () => {
     isMobile: true,
   })
 
-  test('mobile menu preserves product and commercial navigation', async ({ page }) => {
+  test('mobile menu preserves product and commercial navigation', async ({
+    page,
+  }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     await page.getByText('Menu', { exact: true }).click()
 
@@ -138,9 +153,18 @@ test.describe('Gaia Control Plane mobile navigation', () => {
       mobileNavigation.getByRole('link', { name: 'Terminal', exact: true }),
     ).toBeVisible()
     await expect(
-      mobileNavigation.getByRole('link', { name: 'Decision Rooms', exact: true }),
+      mobileNavigation.getByRole('link', {
+        name: 'Decision Rooms',
+        exact: true,
+      }),
     ).toBeVisible()
-    for (const label of ['Live', 'Intelligence', 'Evidence', 'Review', 'Institutions']) {
+    for (const label of [
+      'Live',
+      'Intelligence',
+      'Evidence',
+      'Review',
+      'Institutions',
+    ]) {
       await expect(
         mobileNavigation.getByRole('link', { name: label, exact: true }),
       ).toBeVisible()
