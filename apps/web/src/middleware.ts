@@ -1,9 +1,14 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-// Gate operational routes behind HTTP Basic auth.
-// REVIEW_BASIC_AUTH holds "user:password". Unset denies all access (secure default).
+// Keep the public Review overview visible while protecting operational queues
+// and administrative actions behind HTTP Basic auth.
+// REVIEW_BASIC_AUTH holds "user:password". Unset denies protected access.
 export function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === '/review') {
+    return NextResponse.next()
+  }
+
   const expected = process.env.REVIEW_BASIC_AUTH
   if (!expected) {
     return new NextResponse('Administrative access is not configured.', {
