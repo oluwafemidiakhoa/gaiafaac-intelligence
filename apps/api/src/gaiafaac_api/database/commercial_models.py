@@ -45,8 +45,11 @@ class PilotLead(Base):
     plan_interest: Mapped[str] = mapped_column(String(40), nullable=False)
     use_case: Mapped[str] = mapped_column(Text, nullable=False)
     states_or_periods: Mapped[str | None] = mapped_column(Text)
+    requested_evidence_domains: Mapped[str | None] = mapped_column(Text)
     preferred_format: Mapped[str | None] = mapped_column(String(80))
     expected_users: Mapped[int | None] = mapped_column(Integer)
+    buying_timeline: Mapped[str | None] = mapped_column(String(240))
+    source_page: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="new")
     source: Mapped[str] = mapped_column(String(80), nullable=False, default="website")
 
@@ -58,6 +61,7 @@ class PilotLead(Base):
     owner_name: Mapped[str | None] = mapped_column(String(200))
     next_action: Mapped[str | None] = mapped_column(String(500))
     next_action_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    internal_notes: Mapped[str | None] = mapped_column(Text)
     closed_reason: Mapped[str | None] = mapped_column(String(1000))
     status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     converted_organization_id: Mapped[uuid.UUID | None] = mapped_column(
