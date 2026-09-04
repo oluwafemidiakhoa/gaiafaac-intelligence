@@ -10,10 +10,11 @@ export const dynamic = 'force-dynamic'
 
 const LEAD_STAGES = [
   'new',
-  'contacted',
   'qualified',
-  'pilot',
-  'proposal',
+  'discovery',
+  'pilot_proposed',
+  'pilot_active',
+  'commercial_review',
   'won',
   'lost',
 ] as const
@@ -25,6 +26,10 @@ function displayDate(value: string | null) {
     timeStyle: 'short',
     timeZone: 'America/Chicago',
   }).format(new Date(value))
+}
+
+function displayStage(value: string) {
+  return value.replaceAll('_', ' ')
 }
 
 function naira(value: string) {
@@ -59,10 +64,14 @@ export default async function CommercialLeadsPage() {
             <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Leads
             </p>
-            <p className="mt-2 text-3xl font-semibold">{analytics.leads_total}</p>
+            <p className="mt-2 text-3xl font-semibold">
+              {analytics.leads_total}
+            </p>
             <p className="text-muted-foreground mt-2 text-xs">
               {Object.entries(analytics.leads_by_status)
-                .map(([stage, count]) => `${stage} ${count}`)
+                .map(
+                  ([stage, count]) => `${displayStage(stage)} ${count}`,
+                )
                 .join(' · ') || 'No lead stages yet'}
             </p>
           </div>
@@ -144,7 +153,7 @@ export default async function CommercialLeadsPage() {
                 </div>
                 <div className="text-right text-sm">
                   <p className="font-medium capitalize">
-                    {lead.plan_interest} · {lead.status}
+                    {lead.plan_interest} · {displayStage(lead.status)}
                   </p>
                   <p className="text-muted-foreground mt-1">
                     {displayDate(lead.created_at)}
@@ -156,7 +165,10 @@ export default async function CommercialLeadsPage() {
                 <div>
                   <dt className="text-muted-foreground">Email</dt>
                   <dd className="mt-1 font-medium">
-                    <a className="hover:underline" href={`mailto:${lead.email}`}>
+                    <a
+                      className="hover:underline"
+                      href={`mailto:${lead.email}`}
+                    >
                       {lead.email}
                     </a>
                   </dd>
@@ -197,6 +209,20 @@ export default async function CommercialLeadsPage() {
                     {lead.states_or_periods ?? 'Not specified'}
                   </p>
                 </div>
+                <div>
+                  <h3 className="text-sm font-semibold">
+                    Requested evidence domains
+                  </h3>
+                  <p className="text-muted-foreground mt-2 text-sm leading-6 whitespace-pre-wrap">
+                    {lead.requested_evidence_domains ?? 'Not specified'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Buying timeline</h3>
+                  <p className="text-muted-foreground mt-2 text-sm leading-6 whitespace-pre-wrap">
+                    {lead.buying_timeline ?? 'Not specified'}
+                  </p>
+                </div>
               </div>
 
               <form
@@ -213,7 +239,7 @@ export default async function CommercialLeadsPage() {
                   >
                     {LEAD_STAGES.map((stage) => (
                       <option key={stage} value={stage}>
-                        {stage}
+                        {displayStage(stage)}
                       </option>
                     ))}
                   </select>
@@ -243,10 +269,21 @@ export default async function CommercialLeadsPage() {
                     name="next_action_at"
                     defaultValue={
                       lead.next_action_at
-                        ? new Date(lead.next_action_at).toISOString().slice(0, 16)
+                        ? new Date(lead.next_action_at)
+                            .toISOString()
+                            .slice(0, 16)
                         : ''
                     }
                     className="border-input bg-background h-10 rounded-md border px-3 text-sm"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs lg:col-span-5">
+                  Internal notes
+                  <textarea
+                    name="internal_notes"
+                    defaultValue={lead.internal_notes ?? ''}
+                    className="border-input bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
+                    placeholder="Private commercial qualification notes"
                   />
                 </label>
                 <label className="grid gap-1 text-xs lg:col-span-4">
