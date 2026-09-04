@@ -168,7 +168,7 @@ def extract_oagf_table_iv_excel(path: Path) -> ExtractedLgaTable:
 
             resolved_sheets += 1
             current_states = ["" for _ in panels]
-            for source_row, row in enumerate(rows[anchor + 1 :], start=anchor + 2):
+            for _source_row, row in enumerate(rows[anchor + 1 :], start=anchor + 2):
                 for panel_number, panel in enumerate(panels):
                     observed_state = _clean(_value(row, panel.state))
                     state_key = _key(observed_state)
