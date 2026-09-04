@@ -142,9 +142,12 @@ def update_pilot_lead(
         raise HTTPException(status_code=404, detail="Pilot lead not found.")
 
     changes = payload.model_dump(exclude_unset=True)
-    if "converted_organization_id" in changes and changes["converted_organization_id"] is not None:
-        if session.get(Organization, changes["converted_organization_id"]) is None:
-            raise HTTPException(status_code=422, detail="Converted organization does not exist.")
+    if (
+        "converted_organization_id" in changes
+        and changes["converted_organization_id"] is not None
+        and session.get(Organization, changes["converted_organization_id"]) is None
+    ):
+        raise HTTPException(status_code=422, detail="Converted organization does not exist.")
 
     previous_status = lead.status
     for field, value in changes.items():
