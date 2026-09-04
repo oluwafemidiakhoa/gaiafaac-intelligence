@@ -13,6 +13,7 @@ from gaiafaac_api.database.watch_contract_models import (
     FiscalWatchContract,
     FiscalWatchContractMatch,
 )
+from gaiafaac_api.services.watch_contract_operations import ensure_operational_reviews
 from gaiafaac_api.services.watchlists import sync_organization_watchlist_alerts
 from gaiafaac_api.watch_contract_schemas import (
     FiscalWatchContractCreateRequest,
@@ -47,6 +48,7 @@ def _contract_response(session: Session, row: FiscalWatchContract) -> FiscalWatc
         state_codes=list(row.state_codes or []),
         event_types=list(row.event_types or []),
         minimum_severity=row.minimum_severity,
+        escalation_after_minutes=row.escalation_after_minutes,
         status=row.status,
         last_evaluated_at=row.last_evaluated_at,
         created_at=row.created_at,
@@ -90,6 +92,7 @@ def create_contract(
         state_codes=payload.state_codes,
         event_types=payload.event_types,
         minimum_severity=payload.minimum_severity,
+        escalation_after_minutes=payload.escalation_after_minutes,
         status="active",
     )
     session.add(row)
@@ -186,6 +189,7 @@ def evaluate_contract(
             new_match_count=0,
             total_match_count=len(matches),
             matches=matches,
+            operational_review_count=0,
             note="Paused or archived contracts are not evaluated until reactivated.",
         )
 
@@ -226,9 +230,11 @@ def evaluate_contract(
         existing.add(alert.id)
 
     evaluated_at = datetime.now(UTC)
+    operational_review_count = 0
     if pending:
         session.add_all(pending)
         session.flush()
+        operational_review_count = ensure_operational_reviews(session, contract, pending)
         room = session.scalar(
             select(EvidenceRoom).where(
                 EvidenceRoom.id == contract.room_id,
@@ -248,10 +254,12 @@ def evaluate_contract(
         new_match_count=len(pending),
         total_match_count=len(matches),
         matches=matches,
+        operational_review_count=operational_review_count,
         note=(
             "Matches are deterministic references to governed organization alerts. "
-            "New matches mark the linked Decision Room for review. They do not constitute "
-            "a credit rating, solvency assessment, or prediction."
+            "New matches create auditable in-app operational reviews and mark the linked "
+            "Decision Room for evidence review. Resolving an operational review does not "
+            "clear the Decision Room; a successor Fiscal Receipt records that re-review."
         ),
     )
 
