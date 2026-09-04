@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FiscalDesignEvidence(BaseModel):
@@ -55,3 +56,18 @@ class FiscalDesignResponse(BaseModel):
     evidence: list[FiscalDesignEvidence]
     candidates: list[FiscalDesignCandidate]
     disclaimer: str
+
+
+class FiscalDesignPersistRequest(BaseModel):
+    """Inputs Gaia must recompute before persisting a scenario in a Decision Room."""
+
+    state_slug: str = Field(min_length=2, max_length=100)
+    year: int = Field(ge=2000, le=2100)
+    faac_shock_pct: Decimal = Field(default=Decimal("-20"), ge=-100, le=100)
+    igr_shock_pct: Decimal = Field(default=Decimal("0"), ge=-100, le=100)
+    reserve_share_pct: Decimal = Field(default=Decimal("10"), ge=0, le=100)
+    debt_change_pct: Decimal = Field(default=Decimal("0"), ge=-100, le=100)
+    debt_service_change_pct: Decimal = Field(default=Decimal("0"), ge=-100, le=100)
+    expenditure_change_pct: Decimal = Field(default=Decimal("0"), ge=-100, le=100)
+    capital_spending_change_pct: Decimal = Field(default=Decimal("0"), ge=-100, le=100)
+    inflation_assumption_pct: Decimal = Field(default=Decimal("0"), ge=-99, le=100)
