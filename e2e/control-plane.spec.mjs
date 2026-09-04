@@ -69,7 +69,9 @@ test.describe('Gaia Control Plane', () => {
     ).toBeVisible()
     await expect(page.getByText('Institutional review queue')).toBeVisible()
     await expect(
-      page.getByRole('heading', { name: 'Decisions reopened by governed change' }),
+      page.getByRole('heading', {
+        name: 'Decisions reopened by governed change',
+      }),
     ).toBeVisible()
   })
 
