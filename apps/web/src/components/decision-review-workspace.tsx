@@ -131,7 +131,11 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
       })
       .catch((caught: unknown) => {
         if (cancelled) return
-        setError(caught instanceof Error ? caught.message : 'Decision review is unavailable.')
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Decision review is unavailable.',
+        )
       })
 
     return () => {
@@ -142,9 +146,12 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
   async function issueSuccessorReceipt() {
     setBusy(true)
     try {
-      await request<ReceiptDetail>(`/decision-rooms/${roomId}/fiscal-receipts`, {
-        method: 'POST',
-      })
+      await request<ReceiptDetail>(
+        `/decision-rooms/${roomId}/fiscal-receipts`,
+        {
+          method: 'POST',
+        },
+      )
       await refresh()
     } catch (caught) {
       setError(
@@ -200,11 +207,14 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
                   review.review_required ? 'text-amber-700' : 'text-emerald-700'
                 }`}
               >
-                {review.review_required ? 'Decision review required' : 'Decision review current'}
+                {review.review_required
+                  ? 'Decision review required'
+                  : 'Decision review current'}
               </p>
               <CardTitle className="mt-2 text-2xl">{room.title}</CardTitle>
               <CardDescription className="mt-2">
-                {room.decision_question ?? 'No formal decision question has been declared.'}
+                {room.decision_question ??
+                  'No formal decision question has been declared.'}
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -252,7 +262,9 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
           <CardHeader>
             <CardTitle>What changed</CardTitle>
             <CardDescription>
-              Gaia preserves the governed Watch Contract match that reopened this decision. Human review is required before a successor Receipt becomes the new decision record.
+              Gaia preserves the governed Watch Contract match that reopened
+              this decision. Human review is required before a successor Receipt
+              becomes the new decision record.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -260,11 +272,17 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
-                    <p className="text-muted-foreground text-xs">Watch Contract</p>
-                    <p className="mt-1 text-sm font-medium">{review.trigger.contract_name}</p>
+                    <p className="text-muted-foreground text-xs">
+                      Watch Contract
+                    </p>
+                    <p className="mt-1 text-sm font-medium">
+                      {review.trigger.contract_name}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-xs">Jurisdiction</p>
+                    <p className="text-muted-foreground text-xs">
+                      Jurisdiction
+                    </p>
                     <p className="mt-1 text-sm font-medium">
                       {review.trigger.state_name} · {review.trigger.state_code}
                     </p>
@@ -282,30 +300,40 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
                     </p>
                   </div>
                 </div>
-                <div className="rounded-xl border bg-muted/20 p-4">
+                <div className="bg-muted/20 rounded-xl border p-4">
                   <p className="font-semibold">{review.trigger.headline}</p>
                   <p className="text-muted-foreground mt-2 text-sm leading-6">
                     {review.trigger.detail}
                   </p>
                   <p className="text-muted-foreground mt-3 font-mono text-xs">
-                    {review.trigger.event_type} · match {review.trigger.match_id}
+                    {review.trigger.event_type} · match{' '}
+                    {review.trigger.match_id}
                   </p>
                 </div>
               </>
             ) : (
               <p className="text-muted-foreground text-sm">
-                The room is marked for review, but detailed trigger context is not available.
+                The room is marked for review, but detailed trigger context is
+                not available.
               </p>
             )}
 
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
               <div>
-                <p className="font-semibold">Resolve by issuing a successor Fiscal Receipt</p>
+                <p className="font-semibold">
+                  Resolve by issuing a successor Fiscal Receipt
+                </p>
                 <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
-                  This does not approve the decision automatically. It records the current evidence boundary, links the predecessor Receipt and triggering Watch match, and records that the room was re-reviewed.
+                  This does not approve the decision automatically. It records
+                  the current evidence boundary, links the predecessor Receipt
+                  and triggering Watch match, and records that the room was
+                  re-reviewed.
                 </p>
               </div>
-              <Button disabled={busy} onClick={() => void issueSuccessorReceipt()}>
+              <Button
+                disabled={busy}
+                onClick={() => void issueSuccessorReceipt()}
+              >
                 {busy ? 'Issuing…' : 'Issue successor Receipt'}
               </Button>
             </div>
@@ -316,7 +344,9 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
           <CardHeader>
             <CardTitle>No unresolved governed change</CardTitle>
             <CardDescription>
-              This Decision Room is current against the monitoring events Gaia has recorded. Watch Contracts remain active independently of room lifecycle.
+              This Decision Room is current against the monitoring events Gaia
+              has recorded. Watch Contracts remain active independently of room
+              lifecycle.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -326,20 +356,26 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
         <CardHeader>
           <CardTitle>Fiscal Receipt lineage</CardTitle>
           <CardDescription>
-            Each successor Receipt points to its predecessor. The chain preserves how the decision evidence record evolved after governed changes.
+            Each successor Receipt points to its predecessor. The chain
+            preserves how the decision evidence record evolved after governed
+            changes.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {receipts.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No Fiscal Receipts exist for this room yet.</p>
+            <p className="text-muted-foreground text-sm">
+              No Fiscal Receipts exist for this room yet.
+            </p>
           ) : (
             <div className="space-y-3">
               {receipts.map((receipt, index) => (
                 <div key={receipt.id} className="rounded-xl border p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-mono text-xs text-muted-foreground">
-                        {index === 0 ? 'Current Receipt' : `Prior Receipt ${index}`}
+                      <p className="text-muted-foreground font-mono text-xs">
+                        {index === 0
+                          ? 'Current Receipt'
+                          : `Prior Receipt ${index}`}
                       </p>
                       <p className="mt-1 font-mono text-sm font-semibold break-all">
                         {receipt.receipt_sha256}
@@ -358,7 +394,9 @@ export function DecisionReviewWorkspace({ roomId }: { roomId: string }) {
                       <span>Origin Receipt</span>
                     )}
                     {receipt.triggering_match_id ? (
-                      <span>Triggered by Watch match {receipt.triggering_match_id}</span>
+                      <span>
+                        Triggered by Watch match {receipt.triggering_match_id}
+                      </span>
                     ) : null}
                   </div>
                 </div>
