@@ -34,6 +34,7 @@ EXPECTED_TABLES = {
     "fiscal_claims",
     "fiscal_events",
     "fiscal_proofs",
+    "fiscal_receipts",
     "fiscal_states",
     "forecasts",
     "generated_insights",
