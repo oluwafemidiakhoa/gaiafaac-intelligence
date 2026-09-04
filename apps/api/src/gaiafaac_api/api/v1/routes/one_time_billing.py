@@ -235,15 +235,21 @@ def verify_one_time_purchase(
     if str(metadata.get("organization_id") or "") != str(user.organization_id):
         raise HTTPException(status_code=403, detail="Payment does not belong to this organization.")
     if str(metadata.get("product_code") or "") != purchase.product_code:
-        raise HTTPException(status_code=409, detail="Purchased product does not match the order ledger.")
+        raise HTTPException(
+            status_code=409, detail="Purchased product does not match the order ledger."
+        )
 
     _label, configured_amount = _configured_product_price(purchase.product_code)
     try:
         paid_amount_naira = Decimal(str(data.get("amount"))) / Decimal("100")
     except (TypeError, ValueError, ArithmeticError) as error:
         raise HTTPException(status_code=409, detail="Payment amount is invalid.") from error
-    if paid_amount_naira != purchase.amount_naira or paid_amount_naira != Decimal(configured_amount):
-        raise HTTPException(status_code=409, detail="Payment amount does not match the configured product price.")
+    if paid_amount_naira != purchase.amount_naira or paid_amount_naira != Decimal(
+        configured_amount
+    ):
+        raise HTTPException(
+            status_code=409, detail="Payment amount does not match the configured product price."
+        )
 
     purchase.status = "success"
     purchase.completed_at = purchase.completed_at or datetime.now(UTC)
