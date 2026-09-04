@@ -24,6 +24,7 @@ from gaiafaac_api.database.commercial_models import PilotLead
 from gaiafaac_api.database.models import Organization
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.services.commercial_events import commercial_analytics, record_commercial_event
+from gaiafaac_api.services.product_catalog import public_product_catalog
 
 router = APIRouter(prefix="/commercial", tags=["commercial"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -68,6 +69,14 @@ def _notify_pilot_lead(lead: PilotLead) -> None:
             server.send_message(message)
     except Exception as error:  # noqa: BLE001 - the stored lead remains the source of truth
         logger.warning("Pilot lead notification email failed: %s", error)
+
+
+@router.get(
+    "/products",
+    summary="List Gaia commercial product modes without inventing unapproved prices",
+)
+def list_commercial_products() -> list[dict]:
+    return public_product_catalog()
 
 
 @router.post(
