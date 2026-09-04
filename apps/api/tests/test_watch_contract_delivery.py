@@ -31,7 +31,7 @@ def _client(session) -> TestClient:
     return TestClient(app)
 
 
-def _register(client: TestClient, email: str) -> tuple[str, User]:
+def _register(client: TestClient, email: str) -> str:
     response = client.post(
         "/api/v1/account/register",
         json={
@@ -42,8 +42,7 @@ def _register(client: TestClient, email: str) -> tuple[str, User]:
         },
     )
     assert response.status_code == 201
-    token = response.json()["token"]
-    return token, None  # type: ignore[return-value]
+    return response.json()["token"]
 
 
 def _activate_api(session, email: str) -> User:
@@ -151,7 +150,7 @@ def test_watch_outbound_materializes_and_delivers_email_and_webhook_once(session
     client = _client(session)
     try:
         email = "watch-outbound@example.com"
-        token, _placeholder = _register(client, email)
+        token = _register(client, email)
         user = _activate_api(session, email)
         state, _contract = _review_fixture(session, client, token, user)
         session.add(
@@ -230,7 +229,7 @@ def test_watch_webhook_failure_dead_letters_and_attempt_is_immutable(session, mo
     client = _client(session)
     try:
         email = "watch-dead-letter@example.com"
-        token, _placeholder = _register(client, email)
+        token = _register(client, email)
         user = _activate_api(session, email)
         state, _contract = _review_fixture(session, client, token, user)
         monkeypatch.setattr(socket, "getaddrinfo", _public_dns)
@@ -292,7 +291,7 @@ def test_watch_email_is_not_backfilled_before_explicit_opt_in(session, monkeypat
     client = _client(session)
     try:
         email = "watch-late-opt-in@example.com"
-        token, _placeholder = _register(client, email)
+        token = _register(client, email)
         user = _activate_api(session, email)
         _state, _contract = _review_fixture(session, client, token, user)
         session.add(
