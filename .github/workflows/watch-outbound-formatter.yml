@@ -1,0 +1,63 @@
+name: Watch outbound formatter (temporary)
+
+on:
+  push:
+    branches: [feat/watch-outbound-delivery]
+
+permissions:
+  contents: write
+
+jobs:
+  format-and-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/watch-outbound-delivery
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install API formatter
+        run: python -m pip install 'ruff==0.16.6'
+      - name: Install web formatter
+        run: npm ci
+      - name: Apply canonical formatting
+        run: |
+          python -m ruff format \
+            apps/api/src/gaiafaac_api/services/watch_contract_delivery.py \
+            apps/api/tests/test_watch_contract_delivery.py \
+            apps/api/src/gaiafaac_api/database/watch_contract_models.py \
+            apps/api/src/gaiafaac_api/watch_contract_schemas.py \
+            apps/api/src/gaiafaac_api/api/v1/routes/watch_contracts.py \
+            apps/api/src/gaiafaac_api/watch_contract_delivery_cli.py
+          npx prettier --write \
+            apps/web/src/components/fiscal-watch-contracts-workspace.tsx \
+            apps/web/src/app/watch-contracts/page.tsx \
+            e2e/control-plane.spec.mjs \
+            docs/watch-outbound-delivery.md
+      - name: Commit formatter output
+        run: |
+          if git diff --quiet; then
+            echo 'No formatting changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            apps/api/src/gaiafaac_api/services/watch_contract_delivery.py \
+            apps/api/tests/test_watch_contract_delivery.py \
+            apps/api/src/gaiafaac_api/database/watch_contract_models.py \
+            apps/api/src/gaiafaac_api/watch_contract_schemas.py \
+            apps/api/src/gaiafaac_api/api/v1/routes/watch_contracts.py \
+            apps/api/src/gaiafaac_api/watch_contract_delivery_cli.py \
+            apps/web/src/components/fiscal-watch-contracts-workspace.tsx \
+            apps/web/src/app/watch-contracts/page.tsx \
+            e2e/control-plane.spec.mjs \
+            docs/watch-outbound-delivery.md
+          git commit -m 'style: apply canonical Watch outbound formatting'
+          git push origin HEAD:feat/watch-outbound-delivery
