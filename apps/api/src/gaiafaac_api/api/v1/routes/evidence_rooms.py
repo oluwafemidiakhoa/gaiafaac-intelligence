@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.evidence_room_schemas import (
+    DecisionContextUpdate,
     EvidenceReferenceCreateRequest,
     EvidenceRoomCreateRequest,
     EvidenceRoomDetail,
@@ -24,13 +25,14 @@ from gaiafaac_api.services.evidence_rooms import (
     get_room,
     list_rooms,
     set_room_status,
+    update_decision_context,
     update_note,
 )
 
 router = APIRouter(prefix="/evidence-rooms", tags=["evidence rooms"])
 
 
-def _require_evidence_rooms(session: DatabaseSession, user: CurrentCustomer):
+def require_decision_rooms(session: DatabaseSession, user: CurrentCustomer):
     if user.organization_id is None:
         raise HTTPException(status_code=403, detail="No customer organization is attached.")
     membership = membership_for(session, user)
@@ -40,13 +42,13 @@ def _require_evidence_rooms(session: DatabaseSession, user: CurrentCustomer):
     if entitlements.max_users <= 1:
         raise HTTPException(
             status_code=403,
-            detail="Evidence Rooms require the Team or API plan.",
+            detail="Decision Rooms require the Team or API plan.",
         )
     return user.organization_id, membership
 
 
 def _require_room_admin(session: DatabaseSession, user: CurrentCustomer) -> uuid.UUID:
-    organization_id, membership = _require_evidence_rooms(session, user)
+    organization_id, membership = require_decision_rooms(session, user)
     if membership.role not in {"owner", "admin"}:
         raise HTTPException(
             status_code=403,
@@ -57,7 +59,7 @@ def _require_room_admin(session: DatabaseSession, user: CurrentCustomer) -> uuid
 
 @router.get("", response_model=list[EvidenceRoomSummary])
 def evidence_rooms(session: DatabaseSession, user: CurrentCustomer) -> list[EvidenceRoomSummary]:
-    organization_id, _membership = _require_evidence_rooms(session, user)
+    organization_id, _membership = require_decision_rooms(session, user)
     return list_rooms(session, organization_id)
 
 
@@ -67,13 +69,18 @@ def create_evidence_room(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> EvidenceRoomSummary:
-    organization_id, _membership = _require_evidence_rooms(session, user)
+    organization_id, _membership = require_decision_rooms(session, user)
     return create_room(
         session,
         organization_id,
         user,
         title=payload.title,
         description=payload.description,
+        decision_question=payload.decision_question,
+        jurisdictions=payload.jurisdictions,
+        evidence_domains=payload.evidence_domains,
+        baseline_date=payload.baseline_date,
+        evidence_cutoff=payload.evidence_cutoff,
     )
 
 
@@ -83,10 +90,33 @@ def evidence_room(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> EvidenceRoomDetail:
-    organization_id, _membership = _require_evidence_rooms(session, user)
+    organization_id, _membership = require_decision_rooms(session, user)
     room = get_room(session, organization_id, room_id)
     if room is None:
-        raise HTTPException(status_code=404, detail="Evidence Room not found.")
+        raise HTTPException(status_code=404, detail="Decision Room not found.")
+    return room
+
+
+@router.patch("/{room_id}/decision-context", response_model=EvidenceRoomSummary)
+def change_decision_context(
+    room_id: uuid.UUID,
+    payload: DecisionContextUpdate,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> EvidenceRoomSummary:
+    organization_id, _membership = require_decision_rooms(session, user)
+    room = update_decision_context(
+        session,
+        organization_id,
+        room_id,
+        decision_question=payload.decision_question,
+        jurisdictions=payload.jurisdictions,
+        evidence_domains=payload.evidence_domains,
+        baseline_date=payload.baseline_date,
+        evidence_cutoff=payload.evidence_cutoff,
+    )
+    if room is None:
+        raise HTTPException(status_code=404, detail="Decision Room not found or archived.")
     return room
 
 
@@ -100,7 +130,7 @@ def change_evidence_room_status(
     organization_id = _require_room_admin(session, user)
     room = set_room_status(session, organization_id, room_id, payload.status)
     if room is None:
-        raise HTTPException(status_code=404, detail="Evidence Room not found.")
+        raise HTTPException(status_code=404, detail="Decision Room not found.")
     return room
 
 
@@ -115,12 +145,12 @@ def add_evidence_to_room(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> EvidenceRoomEvidenceResponse:
-    organization_id, _membership = _require_evidence_rooms(session, user)
+    organization_id, _membership = require_decision_rooms(session, user)
     evidence = capture_reference(session, organization_id, room_id, user, payload)
     if evidence is None:
         raise HTTPException(
             status_code=404,
-            detail="Evidence Room or governed evidence reference was not found.",
+            detail="Decision Room or governed evidence reference was not found.",
         )
     return evidence
 
@@ -136,10 +166,10 @@ def add_room_note(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> EvidenceRoomNoteResponse:
-    organization_id, _membership = _require_evidence_rooms(session, user)
+    organization_id, _membership = require_decision_rooms(session, user)
     note = add_note(session, organization_id, room_id, user, payload.body)
     if note is None:
-        raise HTTPException(status_code=404, detail="Evidence Room not found or archived.")
+        raise HTTPException(status_code=404, detail="Decision Room not found or archived.")
     return note
 
 
@@ -151,7 +181,7 @@ def edit_room_note(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> EvidenceRoomNoteResponse:
-    organization_id, _membership = _require_evidence_rooms(session, user)
+    organization_id, _membership = require_decision_rooms(session, user)
     note = update_note(session, organization_id, room_id, note_id, user, payload.body)
     if note is None:
         raise HTTPException(status_code=404, detail="Editable room note not found.")
