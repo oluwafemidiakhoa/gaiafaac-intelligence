@@ -1,12 +1,22 @@
 from datetime import date
 from decimal import Decimal
 
+from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from gaiafaac_api.database.enums import ReportedUnit, VerificationStatus
+from gaiafaac_api.database.enums import ReportedUnit, SubscriptionStatus, VerificationStatus
 from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
-from gaiafaac_api.database.models import ReportingPeriod, SourceDocument, State, StateAllocation
+from gaiafaac_api.database.models import (
+    ReportingPeriod,
+    SourceDocument,
+    State,
+    StateAllocation,
+    Subscription,
+    User,
+)
 from gaiafaac_api.database.seeds import seed_states
+from gaiafaac_api.database.session import get_session
+from gaiafaac_api.main import app
 from gaiafaac_api.services.fiscal_design import fiscal_design, latest_comparable_design_year
 
 
@@ -74,6 +84,37 @@ def _seed_state_evidence(session, *, months: int = 12, year: int = 2026):
     )
     session.flush()
     return state
+
+
+def _client(session) -> TestClient:
+    app.dependency_overrides[get_session] = lambda: session
+    return TestClient(app)
+
+
+def _register_team_customer(client: TestClient, session, email: str) -> str:
+    registered = client.post(
+        "/api/v1/account/register",
+        json={
+            "full_name": "Fiscal Design Analyst",
+            "email": email,
+            "password": "a-long-secure-password",
+            "organization_name": "Fiscal Design Research",
+        },
+    )
+    assert registered.status_code == 201
+    user = session.scalar(select(User).where(User.email == email))
+    assert user is not None and user.organization_id is not None
+    session.add(
+        Subscription(
+            organization_id=user.organization_id,
+            status=SubscriptionStatus.ACTIVE,
+            plan_code="team",
+            external_customer_id=f"cus_{user.organization_id.hex[:12]}",
+            external_subscription_id=f"sub_{user.organization_id.hex[:12]}",
+        )
+    )
+    session.commit()
+    return registered.json()["token"]
 
 
 def test_fiscal_design_computes_deterministic_complete_year_scenarios(session):
@@ -157,3 +198,70 @@ def test_expanded_assumptions_are_recorded_but_not_calculated_without_evidence(s
     assert expanded.metrics == []
     assert "Debt change: 10.00%." in result.assumptions
     assert "inflation_adjustment" in result.unsupported_dimensions
+
+
+def test_fiscal_design_can_be_frozen_into_room_and_receipt(session):
+    state = _seed_state_evidence(session)
+    client = _client(session)
+    try:
+        token = _register_team_customer(client, session, "design-room@example.com")
+        headers = {"Authorization": f"Bearer {token}"}
+        room = client.post(
+            "/api/v1/evidence-rooms",
+            headers=headers,
+            json={
+                "title": "Edo resilience decision",
+                "decision_question": "Can the state absorb a 25% FAAC shock?",
+                "jurisdictions": [state.name],
+                "evidence_domains": ["FAAC", "IGR", "Fiscal Design"],
+            },
+        )
+        assert room.status_code == 201
+        room_id = room.json()["id"]
+
+        payload = {
+            "state_slug": state.slug,
+            "year": 2026,
+            "faac_shock_pct": "-25",
+            "igr_shock_pct": "-10",
+            "reserve_share_pct": "20",
+            "debt_change_pct": "0",
+            "debt_service_change_pct": "0",
+            "expenditure_change_pct": "0",
+            "capital_spending_change_pct": "0",
+            "inflation_assumption_pct": "0",
+        }
+        captured = client.post(
+            f"/api/v1/decision-rooms/{room_id}/fiscal-design-scenarios",
+            headers=headers,
+            json=payload,
+        )
+        assert captured.status_code == 201
+        evidence = captured.json()
+        assert evidence["reference_kind"] == "fiscal_design_scenario"
+        assert evidence["snapshot"]["scenario_gaia_id"] == evidence["reference_id"]
+        assert len(evidence["snapshot"]["captured_source_sha256s"]) == 2
+        assert len(evidence["record_sha256"]) == 64
+
+        duplicate = client.post(
+            f"/api/v1/decision-rooms/{room_id}/fiscal-design-scenarios",
+            headers=headers,
+            json=payload,
+        )
+        assert duplicate.status_code == 201
+        assert duplicate.json()["id"] == evidence["id"]
+
+        receipt = client.post(
+            f"/api/v1/decision-rooms/{room_id}/fiscal-receipts",
+            headers=headers,
+        )
+        assert receipt.status_code == 201
+        manifest_evidence = receipt.json()["manifest"]["evidence"]
+        scenario = next(
+            item for item in manifest_evidence if item["reference_kind"] == "fiscal_design_scenario"
+        )
+        assert scenario["reference_id"] == evidence["reference_id"]
+        assert scenario["snapshot"]["faac_shock_pct"] == "-25.00"
+        assert scenario["record_sha256"] == evidence["record_sha256"]
+    finally:
+        app.dependency_overrides.clear()
