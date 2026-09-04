@@ -18,6 +18,19 @@ EvidenceReferenceKind = Literal[
 class EvidenceRoomCreateRequest(BaseModel):
     title: str = Field(min_length=3, max_length=200)
     description: str | None = Field(default=None, max_length=5000)
+    decision_question: str | None = Field(default=None, max_length=5000)
+    jurisdictions: list[str] = Field(default_factory=list, max_length=37)
+    evidence_domains: list[str] = Field(default_factory=list, max_length=20)
+    baseline_date: date | None = None
+    evidence_cutoff: datetime | None = None
+
+
+class DecisionContextUpdate(BaseModel):
+    decision_question: str | None = Field(default=None, max_length=5000)
+    jurisdictions: list[str] = Field(default_factory=list, max_length=37)
+    evidence_domains: list[str] = Field(default_factory=list, max_length=20)
+    baseline_date: date | None = None
+    evidence_cutoff: datetime | None = None
 
 
 class EvidenceRoomStatusUpdate(BaseModel):
@@ -64,6 +77,11 @@ class EvidenceRoomSummary(BaseModel):
     id: uuid.UUID
     title: str
     description: str | None
+    decision_question: str | None = None
+    jurisdictions: list[str] = Field(default_factory=list)
+    evidence_domains: list[str] = Field(default_factory=list)
+    baseline_date: date | None = None
+    evidence_cutoff: datetime | None = None
     status: Literal["open", "closed", "archived"]
     created_by_user_id: uuid.UUID | None
     created_at: datetime

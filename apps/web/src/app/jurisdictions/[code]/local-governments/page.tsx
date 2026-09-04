@@ -1,3 +1,4 @@
+import { FileSpreadsheet, FileText, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 
 import { DataUnavailable } from '@/components/data-unavailable'
@@ -12,12 +13,36 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { formatDate, formatNaira } from '@/lib/format'
+import { getLgaPublicationStatus } from '@/lib/lga-status-api'
 import {
   getPublishedLgasForState,
   getPublishedOverview,
 } from '@/lib/published-api'
 
 export const dynamic = 'force-dynamic'
+
+const stageCopy = {
+  not_ingested: {
+    label: 'Source not ingested',
+    tone: 'neutral' as const,
+  },
+  investigation_required: {
+    label: 'Extraction blocked',
+    tone: 'warning' as const,
+  },
+  awaiting_review: {
+    label: 'Awaiting human review',
+    tone: 'warning' as const,
+  },
+  awaiting_publication: {
+    label: 'Awaiting publisher',
+    tone: 'success' as const,
+  },
+  published: {
+    label: 'Published',
+    tone: 'success' as const,
+  },
+}
 
 export default async function LocalGovernmentsPage({
   params,
@@ -26,9 +51,10 @@ export default async function LocalGovernmentsPage({
 }) {
   const { code } = await params
   const stateCode = code.toUpperCase()
-  const [result, overviewResult] = await Promise.all([
+  const [result, overviewResult, statusResult] = await Promise.all([
     getPublishedLgasForState(stateCode),
     getPublishedOverview(),
+    getLgaPublicationStatus(stateCode),
   ])
 
   if (!result.data) {
@@ -37,15 +63,99 @@ export default async function LocalGovernmentsPage({
       publishedOverview?.allocations.find(
         (item) => item.state_code === stateCode,
       ) ?? null
+    const pipelineStatus = statusResult.data
+    const statusPresentation = pipelineStatus
+      ? stageCopy[pipelineStatus.stage]
+      : null
 
     return (
       <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
         <PageHeader
           eyebrow={`Local-government ledger · ${stateCode}`}
-          title="Published LGA evidence unavailable"
-          description="GaiaFAAC publishes individual local-government allocations only after the full OAGF Table IV batch passes validation, human review, and four-eyes publication."
+          title="LGA evidence publication status"
+          description="GaiaFAAC exposes the governed state of OAGF Table IV evidence instead of inferring local-government values from state totals."
         />
-        <div className="mt-8">
+
+        <Card className="mt-8 overflow-hidden">
+          <CardHeader className="border-b">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <CardTitle>OAGF Table IV pipeline</CardTitle>
+                <CardDescription className="mt-2 max-w-3xl">
+                  {pipelineStatus?.message ??
+                    statusResult.error ??
+                    'The publication status could not be loaded.'}
+                </CardDescription>
+              </div>
+              {statusPresentation ? (
+                <StatusPill tone={statusPresentation.tone}>
+                  {statusPresentation.label}
+                </StatusPill>
+              ) : null}
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-5 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                Source format
+              </p>
+              <div className="mt-2 flex items-center gap-2 font-medium">
+                {pipelineStatus?.source_format === 'excel' ? (
+                  <FileSpreadsheet className="text-primary size-4" />
+                ) : (
+                  <FileText className="text-primary size-4" />
+                )}
+                {pipelineStatus?.source_format
+                  ? pipelineStatus.source_format.toUpperCase()
+                  : 'Not yet known'}
+              </div>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                Extracted jurisdictions
+              </p>
+              <p className="mt-2 font-mono text-lg font-semibold">
+                {pipelineStatus
+                  ? `${pipelineStatus.record_count}/${pipelineStatus.expected_record_count}`
+                  : '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                Blocking findings
+              </p>
+              <p className="mt-2 font-mono text-lg font-semibold">
+                {pipelineStatus?.blocking_count ?? '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                Evidence period
+              </p>
+              <p className="mt-2 font-medium">
+                {formatDate(pipelineStatus?.disbursement_month ?? null)}
+              </p>
+            </div>
+
+            {pipelineStatus?.original_filename ? (
+              <div className="sm:col-span-2 lg:col-span-4">
+                <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                  Retained official source
+                </p>
+                <p className="mt-2 text-sm font-medium break-all">
+                  {pipelineStatus.original_filename}
+                </p>
+                {pipelineStatus.source_sha256 ? (
+                  <p className="text-muted-foreground mt-2 font-mono text-xs break-all">
+                    SHA-256 {pipelineStatus.source_sha256}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <div className="mt-6">
           <DataUnavailable
             message={
               result.error ??
@@ -59,8 +169,9 @@ export default async function LocalGovernmentsPage({
             <CardHeader>
               <CardTitle>Available state evidence</CardTitle>
               <CardDescription>
-                Verified state-level FAAC evidence is available while the
-                local-government Table IV evidence remains unpublished.
+                Verified state-level FAAC evidence remains available while the
+                local-government Table IV batch completes its governed
+                publication path.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -82,11 +193,14 @@ export default async function LocalGovernmentsPage({
                   </p>
                 </div>
               </div>
-              <p className="text-muted-foreground text-sm leading-6">
-                State-level evidence does not substitute for missing LGA
-                evidence. No local-government value has been inferred from the
-                state total.
-              </p>
+              <div className="flex items-start gap-3 rounded-xl border p-4">
+                <ShieldCheck className="text-primary mt-0.5 size-5 shrink-0" />
+                <p className="text-muted-foreground text-sm leading-6">
+                  State-level evidence does not substitute for missing LGA
+                  evidence. Gaia does not derive individual local-government
+                  allocations from the state total.
+                </p>
+              </div>
               <div className="flex flex-wrap gap-3">
                 <Button asChild>
                   <Link href={`/states/${allocation.state_slug}`}>

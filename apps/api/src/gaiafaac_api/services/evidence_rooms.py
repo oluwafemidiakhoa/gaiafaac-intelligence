@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -59,6 +59,11 @@ def _summary(session: Session, room: EvidenceRoom) -> EvidenceRoomSummary:
         id=room.id,
         title=room.title,
         description=room.description,
+        decision_question=room.decision_question,
+        jurisdictions=list(room.jurisdictions or []),
+        evidence_domains=list(room.evidence_domains or []),
+        baseline_date=room.baseline_date,
+        evidence_cutoff=room.evidence_cutoff,
         status=room.status,
         created_by_user_id=room.created_by_user_id,
         created_at=room.created_at,
@@ -145,14 +150,52 @@ def create_room(
     *,
     title: str,
     description: str | None,
+    decision_question: str | None = None,
+    jurisdictions: list[str] | None = None,
+    evidence_domains: list[str] | None = None,
+    baseline_date: date | None = None,
+    evidence_cutoff: datetime | None = None,
 ) -> EvidenceRoomSummary:
     room = EvidenceRoom(
         organization_id=organization_id,
         created_by_user_id=user.id,
         title=title.strip(),
         description=description.strip() if description else None,
+        decision_question=decision_question.strip() if decision_question else None,
+        jurisdictions=sorted({item.strip() for item in jurisdictions or [] if item.strip()}),
+        evidence_domains=sorted(
+            {item.strip().lower() for item in evidence_domains or [] if item.strip()}
+        ),
+        baseline_date=baseline_date,
+        evidence_cutoff=evidence_cutoff,
     )
     session.add(room)
+    session.commit()
+    session.refresh(room)
+    return _summary(session, room)
+
+
+def update_decision_context(
+    session: Session,
+    organization_id: uuid.UUID,
+    room_id: uuid.UUID,
+    *,
+    decision_question: str | None,
+    jurisdictions: list[str],
+    evidence_domains: list[str],
+    baseline_date: date | None,
+    evidence_cutoff: datetime | None,
+) -> EvidenceRoomSummary | None:
+    room = get_room_row(session, organization_id, room_id)
+    if room is None or room.status == "archived":
+        return None
+    room.decision_question = decision_question.strip() if decision_question else None
+    room.jurisdictions = sorted({item.strip() for item in jurisdictions if item.strip()})
+    room.evidence_domains = sorted(
+        {item.strip().lower() for item in evidence_domains if item.strip()}
+    )
+    room.baseline_date = baseline_date
+    room.evidence_cutoff = evidence_cutoff
     session.commit()
     session.refresh(room)
     return _summary(session, room)

@@ -18,6 +18,9 @@ from gaiafaac_api.database.lga_models import (
 from gaiafaac_api.database.models import AuditLog, ExtractionRun, SourceDocument, State, User
 from gaiafaac_api.database.oagf_revision_models import OagfArchiveObject
 from gaiafaac_api.pipeline.extraction.oagf_lga_table_iv import extract_oagf_table_iv
+from gaiafaac_api.pipeline.extraction.oagf_lga_table_iv_excel import (
+    extract_oagf_table_iv_excel,
+)
 
 EXPECTED_LGA_JURISDICTIONS = 774
 
@@ -27,6 +30,12 @@ _STATE_ALIASES = {
     "nassarawa": "nasarawa",
 }
 
+_EXCEL_MIME_TYPES = {
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel.sheet.macroenabled.12",
+}
+
 
 def _key(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
@@ -34,6 +43,14 @@ def _key(value: str) -> str:
 
 def _slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")
+
+
+def _source_format(source: SourceDocument) -> tuple[str, str]:
+    suffix = Path(source.original_filename).suffix.casefold()
+    mime = source.mime_type.casefold()
+    if suffix in {".xlsx", ".xlsm"} or mime in _EXCEL_MIME_TYPES:
+        return "excel", suffix if suffix in {".xlsx", ".xlsm"} else ".xlsx"
+    return "pdf", ".pdf"
 
 
 def _active_user(session: Session, user_id: uuid.UUID, *, administrator: bool = False) -> User:
@@ -90,24 +107,36 @@ def import_lga_table_iv_from_archive(
     if archive is None:
         raise ValueError("Exact OAGF source bytes are not retained in the durable archive")
 
+    source_format, suffix = _source_format(source)
+    extractor_name = (
+        "oagf_table_iv_lga_excel" if source_format == "excel" else "oagf_table_iv_lga_pdf"
+    )
     run = ExtractionRun(
         source_document_id=source.id,
         status=ExtractionStatus.RUNNING,
-        extractor_name="oagf_table_iv_lga",
-        extractor_version="1",
+        extractor_name=extractor_name,
+        extractor_version="2",
         started_at=datetime.now(UTC),
         records_extracted=0,
-        configuration={"source_table": "Table IV", "expected_jurisdictions": 774},
+        configuration={
+            "source_table": "Table IV",
+            "source_format": source_format,
+            "expected_jurisdictions": EXPECTED_LGA_JURISDICTIONS,
+        },
     )
     session.add(run)
     session.flush()
 
     temporary_path: Path | None = None
     try:
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as handle:
             handle.write(archive.content)
             temporary_path = Path(handle.name)
-        extracted = extract_oagf_table_iv(temporary_path)
+        extracted = (
+            extract_oagf_table_iv_excel(temporary_path)
+            if source_format == "excel"
+            else extract_oagf_table_iv(temporary_path)
+        )
     finally:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)

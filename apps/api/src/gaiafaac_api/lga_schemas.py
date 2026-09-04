@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -59,3 +60,24 @@ class PublishedLgaDetailResponse(BaseModel):
     record_count: int
     allocations: list[PublishedLgaAllocation]
     note: str
+
+
+class LgaPublicationStatus(BaseModel):
+    state_name: str
+    state_code: str
+    stage: Literal[
+        "not_ingested",
+        "investigation_required",
+        "awaiting_review",
+        "awaiting_publication",
+        "published",
+    ]
+    reporting_label: str | None
+    disbursement_month: date | None
+    source_format: Literal["excel", "pdf"] | None
+    original_filename: str | None
+    source_sha256: str | None
+    record_count: int
+    expected_record_count: int = 774
+    blocking_count: int
+    message: str

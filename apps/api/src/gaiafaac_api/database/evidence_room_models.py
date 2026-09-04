@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -23,7 +24,13 @@ from gaiafaac_api.database.base import Base
 
 
 class EvidenceRoom(Base):
-    """A durable organization case file over governed fiscal evidence."""
+    """A durable organization decision case file over governed fiscal evidence.
+
+    The historical table name remains ``evidence_rooms`` for backwards
+    compatibility. Commercially this is the storage layer for a Gaia Fiscal
+    Decision Room: decision context is editable while captured evidence and
+    generated receipts are durable records.
+    """
 
     __tablename__ = "evidence_rooms"
     __table_args__ = (
@@ -44,6 +51,11 @@ class EvidenceRoom(Base):
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
+    decision_question: Mapped[str | None] = mapped_column(Text)
+    jurisdictions: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    evidence_domains: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    baseline_date: Mapped[date | None] = mapped_column(Date)
+    evidence_cutoff: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -54,7 +66,7 @@ class EvidenceRoom(Base):
 
 
 class EvidenceRoomEvidence(Base):
-    """An append-only, tamper-evident reference captured into an Evidence Room."""
+    """An append-only, tamper-evident reference captured into a Decision Room."""
 
     __tablename__ = "evidence_room_evidence"
     __table_args__ = (
@@ -122,16 +134,51 @@ class EvidenceRoomNote(Base):
     )
 
 
+class FiscalReceipt(Base):
+    """Immutable evidence manifest identifying one Decision Room evidence boundary."""
+
+    __tablename__ = "fiscal_receipts"
+    __table_args__ = (
+        CheckConstraint("length(receipt_sha256) = 64", name="ck_fiscal_receipt_hash_length"),
+        UniqueConstraint("room_id", "receipt_sha256", name="uq_fiscal_receipt_room_hash"),
+        Index("ix_fiscal_receipts_org_created", "organization_id", "created_at"),
+        Index("ix_fiscal_receipts_room_created", "room_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    room_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("evidence_rooms.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    evidence_cutoff: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    methodology_version: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="fiscal-receipt-v1"
+    )
+    manifest: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    public_manifest: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 def _immutable_reference(_mapper: Mapper[Any], _connection: Any, target: Any) -> None:
     raise ValueError(f"Captured {target.__class__.__name__} records are immutable.")
 
 
 def _durable_room(_mapper: Mapper[Any], _connection: Any, target: Any) -> None:
     raise ValueError(
-        "Evidence Rooms are durable case files; archive them instead of deleting them."
+        "Decision Rooms are durable case files; archive them instead of deleting them."
     )
 
 
 event.listen(EvidenceRoomEvidence, "before_update", _immutable_reference)
 event.listen(EvidenceRoomEvidence, "before_delete", _immutable_reference)
+event.listen(FiscalReceipt, "before_update", _immutable_reference)
+event.listen(FiscalReceipt, "before_delete", _immutable_reference)
 event.listen(EvidenceRoom, "before_delete", _durable_room)

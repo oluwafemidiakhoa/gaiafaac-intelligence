@@ -1,12 +1,14 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
 import {
   ArrowUpRight,
   BarChart3,
   FileCheck2,
   Landmark,
+  Search,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { DataUnavailable } from '@/components/data-unavailable'
 import { GaiaTerminalSearch } from '@/components/gaia-terminal-search'
@@ -23,7 +25,7 @@ import { formatDate, formatNaira } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
-  title: 'Gaia Fiscal Intelligence',
+  title: 'Gaia Terminal',
   description:
     'Evidence-led public-finance intelligence for Nigeria: source-linked allocation, revenue and debt research for institutional decisions.',
 }
@@ -33,17 +35,22 @@ const workflows = [
   {
     href: '/gaia-analyst',
     title: 'Ask Gaia',
-    description: 'Ask a fiscal question and inspect the evidence used.',
+    description:
+      'Interrogate governed fiscal evidence and inspect the source trail.',
+    icon: Sparkles,
   },
   {
     href: '/fiscal-watch',
     title: 'Fiscal Watch',
-    description: 'Monitor changes that need institutional attention.',
+    description: 'Monitor governed changes that need institutional attention.',
+    icon: Search,
   },
   {
     href: '/decision-packets',
     title: 'Decision Packets',
-    description: 'Turn verified evidence into a review-ready brief.',
+    description:
+      'Turn verified evidence into a review-ready institutional brief.',
+    icon: FileCheck2,
   },
 ] as const
 
@@ -68,246 +75,275 @@ export default async function GaiaTerminalPage() {
   const evidenceLanes = evidenceNetwork.data
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-      <section className="grid gap-8 border-b border-teal-900/10 pb-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold tracking-[0.2em] text-teal-900 uppercase">
-            Gaia Fiscal Intelligence
-          </p>
-          <h1
-            className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-teal-950 sm:text-5xl lg:text-6xl"
-            style={{ fontFamily: 'Georgia, serif' }}
-          >
-            Know what changed before it becomes a problem.
-          </h1>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-teal-700 sm:text-lg">
-            Evidence-led public-finance intelligence for Nigeria. Gaia keeps
-            official allocation, revenue, debt and macro evidence separate,
-            traceable and ready for a real decision.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href="/gaia-analyst"
-              className="inline-flex items-center gap-2 rounded-md bg-teal-900 px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            >
-              Ask Gaia <ArrowUpRight className="size-4" aria-hidden="true" />
-            </Link>
-            <Link
-              href="/sources"
-              className="inline-flex items-center gap-2 rounded-md border border-teal-900 bg-white px-5 py-3 text-sm font-semibold text-teal-900 transition-colors hover:bg-teal-50"
-            >
-              Inspect the evidence
-            </Link>
-          </div>
-        </div>
-        <aside className="rounded-2xl bg-teal-900 p-6 text-white shadow-xl shadow-teal-900/20 sm:p-7">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold tracking-[0.18em] text-amber-200 uppercase">
-                Live evidence
-              </p>
-              <h2 className="mt-3 text-xl font-semibold">
-                OAGF / FAAC allocation ledger
-              </h2>
+    <main className="pb-8">
+      <section className="relative overflow-hidden border-b border-white/8 bg-[#041915] text-white">
+        <div
+          className="absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(110,231,183,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(110,231,183,.35) 1px, transparent 1px)',
+            backgroundSize: '42px 42px',
+          }}
+        />
+        <div className="gaia-shell relative grid gap-12 py-14 lg:grid-cols-[1.08fr_.92fr] lg:items-center lg:py-20">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-3 py-1.5">
+              <span className="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.85)]" />
+              <span className="font-mono text-[0.65rem] font-bold tracking-[0.18em] text-emerald-100 uppercase">
+                Terminal / Evidence online
+              </span>
             </div>
-            <ShieldCheck className="size-6 text-amber-300" aria-hidden="true" />
-          </div>
-          <p className="mt-5 text-sm leading-6 text-teal-50/80">
-            Every public figure is tied to a retained source document and its
-            SHA-256 fingerprint. Missing evidence stays unavailable.
-          </p>
-          <div className="mt-6 border-t border-white/15 pt-5">
-            <p className="font-mono text-2xl font-semibold">
-              {data ? `${data.covered_states}/${data.expected_states}` : '—'}
+            <h1 className="mt-6 max-w-[12ch] text-5xl leading-[0.95] font-semibold tracking-[-0.06em] text-balance sm:text-6xl lg:text-7xl">
+              One command center for Nigerian fiscal evidence.
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-emerald-50/65">
+              Search the governed ledger, inspect source coverage, ask Gaia, and
+              move from a fiscal signal to a review-ready decision without
+              losing provenance.
             </p>
-            <p className="mt-1 text-xs text-amber-200/75">
-              jurisdictions in the latest published allocation
-            </p>
-          </div>
-        </aside>
-      </section>
-
-      {data ? (
-        <>
-          <section className="grid divide-y border-b border-teal-900/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            <div className="py-6 sm:pr-6">
-              <p className="text-xs font-medium tracking-wide text-teal-600 uppercase">
-                Latest verified allocation
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-teal-950">
-                {formatDate(data.period.revenue_month)}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-teal-600">
-                {data.period.reporting_label}
-              </p>
-            </div>
-            <div className="py-6 sm:px-6">
-              <p className="text-xs font-medium tracking-wide text-teal-600 uppercase">
-                State ledger total
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-teal-950">
-                {compactNaira(data.total_net)}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-teal-600">
-                Published state and FCT net allocations
-              </p>
-            </div>
-            <div className="py-6 sm:pl-6">
-              <p className="text-xs font-medium tracking-wide text-teal-600 uppercase">
-                Evidence status
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <FileCheck2
-                  className="size-5 text-teal-900"
-                  aria-hidden="true"
-                />
-                <p className="text-2xl font-semibold tracking-tight text-teal-950">
-                  Source-linked
-                </p>
-              </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/gaia-analyst"
+                className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-sm font-bold text-teal-950 transition hover:-translate-y-0.5 hover:bg-amber-200"
+              >
+                <Sparkles className="size-4" /> Ask Gaia
+              </Link>
               <Link
                 href="/sources"
-                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-teal-900 hover:underline"
+                className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
               >
-                Verify fingerprint{' '}
-                <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                <ShieldCheck className="size-4" /> Inspect evidence
               </Link>
             </div>
-          </section>
+          </div>
 
-          <section className="mt-10">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="gaia-panel-dark relative overflow-hidden p-6 sm:p-7">
+            <div className="absolute top-0 right-0 size-48 rounded-full bg-emerald-300/10 blur-3xl" />
+            <div className="relative flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.18em] text-teal-900 uppercase">
-                  Evidence network
+                <p className="font-mono text-[0.62rem] font-semibold tracking-[0.16em] text-emerald-200/45 uppercase">
+                  Governed ledger
                 </p>
-                <h2
-                  className="mt-2 text-2xl font-semibold tracking-tight text-teal-950"
-                  style={{ fontFamily: 'Georgia, serif' }}
-                >
-                  A fiscal picture built source by source.
+                <h2 className="mt-2 text-xl font-semibold">
+                  OAGF / FAAC allocation
                 </h2>
               </div>
-              <p className="max-w-md text-sm leading-6 text-teal-700">
-                Status is derived from governed published records. If Gaia
-                cannot verify a lane, it says so instead of guessing.
-              </p>
+              <ShieldCheck className="size-6 text-amber-300" />
             </div>
-            {evidenceLanes ? (
-              <div className="mt-5 grid gap-px overflow-hidden rounded-xl border border-teal-900/10 bg-teal-900/5 sm:grid-cols-2 lg:grid-cols-5">
-                {evidenceLanes.map((lane) => (
-                  <article key={lane.authority} className="bg-white p-5">
-                    <div className="flex items-center justify-between gap-2">
-                      <Landmark
-                        className="size-4 text-teal-900"
-                        aria-hidden="true"
-                      />
-                      <StatusPill
-                        tone={lane.state === 'Live' ? 'success' : 'neutral'}
-                      >
-                        {lane.state}
-                      </StatusPill>
-                    </div>
-                    <p className="mt-5 text-base font-semibold text-teal-950">
-                      {lane.authority}
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-teal-700">
-                      {lane.label}
-                    </p>
-                    <p className="mt-3 text-sm leading-6 text-teal-600">
-                      {lane.description}
-                    </p>
-                    <div className="mt-4 border-t border-slate-100 pt-3 font-mono text-[0.68rem] leading-5 text-slate-500 uppercase">
-                      <p>{lane.publishedRecordCount} verified records</p>
-                      {lane.latestPeriod ? (
-                        <p>Latest: {lane.latestPeriod}</p>
-                      ) : null}
-                    </div>
-                  </article>
-                ))}
+            <div className="relative mt-7 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Coverage
+                </p>
+                <p className="mt-2 font-mono text-2xl font-semibold">
+                  {data
+                    ? `${data.covered_states}/${data.expected_states}`
+                    : '—'}
+                </p>
               </div>
-            ) : (
-              <div className="mt-5">
-                <DataUnavailable
-                  message={
-                    evidenceNetwork.error ??
-                    'The evidence-status service is unavailable.'
-                  }
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                  Published total
+                </p>
+                <p className="mt-2 font-mono text-2xl font-semibold">
+                  {data ? compactNaira(data.total_net) : '—'}
+                </p>
+              </div>
+            </div>
+            <div className="relative mt-3 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-mono text-[0.58rem] tracking-[0.14em] text-white/35 uppercase">
+                    Publication state
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-emerald-200">
+                    {data
+                      ? 'Source-linked and published'
+                      : 'Awaiting governed publication'}
+                  </p>
+                </div>
+                <FileCheck2 className="size-5 text-emerald-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="gaia-shell gaia-section">
+        {data ? (
+          <>
+            <section className="grid gap-4 md:grid-cols-3">
+              <div className="gaia-panel p-6">
+                <p className="gaia-data-label">Latest verified allocation</p>
+                <p className="gaia-data-value mt-4">
+                  {formatDate(data.period.revenue_month)}
+                </p>
+                <p className="text-muted-foreground mt-2 text-sm leading-6">
+                  {data.period.reporting_label}
+                </p>
+              </div>
+              <div className="gaia-panel p-6">
+                <p className="gaia-data-label">State ledger total</p>
+                <p className="gaia-data-value mt-4">
+                  {compactNaira(data.total_net)}
+                </p>
+                <p className="text-muted-foreground mt-2 text-sm leading-6">
+                  Published state and FCT net allocations
+                </p>
+              </div>
+              <div className="gaia-panel p-6">
+                <p className="gaia-data-label">Evidence state</p>
+                <div className="mt-4 flex items-center gap-2">
+                  <FileCheck2 className="text-primary size-5" />
+                  <p className="text-xl font-semibold tracking-tight">
+                    Source-linked
+                  </p>
+                </div>
+                <Link
+                  href="/sources"
+                  className="text-primary mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"
+                >
+                  Verify fingerprint <ArrowUpRight className="size-3.5" />
+                </Link>
+              </div>
+            </section>
+
+            <section className="mt-8 overflow-hidden rounded-3xl border border-white/8 bg-[#061d19] p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,.15)] sm:p-7">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="font-mono text-[0.64rem] font-semibold tracking-[0.18em] text-amber-200/55 uppercase">
+                    Research command bar
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em]">
+                    Find the evidence. Then decide.
+                  </h2>
+                </div>
+                <BarChart3 className="size-6 text-amber-300" />
+              </div>
+              <div className="mt-6 rounded-2xl bg-white p-1.5 text-slate-950 shadow-inner">
+                <GaiaTerminalSearch
+                  jurisdictions={data.allocations}
+                  periodLabel={data.period.reporting_label}
                 />
               </div>
-            )}
-          </section>
+            </section>
 
-          <section className="mt-10 rounded-2xl bg-teal-900 p-5 text-white sm:p-7">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.18em] text-amber-300 uppercase">
-                  Research workspace
+            <section className="mt-10">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="gaia-kicker">Evidence network</p>
+                  <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">
+                    A fiscal picture built source by source.
+                  </h2>
+                </div>
+                <p className="text-muted-foreground max-w-md text-sm leading-6">
+                  If Gaia cannot verify a source lane, it remains unavailable
+                  instead of being inferred.
                 </p>
-                <h2
-                  className="mt-2 text-2xl font-semibold tracking-tight"
-                  style={{ fontFamily: 'Georgia, serif' }}
-                >
-                  Find the evidence. Then decide.
-                </h2>
               </div>
-              <BarChart3 className="size-6 text-amber-300" aria-hidden="true" />
-            </div>
-            <div className="mt-6 rounded-xl bg-white p-1.5 text-slate-950">
-              <GaiaTerminalSearch
-                jurisdictions={data.allocations}
-                periodLabel={data.period.reporting_label}
-              />
-            </div>
-          </section>
-        </>
-      ) : (
-        <div className="mt-10">
+
+              {evidenceLanes ? (
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                  {evidenceLanes.map((lane) => (
+                    <article
+                      key={lane.authority}
+                      className="gaia-panel group p-5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="bg-primary/[0.07] flex size-9 items-center justify-center rounded-xl">
+                          <Landmark className="text-primary size-4" />
+                        </div>
+                        <StatusPill
+                          tone={lane.state === 'Live' ? 'success' : 'neutral'}
+                        >
+                          {lane.state}
+                        </StatusPill>
+                      </div>
+                      <p className="mt-5 font-semibold tracking-tight">
+                        {lane.authority}
+                      </p>
+                      <p className="text-primary mt-1 text-sm font-medium">
+                        {lane.label}
+                      </p>
+                      <p className="text-muted-foreground mt-3 text-sm leading-6">
+                        {lane.description}
+                      </p>
+                      <div className="border-border text-muted-foreground mt-5 border-t pt-3 font-mono text-[0.66rem] leading-5 uppercase">
+                        <p>{lane.publishedRecordCount} verified records</p>
+                        {lane.latestPeriod ? (
+                          <p>Latest: {lane.latestPeriod}</p>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-6">
+                  <DataUnavailable
+                    message={
+                      evidenceNetwork.error ??
+                      'The evidence-status service is unavailable.'
+                    }
+                  />
+                </div>
+              )}
+            </section>
+          </>
+        ) : (
           <DataUnavailable
             message={
               overview.error ??
               'No governed published jurisdiction ledger is available for Gaia Terminal.'
             }
           />
-        </div>
-      )}
+        )}
 
-      <section className="mt-12 border-t border-teal-900/10 pt-10">
-        <p className="text-xs font-semibold tracking-[0.18em] text-teal-900 uppercase">
-          Decision workflow
-        </p>
-        <h2
-          className="mt-2 text-2xl font-semibold tracking-tight text-teal-950"
-          style={{ fontFamily: 'Georgia, serif' }}
-        >
-          From a fiscal signal to an evidence-backed action.
-        </h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {workflows.map((workflow, index) => (
-            <Link key={workflow.href} href={workflow.href} className="group">
-              <Card className="h-full border-teal-900/10 shadow-none transition-colors group-hover:border-teal-700">
-                <CardHeader>
-                  <p className="font-mono text-xs text-teal-900">
-                    0{index + 1}
-                  </p>
-                  <CardTitle className="pt-3 text-lg">
-                    {workflow.title}
-                  </CardTitle>
-                  <CardDescription className="leading-6">
-                    {workflow.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-900">
-                    Open workflow{' '}
-                    <ArrowUpRight className="size-3.5" aria-hidden="true" />
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
+        <section className="mt-12">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="gaia-kicker">Decision workflow</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">
+                From fiscal signal to evidence-backed action.
+              </h2>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {workflows.map((workflow, index) => {
+              const Icon = workflow.icon
+              return (
+                <Link
+                  key={workflow.href}
+                  href={workflow.href}
+                  className="group"
+                >
+                  <Card className="h-full transition group-hover:-translate-y-1">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="bg-primary/[0.07] flex size-10 items-center justify-center rounded-xl">
+                          <Icon className="text-primary size-5" />
+                        </div>
+                        <p className="text-muted-foreground font-mono text-xs">
+                          0{index + 1}
+                        </p>
+                      </div>
+                      <CardTitle className="pt-5 text-lg">
+                        {workflow.title}
+                      </CardTitle>
+                      <CardDescription>{workflow.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <span className="text-primary inline-flex items-center gap-1.5 text-sm font-semibold">
+                        Open workflow{' '}
+                        <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      </div>
     </main>
   )
 }
