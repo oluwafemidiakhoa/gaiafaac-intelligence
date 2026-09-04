@@ -196,9 +196,7 @@ def generate_receipt(
         "content_sha256": content_sha256,
         "predecessor_receipt_id": lineage["predecessor_receipt_id"],
         "predecessor_receipt_sha256": lineage["predecessor_receipt_sha256"],
-        "triggering_watch_contract_match_id": lineage[
-            "triggering_watch_contract_match_id"
-        ],
+        "triggering_watch_contract_match_id": lineage["triggering_watch_contract_match_id"],
     }
     row = FiscalReceipt(
         organization_id=organization_id,
