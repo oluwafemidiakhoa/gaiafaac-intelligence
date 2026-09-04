@@ -8,6 +8,13 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.services.account import current_plan, membership_for
+from gaiafaac_api.services.watch_contract_operations import (
+    acknowledge_operational_review,
+    assign_operational_review,
+    escalate_overdue_reviews,
+    list_operational_reviews,
+    resolve_operational_review,
+)
 from gaiafaac_api.services.watch_contracts import (
     create_contract,
     evaluate_contract,
@@ -17,9 +24,13 @@ from gaiafaac_api.services.watch_contracts import (
 )
 from gaiafaac_api.watch_contract_schemas import (
     FiscalWatchContractCreateRequest,
+    FiscalWatchContractEscalationResponse,
     FiscalWatchContractEvaluationResponse,
     FiscalWatchContractMatchResponse,
     FiscalWatchContractResponse,
+    FiscalWatchContractReviewAssignRequest,
+    FiscalWatchContractReviewResolveRequest,
+    FiscalWatchContractReviewResponse,
     FiscalWatchContractStatusUpdate,
 )
 
@@ -126,3 +137,109 @@ def evaluate_watch_contract(
     if result is None:
         raise HTTPException(status_code=404, detail="Fiscal Watch Contract not found.")
     return result
+
+
+@router.get("/reviews", response_model=list[FiscalWatchContractReviewResponse])
+def get_operational_reviews(
+    session: DatabaseSession,
+    user: CurrentCustomer,
+    review_status: Annotated[str | None, Query(alias="status")] = None,
+) -> list[FiscalWatchContractReviewResponse]:
+    organization_id, _membership = _require_watch_contracts(session, user)
+    statuses = {review_status} if review_status else None
+    if statuses and not statuses <= {"open", "acknowledged", "resolved"}:
+        raise HTTPException(status_code=422, detail="Unsupported operational review status.")
+    return list_operational_reviews(session, organization_id, statuses=statuses)
+
+
+@router.get(
+    "/{contract_id}/reviews",
+    response_model=list[FiscalWatchContractReviewResponse],
+)
+def get_contract_operational_reviews(
+    contract_id: uuid.UUID,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> list[FiscalWatchContractReviewResponse]:
+    organization_id, _membership = _require_watch_contracts(session, user)
+    contracts = {item.id for item in list_contracts(session, organization_id)}
+    if contract_id not in contracts:
+        raise HTTPException(status_code=404, detail="Fiscal Watch Contract not found.")
+    return list_operational_reviews(session, organization_id, contract_id=contract_id)
+
+
+@router.post(
+    "/reviews/{review_id}/acknowledge",
+    response_model=FiscalWatchContractReviewResponse,
+)
+def acknowledge_watch_review(
+    review_id: uuid.UUID,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> FiscalWatchContractReviewResponse:
+    organization_id, _membership = _require_watch_contracts(session, user)
+    review = acknowledge_operational_review(session, organization_id, review_id, user)
+    if review is None:
+        raise HTTPException(status_code=404, detail="Operational review not found.")
+    return review
+
+
+@router.patch(
+    "/reviews/{review_id}/assign",
+    response_model=FiscalWatchContractReviewResponse,
+)
+def assign_watch_review(
+    review_id: uuid.UUID,
+    payload: FiscalWatchContractReviewAssignRequest,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> FiscalWatchContractReviewResponse:
+    organization_id = _require_watch_contract_admin(session, user)
+    try:
+        review = assign_operational_review(
+            session,
+            organization_id,
+            review_id,
+            payload.assigned_user_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if review is None:
+        raise HTTPException(status_code=404, detail="Operational review not found.")
+    return review
+
+
+@router.post(
+    "/reviews/{review_id}/resolve",
+    response_model=FiscalWatchContractReviewResponse,
+)
+def resolve_watch_review(
+    review_id: uuid.UUID,
+    payload: FiscalWatchContractReviewResolveRequest,
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> FiscalWatchContractReviewResponse:
+    organization_id, _membership = _require_watch_contracts(session, user)
+    review = resolve_operational_review(
+        session,
+        organization_id,
+        review_id,
+        user,
+        payload.resolution_note,
+    )
+    if review is None:
+        raise HTTPException(status_code=404, detail="Operational review not found.")
+    return review
+
+
+@router.post("/reviews/escalate", response_model=FiscalWatchContractEscalationResponse)
+def escalate_watch_reviews(
+    session: DatabaseSession,
+    user: CurrentCustomer,
+) -> FiscalWatchContractEscalationResponse:
+    organization_id = _require_watch_contract_admin(session, user)
+    reviews = escalate_overdue_reviews(session, organization_id)
+    return FiscalWatchContractEscalationResponse(
+        escalated_count=len(reviews),
+        reviews=reviews,
+    )

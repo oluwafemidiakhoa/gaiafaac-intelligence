@@ -55,6 +55,22 @@ test.describe('Gaia Control Plane', () => {
     })
   }
 
+  test('Watch Contracts expose the operational monitoring surface', async ({
+    page,
+  }) => {
+    const response = await page.goto('/watch-contracts', {
+      waitUntil: 'domcontentloaded',
+    })
+    expect(response).not.toBeNull()
+    expect(response.status()).toBeLessThan(500)
+    await expect(
+      page.getByRole('heading', { name: 'Fiscal Watch Contracts' }),
+    ).toBeVisible()
+    await expect(
+      page.getByText('Decision infrastructure · continuous monitoring'),
+    ).toBeVisible()
+  })
+
   test('Decision Rooms present the institutional evidence-boundary and review workflow', async ({
     page,
   }) => {
@@ -141,6 +157,7 @@ test.describe('Gaia Control Plane', () => {
       '/',
       '/terminal',
       '/decision-rooms',
+      '/watch-contracts',
       '/fiscal-pulse',
       '/review',
       '/pricing',

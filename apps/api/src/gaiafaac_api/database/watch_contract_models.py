@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     String,
     UniqueConstraint,
     Uuid,
@@ -32,6 +33,10 @@ class FiscalWatchContract(Base):
             "minimum_severity IN ('informational', 'watch', 'elevated', 'notable', 'material', 'critical')",
             name="ck_fiscal_watch_contract_minimum_severity",
         ),
+        CheckConstraint(
+            "escalation_after_minutes >= 15 AND escalation_after_minutes <= 10080",
+            name="ck_fiscal_watch_contract_escalation_window",
+        ),
         Index("ix_fiscal_watch_contracts_org_status", "organization_id", "status"),
         Index("ix_fiscal_watch_contracts_room_created", "room_id", "created_at"),
     )
@@ -53,6 +58,9 @@ class FiscalWatchContract(Base):
     state_codes: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     event_types: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     minimum_severity: Mapped[str] = mapped_column(String(24), nullable=False, default="watch")
+    escalation_after_minutes: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1440, server_default="1440"
+    )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     last_evaluated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
@@ -87,5 +95,120 @@ class FiscalWatchContractMatch(Base):
         ForeignKey("organization_alerts.id", ondelete="CASCADE"), nullable=False, index=True
     )
     matched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class FiscalWatchContractReview(Base):
+    """Mutable organization workflow created for one immutable Watch Contract match."""
+
+    __tablename__ = "fiscal_watch_contract_reviews"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('open', 'acknowledged', 'resolved')",
+            name="ck_fiscal_watch_contract_review_status",
+        ),
+        UniqueConstraint("match_id", name="uq_fiscal_watch_contract_review_match"),
+        Index(
+            "ix_fiscal_watch_contract_reviews_org_status_due",
+            "organization_id",
+            "status",
+            "due_at",
+        ),
+        Index(
+            "ix_fiscal_watch_contract_reviews_contract_created",
+            "contract_id",
+            "created_at",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    match_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fiscal_watch_contract_matches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    contract_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fiscal_watch_contracts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    room_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("evidence_rooms.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    assigned_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    acknowledged_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    resolution_note: Mapped[str | None] = mapped_column(String(5000))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class FiscalWatchContractDelivery(Base):
+    """Auditable delivery record proving a Watch match entered the organization inbox."""
+
+    __tablename__ = "fiscal_watch_contract_deliveries"
+    __table_args__ = (
+        CheckConstraint(
+            "channel IN ('in_app')",
+            name="ck_fiscal_watch_contract_delivery_channel",
+        ),
+        CheckConstraint(
+            "status IN ('delivered', 'failed')",
+            name="ck_fiscal_watch_contract_delivery_status",
+        ),
+        UniqueConstraint(
+            "review_id",
+            "channel",
+            name="uq_fiscal_watch_contract_delivery_review_channel",
+        ),
+        Index(
+            "ix_fiscal_watch_contract_deliveries_org_created",
+            "organization_id",
+            "created_at",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    review_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fiscal_watch_contract_reviews.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    match_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fiscal_watch_contract_matches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    contract_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("fiscal_watch_contracts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    recipient_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    channel: Mapped[str] = mapped_column(String(24), nullable=False, default="in_app")
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="delivered")
+    details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
