@@ -34,6 +34,7 @@ def record_commercial_event(
         subject_id=subject_id,
         source="server",
         event_metadata=dict(metadata or {}),
+        occurred_at=datetime.now(UTC),
     )
     session.add(row)
     if commit:
