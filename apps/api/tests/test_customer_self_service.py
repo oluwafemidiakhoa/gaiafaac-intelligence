@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -181,7 +182,7 @@ def test_one_time_purchase_is_persisted_and_verified_once(session, monkeypatch):
         purchase_id = body["purchase"]["id"]
         reference = body["purchase"]["provider_reference"]
 
-        purchase = session.get(OneTimePurchase, purchase_id)
+        purchase = session.get(OneTimePurchase, uuid.UUID(purchase_id))
         assert purchase is not None
         assert purchase.status == "pending"
         assert purchase.amount_naira == Decimal("75000")
