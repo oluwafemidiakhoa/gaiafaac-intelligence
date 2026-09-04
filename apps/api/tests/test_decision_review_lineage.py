@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
@@ -170,7 +172,9 @@ def test_successor_receipt_resolves_review_required_with_attribution(session):
         )
         assert initial.status_code == 201
 
-        room = session.scalar(select(EvidenceRoom).where(EvidenceRoom.id == room_id))
+        room = session.scalar(
+            select(EvidenceRoom).where(EvidenceRoom.id == uuid.UUID(room_id))
+        )
         assert room is not None
         room.review_required = True
         session.commit()
