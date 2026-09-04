@@ -127,9 +127,7 @@ def ensure_operational_reviews(
     now = _utc_now()
     for match in matches:
         existing = session.scalar(
-            select(FiscalWatchContractReview).where(
-                FiscalWatchContractReview.match_id == match.id
-            )
+            select(FiscalWatchContractReview).where(FiscalWatchContractReview.match_id == match.id)
         )
         if existing is not None:
             continue
@@ -318,7 +316,5 @@ def escalate_overdue_reviews(
         if row is None:
             continue
         review_row, match, contract, alert, state = row
-        responses.append(
-            _review_response(session, review_row, match, contract, alert, state)
-        )
+        responses.append(_review_response(session, review_row, match, contract, alert, state))
     return responses
