@@ -38,8 +38,10 @@ def deliver_payment_onboarding(
     """Deliver onboarding after verified payment without making entitlement depend on email."""
 
     normalized_email = (email or "").strip().lower()
-    if not normalized_email or _already_delivered(session, payment):
-        return bool(normalized_email and _already_delivered(session, payment))
+    if not normalized_email:
+        return False
+    if _already_delivered(session, payment):
+        return True
 
     plan_label = subscription.plan_code.replace("_", " ").title()
     invoice = payment.invoice_number or payment.paystack_transaction_id or str(payment.id)
