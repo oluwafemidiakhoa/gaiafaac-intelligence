@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -40,6 +41,7 @@ class EvidenceRoom(Base):
         ),
         Index("ix_evidence_rooms_org_created", "organization_id", "created_at"),
         Index("ix_evidence_rooms_org_status", "organization_id", "status"),
+        Index("ix_evidence_rooms_review_required", "organization_id", "review_required"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -57,6 +59,17 @@ class EvidenceRoom(Base):
     baseline_date: Mapped[date | None] = mapped_column(Date)
     evidence_cutoff: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
+    review_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    review_trigger_match_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("fiscal_watch_contract_matches.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    review_required_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reviewed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -143,6 +156,8 @@ class FiscalReceipt(Base):
         UniqueConstraint("room_id", "receipt_sha256", name="uq_fiscal_receipt_room_hash"),
         Index("ix_fiscal_receipts_org_created", "organization_id", "created_at"),
         Index("ix_fiscal_receipts_room_created", "room_id", "created_at"),
+        Index("ix_fiscal_receipts_predecessor", "predecessor_receipt_id"),
+        Index("ix_fiscal_receipts_trigger_match", "triggering_match_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -155,9 +170,15 @@ class FiscalReceipt(Base):
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    predecessor_receipt_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("fiscal_receipts.id", ondelete="RESTRICT"), nullable=True
+    )
+    triggering_match_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("fiscal_watch_contract_matches.id", ondelete="RESTRICT"), nullable=True
+    )
     evidence_cutoff: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     methodology_version: Mapped[str] = mapped_column(
-        String(80), nullable=False, default="fiscal-receipt-v1"
+        String(80), nullable=False, default="fiscal-receipt-v2"
     )
     manifest: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     public_manifest: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
