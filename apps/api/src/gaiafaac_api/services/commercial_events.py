@@ -78,7 +78,9 @@ def commercial_analytics(session: Session) -> dict:
 
     leads_by_status = {str(name): int(count) for name, count in lead_rows}
     leads_by_plan = {str(name): int(count) for name, count in lead_plan_rows}
-    active_subscriptions_by_plan = {str(name): int(count) for name, count in active_subscription_rows}
+    active_subscriptions_by_plan = {
+        str(name): int(count) for name, count in active_subscription_rows
+    }
     events_last_30_days = {str(name): int(count) for name, count in event_rows}
 
     return {
