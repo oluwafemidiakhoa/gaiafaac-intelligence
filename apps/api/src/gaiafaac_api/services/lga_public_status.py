@@ -75,9 +75,7 @@ def lga_publication_status(
         )
     else:
         stage = "awaiting_review"
-        message = (
-            "The complete extraction is staged for human review before four-eyes publication."
-        )
+        message = "The complete extraction is staged for human review before four-eyes publication."
 
     return LgaPublicationStatus(
         state_name=state.name,
