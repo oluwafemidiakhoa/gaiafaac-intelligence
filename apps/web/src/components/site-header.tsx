@@ -9,6 +9,7 @@ import { getPublishedOverview } from '@/lib/published-api'
 const productNavigation = [
   { href: '/terminal', label: 'Terminal' },
   { href: '/decision-rooms', label: 'Rooms' },
+  { href: '/watch-contracts', label: 'Watch' },
   { href: '/live', label: 'Live' },
   { href: '/fiscal-pulse', label: 'Intelligence' },
   { href: '/sources', label: 'Evidence' },
@@ -109,9 +110,9 @@ export async function SiteHeader() {
             variant="outline"
             className="border-white/12 bg-white/[0.04] text-white hover:bg-white/[0.09] hover:text-white"
           >
-            <Link href="/pilot">
+            <Link href="/watch-contracts">
               <CircleDollarSign className="size-4" />
-              Request Watch
+              Create Watch
             </Link>
           </Button>
           <Button
@@ -143,7 +144,11 @@ export async function SiteHeader() {
                   href={item.href}
                   className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
                 >
-                  {item.label === 'Rooms' ? 'Decision Rooms' : item.label}
+                  {item.label === 'Rooms'
+                    ? 'Decision Rooms'
+                    : item.label === 'Watch'
+                      ? 'Watch Contracts'
+                      : item.label}
                 </Link>
               ))}
             </nav>
@@ -172,10 +177,10 @@ export async function SiteHeader() {
                 Ask Gaia
               </Link>
               <Link
-                href="/pilot"
+                href="/watch-contracts"
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-center text-sm font-semibold text-white"
               >
-                Request Fiscal Watch
+                Create Watch Contract
               </Link>
             </div>
             <div className="mt-3 flex justify-end border-t border-white/10 pt-3">

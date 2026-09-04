@@ -11,6 +11,7 @@ from gaiafaac_api.database import (
     lga_models,
     liability_models,
     models,
+    watch_contract_models,
 )
 from gaiafaac_api.database.base import Base
 
@@ -26,4 +27,5 @@ __all__ = [
     "lga_models",
     "liability_models",
     "models",
+    "watch_contract_models",
 ]

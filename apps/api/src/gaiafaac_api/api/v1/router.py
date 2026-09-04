@@ -29,6 +29,7 @@ from gaiafaac_api.api.v1.routes.oagf_revisions import router as oagf_revisions_r
 from gaiafaac_api.api.v1.routes.published_data import router as published_data_router
 from gaiafaac_api.api.v1.routes.review import router as review_router
 from gaiafaac_api.api.v1.routes.temporal import router as temporal_router
+from gaiafaac_api.api.v1.routes.watch_contracts import router as watch_contracts_router
 from gaiafaac_api.api.v1.routes.watchlists import router as watchlists_router
 
 router = APIRouter(prefix="/api/v1")
@@ -47,6 +48,7 @@ router.include_router(account_router)
 router.include_router(billing_router)
 router.include_router(billing_dashboard_router)
 router.include_router(watchlists_router)
+router.include_router(watch_contracts_router)
 router.include_router(evidence_provenance_router)
 router.include_router(evidence_rooms_router)
 router.include_router(fiscal_receipts_router)
