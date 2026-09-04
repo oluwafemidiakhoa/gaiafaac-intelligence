@@ -51,7 +51,7 @@ function apiBaseUrl() {
     .replace(/\/$/, '')
 }
 
-function adminHeaders(extra?: HeadersInit) {
+function adminHeaders(extra: Record<string, string> = {}) {
   return {
     'X-Admin-Key': process.env.ADMIN_KEY ?? '',
     ...extra,
