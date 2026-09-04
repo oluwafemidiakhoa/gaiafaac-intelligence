@@ -109,7 +109,7 @@ def generate_receipt(
     ]
     source_hashes = sorted({row.source_sha256 for row in rows if row.source_sha256})
     record_hashes = [row.record_sha256 for row in rows]
-    evidence_kinds = sorted({row.reference_kind for row in rows})
+    evidence_kinds = [row.reference_kind for row in rows]
 
     manifest = {
         "schema": _METHODOLOGY_VERSION,
@@ -220,13 +220,23 @@ def verify_receipt(
         evidence_record_sha256s=list(public.get("evidence_record_sha256s") or []),
         evidence_kinds=list(public.get("evidence_kinds") or []),
         statement=(
-            "This Fiscal Receipt identifies the Gaia evidence records captured at the stated "
-            "evidence boundary and the SHA-256 digest of the resulting canonical manifest."
+            "This Fiscal Receipt identifies the Gaia evidence records captured at the "
+            "stated evidence boundary and the SHA-256 digest of the resulting canonical "
+            "manifest."
         ),
         limitations=[
-            "It does not certify or approve a lending, investment, procurement, or policy decision.",
+            (
+                "It does not certify or approve a lending, investment, procurement, "
+                "or policy decision."
+            ),
             "It does not make Gaia an official government publisher or credit-rating agency.",
-            "It proves the recorded evidence manifest and hashes, not that every possible source existed or was captured.",
-            "Human notes and private organization context are intentionally excluded from public verification.",
+            (
+                "It proves the recorded evidence manifest and hashes, not that every "
+                "possible source existed or was captured."
+            ),
+            (
+                "Human notes and private organization context are intentionally excluded "
+                "from public verification."
+            ),
         ],
     )
