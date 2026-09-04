@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import socket
+import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
@@ -102,7 +103,10 @@ def _review_fixture(session, client: TestClient, token: str, user: User):
         },
     )
     assert contract_response.status_code == 201
-    contract = session.get(FiscalWatchContract, contract_response.json()["id"])
+    contract = session.get(
+        FiscalWatchContract,
+        uuid.UUID(contract_response.json()["id"]),
+    )
     assert contract is not None
     alert = OrganizationAlert(
         organization_id=user.organization_id,
