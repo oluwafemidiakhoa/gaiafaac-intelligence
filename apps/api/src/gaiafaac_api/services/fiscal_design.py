@@ -6,8 +6,6 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from gaiafaac_api.database.enums import VerificationStatus
-from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
 from gaiafaac_api.database.models import ReportingPeriod, State, StateAllocation
 from gaiafaac_api.fiscal_design_schemas import (
     FiscalDesignCandidate,
@@ -16,6 +14,7 @@ from gaiafaac_api.fiscal_design_schemas import (
     FiscalDesignResponse,
 )
 from gaiafaac_api.ledger import GaiaObjectType, canonical_sha256, gaia_object_id
+from gaiafaac_api.services.canonical_igr import governed_igr_observations
 from gaiafaac_api.services.decision_packet import decision_packet
 
 _HUNDRED = Decimal("100")
@@ -56,21 +55,11 @@ def latest_comparable_design_year(session: Session, *, state_slug: str) -> int |
         months_by_year[revenue_month.year].add(revenue_month.month)
     complete_faac_years = {year for year, months in months_by_year.items() if len(months) == 12}
 
-    annual_igr_years = set(
-        session.scalars(
-            select(StateIgrRecord.fiscal_year)
-            .join(State, StateIgrRecord.state_id == State.id)
-            .where(
-                State.slug == state_slug,
-                StateIgrRecord.period_type == IgrPeriodType.ANNUAL,
-                StateIgrRecord.quarter.is_(None),
-                StateIgrRecord.is_published.is_(True),
-                StateIgrRecord.is_demo.is_(False),
-                StateIgrRecord.verification_status == VerificationStatus.HUMAN_VERIFIED,
-            )
-            .distinct()
-        ).all()
-    )
+    annual_igr_years = {
+        int(observation.fiscal_period)
+        for observation in governed_igr_observations(session, state_slug=state_slug)
+        if observation.fiscal_period.isdigit() and len(observation.fiscal_period) == 4
+    }
 
     comparable_years = complete_faac_years & annual_igr_years
     return max(comparable_years) if comparable_years else None
