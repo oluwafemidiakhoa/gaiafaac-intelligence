@@ -3,22 +3,28 @@ from __future__ import annotations
 import logging
 import smtplib
 import uuid
+from datetime import UTC, datetime
 from email.message import EmailMessage
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from gaiafaac_api.api.v1.routes.review import require_admin
 from gaiafaac_api.commercial_schemas import (
+    CommercialAnalytics,
     PilotLeadAccepted,
     PilotLeadAdminItem,
     PilotLeadCreate,
+    PilotLeadUpdate,
 )
 from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.commercial_models import PilotLead
+from gaiafaac_api.database.models import Organization
 from gaiafaac_api.database.session import get_session
+from gaiafaac_api.services.commercial_events import commercial_analytics, record_commercial_event
+from gaiafaac_api.services.product_catalog import public_product_catalog
 
 router = APIRouter(prefix="/commercial", tags=["commercial"])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -51,7 +57,9 @@ def _notify_pilot_lead(lead: PilotLead) -> None:
         f"Organization: {lead.organization or 'Not provided'}\n"
         f"Role: {lead.role or 'Not provided'}\n"
         f"Expected users: {lead.expected_users or 'Not provided'}\n"
-        f"Jurisdictions / periods: {lead.states_or_periods or 'Not provided'}\n\n"
+        f"Jurisdictions / periods: {lead.states_or_periods or 'Not provided'}\n"
+        f"Evidence domains: {lead.requested_evidence_domains or 'Not provided'}\n"
+        f"Buying timeline: {lead.buying_timeline or 'Not provided'}\n\n"
         f"Use case:\n{lead.use_case}\n\n"
         "Review the lead in Gaia Fiscal Intelligence before activating a customer workspace.\n"
     )
@@ -61,6 +69,14 @@ def _notify_pilot_lead(lead: PilotLead) -> None:
             server.send_message(message)
     except Exception as error:  # noqa: BLE001 - the stored lead remains the source of truth
         logger.warning("Pilot lead notification email failed: %s", error)
+
+
+@router.get(
+    "/products",
+    summary="List Gaia commercial product modes without inventing unapproved prices",
+)
+def list_commercial_products() -> list[dict]:
+    return public_product_catalog()
 
 
 @router.post(
@@ -87,13 +103,27 @@ def create_pilot_lead(
         plan_interest=payload.plan_interest,
         use_case=payload.use_case,
         states_or_periods=payload.states_or_periods or None,
+        requested_evidence_domains=payload.requested_evidence_domains or None,
         preferred_format=payload.preferred_format or None,
         expected_users=payload.expected_users,
+        buying_timeline=payload.buying_timeline or None,
+        source_page=payload.source_page or None,
         source="website",
-        ip_address=request.client.host if request.client else None,
-        user_agent=(request.headers.get("user-agent") or "")[:500] or None,
+        # Do not persist IP address, user agent, device identifiers, or fingerprints.
+        ip_address=None,
+        user_agent=None,
+        status_changed_at=datetime.now(UTC),
     )
     session.add(lead)
+    session.flush()
+    record_commercial_event(
+        session,
+        event_name="institutional_lead_created",
+        subject_type="pilot_lead",
+        subject_id=str(lead.id),
+        metadata={"plan_interest": lead.plan_interest, "source": lead.source},
+        commit=False,
+    )
     session.commit()
     session.refresh(lead)
     _notify_pilot_lead(lead)
@@ -108,3 +138,62 @@ def create_pilot_lead(
 )
 def list_pilot_leads(session: DatabaseSession) -> list[PilotLead]:
     return list(session.scalars(select(PilotLead).order_by(PilotLead.created_at.desc())))
+
+
+@router.patch(
+    "/pilot-leads/{lead_id}",
+    response_model=PilotLeadAdminItem,
+    summary="Advance a commercial lead through the authorized CRM workflow",
+    dependencies=[Depends(require_admin)],
+)
+def update_pilot_lead(
+    lead_id: uuid.UUID,
+    payload: PilotLeadUpdate,
+    session: DatabaseSession,
+) -> PilotLead:
+    lead = session.get(PilotLead, lead_id)
+    if lead is None:
+        raise HTTPException(status_code=404, detail="Pilot lead not found.")
+
+    changes = payload.model_dump(exclude_unset=True)
+    if (
+        "converted_organization_id" in changes
+        and changes["converted_organization_id"] is not None
+        and session.get(Organization, changes["converted_organization_id"]) is None
+    ):
+        raise HTTPException(status_code=422, detail="Converted organization does not exist.")
+
+    previous_status = lead.status
+    for field, value in changes.items():
+        setattr(lead, field, value)
+    if "status" in changes and changes["status"] != previous_status:
+        lead.status_changed_at = datetime.now(UTC)
+
+    record_commercial_event(
+        session,
+        event_name="institutional_lead_stage_changed"
+        if lead.status != previous_status
+        else "institutional_lead_updated",
+        organization_id=lead.converted_organization_id,
+        subject_type="pilot_lead",
+        subject_id=str(lead.id),
+        metadata={
+            "from_status": previous_status,
+            "to_status": lead.status,
+            "plan_interest": lead.plan_interest,
+        },
+        commit=False,
+    )
+    session.commit()
+    session.refresh(lead)
+    return lead
+
+
+@router.get(
+    "/analytics",
+    response_model=CommercialAnalytics,
+    summary="Get factual commercial analytics (admin only)",
+    dependencies=[Depends(require_admin)],
+)
+def get_commercial_analytics(session: DatabaseSession) -> dict:
+    return commercial_analytics(session)

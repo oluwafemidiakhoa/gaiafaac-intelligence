@@ -1,21 +1,17 @@
-"""Billing dashboard endpoints for customer self-service"""
+"""Billing dashboard projections from canonical subscription and API-key records."""
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
-from gaiafaac_api.database.subscription_models import (
-    Invoice,
-    OrganizationSubscription,
-    SubscriptionTier,
-    UsageLog,
-)
-from gaiafaac_api.services.billing import BillingService
+from gaiafaac_api.database.models import ApiKey, ApiRequest
+from gaiafaac_api.database.subscription_models import Invoice
+from gaiafaac_api.services.account import current_plan
 
 router = APIRouter(prefix="/billing", tags=["billing dashboard"])
 
@@ -29,12 +25,13 @@ class UsageMetric(BaseModel):
 class BillingDashboard(BaseModel):
     organization_id: str
     current_tier: str
-    subscription_status: str
+    subscription_status: str | None
     expires_at: datetime | None = None
     monthly_usage: list[UsageMetric]
     total_api_calls: int
-    total_exports: int
-    overage_charges: int = 0
+    total_exports: int | None = None
+    overage_charges: int | None = None
+    usage_statement: str
 
 
 class InvoiceDetail(BaseModel):
@@ -50,59 +47,59 @@ class InvoiceDetail(BaseModel):
     paid_date: datetime | None = None
 
 
+def _month_start(now: datetime) -> datetime:
+    return datetime(now.year, now.month, 1, tzinfo=UTC)
+
+
+def _canonical_api_calls(session: DatabaseSession, organization_id) -> int:
+    now = datetime.now(UTC)
+    return int(
+        session.scalar(
+            select(func.count(ApiRequest.id))
+            .join(ApiKey, ApiKey.id == ApiRequest.api_key_id)
+            .where(
+                ApiKey.organization_id == organization_id,
+                ApiRequest.created_at >= _month_start(now),
+            )
+        )
+        or 0
+    )
+
+
 @router.get("/dashboard", response_model=BillingDashboard)
 def get_billing_dashboard(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> BillingDashboard:
-    """Get customer billing dashboard with usage metrics"""
+    """Return canonical entitlement and auditable API-key usage only."""
     if not user.organization_id:
         raise HTTPException(status_code=401, detail="Organization not found.")
 
-    subscription = session.scalar(
-        select(OrganizationSubscription).where(
-            OrganizationSubscription.organization_id == user.organization_id
-        )
-    )
-
-    if not subscription:
-        raise HTTPException(status_code=404, detail="No subscription found.")
-
-    tier = session.scalar(
-        select(SubscriptionTier).where(SubscriptionTier.id == subscription.tier_id)
-    )
-    if not tier:
-        raise HTTPException(status_code=404, detail="Subscription tier not found.")
-
-    billing_service = BillingService(session)
-    limits = billing_service.check_usage_limits(user.organization_id, subscription, tier)
+    plan_code, entitlements, subscription = current_plan(session, user.organization_id)
+    api_calls = _canonical_api_calls(session, user.organization_id)
+    api_limit = entitlements.api_rate_limit_per_day if entitlements.api_access else 0
 
     metrics = [
         UsageMetric(
-            event_type="api_calls",
-            count=limits["api_calls"]["used"],
-            limit=limits["api_calls"]["limit"],
-        ),
-        UsageMetric(
-            event_type="exports",
-            count=limits["exports"]["used"],
-            limit=limits["exports"]["limit"],
-        ),
+            event_type="api_calls_this_month",
+            count=api_calls,
+            limit=None,
+        )
     ]
 
     return BillingDashboard(
         organization_id=str(user.organization_id),
-        current_tier=tier.name,
-        subscription_status=subscription.status,
-        expires_at=subscription.expires_at,
+        current_tier=plan_code,
+        subscription_status=subscription.status.value if subscription else None,
+        expires_at=subscription.current_period_end if subscription else None,
         monthly_usage=metrics,
-        total_api_calls=limits["api_calls"]["used"],
-        total_exports=limits["exports"]["used"],
-        overage_charges=int(
-            billing_service.calculate_overage_charges(
-                limits["api_calls"]["overage"],
-                limits["exports"]["overage"],
-            )
+        total_api_calls=api_calls,
+        total_exports=None,
+        overage_charges=None,
+        usage_statement=(
+            "API usage is counted from canonical API-key request records. "
+            f"The current API plan rate boundary is {api_limit} requests/day when API access is enabled. "
+            "Legacy header-derived usage and modeled overage charges are not reported."
         ),
     )
 
@@ -112,7 +109,7 @@ def get_invoices(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> list[InvoiceDetail]:
-    """Get customer invoices"""
+    """Return retained legacy invoice records for historical compatibility."""
     if not user.organization_id:
         raise HTTPException(status_code=401, detail="Organization not found.")
 
@@ -144,20 +141,15 @@ def get_usage_details(
     session: DatabaseSession,
     user: CurrentCustomer,
 ) -> dict:
-    """Get detailed usage breakdown by event type"""
+    """Return canonical API request usage rather than legacy subscription logs."""
     if not user.organization_id:
         raise HTTPException(status_code=401, detail="Organization not found.")
 
-    logs = session.scalars(
-        select(UsageLog).where(UsageLog.organization_id == user.organization_id)
-    ).all()
-
-    usage_by_type = {}
-    for log in logs:
-        usage_by_type[log.event_type] = usage_by_type.get(log.event_type, 0) + 1
-
+    api_calls = _canonical_api_calls(session, user.organization_id)
     return {
         "organization_id": str(user.organization_id),
-        "total_events": len(logs),
-        "by_type": usage_by_type,
+        "period": _month_start(datetime.now(UTC)).strftime("%Y-%m"),
+        "total_events": api_calls,
+        "by_type": {"api_call": api_calls},
+        "statement": "Usage is sourced from canonical API request records only.",
     }

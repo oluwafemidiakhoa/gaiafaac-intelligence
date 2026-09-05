@@ -10,8 +10,16 @@ const requestSchema = z.object({
   plan_interest: z.enum(['analyst', 'team', 'api']),
   use_case: z.string().trim().min(20).max(4000),
   states_or_periods: z.string().trim().max(2000).optional().default(''),
+  requested_evidence_domains: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .default(''),
   preferred_format: z.string().trim().max(80).optional().default(''),
   expected_users: z.number().int().min(1).max(10000).nullable().optional(),
+  buying_timeline: z.string().trim().max(240).optional().default(''),
+  source_page: z.string().trim().max(500).optional().default('/pilot'),
   website: z.string().trim().max(200).optional().default(''),
 })
 

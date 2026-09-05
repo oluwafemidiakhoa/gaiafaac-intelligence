@@ -1,4 +1,10 @@
-"""Subscription tier and billing models for commercial monetization"""
+"""Legacy billing support models plus the payment audit ledger.
+
+Canonical customer entitlement lives in ``database.models.Subscription``. New payment
+records link to that canonical subscription through ``canonical_subscription_id``.
+The older tier/subscription/usage/invoice tables remain readable for historical
+compatibility while runtime entitlement and revenue reporting use the canonical model.
+"""
 
 from __future__ import annotations
 
@@ -24,7 +30,7 @@ from gaiafaac_api.database.base import Base
 
 
 class SubscriptionStatus(str, Enum):
-    """Subscription lifecycle states"""
+    """Legacy subscription lifecycle states."""
 
     ACTIVE = "active"
     PAST_DUE = "past_due"
@@ -33,7 +39,7 @@ class SubscriptionStatus(str, Enum):
 
 
 class TierName(str, Enum):
-    """Predefined subscription tiers"""
+    """Legacy predefined subscription tiers."""
 
     FREE = "free"
     PROFESSIONAL = "professional"
@@ -41,18 +47,16 @@ class TierName(str, Enum):
 
 
 class SubscriptionTier(Base):
-    """Subscription tier definition (Free, Professional, Enterprise)"""
+    """Legacy tier definition retained for historical compatibility."""
 
     __tablename__ = "subscription_tiers"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    price_naira: Mapped[int] = mapped_column(Integer, nullable=False)  # 0, 50000, 500000
+    price_naira: Mapped[int] = mapped_column(Integer, nullable=False)
     requests_per_month: Mapped[int] = mapped_column(Integer, nullable=False)
     exports_per_month: Mapped[int] = mapped_column(Integer, nullable=False)
-    features: Mapped[str] = mapped_column(
-        String(500), nullable=False
-    )  # JSON: ["watchlists", "alerts", "api"]
+    features: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -63,7 +67,7 @@ class SubscriptionTier(Base):
 
 
 class OrganizationSubscription(Base):
-    """Active subscription for an organization"""
+    """Legacy organization subscription retained only for historical compatibility."""
 
     __tablename__ = "organization_subscriptions"
     __table_args__ = (
@@ -78,27 +82,21 @@ class OrganizationSubscription(Base):
     tier_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subscription_tiers.id", ondelete="RESTRICT"), nullable=False
     )
-    tier_name: Mapped[str] = mapped_column(String(50), nullable=False)  # Snapshot of tier name
-
+    tier_name: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default=SubscriptionStatus.ACTIVE)
     paystack_subscription_id: Mapped[str | None] = mapped_column(String(100))
     paystack_authorization_code: Mapped[str | None] = mapped_column(String(200))
-
-    # Billing period
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     renewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    # Usage tracking
     api_requests_used: Mapped[int] = mapped_column(Integer, default=0)
     exports_used: Mapped[int] = mapped_column(Integer, default=0)
     last_reset_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -107,11 +105,9 @@ class OrganizationSubscription(Base):
     )
 
     def is_active(self) -> bool:
-        """Check if subscription is currently active"""
         return self.status == SubscriptionStatus.ACTIVE and self.expires_at > datetime.utcnow()
 
     def reset_monthly_usage(self) -> None:
-        """Reset monthly API/export counters"""
         self.api_requests_used = 0
         self.exports_used = 0
         self.last_reset_at = datetime.utcnow(tz=None)
@@ -121,34 +117,31 @@ class OrganizationSubscription(Base):
 
 
 class PaymentRecord(Base):
-    """Payment transaction record for audit trail"""
+    """Payment transaction audit record tied to canonical subscription when available."""
 
     __tablename__ = "payment_records"
     __table_args__ = (
         Index("ix_payment_records_org_created", "organization_id", "created_at"),
         Index("ix_payment_records_status_created", "status", "created_at"),
+        Index("ix_payment_records_canonical_subscription", "canonical_subscription_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    # Deprecated legacy relation. Existing historical rows are preserved.
     subscription_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("organization_subscriptions.id", ondelete="SET NULL"), nullable=True
     )
-
-    # Payment details
+    canonical_subscription_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True
+    )
     paystack_transaction_id: Mapped[str | None] = mapped_column(String(100), unique=True)
     amount_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False
-    )  # "success", "failed", "pending"
-
-    # Invoice
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
     invoice_number: Mapped[str | None] = mapped_column(String(50), unique=True)
     description: Mapped[str | None] = mapped_column(String(200))
-
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -159,7 +152,7 @@ class PaymentRecord(Base):
 
 
 class UsageLog(Base):
-    """Detailed API usage log for billing and analytics"""
+    """Legacy usage log retained for historical compatibility."""
 
     __tablename__ = "usage_logs"
     __table_args__ = (
@@ -175,17 +168,11 @@ class UsageLog(Base):
     subscription_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("organization_subscriptions.id", ondelete="CASCADE"), nullable=False
     )
-
-    # Usage event details
-    event_type: Mapped[str] = mapped_column(
-        String(50), nullable=False
-    )  # "api_call", "export", "webhook"
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     endpoint: Mapped[str | None] = mapped_column(String(200))
-    method: Mapped[str | None] = mapped_column(String(10))  # GET, POST, etc.
+    method: Mapped[str | None] = mapped_column(String(10))
     response_status: Mapped[int | None] = mapped_column(Integer)
     user_id: Mapped[str | None] = mapped_column(String(100))
-
-    # Timestamp
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -195,7 +182,7 @@ class UsageLog(Base):
 
 
 class BillingEvent(Base):
-    """Billing events for charge generation and audit"""
+    """Legacy billing event retained for historical invoice compatibility."""
 
     __tablename__ = "billing_events"
     __table_args__ = (
@@ -210,21 +197,13 @@ class BillingEvent(Base):
     subscription_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("organization_subscriptions.id", ondelete="CASCADE"), nullable=False
     )
-
-    # Event details
-    event_type: Mapped[str] = mapped_column(
-        String(50), nullable=False
-    )  # "subscription_start", "overage", "renewal"
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500))
     amount_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-
-    # Processing
     is_invoiced: Mapped[bool] = mapped_column(default=False)
     invoice_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True
     )
-
-    # Timestamp
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -234,7 +213,7 @@ class BillingEvent(Base):
 
 
 class Invoice(Base):
-    """Formal invoice generation for payment"""
+    """Legacy formal invoice record retained for historical compatibility."""
 
     __tablename__ = "invoices"
     __table_args__ = (
@@ -250,26 +229,16 @@ class Invoice(Base):
     subscription_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("organization_subscriptions.id", ondelete="CASCADE"), nullable=False
     )
-
-    # Invoice details
     invoice_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     subtotal_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     tax_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     total_naira: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-
-    # Status
-    status: Mapped[str] = mapped_column(
-        String(20), default="draft"
-    )  # "draft", "sent", "paid", "overdue"
+    status: Mapped[str] = mapped_column(String(20), default="draft")
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     paid_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    # Description
     period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    line_items: Mapped[str | None] = mapped_column(String(2000))  # JSON array of line items
-
-    # Timestamps
+    line_items: Mapped[str | None] = mapped_column(String(2000))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

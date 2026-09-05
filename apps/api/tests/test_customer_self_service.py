@@ -1,6 +1,11 @@
+import uuid
+from decimal import Decimal
+
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from gaiafaac_api.config import get_settings
+from gaiafaac_api.database.commercial_models import CommercialEvent, OneTimePurchase
 from gaiafaac_api.database.enums import SubscriptionStatus
 from gaiafaac_api.database.models import Subscription, User
 from gaiafaac_api.database.session import get_session
@@ -111,8 +116,6 @@ def test_api_plan_can_create_and_revoke_key(session):
 
 def test_checkout_is_securely_disabled_without_stripe_configuration(session, monkeypatch):
     monkeypatch.delenv("STRIPE_SECRET_KEY", raising=False)
-    from gaiafaac_api.config import get_settings
-
     get_settings.cache_clear()
     client = _client(session)
     try:
@@ -123,6 +126,107 @@ def test_checkout_is_securely_disabled_without_stripe_configuration(session, mon
             json={"plan_code": "analyst"},
         )
         assert response.status_code == 503
+    finally:
+        app.dependency_overrides.clear()
+        get_settings.cache_clear()
+
+
+def test_one_time_checkout_fails_closed_until_price_is_approved(session, monkeypatch):
+    monkeypatch.setenv("PAYSTACK_SECRET_KEY", "test-secret")
+    monkeypatch.setenv("PAYSTACK_PRICE_DECISION_PACK", "0")
+    get_settings.cache_clear()
+    client = _client(session)
+    try:
+        token = _register(client)
+        response = client.post(
+            "/api/v1/billing/one-time/checkout",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"product_code": "decision_pack", "context": {"state": "ED"}},
+        )
+        assert response.status_code == 503
+        assert session.scalar(select(OneTimePurchase)) is None
+    finally:
+        app.dependency_overrides.clear()
+        get_settings.cache_clear()
+
+
+def test_one_time_purchase_is_persisted_and_verified_once(session, monkeypatch):
+    monkeypatch.setenv("PAYSTACK_SECRET_KEY", "test-secret")
+    monkeypatch.setenv("PAYSTACK_PRICE_DECISION_PACK", "75000")
+    get_settings.cache_clear()
+
+    from gaiafaac_api.api.v1.routes import one_time_billing
+
+    monkeypatch.setattr(
+        one_time_billing,
+        "_initialize_paystack_transaction",
+        lambda **_kwargs: "https://checkout.example/order",
+    )
+
+    client = _client(session)
+    try:
+        token = _register(client)
+        headers = {"Authorization": f"Bearer {token}"}
+        checkout = client.post(
+            "/api/v1/billing/one-time/checkout",
+            headers=headers,
+            json={
+                "product_code": "decision_pack",
+                "context": {"state_code": "ED", "period": "2026-06"},
+            },
+        )
+        assert checkout.status_code == 200
+        body = checkout.json()
+        assert body["url"] == "https://checkout.example/order"
+        assert body["purchase"]["amount_naira"] == "75000.00"
+        purchase_id = body["purchase"]["id"]
+        reference = body["purchase"]["provider_reference"]
+
+        purchase = session.get(OneTimePurchase, uuid.UUID(purchase_id))
+        assert purchase is not None
+        assert purchase.status == "pending"
+        assert purchase.amount_naira == Decimal("75000")
+        assert purchase.purchase_metadata == {"state_code": "ED", "period": "2026-06"}
+
+        monkeypatch.setattr(
+            one_time_billing,
+            "_verify_paystack_transaction",
+            lambda _reference: {
+                "status": "success",
+                "reference": reference,
+                "amount": 7_500_000,
+                "metadata": {
+                    "purchase_mode": "one_time",
+                    "purchase_id": purchase_id,
+                    "organization_id": str(purchase.organization_id),
+                    "product_code": "decision_pack",
+                },
+            },
+        )
+        verified = client.post(
+            f"/api/v1/billing/one-time/paystack-verify?reference={reference}",
+            headers=headers,
+        )
+        assert verified.status_code == 200
+        assert verified.json()["status"] == "success"
+
+        verified_again = client.post(
+            f"/api/v1/billing/one-time/paystack-verify?reference={reference}",
+            headers=headers,
+        )
+        assert verified_again.status_code == 200
+        events = list(
+            session.scalars(
+                select(CommercialEvent).where(
+                    CommercialEvent.subject_type == "one_time_purchase",
+                    CommercialEvent.subject_id == purchase_id,
+                )
+            )
+        )
+        assert sorted(event.event_name for event in events) == [
+            "one_time_checkout_started",
+            "one_time_purchase_completed",
+        ]
     finally:
         app.dependency_overrides.clear()
         get_settings.cache_clear()

@@ -36,15 +36,20 @@ describe('Home', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /The intelligence layer for Nigeria's public money/i,
+        name: /Know what changed\. Know what evidence supports it\. Preserve what your institution knew when it made the decision\./i,
       }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Open live terminal/i }),
+      screen.getByRole('link', { name: /Open Fiscal Terminal/i }),
     ).toHaveAttribute('href', '/terminal')
     expect(
-      screen.getByRole('link', { name: /Request institutional pilot/i }),
+      screen.getByRole('link', { name: /Request Institutional Access/i }),
     ).toHaveAttribute('href', '/pilot')
+    expect(
+      screen.getByRole('heading', {
+        name: /Built for expensive decisions/i,
+      }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', {
         name: /From government PDFs to decision infrastructure/i,

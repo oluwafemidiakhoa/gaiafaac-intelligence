@@ -10,6 +10,7 @@ EvidenceReferenceKind = Literal[
     "organization_alert",
     "fiscal_proof",
     "decision_packet",
+    "fiscal_design_scenario",
     "source",
     "fiscal_event",
 ]

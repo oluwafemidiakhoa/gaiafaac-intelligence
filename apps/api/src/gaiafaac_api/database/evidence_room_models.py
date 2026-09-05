@@ -86,7 +86,7 @@ class EvidenceRoomEvidence(Base):
         CheckConstraint(
             "reference_kind IN ("
             "'organization_alert', 'fiscal_proof', 'decision_packet', "
-            "'source', 'fiscal_event'"
+            "'fiscal_design_scenario', 'source', 'fiscal_event'"
             ")",
             name="ck_evidence_room_reference_kind",
         ),

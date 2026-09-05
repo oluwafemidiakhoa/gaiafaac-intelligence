@@ -15,6 +15,10 @@ import {
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import {
+  CommercialDecisionChain,
+  ExpensiveDecisionWorkflows,
+} from '@/components/commercial-home-sections'
 import { getPublishedAnalytics } from '@/lib/analytics-api'
 import { formatNaira } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
@@ -141,14 +145,15 @@ export default async function Home() {
               Governed fiscal intelligence · Nigeria
             </div>
 
-            <h1 className="max-w-[14ch] text-[clamp(3.35rem,7.2vw,7.2rem)] leading-[0.92] font-semibold tracking-[-0.065em] text-balance">
-              The intelligence layer for Nigeria&apos;s public money.
+            <h1 className="max-w-[16ch] text-[clamp(3rem,6vw,6.2rem)] leading-[0.94] font-semibold tracking-[-0.06em] text-balance">
+              Know what changed. Know what evidence supports it. Preserve what
+              your institution knew when it made the decision.
             </h1>
 
             <p className="mt-8 max-w-2xl text-lg leading-8 text-teal-50/75 sm:text-xl">
-              Gaia turns official fiscal records into governed, machine-readable
-              evidence that institutions can audit, query, compare, and act
-              on—with the source trail still attached.
+              Gaia turns fragmented Nigerian public-finance records into
+              governed evidence, monitoring and decision records for
+              institutions allocating capital.
             </p>
 
             <div className="mt-9 flex flex-wrap gap-3">
@@ -156,14 +161,20 @@ export default async function Home() {
                 href="/terminal"
                 className="group inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3.5 text-sm font-bold text-teal-950 shadow-[0_12px_50px_rgba(252,211,77,.2)] transition hover:-translate-y-0.5 hover:bg-amber-200"
               >
-                Open live terminal
+                Open Fiscal Terminal
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                href="/pilot"
+                href="/decision-rooms"
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10"
               >
-                Request institutional pilot
+                Start a Decision Room
+              </Link>
+              <Link
+                href="/pilot"
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-300/10 px-6 py-3.5 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/15"
+              >
+                Request Institutional Access
               </Link>
             </div>
 
@@ -293,6 +304,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <CommercialDecisionChain />
+      <ExpensiveDecisionWorkflows />
 
       {!data && (
         <section className="border-b border-amber-200/60 bg-amber-50 px-5 py-5 dark:border-amber-300/10 dark:bg-amber-300/[0.06]">

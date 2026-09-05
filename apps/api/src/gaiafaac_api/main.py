@@ -4,8 +4,6 @@ from fastapi.responses import RedirectResponse
 
 from gaiafaac_api.api.v1.router import router as api_v1_router
 from gaiafaac_api.config import get_settings
-from gaiafaac_api.database.session import create_database_engine, create_session_factory
-from gaiafaac_api.middleware import UsageTrackingMiddleware
 
 
 def create_app() -> FastAPI:
@@ -26,10 +24,10 @@ def create_app() -> FastAPI:
         allow_headers=["Accept", "Content-Type"],
     )
 
-    engine = create_database_engine()
-    session_factory = create_session_factory(engine)
-    application.add_middleware(UsageTrackingMiddleware, session_factory=session_factory)
-
+    # API-key request accounting is performed by the canonical API-key service.
+    # The older X-Organization-ID usage middleware is intentionally not mounted:
+    # it trusted caller-supplied organization headers and wrote to a legacy
+    # subscription generation that is no longer authoritative for entitlements.
     application.include_router(api_v1_router)
 
     @application.get("/", include_in_schema=False)

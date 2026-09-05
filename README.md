@@ -27,12 +27,18 @@ Current public capabilities:
 - Methodology and data-governance documentation
 - Public pricing and pilot-access information
 
-Commercial API foundations are also implemented:
+Commercial and institutional foundations are implemented:
 
-- API keys are stored as hashes
-- Plan entitlements are enforced server-side
-- Daily request limits are recorded and enforced
-- Published historical-month and allocation endpoints require an entitled key
+- Customer sessions and organization membership are server-side and tenant-scoped
+- Paystack checkout is verified server-to-server before entitlement activation
+- Billing history retains verified payment references and receipt identifiers
+- API keys are stored as hashes and API usage is recorded against canonical keys
+- Plan entitlements are enforced server-side from the canonical subscription model
+- Decision Rooms preserve decision context and immutable captured evidence
+- Fiscal Receipts expose deterministic evidence-boundary verification
+- Fiscal Watch Contracts connect governed changes to decision re-review
+- Watch delivery supports auditable in-app, opted-in email, and institutional webhook channels
+- Commercial lead stages and analytics are computed from first-party persisted records only
 
 ## Fiscal Pulse
 
@@ -52,9 +58,11 @@ Fiscal Pulse is **not** a credit rating, solvency test, corruption signal, gover
 
 ## Commercial status
 
-Gaia Fiscal Intelligence is currently accepting **manually provisioned pilot customers**.
+Gaia Fiscal Intelligence supports a production customer-account and billing path together with an institutional decision workflow.
 
-The latest verified month and selected Fiscal Pulse indicators remain publicly accessible. Paid plans are intended to unlock historical intelligence, exports, reports, team access, and API use. Automated checkout, customer accounts, personalized licensed exports, and subscription self-service are not yet complete and must not be represented as available until they are implemented.
+Paid access is activated only after server-side payment verification. Analyst, Team, and API entitlements resolve from the canonical `subscriptions` model. Verified payment records, current access periods, renewal, Decision Rooms, Fiscal Receipts, Watch Contracts, team controls, and entitled API access are represented in the live product according to plan capability.
+
+Commercial operations use explicit lead stages (`new`, `contacted`, `qualified`, `pilot`, `proposal`, `won`, `lost`) and first-party server-side events. Gaia does not require third-party analytics, device identifiers, or fingerprinting to report its commercial funnel. Revenue analytics count actual persisted successful payment records; they do not substitute demo or modeled KPI values.
 
 Commercial and pilot enquiries:
 
@@ -74,6 +82,9 @@ Official source document
   -> publication
   -> public pages and entitled API access
   -> derived intelligence and fiscal events
+  -> Decision Room / Fiscal Receipt
+  -> Watch Contract / governed change
+  -> human re-review / successor Fiscal Receipt
 ```
 
 Important safeguards:
@@ -85,6 +96,7 @@ Important safeguards:
 - The FCT may be published net-only when that is the only directly reconcilable value in the source.
 - Derived metrics that require unavailable FCT gross or deduction values remain unavailable.
 - Statistical movements are not treated as evidence of fraud, misconduct, governance performance, or credit quality.
+- A Fiscal Receipt verifies the recorded evidence manifest and lineage; it does not certify the customer's institutional decision.
 
 A scheduled GitHub Actions collector checks for newly available OAGF reports daily, imports and validates them, and queues them for review. Human approval remains mandatory.
 
@@ -103,18 +115,23 @@ docs/                 Architecture, methodology, and operating documentation
 ## Main routes
 
 ```text
-/fiscal-pulse       Derived state fiscal signals over verified published records
-/live               Latest verified allocations and source record
-/insights           National trend, rankings, and movers
-/overview           Latest published national overview
-/states             All 36 states and the FCT
-/states/{slug}      State detail
-/compare            Two-to-six-jurisdiction comparison
-/sources            Source record for every published month
-/methodology        Collection, validation, publication, and Fiscal Pulse methodology
-/pricing            Public plan positioning
-/pilot              Pilot-access and commercial enquiry
-/admin/leads        Protected commercial lead inbox
+/terminal             Evidence-oriented product terminal
+/decision-rooms       Institutional Decision Rooms and re-review queue
+/watch-contracts      Customer-defined governed monitoring contracts
+/fiscal-pulse         Derived state fiscal signals over verified published records
+/live                 Latest verified allocations and source record
+/insights             National trend, rankings, and movers
+/overview             Latest published national overview
+/states               All 36 states and the FCT
+/states/{slug}        State detail
+/compare              Two-to-six-jurisdiction comparison
+/sources              Source record for every published month
+/methodology          Collection, validation, publication, and Fiscal Pulse methodology
+/pricing              Public plan positioning
+/pilot                Pilot-access and commercial enquiry
+/account/billing      Verified payment history, access period and renewal
+/admin/leads          Protected commercial revenue control plane
+/verify/{receipt_id}  Public privacy-safe Fiscal Receipt verification
 ```
 
 API documentation is available at:
@@ -128,16 +145,21 @@ API documentation is available at:
 Important API routes include:
 
 ```text
-GET  /api/v1/health
-GET  /api/v1/published/overview/latest
-GET  /api/v1/published/analytics
-GET  /api/v1/published/fiscal-pulse?year=2024
-GET  /api/v1/published/sources
-GET  /api/v1/data/months                         # API key required
-GET  /api/v1/data/allocations?month=...          # API key required
-POST /api/v1/commercial/pilot-leads
-GET  /api/v1/commercial/pilot-leads              # Admin key required
-GET  /api/v1/review/pending                       # Admin key required
+GET   /api/v1/health
+GET   /api/v1/published/overview/latest
+GET   /api/v1/published/analytics
+GET   /api/v1/published/fiscal-pulse?year=2024
+GET   /api/v1/published/sources
+GET   /api/v1/data/months                                # API key required
+GET   /api/v1/data/allocations?month=...                 # API key required
+POST  /api/v1/commercial/pilot-leads
+GET   /api/v1/commercial/pilot-leads                     # Admin key required
+PATCH /api/v1/commercial/pilot-leads/{lead_id}           # Admin key required
+GET   /api/v1/commercial/analytics                       # Admin key required
+GET   /api/v1/evidence-rooms                             # Customer session / plan gated
+GET   /api/v1/fiscal-watch-contracts                     # Team/API customer gated
+POST  /api/v1/fiscal-watch-contracts/deliveries/run      # Organization admin
+GET   /api/v1/review/pending                              # Admin key required
 ```
 
 ## Local setup
@@ -230,6 +252,9 @@ python -m ruff check apps/api
 python -m pytest apps/api/tests
 npm run build
 npm run docker:config
+npx playwright test
 ```
+
+The Playwright release gate exercises critical surfaces at 1440, 1024, 768, and 390 pixels, captures screenshots into the report artifact, and fails on uncaught browser errors, failed requests, console errors, or horizontal overflow.
 
 See the documentation in `docs/` for architecture, data definitions, source policy, validation methodology, collection operations, and deployment guidance.

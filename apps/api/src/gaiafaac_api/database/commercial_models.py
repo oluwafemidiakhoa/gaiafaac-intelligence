@@ -2,11 +2,31 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
+from typing import Any
 
-from sqlalchemy import DateTime, Index, Integer, String, Text, Uuid, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    event,
+    func,
+    select,
+    update,
+)
+from sqlalchemy.engine import Connection
+from sqlalchemy.orm import Mapped, Mapper, mapped_column
 
 from gaiafaac_api.database.base import Base
+from gaiafaac_api.database.models import Subscription
+from gaiafaac_api.database.subscription_models import PaymentRecord
 
 
 class PilotLead(Base):
@@ -16,6 +36,7 @@ class PilotLead(Base):
     __table_args__ = (
         Index("ix_pilot_leads_status_created", "status", "created_at"),
         Index("ix_pilot_leads_email", "email"),
+        Index("ix_pilot_leads_next_action", "status", "next_action_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -27,12 +48,29 @@ class PilotLead(Base):
     plan_interest: Mapped[str] = mapped_column(String(40), nullable=False)
     use_case: Mapped[str] = mapped_column(Text, nullable=False)
     states_or_periods: Mapped[str | None] = mapped_column(Text)
+    requested_evidence_domains: Mapped[str | None] = mapped_column(Text)
     preferred_format: Mapped[str | None] = mapped_column(String(80))
     expected_users: Mapped[int | None] = mapped_column(Integer)
+    buying_timeline: Mapped[str | None] = mapped_column(String(240))
+    source_page: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="new")
     source: Mapped[str] = mapped_column(String(80), nullable=False, default="website")
+
+    # Retained only for compatibility with historical rows. New intake intentionally
+    # does not collect network/device metadata.
     ip_address: Mapped[str | None] = mapped_column(String(64))
     user_agent: Mapped[str | None] = mapped_column(String(500))
+
+    owner_name: Mapped[str | None] = mapped_column(String(200))
+    next_action: Mapped[str | None] = mapped_column(String(500))
+    next_action_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    internal_notes: Mapped[str | None] = mapped_column(Text)
+    closed_reason: Mapped[str | None] = mapped_column(String(1000))
+    status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    converted_organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -42,3 +80,127 @@ class PilotLead(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class CommercialEvent(Base):
+    """First-party server-side commercial event with no fingerprinting metadata."""
+
+    __tablename__ = "commercial_events"
+    __table_args__ = (
+        Index("ix_commercial_events_name_occurred", "event_name", "occurred_at"),
+        Index("ix_commercial_events_org_occurred", "organization_id", "occurred_at"),
+        Index("ix_commercial_events_subject", "subject_type", "subject_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    event_name: Mapped[str] = mapped_column(String(80), nullable=False)
+    subject_type: Mapped[str | None] = mapped_column(String(80))
+    subject_id: Mapped[str | None] = mapped_column(String(160))
+    source: Mapped[str] = mapped_column(String(80), nullable=False, default="server")
+    event_metadata: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class OneTimePurchase(Base):
+    """Canonical persisted order/payment record for configured one-time products."""
+
+    __tablename__ = "one_time_purchases"
+    __table_args__ = (
+        UniqueConstraint(
+            "provider", "provider_reference", name="uq_one_time_purchase_provider_reference"
+        ),
+        Index("ix_one_time_purchases_org_created", "organization_id", "created_at"),
+        Index("ix_one_time_purchases_status_created", "status", "created_at"),
+        Index("ix_one_time_purchases_product_status", "product_code", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    product_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    provider: Mapped[str] = mapped_column(String(40), nullable=False, default="paystack")
+    provider_reference: Mapped[str] = mapped_column(String(160), nullable=False)
+    amount_naira: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False, default="NGN")
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="pending")
+    fulfillment_status: Mapped[str] = mapped_column(String(40), nullable=False, default="pending")
+    fulfillment_reference: Mapped[str | None] = mapped_column(String(200))
+    purchase_metadata: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fulfilled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+def _capture_successful_payment(
+    _mapper: Mapper[Any],
+    connection: Connection,
+    target: PaymentRecord,
+) -> None:
+    """Attach new revenue to canonical entitlement and emit one factual conversion event."""
+
+    if target.status != "success" or not target.paystack_transaction_id:
+        return
+
+    canonical_id = connection.scalar(
+        select(Subscription.id).where(
+            Subscription.organization_id == target.organization_id,
+            Subscription.external_subscription_id == target.paystack_transaction_id,
+        )
+    )
+    if canonical_id is not None and target.canonical_subscription_id != canonical_id:
+        connection.execute(
+            update(PaymentRecord)
+            .where(PaymentRecord.id == target.id)
+            .values(canonical_subscription_id=canonical_id)
+        )
+
+    subject_id = str(target.id)
+    existing = connection.scalar(
+        select(CommercialEvent.id).where(
+            CommercialEvent.event_name == "payment_confirmed",
+            CommercialEvent.subject_type == "payment_record",
+            CommercialEvent.subject_id == subject_id,
+        )
+    )
+    if existing is not None:
+        return
+
+    connection.execute(
+        CommercialEvent.__table__.insert().values(
+            id=uuid.uuid4(),
+            organization_id=target.organization_id,
+            event_name="payment_confirmed",
+            subject_type="payment_record",
+            subject_id=subject_id,
+            source="server",
+            event_metadata={
+                "amount_naira": str(target.amount_naira),
+                "invoice_number": target.invoice_number,
+                "payment_reference": target.paystack_transaction_id,
+            },
+        )
+    )
+
+
+event.listen(PaymentRecord, "after_insert", _capture_successful_payment)
+event.listen(PaymentRecord, "after_update", _capture_successful_payment)

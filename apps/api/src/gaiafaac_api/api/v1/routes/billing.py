@@ -22,6 +22,11 @@ from gaiafaac_api.database.enums import SubscriptionStatus
 from gaiafaac_api.database.models import Subscription
 from gaiafaac_api.database.subscription_models import PaymentRecord
 from gaiafaac_api.services.account import active_subscription, membership_for
+from gaiafaac_api.services.commercial_events import (
+    record_commercial_event,
+    record_commercial_event_once,
+)
+from gaiafaac_api.services.payment_onboarding import deliver_payment_onboarding
 
 router = APIRouter(prefix="/billing", tags=["customer billing"])
 
@@ -327,11 +332,21 @@ def create_checkout(
         )
 
     if settings.paystack_secret_key:
-        return _initialize_paystack_checkout(
+        redirect = _initialize_paystack_checkout(
             email=user.email,
             organization_id=user.organization_id,
             plan_code=payload.plan_code,
         )
+        record_commercial_event(
+            session,
+            event_name="checkout_started",
+            organization_id=user.organization_id,
+            user_id=user.id,
+            subject_type="organization",
+            subject_id=str(user.organization_id),
+            metadata={"plan_code": payload.plan_code, "provider": "paystack"},
+        )
+        return redirect
 
     settings = _stripe_ready()
     price_id = _stripe_price_id(settings, payload.plan_code)
@@ -358,6 +373,15 @@ def create_checkout(
         raise HTTPException(
             status_code=502, detail="Billing provider did not return a checkout URL."
         )
+    record_commercial_event(
+        session,
+        event_name="checkout_started",
+        organization_id=user.organization_id,
+        user_id=user.id,
+        subject_type="stripe_checkout",
+        subject_id=_as_id(checkout) or str(user.organization_id),
+        metadata={"plan_code": payload.plan_code, "provider": "stripe"},
+    )
     return RedirectResponse(url=checkout.url)
 
 
@@ -399,6 +423,30 @@ def verify_paystack_return(
     payment = _record_paystack_payment(session, data, subscription)
     if payment is None:
         raise HTTPException(status_code=409, detail="Payment amount is invalid.")
+    deliver_payment_onboarding(
+        session,
+        payment=payment,
+        subscription=subscription,
+        email=user.email,
+    )
+    record_commercial_event_once(
+        session,
+        event_name="checkout_completed",
+        organization_id=subscription.organization_id,
+        user_id=user.id,
+        subject_type="payment_record",
+        subject_id=str(payment.id),
+        metadata={"plan_code": subscription.plan_code, "provider": "paystack"},
+    )
+    record_commercial_event_once(
+        session,
+        event_name="entitlement_activated",
+        organization_id=subscription.organization_id,
+        user_id=user.id,
+        subject_type="payment_record",
+        subject_id=str(payment.id),
+        metadata={"plan_code": subscription.plan_code},
+    )
     return {
         "status": "success",
         "plan_code": subscription.plan_code,
@@ -550,6 +598,31 @@ async def paystack_webhook(
         data = event.get("data") or {}
         subscription = _activate_paystack_subscription(session, data)
         if subscription is not None:
-            _record_paystack_payment(session, data, subscription)
+            payment = _record_paystack_payment(session, data, subscription)
+            if payment is not None:
+                customer = data.get("customer") or {}
+                customer_email = customer.get("email") if isinstance(customer, dict) else None
+                deliver_payment_onboarding(
+                    session,
+                    payment=payment,
+                    subscription=subscription,
+                    email=customer_email,
+                )
+                record_commercial_event_once(
+                    session,
+                    event_name="checkout_completed",
+                    organization_id=subscription.organization_id,
+                    subject_type="payment_record",
+                    subject_id=str(payment.id),
+                    metadata={"plan_code": subscription.plan_code, "provider": "paystack"},
+                )
+                record_commercial_event_once(
+                    session,
+                    event_name="entitlement_activated",
+                    organization_id=subscription.organization_id,
+                    subject_type="payment_record",
+                    subject_id=str(payment.id),
+                    metadata={"plan_code": subscription.plan_code},
+                )
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
