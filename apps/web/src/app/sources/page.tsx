@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { getEvidenceNetworkStatus } from '@/lib/evidence-network-api'
 import { formatDate, formatNaira, humanize } from '@/lib/format'
 import {
   getPublishedNationalDistributions,
@@ -26,44 +27,6 @@ import {
 
 export const metadata: Metadata = { title: 'Sources' }
 export const dynamic = 'force-dynamic'
-
-const sourceLanes = [
-  {
-    authority: 'OAGF / FAAC',
-    purpose: 'Monthly state and FCT allocation evidence',
-    status: 'Live evidence',
-    detail:
-      'Official monthly distribution tables are retained, validated and published with a SHA-256 fingerprint.',
-  },
-  {
-    authority: 'NBS',
-    purpose: 'State internally generated revenue (IGR)',
-    status: 'Governed intake ready',
-    detail:
-      'Official NBS IGR reports can be discovered, archived, extracted, human-approved and then published as immutable claims.',
-  },
-  {
-    authority: 'DMO',
-    purpose: 'State and FCT debt stock and debt-service evidence',
-    status: 'Governed intake ready',
-    detail:
-      'Official DMO debt publications have a separate review-to-publication pipeline; no debt claim appears before human verification.',
-  },
-  {
-    authority: 'CBN',
-    purpose: 'Macroeconomic context',
-    status: 'Source lane reserved',
-    detail:
-      'CBN indicators will enter only as retained official series with a defined period, unit, source link and review record.',
-  },
-  {
-    authority: 'FIRS',
-    purpose: 'Federal tax-revenue context',
-    status: 'Source lane reserved',
-    detail:
-      'FIRS context will remain separate from state IGR so Gaia never treats federal tax revenue as a state-owned revenue figure.',
-  },
-] as const
 
 export default async function SourcesPage() {
   const [jurisdictionResult, nationalResult] = await Promise.all([
@@ -85,6 +48,15 @@ export default async function SourcesPage() {
   const latestCoverageComplete =
     latestJurisdiction?.covered_states === latestJurisdiction?.expected_states
 
+  const oagfLive =
+    Boolean(latestJurisdiction) && latestCoverageComplete === true
+  const oagfPeriod = latestJurisdiction?.revenue_month ?? null
+  const evidenceNetworkResult = await getEvidenceNetworkStatus({
+    oagfLive,
+    oagfPeriod,
+  })
+  const lanes = evidenceNetworkResult.data ?? []
+
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
@@ -99,7 +71,8 @@ export default async function SourcesPage() {
             <FileCheck2 className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">OAGF jurisdiction evidence</CardTitle>
             <CardDescription>
-              Complete 37-jurisdiction FAAC allocation evidence.
+              Shows the latest verified/published OAGF allocation available
+              to Gaia, not the current calendar month.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -171,34 +144,43 @@ export default async function SourcesPage() {
             publication gate.
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {sourceLanes.map((lane) => (
-            <Card key={lane.authority}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-3">
-                  <Landmark
-                    className="text-primary size-5"
-                    aria-hidden="true"
-                  />
-                  <StatusPill
-                    tone={
-                      lane.status === 'Live evidence' ? 'success' : 'neutral'
-                    }
-                  >
-                    {lane.status}
-                  </StatusPill>
-                </div>
-                <CardTitle className="pt-3">{lane.authority}</CardTitle>
-                <CardDescription>{lane.purpose}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm leading-6">
-                  {lane.detail}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {evidenceNetworkResult.error ? (
+          <DataUnavailable message={evidenceNetworkResult.error} />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {lanes.map((lane) => (
+              <Card key={lane.authority}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-3">
+                    <Landmark
+                      className="text-primary size-5"
+                      aria-hidden="true"
+                    />
+                    <StatusPill
+                      tone={lane.state === 'Live' ? 'success' : 'neutral'}
+                    >
+                      {lane.state}
+                    </StatusPill>
+                  </div>
+                  <CardTitle className="pt-3">{lane.authority}</CardTitle>
+                  <CardDescription>{lane.label}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm leading-6">
+                    {lane.description}
+                  </p>
+                  <p className="text-muted-foreground mt-3 text-sm">
+                    {lane.publishedRecordCount} published record
+                    {lane.publishedRecordCount === 1 ? '' : 's'}
+                    {lane.latestPeriod
+                      ? `, latest ${formatDate(lane.latestPeriod)}`
+                      : null}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="mt-12" aria-labelledby="jurisdiction-evidence">
