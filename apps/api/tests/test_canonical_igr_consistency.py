@@ -105,6 +105,7 @@ def test_terminal_nbs_status_and_ask_gaia_ignore_legacy_newer_row(session):
     assert terminal_status.is_live is True
     assert terminal_status.latest_period == "2024"
     assert terminal_status.published_record_count == 1
+    assert terminal_status.source_organizations == ["National Bureau of Statistics (NBS)"]
     assert answer.intent == "igr_latest"
     assert answer.status == "answered"
     assert answer.evidence[0].period_label == "2024 annual"
