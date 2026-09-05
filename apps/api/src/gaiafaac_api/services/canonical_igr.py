@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from gaiafaac_api.database.enums import EvidenceStatus, SourceStatus
 from gaiafaac_api.database.ledger_models import FiscalClaim
 from gaiafaac_api.database.models import SourceDocument, State
-from gaiafaac_api.igr_schemas import GovernedIgrStatus
+from gaiafaac_api.igr_schemas import GovernedIgrSourceDocument, GovernedIgrStatus
 
 _PERIOD_RE = re.compile(r"^(?P<year>20\d{2})(?:Q(?P<quarter>[1-4]))?$")
 
@@ -205,15 +205,27 @@ def governed_igr_status(
         if observations
         else None
     )
+    latest_period = latest.fiscal_period if latest is not None else None
     source_organizations = sorted({item.source_organization for item in observations})
+    latest_sources: dict[str, GovernedIgrSourceDocument] = {}
+    for item in observations:
+        if item.fiscal_period != latest_period or item.source_sha256 in latest_sources:
+            continue
+        latest_sources[item.source_sha256] = GovernedIgrSourceDocument(
+            organization=item.source_organization,
+            source_url=item.source_url,
+            sha256=item.source_sha256,
+            fiscal_period=item.fiscal_period,
+        )
     return GovernedIgrStatus(
         source_scope=publisher_fragment,
         is_live=bool(observations),
         published_record_count=len(observations),
         jurisdiction_count=len({item.state_code for item in observations}),
-        latest_period=latest.fiscal_period if latest is not None else None,
+        latest_period=latest_period,
         latest_published_at=latest.published_at if latest is not None else None,
         source_organizations=source_organizations,
+        source_documents=list(latest_sources.values()),
         note=(
             "Status is derived only from current, non-demo, source-approved, verified IGR "
             "FiscalClaim records. Staged, legacy or unverified successor rows do not make "
