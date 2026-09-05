@@ -31,7 +31,7 @@ describe('GaiaAnalystPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders governed IGR provenance without mixing it into FAAC evidence', async () => {
+  it('renders governed IGR provenance in the answer card and evidence record', async () => {
     vi.mocked(askGaiaAnalyst).mockResolvedValue({
       data: {
         question: 'What is Lagos IGR in 2024?',
@@ -72,12 +72,63 @@ describe('GaiaAnalystPage', () => {
 
     expect(screen.getByText('igr')).toBeInTheDocument()
     expect(screen.getByText('2024 annual')).toBeInTheDocument()
-    expect(
-      screen.getByText('National Bureau of Statistics'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Source:')).toBeInTheDocument()
+    expect(screen.getAllByText('National Bureau of Statistics')).toHaveLength(2)
     expect(screen.getByText('a'.repeat(64))).toBeInTheDocument()
     expect(screen.getByText('Open state record →')).toBeInTheDocument()
+    expect(
+      screen.getByText('This IGR answer is restricted to the selected year: 2024.'),
+    ).toBeInTheDocument()
     expect(screen.queryByText('Fiscal Proof')).not.toBeInTheDocument()
+  })
+
+  it('makes latest-query year semantics explicit', async () => {
+    vi.mocked(askGaiaAnalyst).mockResolvedValue({
+      data: {
+        question: 'What is the latest published IGR for Lagos?',
+        year: 2026,
+        intent: 'igr_latest',
+        status: 'answered',
+        answer: 'The latest published IGR for Lagos is 2024 annual: NGN 1,000.00.',
+        coverage_label: 'Latest published IGR · 2024 annual',
+        evidence: [
+          {
+            state_name: 'Lagos',
+            state_slug: 'lagos',
+            label: '2024 annual IGR',
+            value: 'NGN 1,000.00',
+            metric: 'igr_amount',
+            reference_path: '/states/lagos',
+            reference_label: 'Open state record',
+            evidence_domain: 'igr',
+            period_label: '2024 annual',
+            source_organization: 'National Bureau of Statistics',
+            source_sha256: 'b'.repeat(64),
+          },
+        ],
+        caveat: 'Only current governed IGR publications are used.',
+        suggested_questions: [],
+      },
+      error: null,
+    })
+
+    render(
+      await GaiaAnalystPage({
+        searchParams: Promise.resolve({
+          question: 'What is the latest published IGR for Lagos?',
+          year: '2026',
+        }),
+      }),
+    )
+
+    expect(
+      screen.getByText('Latest mode is active: the Year field does not restrict this query.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '“Latest” is resolved from the canonical governed IGR publication ledger and is not restricted by the Year field.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('keeps FAAC evidence free of IGR-only provenance fields', async () => {
@@ -126,7 +177,7 @@ describe('GaiaAnalystPage', () => {
     expect(screen.getByText('faac')).toBeInTheDocument()
     expect(screen.getByText('Open Fiscal Proof →')).toBeInTheDocument()
     expect(screen.queryByText('Source SHA-256')).not.toBeInTheDocument()
-    expect(screen.queryByText('Source')).not.toBeInTheDocument()
+    expect(screen.queryByText('Source:')).not.toBeInTheDocument()
   })
 
   it('fails closed when Gaia Analyst cannot return published evidence', async () => {
