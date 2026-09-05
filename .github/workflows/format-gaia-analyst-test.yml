@@ -1,0 +1,35 @@
+name: Format Ask Gaia Test
+
+on:
+  push:
+    branches:
+      - fix/canonical-igr-publication
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ !contains(github.event.head_commit.message, '[format-test-bot]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/canonical-igr-publication
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --write apps/web/src/app/gaia-analyst/page.test.tsx
+      - name: Commit formatter output
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/src/app/gaia-analyst/page.test.tsx
+          git commit -m "chore: format Ask Gaia test [format-test-bot]"
+          git push
