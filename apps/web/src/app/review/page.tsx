@@ -254,6 +254,7 @@ export default async function EvidenceControlPage() {
                 <Link
                   key={queue.href}
                   href={queue.href}
+                  prefetch={false}
                   className="gaia-panel group flex min-h-64 flex-col p-6 transition hover:-translate-y-1"
                 >
                   <div className="flex items-start justify-between gap-3">
