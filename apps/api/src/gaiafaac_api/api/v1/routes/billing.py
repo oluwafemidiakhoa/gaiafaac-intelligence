@@ -457,6 +457,73 @@ def verify_paystack_return(
     }
 
 
+@router.get("/paystack-check")
+def paystack_check(
+    user: CurrentCustomer,
+) -> dict:
+    """Temporary diagnostic endpoint to verify Paystack secret key configuration.
+
+    Makes a safe, read-only GET request against Paystack's transaction list
+    endpoint (limited to a single record) to confirm the configured secret
+    key is valid. Does not initialize transactions, create charges, or
+    mutate any Paystack data, and never exposes the secret key itself.
+    """
+    settings = get_settings()
+    if not settings.paystack_secret_key:
+        return {
+            "status": "error",
+            "http_status": None,
+            "paystack_response": None,
+            "error_message": "Paystack billing is not configured.",
+        }
+
+    request = UrlRequest(
+        f"{_PAYSTACK_API_URL}/transaction?perPage=1",
+        headers={"Authorization": f"Bearer {settings.paystack_secret_key}"},
+        method="GET",
+    )
+    try:
+        with urlopen(request, timeout=12) as response:  # noqa: S310 - fixed trusted host
+            http_status = response.status
+            raw_body = response.read().decode("utf-8")
+    except HTTPError as error:
+        raw_body = error.read().decode("utf-8") if error.fp else ""
+        try:
+            paystack_response = json.loads(raw_body) if raw_body else None
+        except json.JSONDecodeError:
+            paystack_response = {"raw": raw_body}
+        return {
+            "status": "error",
+            "http_status": error.code,
+            "paystack_response": paystack_response,
+            "error_message": f"Paystack returned HTTP {error.code}.",
+        }
+    except (URLError, TimeoutError) as error:
+        return {
+            "status": "error",
+            "http_status": None,
+            "paystack_response": None,
+            "error_message": f"Failed to reach Paystack: {error}",
+        }
+
+    try:
+        paystack_response = json.loads(raw_body) if raw_body else None
+    except json.JSONDecodeError as error:
+        return {
+            "status": "error",
+            "http_status": http_status,
+            "paystack_response": None,
+            "error_message": f"Paystack returned invalid JSON: {error}",
+        }
+
+    return {
+        "status": "ok",
+        "http_status": http_status,
+        "paystack_response": paystack_response,
+        "error_message": None,
+    }
+
+
 @router.get("/history")
 def billing_history(
     session: DatabaseSession,
