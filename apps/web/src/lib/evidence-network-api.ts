@@ -38,6 +38,14 @@ const governedIgrStatusSchema = z.object({
   latest_period: z.string().nullable(),
   latest_published_at: z.string().nullable(),
   source_organizations: z.array(z.string()),
+  source_documents: z.array(
+    z.object({
+      organization: z.string(),
+      source_url: z.string().nullable(),
+      sha256: z.string().length(64),
+      fiscal_period: z.string(),
+    }),
+  ),
   note: z.string(),
 })
 
@@ -155,16 +163,11 @@ export async function getEvidenceNetworkStatus({
   oagfPeriod: string | null
 }): Promise<EvidenceNetworkResult> {
   try {
-    const [nbsIgrStatus, igrEnvelope, debtEnvelope] = await Promise.all([
+    const [nbsIgrStatus, debtEnvelope] = await Promise.all([
       fetchNbsIgrStatus(),
-      fetchClaims('igr'),
       fetchClaims('debt'),
     ])
 
-    const nbsClaims = officialClaims(
-      igrEnvelope,
-      'National Bureau of Statistics',
-    )
     const dmoClaims = officialClaims(debtEnvelope, 'Debt Management Office')
     const dmoLatestPeriod = newestPeriod(
       dmoClaims.map((claim) => claim.fiscal_period),
@@ -197,7 +200,12 @@ export async function getEvidenceNetworkStatus({
         jurisdictionCount: nbsIgrStatus.jurisdiction_count,
         latestPeriod: nbsIgrStatus.latest_period,
         sourceOrganizations: nbsIgrStatus.source_organizations,
-        sourceDocuments: sourceDocuments(nbsClaims, nbsIgrStatus.latest_period),
+        sourceDocuments: nbsIgrStatus.source_documents.map((source) => ({
+          publisher: source.organization,
+          documentUrl: source.source_url,
+          sha256: source.sha256,
+          fiscalPeriod: source.fiscal_period,
+        })),
       },
       {
         authority: 'DMO',
