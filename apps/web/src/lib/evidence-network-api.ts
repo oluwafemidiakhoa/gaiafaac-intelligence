@@ -30,6 +30,17 @@ const fiscalClaimEnvelopeSchema = z.object({
   data: z.array(fiscalClaimSchema),
 })
 
+const governedIgrStatusSchema = z.object({
+  source_scope: z.string().nullable(),
+  is_live: z.boolean(),
+  published_record_count: z.number().int().nonnegative(),
+  jurisdiction_count: z.number().int().nonnegative(),
+  latest_period: z.string().nullable(),
+  latest_published_at: z.string().nullable(),
+  source_organizations: z.array(z.string()),
+  note: z.string(),
+})
+
 export type EvidenceLaneState =
   | 'Live'
   | 'Pipeline ready'
@@ -88,6 +99,20 @@ async function fetchClaims(domain: string) {
   return fiscalClaimEnvelopeSchema.parse(await response.json())
 }
 
+async function fetchNbsIgrStatus() {
+  const params = new URLSearchParams({
+    publisher: 'National Bureau of Statistics',
+  })
+  const response = await fetch(
+    `${apiBaseUrl()}/api/v1/published/igr/status?${params.toString()}`,
+    { next: { revalidate: 300 } },
+  )
+  if (!response.ok) {
+    throw new Error('Unable to load canonical NBS IGR status.')
+  }
+  return governedIgrStatusSchema.parse(await response.json())
+}
+
 export async function getEvidenceNetworkStatus({
   oagfLive,
   oagfPeriod,
@@ -96,15 +121,11 @@ export async function getEvidenceNetworkStatus({
   oagfPeriod: string | null
 }): Promise<EvidenceNetworkResult> {
   try {
-    const [igrEnvelope, debtEnvelope] = await Promise.all([
-      fetchClaims('igr'),
+    const [nbsIgrStatus, debtEnvelope] = await Promise.all([
+      fetchNbsIgrStatus(),
       fetchClaims('debt'),
     ])
 
-    const nbsClaims = officialClaims(
-      igrEnvelope,
-      'National Bureau of Statistics',
-    )
     const dmoClaims = officialClaims(debtEnvelope, 'Debt Management Office')
 
     const lanes: EvidenceLane[] = [
@@ -121,15 +142,12 @@ export async function getEvidenceNetworkStatus({
       {
         authority: 'NBS',
         label: 'State IGR',
-        state: nbsClaims.length > 0 ? 'Live' : 'Pipeline ready',
-        description:
-          nbsClaims.length > 0
-            ? 'Human-verified NBS state IGR claims are published and source-linked.'
-            : 'The governed NBS IGR pipeline is available, but no verified NBS IGR claim is published yet.',
-        publishedRecordCount: nbsClaims.length,
-        latestPeriod: newestPeriod(
-          nbsClaims.map((claim) => claim.fiscal_period),
-        ),
+        state: nbsIgrStatus.is_live ? 'Live' : 'Pipeline ready',
+        description: nbsIgrStatus.is_live
+          ? 'Human-verified NBS state IGR claims are published in the canonical governed ledger and source-linked.'
+          : 'The governed NBS IGR pipeline is available, but no canonical verified NBS IGR publication is live yet.',
+        publishedRecordCount: nbsIgrStatus.published_record_count,
+        latestPeriod: nbsIgrStatus.latest_period,
       },
       {
         authority: 'DMO',
