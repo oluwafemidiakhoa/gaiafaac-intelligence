@@ -123,3 +123,44 @@ def test_verified_successor_replaces_prior_verified_igr(session):
     assert len(observations) == 1
     assert observations[0].value == "120.00"
     assert observations[0].source_sha256 == "2" * 64
+
+
+def test_verified_revision_after_partial_intermediate_becomes_only_current_igr(session):
+    seed_states(session)
+    lagos = session.scalar(select(State).where(State.slug == "lagos"))
+    assert lagos is not None
+
+    first_source = _source(session, organization="NBS", sha="3" * 64)
+    partial_source = _source(session, organization="NBS", sha="4" * 64)
+    final_source = _source(session, organization="NBS", sha="5" * 64)
+    _publish(
+        session,
+        state=lagos,
+        source=first_source,
+        amount="100.00",
+        published_at=datetime(2025, 3, 10, 12, 0, tzinfo=UTC),
+        human_reviewed=True,
+    )
+    _publish(
+        session,
+        state=lagos,
+        source=partial_source,
+        amount="110.00",
+        published_at=datetime(2025, 3, 11, 12, 0, tzinfo=UTC),
+        human_reviewed=False,
+    )
+    _publish(
+        session,
+        state=lagos,
+        source=final_source,
+        amount="125.00",
+        published_at=datetime(2025, 3, 12, 12, 0, tzinfo=UTC),
+        human_reviewed=True,
+    )
+    session.flush()
+
+    observations = governed_igr_observations(session, state_slug="lagos", year=2024)
+
+    assert len(observations) == 1
+    assert observations[0].value == "125.00"
+    assert observations[0].source_sha256 == "5" * 64
