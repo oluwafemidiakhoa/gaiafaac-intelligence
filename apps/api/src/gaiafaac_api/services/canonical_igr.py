@@ -62,22 +62,40 @@ def governed_igr_observations(
     """Return the canonical, current, verified IGR publication set.
 
     FiscalClaim is the publication ledger. StateIgrRecord remains a staging/review
-    substrate and is deliberately not treated as public evidence here.
+    substrate and is deliberately not treated as public evidence here. A prior verified
+    claim remains current until a later claim that is itself verified, approved and
+    non-demo explicitly supersedes it.
     """
 
     successor = aliased(FiscalClaim)
+    successor_source = aliased(SourceDocument)
+    eligible_successor = (
+        select(successor.gaia_id)
+        .join(successor_source, successor.source_document_id == successor_source.id)
+        .where(
+            successor.supersedes_gaia_id == FiscalClaim.gaia_id,
+            successor.object_type == "igr",
+            successor.metric == "igr",
+            successor.state_id == FiscalClaim.state_id,
+            successor.fiscal_period == FiscalClaim.fiscal_period,
+            successor.evidence_status == EvidenceStatus.VERIFIED,
+            successor_source.source_status == SourceStatus.APPROVED,
+            successor_source.is_demo.is_(False),
+        )
+        .correlate(FiscalClaim)
+        .exists()
+    )
     statement = (
-        select(FiscalClaim, State, SourceDocument, successor.gaia_id)
+        select(FiscalClaim, State, SourceDocument)
         .join(State, FiscalClaim.state_id == State.id)
         .join(SourceDocument, FiscalClaim.source_document_id == SourceDocument.id)
-        .outerjoin(successor, successor.supersedes_gaia_id == FiscalClaim.gaia_id)
         .where(
             FiscalClaim.object_type == "igr",
             FiscalClaim.metric == "igr",
             FiscalClaim.evidence_status == EvidenceStatus.VERIFIED,
             SourceDocument.source_status == SourceStatus.APPROVED,
             SourceDocument.is_demo.is_(False),
-            successor.gaia_id.is_(None),
+            ~eligible_successor,
         )
     )
     if state_slug is not None:
@@ -114,7 +132,7 @@ def governed_igr_observations(
             effective_at=claim.effective_at,
             published_at=claim.published_at,
         )
-        for claim, state, source, _superseded_by in rows
+        for claim, state, source in rows
         if year is None or fiscal_period_year(claim.fiscal_period) == year
     ]
     return observations
@@ -175,6 +193,7 @@ def governed_igr_status(
         source_organizations=source_organizations,
         note=(
             "Status is derived only from current, non-demo, source-approved, verified IGR "
-            "FiscalClaim records. Staged or legacy IGR rows do not make a publication live."
+            "FiscalClaim records. Staged, legacy or unverified successor rows do not make "
+            "a publication live or hide the last verified publication."
         ),
     )
