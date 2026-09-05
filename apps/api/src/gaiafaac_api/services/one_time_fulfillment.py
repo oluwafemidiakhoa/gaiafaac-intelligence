@@ -19,11 +19,9 @@ class OneTimeFulfillmentUnavailable(ValueError):
     """Raised before charging when the requested governed evidence is unavailable."""
 
 
-def _year(value: object, *, required: bool) -> int | None:
+def _year(value: object) -> int:
     if value in (None, ""):
-        if required:
-            raise OneTimeFulfillmentUnavailable("A year is required for this product.")
-        return None
+        raise OneTimeFulfillmentUnavailable("A year is required for this product.")
     try:
         year = int(value)
     except (TypeError, ValueError) as error:
@@ -33,7 +31,7 @@ def _year(value: object, *, required: bool) -> int | None:
     return year
 
 
-def _state_slug(session: Session, value: object) -> str:
+def _state(session: Session, value: object) -> State:
     raw = str(value or "").strip()
     if not raw:
         raise OneTimeFulfillmentUnavailable("A jurisdiction is required for this product.")
@@ -42,7 +40,7 @@ def _state_slug(session: Session, value: object) -> str:
     )
     if state is None:
         raise OneTimeFulfillmentUnavailable("The requested jurisdiction is not recognized by Gaia.")
-    return state.slug
+    return state
 
 
 def normalize_one_time_context(
@@ -51,50 +49,49 @@ def normalize_one_time_context(
     product_code: str,
     context: dict[str, Any],
 ) -> dict[str, Any]:
-    """Normalize only the inputs required to create a deterministic deliverable."""
+    """Normalize the minimum inputs required for a deterministic deliverable."""
 
     if product_code in {"decision_pack", "due_diligence_snapshot"}:
         state_value = context.get("state_slug") or context.get("state_code") or context.get("state")
         year_value = context.get("year")
         if year_value in (None, "") and context.get("period"):
             year_value = str(context["period"])[:4]
-        return {
-            "state_slug": _state_slug(session, state_value),
-            "year": _year(year_value, required=False),
-        }
+        state = _state(session, state_value)
+        return {"state_slug": state.slug, "state_code": state.code, "year": _year(year_value)}
 
     if product_code == "multi_state_comparison_pack":
-        raw_states = context.get("state_slugs") or context.get("states")
+        raw_states = context.get("state_slugs") or context.get("state_codes") or context.get("states")
         if isinstance(raw_states, str):
             raw_states = [part.strip() for part in raw_states.split(",") if part.strip()]
         if not isinstance(raw_states, list):
             raise OneTimeFulfillmentUnavailable(
-                "Provide between two and ten jurisdictions for a comparison pack."
+                "Provide between two and six jurisdictions for a comparison pack."
             )
-        state_slugs: list[str] = []
+        states: list[State] = []
         for item in raw_states:
-            slug = _state_slug(session, item)
-            if slug not in state_slugs:
-                state_slugs.append(slug)
-        if len(state_slugs) < 2 or len(state_slugs) > 10:
+            state = _state(session, item)
+            if all(existing.id != state.id for existing in states):
+                states.append(state)
+        if len(states) < 2 or len(states) > 6:
             raise OneTimeFulfillmentUnavailable(
-                "Provide between two and ten distinct jurisdictions for a comparison pack."
+                "Provide between two and six distinct jurisdictions for a comparison pack."
             )
         return {
-            "state_slugs": state_slugs,
-            "year": _year(context.get("year"), required=True),
+            "state_slugs": [state.slug for state in states],
+            "state_codes": [state.code for state in states],
+            "year": _year(context.get("year")),
         }
 
     if product_code == "historical_evidence_export":
         state_value = context.get("state_slug") or context.get("state_code") or context.get("state")
+        state = _state(session, state_value)
         domain = str(context.get("domain") or "igr").strip().lower()
         if domain not in {"igr", "faac"}:
             raise OneTimeFulfillmentUnavailable(
                 "Historical exports currently support the IGR or FAAC governed evidence lane."
             )
-        start_year = _year(context.get("start_year"), required=True)
-        end_year = _year(context.get("end_year"), required=True)
-        assert start_year is not None and end_year is not None
+        start_year = _year(context.get("start_year"))
+        end_year = _year(context.get("end_year"))
         if end_year < start_year:
             raise OneTimeFulfillmentUnavailable("End year cannot be earlier than start year.")
         if end_year - start_year > 10:
@@ -102,7 +99,8 @@ def normalize_one_time_context(
                 "A single historical export can cover at most eleven calendar years."
             )
         return {
-            "state_slug": _state_slug(session, state_value),
+            "state_slug": state.slug,
+            "state_code": state.code,
             "domain": domain,
             "start_year": start_year,
             "end_year": end_year,
@@ -155,11 +153,7 @@ def _historical_faac_rows(session: Session, context: dict[str, Any]) -> list[dic
         if overview is None:
             continue
         allocation = next(
-            (
-                item
-                for item in overview.allocations
-                if item.state_slug == context["state_slug"]
-            ),
+            (item for item in overview.allocations if item.state_slug == context["state_slug"]),
             None,
         )
         if allocation is None:
@@ -185,7 +179,10 @@ def _historical_faac_rows(session: Session, context: dict[str, Any]) -> list[dic
 
 
 def _current_verified_debt_claims(
-    session: Session, *, state_slug: str
+    session: Session,
+    *,
+    state_slug: str,
+    year: int,
 ) -> list[dict[str, Any]]:
     successor = aliased(FiscalClaim)
     successor_source = aliased(SourceDocument)
@@ -195,10 +192,12 @@ def _current_verified_debt_claims(
         .where(
             successor.supersedes_gaia_id == FiscalClaim.gaia_id,
             successor.object_type == "debt",
+            successor.metric == FiscalClaim.metric,
             successor.evidence_status == EvidenceStatus.VERIFIED,
             successor_source.source_status == SourceStatus.APPROVED,
             successor_source.is_demo.is_(False),
         )
+        .correlate(FiscalClaim)
         .exists()
     )
     rows = session.execute(
@@ -208,6 +207,7 @@ def _current_verified_debt_claims(
         .where(
             State.slug == state_slug,
             FiscalClaim.object_type == "debt",
+            FiscalClaim.fiscal_period.like(f"{year}%"),
             FiscalClaim.evidence_status == EvidenceStatus.VERIFIED,
             SourceDocument.source_status == SourceStatus.APPROVED,
             SourceDocument.is_demo.is_(False),
@@ -246,9 +246,9 @@ def build_one_time_fulfillment(
         packet = decision_packet(
             session,
             state_slug=context["state_slug"],
-            year=context.get("year"),
+            year=context["year"],
         )
-        if not packet.months and not packet.igr_records:
+        if packet is None or (not packet.months and not packet.igr_records):
             raise OneTimeFulfillmentUnavailable(
                 "No governed evidence is available for the requested Decision Pack."
             )
@@ -262,10 +262,10 @@ def build_one_time_fulfillment(
     if product_code == "multi_state_comparison_pack":
         comparison = compare_jurisdictions(
             session,
-            state_slugs=context["state_slugs"],
-            year=context["year"],
+            jurisdiction_codes=context["state_codes"],
+            as_of=date(context["year"], 12, 31),
         )
-        if not comparison.jurisdictions:
+        if not comparison.data.jurisdictions:
             raise OneTimeFulfillmentUnavailable(
                 "No governed evidence is available for the requested comparison."
             )
@@ -297,13 +297,14 @@ def build_one_time_fulfillment(
         packet = decision_packet(
             session,
             state_slug=context["state_slug"],
-            year=context.get("year"),
+            year=context["year"],
         )
         debt_claims = _current_verified_debt_claims(
             session,
             state_slug=context["state_slug"],
+            year=context["year"],
         )
-        if not packet.months and not packet.igr_records and not debt_claims:
+        if (packet is None or (not packet.months and not packet.igr_records)) and not debt_claims:
             raise OneTimeFulfillmentUnavailable(
                 "No governed evidence is available for the requested due-diligence snapshot."
             )
@@ -311,7 +312,7 @@ def build_one_time_fulfillment(
             "schema": "gaia-one-time-due-diligence-snapshot-v1",
             "captured_at": captured_at,
             "request": context,
-            "decision_packet": packet.model_dump(mode="json"),
+            "decision_packet": packet.model_dump(mode="json") if packet is not None else None,
             "debt_claims": debt_claims,
             "statement": (
                 "This snapshot preserves the governed evidence available to Gaia at the "
