@@ -104,10 +104,7 @@ def governed_igr_observations(
             return False
         if source.source_status != SourceStatus.APPROVED or source.is_demo:
             return False
-        return not (
-            publisher_needle
-            and publisher_needle not in source.source_organization.lower()
-        )
+        return not (publisher_needle and publisher_needle not in source.source_organization.lower())
 
     eligible_ids = {gaia_id for gaia_id, row in row_by_gaia_id.items() if eligible(row)}
 
