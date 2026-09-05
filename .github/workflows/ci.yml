@@ -24,7 +24,11 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run format
+      - name: Show exact Prettier diff for sources page
+        run: |
+          npx prettier --write apps/web/src/app/sources/page.tsx
+          git diff -- apps/web/src/app/sources/page.tsx
+          git diff --quiet -- apps/web/src/app/sources/page.tsx || exit 1
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
