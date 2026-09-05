@@ -150,13 +150,30 @@ def test_one_time_checkout_fails_closed_until_price_is_approved(session, monkeyp
         get_settings.cache_clear()
 
 
-def test_one_time_purchase_is_persisted_and_verified_once(session, monkeypatch):
+def test_one_time_purchase_is_persisted_verified_and_fulfilled_once(session, monkeypatch):
     monkeypatch.setenv("PAYSTACK_SECRET_KEY", "test-secret")
     monkeypatch.setenv("PAYSTACK_PRICE_DECISION_PACK", "75000")
     get_settings.cache_clear()
 
     from gaiafaac_api.api.v1.routes import one_time_billing
 
+    normalized_context = {"state_slug": "edo", "state_code": "ED", "year": 2026}
+    fulfillment = {
+        "schema": "gaia-one-time-decision-pack-v1",
+        "captured_at": "2026-09-05T12:00:00+00:00",
+        "request": normalized_context,
+        "decision_packet": {"state_slug": "edo", "year": 2026},
+    }
+    monkeypatch.setattr(
+        one_time_billing,
+        "normalize_one_time_context",
+        lambda _session, *, product_code, context: normalized_context,
+    )
+    monkeypatch.setattr(
+        one_time_billing,
+        "build_one_time_fulfillment",
+        lambda _session, *, product_code, context: fulfillment,
+    )
     monkeypatch.setattr(
         one_time_billing,
         "_initialize_paystack_transaction",
@@ -185,8 +202,12 @@ def test_one_time_purchase_is_persisted_and_verified_once(session, monkeypatch):
         purchase = session.get(OneTimePurchase, uuid.UUID(purchase_id))
         assert purchase is not None
         assert purchase.status == "pending"
+        assert purchase.fulfillment_status == "pending"
         assert purchase.amount_naira == Decimal("75000")
-        assert purchase.purchase_metadata == {"state_code": "ED", "period": "2026-06"}
+        assert purchase.purchase_metadata == {
+            "request": normalized_context,
+            "_fulfillment": fulfillment,
+        }
 
         monkeypatch.setattr(
             one_time_billing,
@@ -209,6 +230,15 @@ def test_one_time_purchase_is_persisted_and_verified_once(session, monkeypatch):
         )
         assert verified.status_code == 200
         assert verified.json()["status"] == "success"
+        assert verified.json()["fulfillment_status"] == "ready"
+        assert verified.json()["fulfillment_reference"].endswith("/fulfillment")
+
+        deliverable = client.get(
+            f"/api/v1/billing/one-time/purchases/{purchase_id}/fulfillment",
+            headers=headers,
+        )
+        assert deliverable.status_code == 200
+        assert deliverable.json()["artifact"] == fulfillment
 
         verified_again = client.post(
             f"/api/v1/billing/one-time/paystack-verify?reference={reference}",
@@ -225,6 +255,7 @@ def test_one_time_purchase_is_persisted_and_verified_once(session, monkeypatch):
         )
         assert sorted(event.event_name for event in events) == [
             "one_time_checkout_started",
+            "one_time_fulfillment_ready",
             "one_time_purchase_completed",
         ]
     finally:

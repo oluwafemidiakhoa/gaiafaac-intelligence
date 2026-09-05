@@ -38,6 +38,13 @@ class PublishedIgrResponse(BaseModel):
     note: str
 
 
+class GovernedIgrSourceDocument(BaseModel):
+    organization: str
+    source_url: str | None
+    sha256: str
+    fiscal_period: str
+
+
 class GovernedIgrStatus(BaseModel):
     source_scope: str | None
     is_live: bool
@@ -46,4 +53,5 @@ class GovernedIgrStatus(BaseModel):
     latest_period: str | None
     latest_published_at: datetime | None
     source_organizations: list[str]
+    source_documents: list[GovernedIgrSourceDocument]
     note: str

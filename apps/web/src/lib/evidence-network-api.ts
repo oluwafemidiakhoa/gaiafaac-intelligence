@@ -38,6 +38,14 @@ const governedIgrStatusSchema = z.object({
   latest_period: z.string().nullable(),
   latest_published_at: z.string().nullable(),
   source_organizations: z.array(z.string()),
+  source_documents: z.array(
+    z.object({
+      organization: z.string(),
+      source_url: z.string().nullable(),
+      sha256: z.string().length(64),
+      fiscal_period: z.string(),
+    }),
+  ),
   note: z.string(),
 })
 
@@ -47,13 +55,23 @@ export type EvidenceLaneState =
   | 'Not connected'
   | 'Unavailable'
 
+export interface EvidenceSourceDocument {
+  publisher: string
+  documentUrl: string | null
+  sha256: string
+  fiscalPeriod: string
+}
+
 export interface EvidenceLane {
   authority: string
   label: string
   state: EvidenceLaneState
   description: string
   publishedRecordCount: number
+  jurisdictionCount: number
   latestPeriod: string | null
+  sourceOrganizations: string[]
+  sourceDocuments: EvidenceSourceDocument[]
 }
 
 export interface EvidenceNetworkResult {
@@ -84,8 +102,32 @@ function officialClaims(
   return envelope.data.filter(
     (claim) =>
       claim.evidence_status === 'verified' &&
+      claim.superseded_by_gaia_id === null &&
       claim.source.publisher.toLocaleLowerCase().includes(needle),
   )
+}
+
+function sourceDocuments(
+  claims: z.infer<typeof fiscalClaimSchema>[],
+  latestPeriod: string | null,
+): EvidenceSourceDocument[] {
+  const seen = new Set<string>()
+  return claims
+    .filter(
+      (claim) => latestPeriod === null || claim.fiscal_period === latestPeriod,
+    )
+    .flatMap((claim) => {
+      if (seen.has(claim.source.document_sha256)) return []
+      seen.add(claim.source.document_sha256)
+      return [
+        {
+          publisher: claim.source.publisher,
+          documentUrl: claim.source.document_url,
+          sha256: claim.source.document_sha256,
+          fiscalPeriod: claim.fiscal_period,
+        },
+      ]
+    })
 }
 
 async function fetchClaims(domain: string) {
@@ -127,6 +169,9 @@ export async function getEvidenceNetworkStatus({
     ])
 
     const dmoClaims = officialClaims(debtEnvelope, 'Debt Management Office')
+    const dmoLatestPeriod = newestPeriod(
+      dmoClaims.map((claim) => claim.fiscal_period),
+    )
 
     const lanes: EvidenceLane[] = [
       {
@@ -137,7 +182,12 @@ export async function getEvidenceNetworkStatus({
           ? 'Complete published state and FCT allocation evidence, retained with its official source fingerprint.'
           : 'No complete governed OAGF / FAAC allocation release is currently published.',
         publishedRecordCount: oagfLive ? 37 : 0,
+        jurisdictionCount: oagfLive ? 37 : 0,
         latestPeriod: oagfPeriod,
+        sourceOrganizations: oagfLive
+          ? ['Office of the Accountant-General of the Federation (OAGF)']
+          : [],
+        sourceDocuments: [],
       },
       {
         authority: 'NBS',
@@ -147,7 +197,15 @@ export async function getEvidenceNetworkStatus({
           ? 'Human-verified NBS state IGR claims are published in the canonical governed ledger and source-linked.'
           : 'The governed NBS IGR pipeline is available, but no canonical verified NBS IGR publication is live yet.',
         publishedRecordCount: nbsIgrStatus.published_record_count,
+        jurisdictionCount: nbsIgrStatus.jurisdiction_count,
         latestPeriod: nbsIgrStatus.latest_period,
+        sourceOrganizations: nbsIgrStatus.source_organizations,
+        sourceDocuments: nbsIgrStatus.source_documents.map((source) => ({
+          publisher: source.organization,
+          documentUrl: source.source_url,
+          sha256: source.sha256,
+          fiscalPeriod: source.fiscal_period,
+        })),
       },
       {
         authority: 'DMO',
@@ -158,9 +216,14 @@ export async function getEvidenceNetworkStatus({
             ? 'Human-verified DMO debt claims are published and source-linked.'
             : 'The governed DMO debt pipeline is available, but no verified DMO debt claim is published yet.',
         publishedRecordCount: dmoClaims.length,
-        latestPeriod: newestPeriod(
-          dmoClaims.map((claim) => claim.fiscal_period),
-        ),
+        jurisdictionCount: new Set(
+          dmoClaims.map((claim) => claim.jurisdiction.code),
+        ).size,
+        latestPeriod: dmoLatestPeriod,
+        sourceOrganizations: [
+          ...new Set(dmoClaims.map((claim) => claim.source.publisher)),
+        ].sort(),
+        sourceDocuments: sourceDocuments(dmoClaims, dmoLatestPeriod),
       },
       {
         authority: 'CBN',
@@ -169,7 +232,10 @@ export async function getEvidenceNetworkStatus({
         description:
           'CBN macro series are not yet ingested into governed claims, so Gaia does not use a CBN figure here.',
         publishedRecordCount: 0,
+        jurisdictionCount: 0,
         latestPeriod: null,
+        sourceOrganizations: [],
+        sourceDocuments: [],
       },
       {
         authority: 'NRS',
@@ -178,7 +244,10 @@ export async function getEvidenceNetworkStatus({
         description:
           'Federal tax-authority series are not yet ingested into governed claims, so Gaia does not use a tax figure here.',
         publishedRecordCount: 0,
+        jurisdictionCount: 0,
         latestPeriod: null,
+        sourceOrganizations: [],
+        sourceDocuments: [],
       },
     ]
 
