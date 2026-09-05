@@ -70,8 +70,8 @@ export default async function SourcesPage() {
             <FileCheck2 className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">OAGF jurisdiction evidence</CardTitle>
             <CardDescription>
-              Shows the latest verified/published OAGF allocation that Gaia
-              can support, not the current calendar month.
+              Shows the latest verified/published OAGF allocation that Gaia can
+              support, not the current calendar month.
             </CardDescription>
           </CardHeader>
           <CardContent>
