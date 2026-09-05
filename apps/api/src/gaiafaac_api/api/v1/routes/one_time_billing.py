@@ -168,7 +168,7 @@ def _mark_fulfillment_ready(
     session: DatabaseSession,
     *,
     purchase: OneTimePurchase,
-    user: CurrentCustomer,
+    user_id: uuid.UUID | None,
 ) -> None:
     metadata = dict(purchase.purchase_metadata or {})
     artifact = metadata.get(_FULFILLMENT_KEY)
@@ -193,7 +193,7 @@ def _mark_fulfillment_ready(
         session,
         event_name="one_time_fulfillment_ready",
         organization_id=purchase.organization_id,
-        user_id=user.id,
+        user_id=user_id,
         subject_type="one_time_purchase",
         subject_id=str(purchase.id),
         metadata={
@@ -201,6 +201,88 @@ def _mark_fulfillment_ready(
             "fulfillment_reference": purchase.fulfillment_reference,
         },
     )
+
+
+def process_one_time_paystack_success(
+    session: DatabaseSession,
+    data: dict,
+    *,
+    expected_organization_id: uuid.UUID | None = None,
+    user_id: uuid.UUID | None = None,
+) -> OneTimePurchase | None:
+    """Apply a signed/verified Paystack success event to a one-time order idempotently."""
+
+    metadata = data.get("metadata") or {}
+    if str(metadata.get("purchase_mode") or "") != "one_time":
+        return None
+
+    purchase_id_text = str(metadata.get("purchase_id") or "")
+    organization_id_text = str(metadata.get("organization_id") or "")
+    product_code = str(metadata.get("product_code") or "")
+    reference = str(data.get("reference") or "")
+    if not purchase_id_text or not organization_id_text or not product_code or not reference:
+        raise HTTPException(status_code=409, detail="One-time payment metadata is incomplete.")
+    try:
+        purchase_id = uuid.UUID(purchase_id_text)
+        organization_id = uuid.UUID(organization_id_text)
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail="One-time payment metadata is invalid.") from error
+    if expected_organization_id is not None and organization_id != expected_organization_id:
+        raise HTTPException(status_code=403, detail="Payment does not belong to this organization.")
+
+    purchase = session.scalar(
+        select(OneTimePurchase).where(
+            OneTimePurchase.id == purchase_id,
+            OneTimePurchase.provider == "paystack",
+            OneTimePurchase.provider_reference == reference,
+            OneTimePurchase.organization_id == organization_id,
+        )
+    )
+    if purchase is None:
+        raise HTTPException(status_code=404, detail="One-time purchase was not found.")
+    if product_code != purchase.product_code:
+        raise HTTPException(
+            status_code=409, detail="Purchased product does not match the order ledger."
+        )
+
+    _label, configured_amount = _configured_product_price(purchase.product_code)
+    try:
+        paid_amount_naira = Decimal(str(data.get("amount"))) / Decimal("100")
+    except (TypeError, ValueError, ArithmeticError) as error:
+        raise HTTPException(status_code=409, detail="Payment amount is invalid.") from error
+    if paid_amount_naira != purchase.amount_naira or paid_amount_naira != Decimal(
+        configured_amount
+    ):
+        raise HTTPException(
+            status_code=409, detail="Payment amount does not match the configured product price."
+        )
+
+    if purchase.status != "success":
+        purchase.status = "success"
+        purchase.completed_at = purchase.completed_at or datetime.now(UTC)
+        session.commit()
+        session.refresh(purchase)
+        record_commercial_event_once(
+            session,
+            event_name="one_time_purchase_completed",
+            organization_id=purchase.organization_id,
+            user_id=user_id,
+            subject_type="one_time_purchase",
+            subject_id=str(purchase.id),
+            metadata={
+                "product_code": purchase.product_code,
+                "amount_naira": str(purchase.amount_naira),
+                "provider": purchase.provider,
+            },
+        )
+
+    if purchase.fulfillment_status != "ready":
+        _mark_fulfillment_ready(
+            session,
+            purchase=purchase,
+            user_id=user_id,
+        )
+    return purchase
 
 
 @router.post("/checkout", response_model=OneTimePurchaseCheckoutResponse)
@@ -293,66 +375,17 @@ def verify_one_time_purchase(
     if user.organization_id is None:
         raise HTTPException(status_code=409, detail="Customer organization is not configured.")
 
-    purchase = session.scalar(
-        select(OneTimePurchase).where(
-            OneTimePurchase.provider == "paystack",
-            OneTimePurchase.provider_reference == reference,
-            OneTimePurchase.organization_id == user.organization_id,
-        )
-    )
-    if purchase is None:
-        raise HTTPException(status_code=404, detail="One-time purchase was not found.")
-    if purchase.status == "success":
-        if purchase.fulfillment_status != "ready":
-            _mark_fulfillment_ready(session, purchase=purchase, user=user)
-        return _serialize_purchase(purchase)
-
     data = _verify_paystack_transaction(reference)
-    metadata = data.get("metadata") or {}
     if str(data.get("reference") or "") != reference:
         raise HTTPException(status_code=409, detail="Payment reference mismatch.")
-    if str(metadata.get("purchase_mode") or "") != "one_time":
-        raise HTTPException(status_code=409, detail="Payment is not a Gaia one-time purchase.")
-    if str(metadata.get("purchase_id") or "") != str(purchase.id):
-        raise HTTPException(status_code=403, detail="Payment does not belong to this purchase.")
-    if str(metadata.get("organization_id") or "") != str(user.organization_id):
-        raise HTTPException(status_code=403, detail="Payment does not belong to this organization.")
-    if str(metadata.get("product_code") or "") != purchase.product_code:
-        raise HTTPException(
-            status_code=409, detail="Purchased product does not match the order ledger."
-        )
-
-    _label, configured_amount = _configured_product_price(purchase.product_code)
-    try:
-        paid_amount_naira = Decimal(str(data.get("amount"))) / Decimal("100")
-    except (TypeError, ValueError, ArithmeticError) as error:
-        raise HTTPException(status_code=409, detail="Payment amount is invalid.") from error
-    if paid_amount_naira != purchase.amount_naira or paid_amount_naira != Decimal(
-        configured_amount
-    ):
-        raise HTTPException(
-            status_code=409, detail="Payment amount does not match the configured product price."
-        )
-
-    purchase.status = "success"
-    purchase.completed_at = purchase.completed_at or datetime.now(UTC)
-    session.commit()
-    session.refresh(purchase)
-
-    record_commercial_event_once(
+    purchase = process_one_time_paystack_success(
         session,
-        event_name="one_time_purchase_completed",
-        organization_id=user.organization_id,
+        data,
+        expected_organization_id=user.organization_id,
         user_id=user.id,
-        subject_type="one_time_purchase",
-        subject_id=str(purchase.id),
-        metadata={
-            "product_code": purchase.product_code,
-            "amount_naira": str(purchase.amount_naira),
-            "provider": purchase.provider,
-        },
     )
-    _mark_fulfillment_ready(session, purchase=purchase, user=user)
+    if purchase is None:
+        raise HTTPException(status_code=409, detail="Payment is not a Gaia one-time purchase.")
     return _serialize_purchase(purchase)
 
 
@@ -392,7 +425,11 @@ def get_one_time_fulfillment(
             status_code=409, detail="Payment has not been confirmed for this order."
         )
     if purchase.fulfillment_status != "ready":
-        _mark_fulfillment_ready(session, purchase=purchase, user=user)
+        _mark_fulfillment_ready(
+            session,
+            purchase=purchase,
+            user_id=user.id,
+        )
 
     metadata = dict(purchase.purchase_metadata or {})
     artifact = metadata.get(_FULFILLMENT_KEY)
