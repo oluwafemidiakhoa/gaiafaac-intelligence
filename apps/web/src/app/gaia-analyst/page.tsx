@@ -35,6 +35,7 @@ export default async function GaiaAnalystPage({
   const year = Number.isInteger(parsedYear) ? parsedYear : currentYear
   const question = (params.question ?? '').trim()
   const submitted = question.length >= 3
+  const isLatestQuestion = /\blatest\b/i.test(question)
   const result = submitted ? await askGaiaAnalyst(question, year) : null
   const data = result?.data ?? null
 
@@ -53,6 +54,16 @@ export default async function GaiaAnalystPage({
     ? data.evidence
         .map((item) => item.state_slug)
         .filter((value): value is string => Boolean(value))
+    : []
+  const igrSources = data
+    ? Array.from(
+        new Set(
+          data.evidence
+            .filter((item) => item.evidence_domain === 'igr')
+            .map((item) => item.source_organization)
+            .filter((value): value is string => Boolean(value)),
+        ),
+      )
     : []
 
   return (
@@ -101,6 +112,10 @@ export default async function GaiaAnalystPage({
                 defaultValue={year}
                 className="border-input bg-background h-11 rounded-md border px-3 text-sm"
               />
+              <span className="text-muted-foreground text-xs font-normal leading-4">
+                Year-specific questions use this value. “Latest” searches the
+                latest governed publication instead.
+              </span>
             </label>
             <div className="flex items-end">
               <button
@@ -111,6 +126,12 @@ export default async function GaiaAnalystPage({
               </button>
             </div>
           </form>
+          {submitted && isLatestQuestion ? (
+            <p className="text-muted-foreground mt-3 text-xs">
+              Latest mode is active: the Year field does not restrict this
+              query.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -165,6 +186,22 @@ export default async function GaiaAnalystPage({
             </CardHeader>
             <CardContent>
               <p className="max-w-4xl text-base leading-7">{data.answer}</p>
+              {igrSources.length > 0 ? (
+                <p className="text-muted-foreground mt-3 text-sm leading-6">
+                  <span className="text-foreground font-medium">Source:</span>{' '}
+                  {igrSources.join(', ')}
+                </p>
+              ) : null}
+              {data.intent === 'igr_latest' ? (
+                <p className="text-muted-foreground mt-2 text-xs">
+                  “Latest” is resolved from the canonical governed IGR
+                  publication ledger and is not restricted by the Year field.
+                </p>
+              ) : data.intent.startsWith('igr_') ? (
+                <p className="text-muted-foreground mt-2 text-xs">
+                  This IGR answer is restricted to the selected year: {data.year}.
+                </p>
+              ) : null}
             </CardContent>
           </Card>
 
