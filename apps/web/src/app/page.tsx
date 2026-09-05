@@ -14,8 +14,10 @@ import {
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { CommercialDecisionChain } from '@/components/commercial-decision-chain'
-import { ExpensiveDecisionWorkflows } from '@/components/expensive-decision-workflows'
+import {
+  CommercialDecisionChain,
+  ExpensiveDecisionWorkflows,
+} from '@/components/commercial-home-sections'
 import { formatNaira } from '@/lib/format'
 import { getPublishedAnalytics } from '@/lib/analytics-api'
 import { getPublishedOverview } from '@/lib/published-api'
