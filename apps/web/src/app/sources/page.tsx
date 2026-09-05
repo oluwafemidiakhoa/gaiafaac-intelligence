@@ -55,6 +55,8 @@ export default async function SourcesPage() {
     oagfPeriod,
   })
   const evidenceLanes = evidenceNetwork.data
+  const nbsLane = evidenceLanes?.find((lane) => lane.authority === 'NBS')
+  const dmoLane = evidenceLanes?.find((lane) => lane.authority === 'DMO')
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -166,6 +168,28 @@ export default async function SourcesPage() {
                   <p className="text-muted-foreground text-sm leading-6">
                     {lane.description}
                   </p>
+                  {lane.state === 'Live' ? (
+                    <dl className="border-border mt-5 grid grid-cols-2 gap-4 border-t pt-4 text-xs">
+                      <div>
+                        <dt className="text-muted-foreground">Verified records</dt>
+                        <dd className="mt-1 font-mono font-semibold">
+                          {lane.publishedRecordCount}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Jurisdictions</dt>
+                        <dd className="mt-1 font-mono font-semibold">
+                          {lane.jurisdictionCount}
+                        </dd>
+                      </div>
+                      <div className="col-span-2">
+                        <dt className="text-muted-foreground">Latest period</dt>
+                        <dd className="mt-1 font-mono font-semibold">
+                          {lane.latestPeriod ?? 'Unavailable'}
+                        </dd>
+                      </div>
+                    </dl>
+                  ) : null}
                 </CardContent>
               </Card>
             ))}
@@ -177,6 +201,108 @@ export default async function SourcesPage() {
             }
           />
         )}
+      </section>
+
+      <section className="mt-12" aria-labelledby="authority-evidence">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-3xl">
+            <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
+              NBS &amp; DMO governed evidence
+            </p>
+            <h2 id="authority-evidence" className="mt-2 text-2xl font-semibold">
+              State IGR and debt evidence are first-class source lanes.
+            </h2>
+            <p className="text-muted-foreground mt-2 text-sm leading-6">
+              These cards expose the same governed status used by Terminal. A
+              source appears live only when verified, current claims exist; Gaia
+              does not infer missing periods or jurisdictions.
+            </p>
+          </div>
+          <StatusPill tone="success">Source-linked</StatusPill>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          {[nbsLane, dmoLane].map((lane) =>
+            lane ? (
+              <Card key={lane.authority}>
+                <CardHeader>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <Landmark className="text-primary size-5" aria-hidden="true" />
+                      <CardTitle className="pt-3">
+                        {lane.authority} · {lane.label}
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        {lane.sourceOrganizations.length > 0
+                          ? lane.sourceOrganizations.join(' · ')
+                          : 'No verified official source is currently published.'}
+                      </CardDescription>
+                    </div>
+                    <StatusPill
+                      tone={lane.state === 'Live' ? 'success' : 'neutral'}
+                    >
+                      {lane.state}
+                    </StatusPill>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <dl className="grid gap-5 text-sm sm:grid-cols-3">
+                    <div>
+                      <dt className="text-muted-foreground">Latest period</dt>
+                      <dd className="mt-1 font-mono font-semibold">
+                        {lane.latestPeriod ?? 'Unavailable'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Verified records</dt>
+                      <dd className="mt-1 font-mono font-semibold">
+                        {lane.publishedRecordCount}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Jurisdictions</dt>
+                      <dd className="mt-1 font-mono font-semibold">
+                        {lane.jurisdictionCount}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  {lane.sourceDocuments.length > 0 ? (
+                    <div className="border-border mt-5 space-y-4 border-t pt-5">
+                      {lane.sourceDocuments.map((source) => (
+                        <div key={source.sha256}>
+                          <p className="text-sm font-medium">{source.publisher}</p>
+                          <p className="text-muted-foreground mt-1 font-mono text-xs">
+                            Period {source.fiscalPeriod}
+                          </p>
+                          <p className="text-muted-foreground mt-1 font-mono text-[0.7rem] break-all">
+                            SHA-256 {source.sha256}
+                          </p>
+                          {source.documentUrl ? (
+                            <a
+                              href={source.documentUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-primary mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                            >
+                              Open official source
+                              <ExternalLink className="size-3.5" aria-hidden="true" />
+                            </a>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground border-border mt-5 border-t pt-5 text-sm">
+                      No current source document is exposed for this lane. Gaia
+                      will not manufacture a document link.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ) : null,
+          )}
+        </div>
       </section>
 
       <section className="mt-12" aria-labelledby="jurisdiction-evidence">
