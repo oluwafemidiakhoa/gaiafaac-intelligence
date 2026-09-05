@@ -596,33 +596,41 @@ async def paystack_webhook(
 
     if event.get("event") == "charge.success":
         data = event.get("data") or {}
-        subscription = _activate_paystack_subscription(session, data)
-        if subscription is not None:
-            payment = _record_paystack_payment(session, data, subscription)
-            if payment is not None:
-                customer = data.get("customer") or {}
-                customer_email = customer.get("email") if isinstance(customer, dict) else None
-                deliver_payment_onboarding(
-                    session,
-                    payment=payment,
-                    subscription=subscription,
-                    email=customer_email,
-                )
-                record_commercial_event_once(
-                    session,
-                    event_name="checkout_completed",
-                    organization_id=subscription.organization_id,
-                    subject_type="payment_record",
-                    subject_id=str(payment.id),
-                    metadata={"plan_code": subscription.plan_code, "provider": "paystack"},
-                )
-                record_commercial_event_once(
-                    session,
-                    event_name="entitlement_activated",
-                    organization_id=subscription.organization_id,
-                    subject_type="payment_record",
-                    subject_id=str(payment.id),
-                    metadata={"plan_code": subscription.plan_code},
-                )
+        from gaiafaac_api.api.v1.routes.one_time_billing import (
+            process_one_time_paystack_success,
+        )
 
+        one_time_purchase = process_one_time_paystack_success(session, data)
+        if one_time_purchase is None:
+            subscription = _activate_paystack_subscription(session, data)
+            if subscription is not None:
+                payment = _record_paystack_payment(session, data, subscription)
+                if payment is not None:
+                    customer = data.get("customer") or {}
+                    customer_email = customer.get("email") if isinstance(customer, dict) else None
+                    deliver_payment_onboarding(
+                        session,
+                        payment=payment,
+                        subscription=subscription,
+                        email=customer_email,
+                    )
+                    record_commercial_event_once(
+                        session,
+                        event_name="checkout_completed",
+                        organization_id=subscription.organization_id,
+                        subject_type="payment_record",
+                        subject_id=str(payment.id),
+                        metadata={
+                            "plan_code": subscription.plan_code,
+                            "provider": "paystack",
+                        },
+                    )
+                    record_commercial_event_once(
+                        session,
+                        event_name="entitlement_activated",
+                        organization_id=subscription.organization_id,
+                        subject_type="payment_record",
+                        subject_id=str(payment.id),
+                        metadata={"plan_code": subscription.plan_code},
+                    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -226,7 +226,9 @@ def process_one_time_paystack_success(
         purchase_id = uuid.UUID(purchase_id_text)
         organization_id = uuid.UUID(organization_id_text)
     except ValueError as error:
-        raise HTTPException(status_code=409, detail="One-time payment metadata is invalid.") from error
+        raise HTTPException(
+            status_code=409, detail="One-time payment metadata is invalid."
+        ) from error
     if expected_organization_id is not None and organization_id != expected_organization_id:
         raise HTTPException(status_code=403, detail="Payment does not belong to this organization.")
 
