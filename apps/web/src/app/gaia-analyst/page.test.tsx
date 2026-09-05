@@ -77,7 +77,9 @@ describe('GaiaAnalystPage', () => {
     expect(screen.getByText('a'.repeat(64))).toBeInTheDocument()
     expect(screen.getByText('Open state record →')).toBeInTheDocument()
     expect(
-      screen.getByText('This IGR answer is restricted to the selected year: 2024.'),
+      screen.getByText(
+        'This IGR answer is restricted to the selected year: 2024.',
+      ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Fiscal Proof')).not.toBeInTheDocument()
   })
@@ -89,7 +91,8 @@ describe('GaiaAnalystPage', () => {
         year: 2026,
         intent: 'igr_latest',
         status: 'answered',
-        answer: 'The latest published IGR for Lagos is 2024 annual: NGN 1,000.00.',
+        answer:
+          'The latest published IGR for Lagos is 2024 annual: NGN 1,000.00.',
         coverage_label: 'Latest published IGR · 2024 annual',
         evidence: [
           {
@@ -122,7 +125,9 @@ describe('GaiaAnalystPage', () => {
     )
 
     expect(
-      screen.getByText('Latest mode is active: the Year field does not restrict this query.'),
+      screen.getByText(
+        'Latest mode is active: the Year field does not restrict this query.',
+      ),
     ).toBeInTheDocument()
     expect(
       screen.getByText(
