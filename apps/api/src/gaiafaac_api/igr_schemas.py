@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel
@@ -35,4 +35,15 @@ class PublishedIgrResponse(BaseModel):
     state_slug: str | None
     record_count: int
     records: list[PublishedIgrRecord]
+    note: str
+
+
+class GovernedIgrStatus(BaseModel):
+    source_scope: str | None
+    is_live: bool
+    published_record_count: int
+    jurisdiction_count: int
+    latest_period: str | None
+    latest_published_at: datetime | None
+    source_organizations: list[str]
     note: str
