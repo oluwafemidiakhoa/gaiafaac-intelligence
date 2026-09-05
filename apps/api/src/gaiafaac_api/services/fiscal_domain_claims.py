@@ -238,7 +238,15 @@ def publish_domain_claim(
         previous_proof_gaia_id=previous_claim.gaia_id if previous_claim else None,
         published_at=published_at,
     )
-    session.add_all([claim, verification, manifest, proof])
+
+    # These models reference one another through explicit foreign-key values but do not
+    # declare ORM relationships. Flush principals first so PostgreSQL always sees the
+    # claim and manifest rows before their dependent verification/proof rows.
+    session.add(claim)
+    session.flush()
+    session.add(manifest)
+    session.flush()
+    session.add_all([verification, proof])
     session.flush()
 
     register_evidence_source(
