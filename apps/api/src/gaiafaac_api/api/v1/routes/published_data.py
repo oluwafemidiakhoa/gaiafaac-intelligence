@@ -12,10 +12,11 @@ from gaiafaac_api.fiscal_proof_schemas import FiscalProofResponse
 from gaiafaac_api.fiscal_pulse_schemas import FiscalPulseResponse
 from gaiafaac_api.fiscal_watch_schemas import FiscalWatchResponse
 from gaiafaac_api.gaia_analyst_schemas import GaiaAnalystResponse
-from gaiafaac_api.igr_schemas import PublishedIgrRecord, PublishedIgrResponse
+from gaiafaac_api.igr_schemas import GovernedIgrStatus, PublishedIgrRecord, PublishedIgrResponse
 from gaiafaac_api.lga_schemas import PublishedLgaDetailResponse, PublishedLgaStateResponse
 from gaiafaac_api.published_analytics_schemas import PublishedAnalytics
 from gaiafaac_api.published_schemas import PublishedOverviewResponse, PublishedSourceItem
+from gaiafaac_api.services.canonical_igr import governed_igr_status
 from gaiafaac_api.services.decision_packet import decision_packet
 from gaiafaac_api.services.fiscal_design import fiscal_design
 from gaiafaac_api.services.fiscal_proof import get_fiscal_proof
@@ -49,7 +50,7 @@ def published_analytics_endpoint(session: DatabaseSession) -> PublishedAnalytics
     response_model=FiscalPulseResponse,
     summary="Derived fiscal signals over published, human-verified FAAC data",
 )
-def fiscal_pulse_endpoint(
+def published_fiscal_pulse_endpoint(
     session: DatabaseSession,
     year: Annotated[int, Query(ge=2000, le=2100)] = 2024,
 ) -> FiscalPulseResponse:
@@ -61,7 +62,7 @@ def fiscal_pulse_endpoint(
     response_model=FiscalWatchResponse,
     summary="Deterministic monitoring signals over published FAAC data",
 )
-def fiscal_watch_endpoint(
+def published_fiscal_watch_endpoint(
     session: DatabaseSession,
     year: Annotated[int, Query(ge=2000, le=2100)] = 2026,
 ) -> FiscalWatchResponse:
@@ -121,9 +122,21 @@ def gaia_analyst_endpoint(
 
 
 @router.get(
+    "/igr/status",
+    response_model=GovernedIgrStatus,
+    summary="Canonical governed IGR publication status",
+)
+def governed_igr_status_endpoint(
+    session: DatabaseSession,
+    publisher: Annotated[str | None, Query(min_length=2, max_length=200)] = None,
+) -> GovernedIgrStatus:
+    return governed_igr_status(session, publisher_fragment=publisher)
+
+
+@router.get(
     "/igr/latest",
     response_model=PublishedIgrRecord,
-    summary="Latest published, human-verified IGR evidence for a state",
+    summary="Latest governed published IGR evidence for a state",
 )
 def latest_published_igr_endpoint(
     session: DatabaseSession,
@@ -133,7 +146,7 @@ def latest_published_igr_endpoint(
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No published IGR evidence exists for this state.",
+            detail="No governed published IGR evidence exists for this state.",
         )
     return record
 
@@ -141,7 +154,7 @@ def latest_published_igr_endpoint(
 @router.get(
     "/igr",
     response_model=PublishedIgrResponse,
-    summary="Published, human-verified state internally generated revenue evidence",
+    summary="Governed published state internally generated revenue evidence",
 )
 def published_igr_endpoint(
     session: DatabaseSession,
