@@ -1,18 +1,39 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from sqlalchemy import select
 
-from gaiafaac_api.database.enums import ReportedUnit, VerificationStatus
-from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
+from gaiafaac_api.database.enums import ReportedUnit, SourceStatus
 from gaiafaac_api.database.models import ReportingPeriod, SourceDocument, State, StateAllocation
 from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.services.decision_packet import decision_packet
+from gaiafaac_api.services.fiscal_domain_claims import publish_domain_claim
+
+
+def _publish_igr(session, *, state: State, source: SourceDocument, year: int, amount: str) -> None:
+    observed = datetime(year, 12, 31, 12, 0, tzinfo=UTC)
+    publish_domain_claim(
+        session,
+        domain="igr",
+        state_id=state.id,
+        source_document_id=source.id,
+        fiscal_period=str(year),
+        metric="igr",
+        value=Decimal(amount),
+        value_text=amount,
+        unit="currency",
+        currency="NGN",
+        effective_at=observed,
+        published_at=observed,
+        human_reviewed=True,
+        reconciled=True,
+    )
 
 
 def test_decision_packet_collects_pulse_watch_monthly_proofs_and_exact_year_igr(session):
     seed_states(session)
     state = session.scalars(select(State).where(State.is_fct.is_(False))).first()
+    assert state is not None
     source = SourceDocument(
         source_organization="OAGF",
         original_filename="packet.pdf",
@@ -27,6 +48,7 @@ def test_decision_packet_collects_pulse_watch_monthly_proofs_and_exact_year_igr(
         storage_path="igr.zip",
         sha256="e" * 64,
         mime_type="application/zip",
+        source_status=SourceStatus.APPROVED,
         is_demo=False,
     )
     session.add_all([source, igr_source])
@@ -55,40 +77,8 @@ def test_decision_packet_collects_pulse_watch_monthly_proofs_and_exact_year_igr(
             )
         )
 
-    session.add_all(
-        [
-            StateIgrRecord(
-                state_id=state.id,
-                source_document_id=igr_source.id,
-                fiscal_year=2025,
-                period_type=IgrPeriodType.ANNUAL,
-                quarter=None,
-                period_start=date(2025, 1, 1),
-                period_end=date(2025, 12, 31),
-                igr_amount=Decimal("500.00"),
-                igr_amount_original="500.00",
-                reported_unit=ReportedUnit.NAIRA,
-                verification_status=VerificationStatus.HUMAN_VERIFIED,
-                is_demo=False,
-                is_published=True,
-            ),
-            StateIgrRecord(
-                state_id=state.id,
-                source_document_id=igr_source.id,
-                fiscal_year=2026,
-                period_type=IgrPeriodType.ANNUAL,
-                quarter=None,
-                period_start=date(2026, 1, 1),
-                period_end=date(2026, 12, 31),
-                igr_amount=Decimal("700.00"),
-                igr_amount_original="700.00",
-                reported_unit=ReportedUnit.NAIRA,
-                verification_status=VerificationStatus.HUMAN_VERIFIED,
-                is_demo=False,
-                is_published=True,
-            ),
-        ]
-    )
+    _publish_igr(session, state=state, source=igr_source, year=2025, amount="500.00")
+    _publish_igr(session, state=state, source=igr_source, year=2026, amount="700.00")
 
     session.flush()
     packet = decision_packet(session, state_slug=state.slug, year=2026)
@@ -113,6 +103,7 @@ def test_decision_packet_collects_pulse_watch_monthly_proofs_and_exact_year_igr(
 def test_decision_packet_does_not_borrow_igr_from_another_year(session):
     seed_states(session)
     state = session.scalars(select(State).where(State.is_fct.is_(False))).first()
+    assert state is not None
     faac_source = SourceDocument(
         source_organization="OAGF",
         original_filename="packet.pdf",
@@ -127,6 +118,7 @@ def test_decision_packet_does_not_borrow_igr_from_another_year(session):
         storage_path="igr.zip",
         sha256="1" * 64,
         mime_type="application/zip",
+        source_status=SourceStatus.APPROVED,
         is_demo=False,
     )
     session.add_all([faac_source, igr_source])
@@ -151,23 +143,7 @@ def test_decision_packet_does_not_borrow_igr_from_another_year(session):
             is_published=True,
         )
     )
-    session.add(
-        StateIgrRecord(
-            state_id=state.id,
-            source_document_id=igr_source.id,
-            fiscal_year=2024,
-            period_type=IgrPeriodType.ANNUAL,
-            quarter=None,
-            period_start=date(2024, 1, 1),
-            period_end=date(2024, 12, 31),
-            igr_amount=Decimal("500.00"),
-            igr_amount_original="500.00",
-            reported_unit=ReportedUnit.NAIRA,
-            verification_status=VerificationStatus.HUMAN_VERIFIED,
-            is_demo=False,
-            is_published=True,
-        )
-    )
+    _publish_igr(session, state=state, source=igr_source, year=2024, amount="500.00")
     session.flush()
 
     packet = decision_packet(session, state_slug=state.slug, year=2026)
