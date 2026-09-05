@@ -60,7 +60,9 @@ def normalize_one_time_context(
         return {"state_slug": state.slug, "state_code": state.code, "year": _year(year_value)}
 
     if product_code == "multi_state_comparison_pack":
-        raw_states = context.get("state_slugs") or context.get("state_codes") or context.get("states")
+        raw_states = (
+            context.get("state_slugs") or context.get("state_codes") or context.get("states")
+        )
         if isinstance(raw_states, str):
             raw_states = [part.strip() for part in raw_states.split(",") if part.strip()]
         if not isinstance(raw_states, list):

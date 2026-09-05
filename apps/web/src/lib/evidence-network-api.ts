@@ -105,7 +105,9 @@ function sourceDocuments(
 ): EvidenceSourceDocument[] {
   const seen = new Set<string>()
   return claims
-    .filter((claim) => latestPeriod === null || claim.fiscal_period === latestPeriod)
+    .filter(
+      (claim) => latestPeriod === null || claim.fiscal_period === latestPeriod,
+    )
     .flatMap((claim) => {
       if (seen.has(claim.source.document_sha256)) return []
       seen.add(claim.source.document_sha256)

@@ -171,7 +171,9 @@ export default async function SourcesPage() {
                   {lane.state === 'Live' ? (
                     <dl className="border-border mt-5 grid grid-cols-2 gap-4 border-t pt-4 text-xs">
                       <div>
-                        <dt className="text-muted-foreground">Verified records</dt>
+                        <dt className="text-muted-foreground">
+                          Verified records
+                        </dt>
                         <dd className="mt-1 font-mono font-semibold">
                           {lane.publishedRecordCount}
                         </dd>
@@ -228,7 +230,10 @@ export default async function SourcesPage() {
                 <CardHeader>
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <Landmark className="text-primary size-5" aria-hidden="true" />
+                      <Landmark
+                        className="text-primary size-5"
+                        aria-hidden="true"
+                      />
                       <CardTitle className="pt-3">
                         {lane.authority} · {lane.label}
                       </CardTitle>
@@ -254,7 +259,9 @@ export default async function SourcesPage() {
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-muted-foreground">Verified records</dt>
+                      <dt className="text-muted-foreground">
+                        Verified records
+                      </dt>
                       <dd className="mt-1 font-mono font-semibold">
                         {lane.publishedRecordCount}
                       </dd>
@@ -271,7 +278,9 @@ export default async function SourcesPage() {
                     <div className="border-border mt-5 space-y-4 border-t pt-5">
                       {lane.sourceDocuments.map((source) => (
                         <div key={source.sha256}>
-                          <p className="text-sm font-medium">{source.publisher}</p>
+                          <p className="text-sm font-medium">
+                            {source.publisher}
+                          </p>
                           <p className="text-muted-foreground mt-1 font-mono text-xs">
                             Period {source.fiscalPeriod}
                           </p>
@@ -286,7 +295,10 @@ export default async function SourcesPage() {
                               className="text-primary mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
                             >
                               Open official source
-                              <ExternalLink className="size-3.5" aria-hidden="true" />
+                              <ExternalLink
+                                className="size-3.5"
+                                aria-hidden="true"
+                              />
                             </a>
                           ) : null}
                         </div>

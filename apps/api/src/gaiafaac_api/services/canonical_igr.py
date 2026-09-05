@@ -108,9 +108,7 @@ def governed_igr_observations(
             return False
         return True
 
-    eligible_ids = {
-        gaia_id for gaia_id, row in row_by_gaia_id.items() if eligible(row)
-    }
+    eligible_ids = {gaia_id for gaia_id, row in row_by_gaia_id.items() if eligible(row)}
 
     def has_eligible_descendant(gaia_id: str) -> bool:
         stack = list(children.get(gaia_id, ()))

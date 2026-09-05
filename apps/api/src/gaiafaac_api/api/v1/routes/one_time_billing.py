@@ -388,7 +388,9 @@ def get_one_time_fulfillment(
     if purchase is None:
         raise HTTPException(status_code=404, detail="One-time purchase was not found.")
     if purchase.status != "success":
-        raise HTTPException(status_code=409, detail="Payment has not been confirmed for this order.")
+        raise HTTPException(
+            status_code=409, detail="Payment has not been confirmed for this order."
+        )
     if purchase.fulfillment_status != "ready":
         _mark_fulfillment_ready(session, purchase=purchase, user=user)
 

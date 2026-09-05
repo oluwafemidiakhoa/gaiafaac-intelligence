@@ -116,9 +116,12 @@ export default function ProjectProductsPage() {
 
   useEffect(() => {
     void (async () => {
-      const productsResponse = await fetch('/api/customer/commercial/products', {
-        cache: 'no-store',
-      })
+      const productsResponse = await fetch(
+        '/api/customer/commercial/products',
+        {
+          cache: 'no-store',
+        },
+      )
       if (productsResponse.ok) {
         setProducts((await productsResponse.json()) as CommercialProduct[])
       }
@@ -236,8 +239,8 @@ export default function ProjectProductsPage() {
         <CardHeader>
           <CardTitle>Define the evidence boundary</CardTitle>
           <CardDescription>
-            Gaia will refuse checkout rather than charge for an evidence boundary
-            it cannot currently support.
+            Gaia will refuse checkout rather than charge for an evidence
+            boundary it cannot currently support.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -317,7 +320,9 @@ export default function ProjectProductsPage() {
             ) : (
               <PackageCheck className="size-4" />
             )}
-            {buying === selected ? 'Checking evidence…' : 'Check evidence & pay'}
+            {buying === selected
+              ? 'Checking evidence…'
+              : 'Check evidence & pay'}
           </Button>
         </CardContent>
       </Card>
@@ -356,8 +361,8 @@ export default function ProjectProductsPage() {
                       </p>
                     </div>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {naira(purchase.amount_naira)} · payment {purchase.status} ·
-                      deliverable {purchase.fulfillment_status}
+                      {naira(purchase.amount_naira)} · payment {purchase.status}{' '}
+                      · deliverable {purchase.fulfillment_status}
                     </p>
                   </div>
                   {purchase.status === 'success' &&
