@@ -112,7 +112,7 @@ export default async function GaiaAnalystPage({
                 defaultValue={year}
                 className="border-input bg-background h-11 rounded-md border px-3 text-sm"
               />
-              <span className="text-muted-foreground text-xs font-normal leading-4">
+              <span className="text-muted-foreground text-xs leading-4 font-normal">
                 Year-specific questions use this value. “Latest” searches the
                 latest governed publication instead.
               </span>
@@ -199,7 +199,8 @@ export default async function GaiaAnalystPage({
                 </p>
               ) : data.intent.startsWith('igr_') ? (
                 <p className="text-muted-foreground mt-2 text-xs">
-                  This IGR answer is restricted to the selected year: {data.year}.
+                  This IGR answer is restricted to the selected year:{' '}
+                  {data.year}.
                 </p>
               ) : null}
             </CardContent>

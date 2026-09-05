@@ -31,7 +31,9 @@ def _source(session, *, organization: str, sha: str) -> SourceDocument:
     return source
 
 
-def _canonical_igr(session, *, state: State, source: SourceDocument, year: int, amount: str) -> None:
+def _canonical_igr(
+    session, *, state: State, source: SourceDocument, year: int, amount: str
+) -> None:
     observed = datetime(year, 12, 31, 12, 0, tzinfo=UTC)
     publish_domain_claim(
         session,
