@@ -67,7 +67,7 @@ def _initialize_paystack_transaction(
             "amount": amount_naira * 100,
             "reference": reference,
             "callback_url": (
-                f"{settings.customer_app_url.rstrip('/')}/account/billing"
+                f"{settings.customer_app_url.rstrip('/')}/projects"
                 f"?purchase=return&reference={quote(reference, safe='')}"
             ),
             "metadata": metadata,
