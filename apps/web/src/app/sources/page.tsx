@@ -18,6 +18,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import type { EvidenceLane } from '@/lib/evidence-network-api'
+import { getEvidenceNetworkStatus } from '@/lib/evidence-network-api'
 import { formatDate, formatNaira, humanize } from '@/lib/format'
 import {
   getPublishedNationalDistributions,
@@ -27,43 +29,53 @@ import {
 export const metadata: Metadata = { title: 'Sources' }
 export const dynamic = 'force-dynamic'
 
-const sourceLanes = [
+const fallbackLanes: EvidenceLane[] = [
   {
     authority: 'OAGF / FAAC',
-    purpose: 'Monthly state and FCT allocation evidence',
-    status: 'Live evidence',
-    detail:
-      'Official monthly distribution tables are retained, validated and published with a SHA-256 fingerprint.',
+    label: 'Allocations',
+    state: 'Unavailable',
+    description:
+      'The evidence-status service is unavailable. Gaia will not guess a source status.',
+    publishedRecordCount: 0,
+    latestPeriod: null,
   },
   {
     authority: 'NBS',
-    purpose: 'State internally generated revenue (IGR)',
-    status: 'Governed intake ready',
-    detail:
-      'Official NBS IGR reports can be discovered, archived, extracted, human-approved and then published as immutable claims.',
+    label: 'State IGR',
+    state: 'Unavailable',
+    description:
+      'The evidence-status service is unavailable. Gaia will not guess a source status.',
+    publishedRecordCount: 0,
+    latestPeriod: null,
   },
   {
     authority: 'DMO',
-    purpose: 'State and FCT debt stock and debt-service evidence',
-    status: 'Governed intake ready',
-    detail:
-      'Official DMO debt publications have a separate review-to-publication pipeline; no debt claim appears before human verification.',
+    label: 'Debt pressure',
+    state: 'Unavailable',
+    description:
+      'The evidence-status service is unavailable. Gaia will not guess a source status.',
+    publishedRecordCount: 0,
+    latestPeriod: null,
   },
   {
     authority: 'CBN',
-    purpose: 'Macroeconomic context',
-    status: 'Source lane reserved',
-    detail:
-      'CBN indicators will enter only as retained official series with a defined period, unit, source link and review record.',
+    label: 'Macro context',
+    state: 'Not connected',
+    description:
+      'CBN macro series are not yet ingested into governed claims, so Gaia does not use a CBN figure here.',
+    publishedRecordCount: 0,
+    latestPeriod: null,
   },
   {
-    authority: 'FIRS',
-    purpose: 'Federal tax-revenue context',
-    status: 'Source lane reserved',
-    detail:
-      'FIRS context will remain separate from state IGR so Gaia never treats federal tax revenue as a state-owned revenue figure.',
+    authority: 'NRS',
+    label: 'Tax context',
+    state: 'Not connected',
+    description:
+      'Federal tax-authority series are not yet ingested into governed claims, so Gaia does not use a tax figure here.',
+    publishedRecordCount: 0,
+    latestPeriod: null,
   },
-] as const
+]
 
 export default async function SourcesPage() {
   const [jurisdictionResult, nationalResult] = await Promise.all([
@@ -85,6 +97,12 @@ export default async function SourcesPage() {
   const latestCoverageComplete =
     latestJurisdiction?.covered_states === latestJurisdiction?.expected_states
 
+  const evidenceNetworkResult = await getEvidenceNetworkStatus({
+    oagfLive: Boolean(latestJurisdiction && latestCoverageComplete),
+    oagfPeriod: latestJurisdiction?.revenue_month ?? null,
+  })
+  const sourceLanes = evidenceNetworkResult.data ?? fallbackLanes
+
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <PageHeader
@@ -99,7 +117,7 @@ export default async function SourcesPage() {
             <FileCheck2 className="text-primary size-5" aria-hidden="true" />
             <CardTitle className="pt-3">OAGF jurisdiction evidence</CardTitle>
             <CardDescription>
-              Complete 37-jurisdiction FAAC allocation evidence.
+              Latest verified OAGF allocation Gaia can publish.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -110,6 +128,11 @@ export default async function SourcesPage() {
               {latestJurisdiction
                 ? `${latestJurisdiction.covered_states} / ${latestJurisdiction.expected_states} jurisdictions covered`
                 : 'No governed jurisdiction publication yet.'}
+            </p>
+            <p className="text-muted-foreground mt-3 text-sm">
+              This date is the latest complete allocation Gaia can publish
+              from official OAGF records, not necessarily the current
+              calendar month.
             </p>
             {latestJurisdiction && !latestCoverageComplete ? (
               <p className="mt-3 text-sm font-medium">
@@ -181,19 +204,17 @@ export default async function SourcesPage() {
                     aria-hidden="true"
                   />
                   <StatusPill
-                    tone={
-                      lane.status === 'Live evidence' ? 'success' : 'neutral'
-                    }
+                    tone={lane.state === 'Live' ? 'success' : 'neutral'}
                   >
-                    {lane.status}
+                    {lane.state}
                   </StatusPill>
                 </div>
                 <CardTitle className="pt-3">{lane.authority}</CardTitle>
-                <CardDescription>{lane.purpose}</CardDescription>
+                <CardDescription>{lane.label}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm leading-6">
-                  {lane.detail}
+                  {lane.description}
                 </p>
               </CardContent>
             </Card>
