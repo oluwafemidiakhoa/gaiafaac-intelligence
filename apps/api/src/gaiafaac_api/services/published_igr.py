@@ -1,57 +1,69 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+import re
+from datetime import date
+
 from sqlalchemy.orm import Session
 
-from gaiafaac_api.database.enums import VerificationStatus
-from gaiafaac_api.database.igr_models import StateIgrRecord
-from gaiafaac_api.database.models import SourceDocument, State
 from gaiafaac_api.igr_schemas import (
     PublishedIgrRecord,
     PublishedIgrResponse,
     PublishedIgrSource,
 )
+from gaiafaac_api.services.canonical_igr import (
+    GovernedIgrObservation,
+    governed_igr_observations,
+    latest_governed_igr,
+)
+
+_PERIOD_RE = re.compile(r"^(?P<year>20\d{2})(?:Q(?P<quarter>[1-4]))?$")
 
 
-def _published_record(
-    record: StateIgrRecord,
-    state: State,
-    source: SourceDocument,
-) -> PublishedIgrRecord:
-    return PublishedIgrRecord(
-        state_name=state.name,
-        state_slug=state.slug,
-        state_code=state.code,
-        fiscal_year=record.fiscal_year,
-        period_type=record.period_type.value,
-        quarter=record.quarter,
-        period_start=record.period_start,
-        period_end=record.period_end,
-        igr_amount=format(record.igr_amount, ".2f"),
-        reported_unit=record.reported_unit.value,
-        source_page=record.source_page,
-        source_table=record.source_table,
-        verification_status=record.verification_status.value,
-        source=PublishedIgrSource(
-            organization=source.source_organization,
-            source_url=source.source_url,
-            sha256=source.sha256,
-            publication_date=record.publication_date or source.publication_date,
-        ),
+def _period_fields(period: str) -> tuple[int, str, int | None, date, date] | None:
+    match = _PERIOD_RE.fullmatch(period.strip().upper())
+    if match is None:
+        return None
+    year = int(match.group("year"))
+    quarter_text = match.group("quarter")
+    if quarter_text is None:
+        return year, "annual", None, date(year, 1, 1), date(year, 12, 31)
+    quarter = int(quarter_text)
+    starts = {1: (1, 1), 2: (4, 1), 3: (7, 1), 4: (10, 1)}
+    ends = {1: (3, 31), 2: (6, 30), 3: (9, 30), 4: (12, 31)}
+    return (
+        year,
+        "quarterly",
+        quarter,
+        date(year, *starts[quarter]),
+        date(year, *ends[quarter]),
     )
 
 
-def _published_statement():
-    return (
-        select(StateIgrRecord, State, SourceDocument)
-        .join(State, StateIgrRecord.state_id == State.id)
-        .join(SourceDocument, StateIgrRecord.source_document_id == SourceDocument.id)
-        .where(
-            StateIgrRecord.is_published.is_(True),
-            StateIgrRecord.is_demo.is_(False),
-            StateIgrRecord.verification_status == VerificationStatus.HUMAN_VERIFIED,
-            SourceDocument.is_demo.is_(False),
-        )
+def _published_record(observation: GovernedIgrObservation) -> PublishedIgrRecord | None:
+    fields = _period_fields(observation.fiscal_period)
+    if fields is None or observation.value is None:
+        return None
+    fiscal_year, period_type, quarter, period_start, period_end = fields
+    return PublishedIgrRecord(
+        state_name=observation.state_name,
+        state_slug=observation.state_slug,
+        state_code=observation.state_code,
+        fiscal_year=fiscal_year,
+        period_type=period_type,
+        quarter=quarter,
+        period_start=period_start,
+        period_end=period_end,
+        igr_amount=observation.value,
+        reported_unit=observation.currency or observation.unit,
+        source_page=observation.source_page,
+        source_table=observation.source_table,
+        verification_status=observation.evidence_status.value,
+        source=PublishedIgrSource(
+            organization=observation.source_organization,
+            source_url=observation.source_url,
+            sha256=observation.source_sha256,
+            publication_date=observation.published_at.date(),
+        ),
     )
 
 
@@ -61,42 +73,26 @@ def published_igr(
     year: int,
     state_slug: str | None = None,
 ) -> PublishedIgrResponse:
-    statement = _published_statement().where(StateIgrRecord.fiscal_year == year)
-    if state_slug is not None:
-        statement = statement.where(State.slug == state_slug)
-    statement = statement.order_by(
-        State.name, StateIgrRecord.period_start, StateIgrRecord.period_end
-    )
-
+    observations = governed_igr_observations(session, year=year, state_slug=state_slug)
     records = [
-        _published_record(record, state, source)
-        for record, state, source in session.execute(statement).tuples()
+        record
+        for observation in observations
+        if (record := _published_record(observation)) is not None
     ]
-
+    records.sort(key=lambda item: (item.state_name, item.period_start, item.period_end))
     return PublishedIgrResponse(
         year=year,
         state_slug=state_slug,
         record_count=len(records),
         records=records,
         note=(
-            "IGR records are returned only when they are published, non-demo, and human-verified. "
-            "No missing fiscal periods or values are inferred."
+            "IGR records come from the canonical governed FiscalClaim publication ledger only: "
+            "current, source-approved, non-demo and verified claims. Staged or legacy IGR rows "
+            "are not treated as published evidence, and missing periods are never inferred."
         ),
     )
 
 
 def latest_published_igr(session: Session, *, state_slug: str) -> PublishedIgrRecord | None:
-    row = session.execute(
-        _published_statement()
-        .where(State.slug == state_slug)
-        .order_by(
-            StateIgrRecord.period_end.desc(),
-            StateIgrRecord.period_start.desc(),
-            StateIgrRecord.created_at.desc(),
-        )
-        .limit(1)
-    ).first()
-    if row is None:
-        return None
-    record, state, source = row
-    return _published_record(record, state, source)
+    observation = latest_governed_igr(session, state_slug=state_slug)
+    return _published_record(observation) if observation is not None else None

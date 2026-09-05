@@ -1,11 +1,10 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from gaiafaac_api.database.enums import ReportedUnit, SubscriptionStatus, VerificationStatus
-from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
+from gaiafaac_api.database.enums import ReportedUnit, SourceStatus, SubscriptionStatus
 from gaiafaac_api.database.models import (
     ReportingPeriod,
     SourceDocument,
@@ -18,11 +17,13 @@ from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.main import app
 from gaiafaac_api.services.fiscal_design import fiscal_design, latest_comparable_design_year
+from gaiafaac_api.services.fiscal_domain_claims import publish_domain_claim
 
 
 def _seed_state_evidence(session, *, months: int = 12, year: int = 2026):
     seed_states(session)
     state = session.scalars(select(State).where(State.is_fct.is_(False))).first()
+    assert state is not None
     faac_source = SourceDocument(
         source_organization="OAGF",
         original_filename=f"design-faac-{year}.pdf",
@@ -37,6 +38,7 @@ def _seed_state_evidence(session, *, months: int = 12, year: int = 2026):
         storage_path=f"design-igr-{year}.xlsx",
         sha256=f"{year}".ljust(64, "b")[:64],
         mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        source_status=SourceStatus.APPROVED,
         is_demo=False,
     )
     session.add_all([faac_source, igr_source])
@@ -65,22 +67,22 @@ def _seed_state_evidence(session, *, months: int = 12, year: int = 2026):
             )
         )
 
-    session.add(
-        StateIgrRecord(
-            state_id=state.id,
-            source_document_id=igr_source.id,
-            fiscal_year=year,
-            period_type=IgrPeriodType.ANNUAL,
-            quarter=None,
-            period_start=date(year, 1, 1),
-            period_end=date(year, 12, 31),
-            igr_amount=Decimal("600.00"),
-            igr_amount_original="600.00",
-            reported_unit=ReportedUnit.NAIRA,
-            verification_status=VerificationStatus.HUMAN_VERIFIED,
-            is_demo=False,
-            is_published=True,
-        )
+    observed = datetime(year, 12, 31, 12, 0, tzinfo=UTC)
+    publish_domain_claim(
+        session,
+        domain="igr",
+        state_id=state.id,
+        source_document_id=igr_source.id,
+        fiscal_period=str(year),
+        metric="igr",
+        value=Decimal("600.00"),
+        value_text="600.00",
+        unit="currency",
+        currency="NGN",
+        effective_at=observed,
+        published_at=observed,
+        human_reviewed=True,
+        reconciled=True,
     )
     session.flush()
     return state

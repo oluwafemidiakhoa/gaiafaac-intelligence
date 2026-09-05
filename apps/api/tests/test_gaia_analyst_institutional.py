@@ -4,7 +4,6 @@ from decimal import Decimal
 from sqlalchemy import select
 
 from gaiafaac_api.database.enums import ReportedUnit, SourceStatus, VerificationStatus
-from gaiafaac_api.database.igr_models import IgrPeriodType, StateIgrRecord
 from gaiafaac_api.database.models import ReportingPeriod, SourceDocument, State, StateAllocation
 from gaiafaac_api.database.seeds import seed_states
 from gaiafaac_api.services.fiscal_domain_claims import publish_domain_claim
@@ -12,9 +11,9 @@ from gaiafaac_api.services.fiscal_ledger import publish_current_fiscal_state
 from gaiafaac_api.services.gaia_analyst_institutional import gaia_analyst
 
 
-def _source(session, sha: str):
+def _source(session, sha: str, *, organization: str = "Official publisher"):
     source = SourceDocument(
-        source_organization="Official publisher",
+        source_organization=organization,
         original_filename=f"{sha[:4]}.pdf",
         storage_path=f"archive/{sha}.pdf",
         sha256=sha,
@@ -200,38 +199,34 @@ def _published_faac_allocation(session, *, state: State, revenue_month: date, ne
 
 
 def _published_igr_record(session, *, state: State, year: int, amount: str) -> None:
-    source = SourceDocument(
-        source_organization="National Bureau of Statistics",
-        original_filename="igr.xlsx",
-        storage_path="igr.xlsx",
-        sha256="e" * 64,
-        mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        is_demo=False,
+    source = _source(
+        session,
+        "e" * 64,
+        organization="National Bureau of Statistics",
     )
-    session.add(source)
-    session.flush()
-    session.add(
-        StateIgrRecord(
-            state_id=state.id,
-            source_document_id=source.id,
-            fiscal_year=year,
-            period_type=IgrPeriodType.ANNUAL,
-            period_start=date(year, 1, 1),
-            period_end=date(year, 12, 31),
-            igr_amount=Decimal(amount),
-            igr_amount_original=amount,
-            reported_unit=ReportedUnit.NAIRA,
-            verification_status=VerificationStatus.HUMAN_VERIFIED,
-            is_demo=False,
-            is_published=True,
-        )
+    observed = datetime(year, 12, 31, 12, 0, tzinfo=UTC)
+    publish_domain_claim(
+        session,
+        domain="igr",
+        state_id=state.id,
+        source_document_id=source.id,
+        fiscal_period=str(year),
+        metric="igr",
+        value=Decimal(amount),
+        value_text=amount,
+        unit="currency",
+        currency="NGN",
+        effective_at=observed,
+        published_at=observed,
+        human_reviewed=True,
+        reconciled=True,
     )
-    session.flush()
 
 
 def test_dependence_falls_back_to_component_evidence_without_a_fiscal_state(session):
     seed_states(session)
     lagos = session.scalar(select(State).where(State.code == "LA"))
+    assert lagos is not None
     _published_faac_allocation(
         session, state=lagos, revenue_month=date(2026, 6, 1), net="60348388366.77"
     )
@@ -252,6 +247,7 @@ def test_dependence_falls_back_to_component_evidence_without_a_fiscal_state(sess
 def test_debt_burden_fallback_only_cites_faac_not_igr(session):
     seed_states(session)
     lagos = session.scalar(select(State).where(State.code == "LA"))
+    assert lagos is not None
     _published_faac_allocation(
         session, state=lagos, revenue_month=date(2026, 6, 1), net="60348388366.77"
     )
