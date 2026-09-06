@@ -18,6 +18,7 @@ const productNavigation = [
 ]
 
 const commercialNavigation = [
+  { href: '/projects', label: 'Project Products' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/account', label: 'Account' },
 ]
