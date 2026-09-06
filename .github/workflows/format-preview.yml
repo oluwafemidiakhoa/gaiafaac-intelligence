@@ -1,0 +1,24 @@
+name: Format Preview
+
+on:
+  push:
+    branches:
+      - feat/advanced-fiscal-watermark-and-value-copy
+
+permissions:
+  contents: read
+
+jobs:
+  web-format-preview:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Show exact Prettier diff
+        run: |
+          npx prettier --write apps/web/src/app/projects/page.tsx apps/web/src/app/verify/project/'[purchaseId]'/page.tsx apps/web/src/lib/project-receipt-api.ts
+          git diff -- apps/web/src/app/projects/page.tsx apps/web/src/app/verify/project/'[purchaseId]'/page.tsx apps/web/src/lib/project-receipt-api.ts
