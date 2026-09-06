@@ -339,7 +339,8 @@ export default function AccountPage() {
               {profile.historical_access ? 'Enabled' : 'Free tier only'}
             </p>
             <p className="mt-2">
-              Subscription exports: {profile.downloads ? 'Enabled' : 'Not included'}
+              Subscription exports:{' '}
+              {profile.downloads ? 'Enabled' : 'Not included'}
             </p>
             <p className="mt-2">
               API: {profile.api_access ? 'Enabled' : 'Not included'}
@@ -372,7 +373,8 @@ export default function AccountPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="text-sm">
               <p>
-                Orders: <span className="font-semibold">{projectPurchases.length}</span>
+                Orders:{' '}
+                <span className="font-semibold">{projectPurchases.length}</span>
               </p>
               <p className="text-muted-foreground mt-1">
                 Ready for download: {readyProjectPurchases}
@@ -405,8 +407,8 @@ export default function AccountPage() {
                       {purchase.product_code.replaceAll('_', ' ')}
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {naira(purchase.amount_naira)} · payment {purchase.status} ·
-                      {' '}deliverable {purchase.fulfillment_status}
+                      {naira(purchase.amount_naira)} · payment {purchase.status}{' '}
+                      · deliverable {purchase.fulfillment_status}
                     </p>
                   </div>
                   {purchase.status === 'success' &&

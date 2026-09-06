@@ -174,7 +174,9 @@ def _style_table_sheet(sheet, rows: list[dict[str, Any]]) -> None:
                 if header.endswith("source_url") and text.startswith(("https://", "http://")):
                     item.hyperlink = text
                     item.font = Font(color="0563C1", underline="single")
-        sheet.column_dimensions[get_column_letter(column_index)].width = min(max(max_width + 2, 12), 56)
+        sheet.column_dimensions[get_column_letter(column_index)].width = min(
+            max(max_width + 2, 12), 56
+        )
 
 
 def build_one_time_excel(
@@ -206,7 +208,9 @@ def build_one_time_excel(
             summary_rows.append((key, value))
 
     excluded = {"schema", "captured_at", "request"}
-    for path, value in _scalar_rows({key: value for key, value in artifact.items() if key not in excluded}):
+    for path, value in _scalar_rows(
+        {key: value for key, value in artifact.items() if key not in excluded}
+    ):
         summary_rows.append((path, value))
 
     _style_summary_sheet(summary, summary_rows)
@@ -314,7 +318,13 @@ def build_one_time_pdf(
         ["Evidence captured", _display(artifact.get("captured_at"))],
     ]
     order_table = Table(
-        [[Paragraph(f"<b>{escape(label)}</b>", body_style), Paragraph(_pdf_text(value), body_style)] for label, value in order_rows],
+        [
+            [
+                Paragraph(f"<b>{escape(label)}</b>", body_style),
+                Paragraph(_pdf_text(value), body_style),
+            ]
+            for label, value in order_rows
+        ],
         colWidths=[48 * mm, 190 * mm],
     )
     order_table.setStyle(
@@ -337,7 +347,10 @@ def build_one_time_pdf(
     if isinstance(request, dict):
         story.append(Paragraph("Evidence boundary", section_style))
         request_rows = [
-            [Paragraph(f"<b>{escape(key)}</b>", body_style), Paragraph(_pdf_text(value), body_style)]
+            [
+                Paragraph(f"<b>{escape(key)}</b>", body_style),
+                Paragraph(_pdf_text(value), body_style),
+            ]
             for key, value in _flatten_mapping(request).items()
         ]
         request_table = Table(request_rows, colWidths=[55 * mm, 183 * mm])
@@ -364,7 +377,10 @@ def build_one_time_pdf(
             story.append(Paragraph(f"Record {index}", small_style))
             flat = _flatten_mapping(row)
             record_rows = [
-                [Paragraph(f"<b>{escape(key)}</b>", small_style), Paragraph(_pdf_text(value), small_style)]
+                [
+                    Paragraph(f"<b>{escape(key)}</b>", small_style),
+                    Paragraph(_pdf_text(value), small_style),
+                ]
                 for key, value in flat.items()
             ]
             if not record_rows:

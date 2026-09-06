@@ -202,10 +202,10 @@ export default function ProjectProductsPage() {
           Project Products
         </h1>
         <p className="text-muted-foreground mt-4 text-base leading-7">
-          This is Gaia&apos;s one-time purchase and fulfillment workspace. Choose
-          a defined governed evidence product, set the evidence boundary and pay
-          once through Paystack. Gaia checks the evidence before checkout and
-          freezes the paid deliverable to the order.
+          This is Gaia&apos;s one-time purchase and fulfillment workspace.
+          Choose a defined governed evidence product, set the evidence boundary
+          and pay once through Paystack. Gaia checks the evidence before
+          checkout and freezes the paid deliverable to the order.
         </p>
       </div>
 
