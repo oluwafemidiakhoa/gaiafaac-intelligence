@@ -261,7 +261,11 @@ def draw_pdf_branding(
     canvas.setFillColor(colors.white)
     canvas.setFont("Helvetica-Bold", 7.5)
     canvas.drawString(10 * mm, page_height - 5.2 * mm, BRAND_NAME)
-    classification = "DEMONSTRATION SAMPLE · NOT FOR RESALE" if sample else "GOVERNED CUSTOMER DELIVERABLE"
+    classification = (
+        "DEMONSTRATION SAMPLE · NOT FOR RESALE"
+        if sample
+        else "GOVERNED CUSTOMER DELIVERABLE"
+    )
     canvas.drawCentredString(page_width / 2, page_height - 5.2 * mm, classification)
     canvas.drawRightString(page_width - 10 * mm, page_height - 5.2 * mm, fingerprint)
     canvas.restoreState()
