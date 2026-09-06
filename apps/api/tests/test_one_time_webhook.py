@@ -9,6 +9,7 @@ from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.commercial_models import OneTimePurchase
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.main import app
+from gaiafaac_api.services.project_receipts import canonical_artifact_sha256
 
 
 def test_signed_paystack_webhook_completes_paid_one_time_order(session, monkeypatch):
@@ -26,6 +27,7 @@ def test_signed_paystack_webhook_completes_paid_one_time_order(session, monkeypa
         "request": normalized,
         "decision_packet": {"state_slug": "edo", "year": 2026},
     }
+    artifact_sha256 = canonical_artifact_sha256(artifact)
     monkeypatch.setattr(
         one_time_billing,
         "normalize_one_time_context",
@@ -70,6 +72,7 @@ def test_signed_paystack_webhook_completes_paid_one_time_order(session, monkeypa
         reference = purchase_body["provider_reference"]
         purchase = session.get(OneTimePurchase, uuid.UUID(purchase_id))
         assert purchase is not None
+        assert purchase.purchase_metadata["_artifact_sha256"] == artifact_sha256
 
         body = json.dumps(
             {
@@ -104,6 +107,16 @@ def test_signed_paystack_webhook_completes_paid_one_time_order(session, monkeypa
         assert purchase.fulfillment_status == "ready"
         assert purchase.fulfillment_reference is not None
         assert purchase.fulfilled_at is not None
+        assert purchase.purchase_metadata["_artifact_sha256"] == artifact_sha256
+
+        verification = client.get(f"/api/v1/project-receipts/{purchase_id}/verify")
+        assert verification.status_code == 200
+        receipt = verification.json()
+        assert receipt["purchase_id"] == purchase_id
+        assert receipt["artifact_sha256"] == artifact_sha256
+        assert receipt["integrity_status"] == "verified"
+        assert receipt["document_id"].startswith("GFI-")
+        assert receipt["revision_status"] == "source_registry_partial"
     finally:
         app.dependency_overrides.clear()
         get_settings.cache_clear()
