@@ -8,7 +8,10 @@ from sqlalchemy import select
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.database.commercial_models import OneTimePurchase
 from gaiafaac_api.services.account import membership_for
-from gaiafaac_api.services.one_time_exports import build_one_time_excel, build_one_time_pdf
+from gaiafaac_api.services.branded_one_time_exports import (
+    build_one_time_excel,
+    build_one_time_pdf,
+)
 
 router = APIRouter(prefix="/billing/one-time", tags=["customer billing"])
 _FULFILLMENT_KEY = "_fulfillment"
@@ -48,6 +51,19 @@ def _paid_artifact(
     return purchase, artifact
 
 
+def _jurisdiction_label(artifact: dict) -> str | None:
+    request = artifact.get("request")
+    if not isinstance(request, dict):
+        return None
+    state = request.get("state_slug") or request.get("state_code")
+    if state:
+        return str(state).replace("-", " ").title()
+    states = request.get("state_slugs") or request.get("state_codes")
+    if isinstance(states, list) and states:
+        return ", ".join(str(value).replace("-", " ").title() for value in states)
+    return None
+
+
 def _download_response(filename: str, media_type: str, body: bytes) -> Response:
     return Response(
         content=body,
@@ -73,6 +89,7 @@ def download_one_time_excel(
         currency=purchase.currency,
         completed_at=purchase.completed_at,
         artifact=artifact,
+        jurisdiction=_jurisdiction_label(artifact),
     )
     return _download_response(filename, media_type, body)
 
@@ -91,5 +108,6 @@ def download_one_time_pdf(
         currency=purchase.currency,
         completed_at=purchase.completed_at,
         artifact=artifact,
+        jurisdiction=_jurisdiction_label(artifact),
     )
     return _download_response(filename, media_type, body)
