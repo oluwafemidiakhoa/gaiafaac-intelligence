@@ -6,6 +6,9 @@ from hashlib import sha256
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
+from reportlab.graphics import renderPDF
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
 from reportlab.lib.units import mm
 
@@ -33,6 +36,7 @@ def document_fingerprint(
     order_id: str | None,
     jurisdiction: str | None,
     generated_at: object | None,
+    artifact_sha256: str | None = None,
 ) -> str:
     generated = _generated_label(generated_at)
     material = "|".join(
@@ -42,6 +46,7 @@ def document_fingerprint(
             order_id or "",
             jurisdiction or "",
             generated,
+            artifact_sha256 or "",
         ]
     )
     digest = sha256(material.encode("utf-8")).hexdigest().upper()
@@ -56,6 +61,8 @@ def _document_control_sheet(
     jurisdiction: str | None,
     generated: str,
     fingerprint: str,
+    artifact_sha256: str | None,
+    verification_url: str | None,
 ) -> None:
     if "Document Control" in workbook.sheetnames:
         sheet = workbook["Document Control"]
@@ -96,9 +103,11 @@ def _document_control_sheet(
     entries = [
         ("Document class", "DEMONSTRATION SAMPLE" if sample else "PAID CUSTOMER DELIVERABLE"),
         ("Document ID", fingerprint),
+        ("Artifact SHA-256", artifact_sha256 or "Not recorded"),
         ("Jurisdiction / scope", jurisdiction or "Governed evidence boundary"),
         ("Order ID", "Not applicable" if sample else (order_id or "Unavailable")),
         ("Generated", generated),
+        ("Verification", verification_url or "Sample document — no paid receipt verification"),
         (
             "Commercial basis",
             "Customer pays for governed fiscal intelligence and evidence scope; PDF, Excel and JSON are included delivery formats.",
@@ -106,10 +115,13 @@ def _document_control_sheet(
     ]
     for label, value in entries:
         sheet.cell(row=row, column=1, value=label)
-        sheet.cell(row=row, column=2, value=value)
+        value_cell = sheet.cell(row=row, column=2, value=value)
         sheet.cell(row=row, column=1).font = Font(bold=True, color=_TEAL)
         sheet.cell(row=row, column=1).alignment = Alignment(vertical="top", wrap_text=True)
-        sheet.cell(row=row, column=2).alignment = Alignment(vertical="top", wrap_text=True)
+        value_cell.alignment = Alignment(vertical="top", wrap_text=True)
+        if label == "Verification" and verification_url:
+            value_cell.hyperlink = verification_url
+            value_cell.style = "Hyperlink"
         row += 1
 
     sheet.column_dimensions["A"].width = 28
@@ -126,13 +138,10 @@ def brand_workbook(
     order_id: str | None = None,
     jurisdiction: str | None = None,
     generated_at: object | None = None,
+    artifact_sha256: str | None = None,
+    verification_url: str | None = None,
 ) -> None:
-    """Apply institutional Gaia Fiscal Intelligence branding and document control.
-
-    XLSX has no native page-watermark primitive in normal workbook view. Gaia therefore
-    combines a visible Document Control sheet with print headers/footers on every sheet,
-    carrying a deterministic document fingerprint and sample/paid classification.
-    """
+    """Apply institutional branding, artifact integrity and document control."""
 
     generated = _generated_label(generated_at)
     fingerprint = document_fingerprint(
@@ -140,6 +149,7 @@ def brand_workbook(
         order_id=order_id,
         jurisdiction=jurisdiction,
         generated_at=generated,
+        artifact_sha256=artifact_sha256,
     )
     watermark = SAMPLE_WATERMARK if sample else PAID_WATERMARK
 
@@ -159,6 +169,8 @@ def brand_workbook(
         jurisdiction=jurisdiction,
         generated=generated,
         fingerprint=fingerprint,
+        artifact_sha256=artifact_sha256,
+        verification_url=verification_url,
     )
 
     for sheet in workbook.worksheets:
@@ -207,6 +219,26 @@ def _draw_repeating_pdf_watermark(
     canvas.restoreState()
 
 
+def _draw_verification_qr(canvas, *, verification_url: str, page_width: float) -> None:
+    qr = QrCodeWidget(verification_url)
+    x1, y1, x2, y2 = qr.getBounds()
+    size = 17 * mm
+    width = x2 - x1
+    height = y2 - y1
+    drawing = Drawing(
+        size,
+        size,
+        transform=[size / width, 0, 0, size / height, 0, 0],
+    )
+    drawing.add(qr)
+    renderPDF.draw(drawing, canvas, page_width - 31 * mm, 12 * mm)
+    canvas.saveState()
+    canvas.setFillColor(colors.HexColor(f"#{_DARK_TEAL}"))
+    canvas.setFont("Helvetica-Bold", 5.5)
+    canvas.drawCentredString(page_width - 22.5 * mm, 10 * mm, "VERIFY RECEIPT")
+    canvas.restoreState()
+
+
 def draw_pdf_branding(
     canvas,
     doc,
@@ -215,6 +247,8 @@ def draw_pdf_branding(
     order_id: str | None = None,
     jurisdiction: str | None = None,
     generated_at: object | None = None,
+    artifact_sha256: str | None = None,
+    verification_url: str | None = None,
 ) -> None:
     """Draw layered institutional watermarking and traceable document controls."""
 
@@ -224,6 +258,7 @@ def draw_pdf_branding(
         order_id=order_id,
         jurisdiction=jurisdiction,
         generated_at=generated,
+        artifact_sha256=artifact_sha256,
     )
     page_width, page_height = doc.pagesize
 
@@ -283,5 +318,13 @@ def draw_pdf_branding(
         right_parts.append(f"Order {order_id}")
     right_parts.append(generated)
     right_parts.append(f"Page {doc.page}")
-    canvas.drawRightString(page_width - 12 * mm, 5.5 * mm, " · ".join(right_parts))
+    right_margin = page_width - (35 * mm if verification_url and not sample else 12 * mm)
+    canvas.drawRightString(right_margin, 5.5 * mm, " · ".join(right_parts))
     canvas.restoreState()
+
+    if verification_url and not sample:
+        _draw_verification_qr(
+            canvas,
+            verification_url=verification_url,
+            page_width=page_width,
+        )
