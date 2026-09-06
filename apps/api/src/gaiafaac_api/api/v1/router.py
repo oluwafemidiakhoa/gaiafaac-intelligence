@@ -33,6 +33,7 @@ from gaiafaac_api.api.v1.routes.oagf_revisions import router as oagf_revisions_r
 from gaiafaac_api.api.v1.routes.one_time_billing import router as one_time_billing_router
 from gaiafaac_api.api.v1.routes.one_time_exports import router as one_time_exports_router
 from gaiafaac_api.api.v1.routes.paystack_checkout_fix import router as paystack_checkout_router
+from gaiafaac_api.api.v1.routes.project_receipts import router as project_receipts_router
 from gaiafaac_api.api.v1.routes.published_data import router as published_data_router
 from gaiafaac_api.api.v1.routes.review import router as review_router
 from gaiafaac_api.api.v1.routes.sample_exports import router as sample_exports_router
@@ -49,6 +50,7 @@ router.include_router(demo_data_router)
 router.include_router(analytics_router)
 router.include_router(published_data_router)
 router.include_router(sample_exports_router)
+router.include_router(project_receipts_router)
 router.include_router(lga_status_router)
 router.include_router(national_distribution_router)
 router.include_router(data_api_router)
