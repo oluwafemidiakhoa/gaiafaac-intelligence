@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -30,6 +31,7 @@ from gaiafaac_api.services.one_time_fulfillment import (
 from gaiafaac_api.services.product_catalog import ProductBillingMode, product_by_code
 
 router = APIRouter(prefix="/billing/one-time", tags=["customer billing"])
+logger = logging.getLogger(__name__)
 _PAYSTACK_API_URL = "https://api.paystack.co"
 _FULFILLMENT_KEY = "_fulfillment"
 _REQUEST_KEY = "request"
@@ -50,6 +52,16 @@ def _configured_product_price(product_code: str) -> tuple[str, int]:
     return product.label, int(product.price_naira)
 
 
+def _provider_message(error: HTTPError) -> str:
+    try:
+        raw = error.read().decode("utf-8", errors="replace")
+        payload = json.loads(raw)
+        message = str(payload.get("message") or "provider rejected request")
+    except (OSError, ValueError, TypeError, AttributeError):
+        message = "provider rejected request"
+    return message[:240]
+
+
 def _initialize_paystack_transaction(
     *,
     email: str,
@@ -58,40 +70,57 @@ def _initialize_paystack_transaction(
     metadata: dict,
 ) -> str:
     settings = get_settings()
-    if not settings.paystack_secret_key:
+    secret = settings.paystack_secret_key.strip()
+    if not secret:
         raise HTTPException(status_code=503, detail="Paystack billing is not configured.")
 
     body = json.dumps(
         {
             "email": email,
-            "amount": amount_naira * 100,
+            "amount": str(amount_naira * 100),
             "reference": reference,
             "callback_url": (
                 f"{settings.customer_app_url.rstrip('/')}/projects"
                 f"?purchase=return&reference={quote(reference, safe='')}"
             ),
-            "metadata": metadata,
+            "metadata": json.dumps(metadata, separators=(",", ":")),
         }
     ).encode("utf-8")
     request = UrlRequest(
         f"{_PAYSTACK_API_URL}/transaction/initialize",
         data=body,
         headers={
-            "Authorization": f"Bearer {settings.paystack_secret_key}",
+            "Authorization": f"Bearer {secret}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "GaiaFiscalIntelligence/1.0",
         },
         method="POST",
     )
     try:
         with urlopen(request, timeout=12) as response:  # noqa: S310 - fixed trusted host
             payload = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
+    except HTTPError as error:
+        logger.warning(
+            "Paystack one-time initialize rejected status=%s message=%s",
+            error.code,
+            _provider_message(error),
+        )
+        raise HTTPException(
+            status_code=502, detail="Payment gateway is temporarily unavailable."
+        ) from error
+    except (URLError, TimeoutError, json.JSONDecodeError) as error:
+        logger.warning(
+            "Paystack one-time initialize transport failure type=%s",
+            type(error).__name__,
+        )
         raise HTTPException(
             status_code=502, detail="Payment gateway is temporarily unavailable."
         ) from error
 
     authorization_url = (payload.get("data") or {}).get("authorization_url")
     if not payload.get("status") or not authorization_url:
+        logger.warning("Paystack one-time initialize returned no authorization URL")
         raise HTTPException(status_code=502, detail="Paystack did not return a checkout URL.")
     return str(authorization_url)
 
