@@ -148,7 +148,9 @@ def verify_project_receipt(
         document_id=document_id,
         artifact_sha256=computed_hash,
         product_code=purchase.product_code,
-        product_label=product.label if product is not None else purchase.product_code.replace("_", " ").title(),
+        product_label=product.label
+        if product is not None
+        else purchase.product_code.replace("_", " ").title(),
         artifact_schema=str(artifact.get("schema")) if artifact.get("schema") else None,
         evidence_captured_at=(
             str(artifact.get("captured_at")) if artifact.get("captured_at") else None
