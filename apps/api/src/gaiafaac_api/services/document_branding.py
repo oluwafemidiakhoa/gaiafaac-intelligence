@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from datetime import UTC, datetime
 
 from openpyxl import Workbook
@@ -72,10 +73,8 @@ def draw_pdf_branding(
     page_width, page_height = doc.pagesize
 
     canvas.saveState()
-    try:
+    with suppress(AttributeError):
         canvas.setFillAlpha(0.10 if sample else 0.055)
-    except AttributeError:
-        pass
     canvas.setFillColor(colors.HexColor("#07594F"))
     canvas.setFont("Helvetica-Bold", 25 if sample else 31)
     canvas.translate(page_width / 2, page_height / 2)
