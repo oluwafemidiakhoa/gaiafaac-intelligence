@@ -29,10 +29,12 @@ from gaiafaac_api.services.one_time_fulfillment import (
     normalize_one_time_context,
 )
 from gaiafaac_api.services.product_catalog import ProductBillingMode, product_by_code
+from gaiafaac_api.services.project_receipts import canonical_artifact_sha256
 
 router = APIRouter(prefix="/billing/one-time", tags=["customer billing"])
 logger = logging.getLogger(__name__)
 _PAYSTACK_API_URL = "https://api.paystack.co"
+_ARTIFACT_HASH_KEY = "_artifact_sha256"
 _FULFILLMENT_KEY = "_fulfillment"
 _REQUEST_KEY = "request"
 
@@ -210,8 +212,9 @@ def _mark_fulfillment_ready(
             context=legacy_context,
         )
         metadata = {_REQUEST_KEY: normalized, _FULFILLMENT_KEY: artifact}
-        purchase.purchase_metadata = metadata
 
+    metadata[_ARTIFACT_HASH_KEY] = canonical_artifact_sha256(artifact)
+    purchase.purchase_metadata = metadata
     purchase.fulfillment_status = "ready"
     purchase.fulfillment_reference = _fulfillment_reference(purchase.id)
     purchase.fulfilled_at = purchase.fulfilled_at or datetime.now(UTC)
@@ -228,6 +231,7 @@ def _mark_fulfillment_ready(
         metadata={
             "product_code": purchase.product_code,
             "fulfillment_reference": purchase.fulfillment_reference,
+            "artifact_sha256": purchase.purchase_metadata.get(_ARTIFACT_HASH_KEY),
         },
     )
 
@@ -335,6 +339,7 @@ def create_one_time_checkout(
         product_code=payload.product_code,
         context=dict(payload.context),
     )
+    artifact_sha256 = canonical_artifact_sha256(fulfillment)
 
     purchase_id = uuid.uuid4()
     reference = f"gfi-order-{purchase_id.hex}"
@@ -352,6 +357,7 @@ def create_one_time_checkout(
         purchase_metadata={
             _REQUEST_KEY: normalized_context,
             _FULFILLMENT_KEY: fulfillment,
+            _ARTIFACT_HASH_KEY: artifact_sha256,
         },
     )
     session.add(purchase)
@@ -365,6 +371,7 @@ def create_one_time_checkout(
         "product_code": payload.product_code,
         "product_label": product_label,
         "gaia_reference": reference,
+        "artifact_sha256": artifact_sha256,
     }
     try:
         authorization_url = _initialize_paystack_transaction(
@@ -389,6 +396,7 @@ def create_one_time_checkout(
             "product_code": payload.product_code,
             "amount_naira": str(purchase.amount_naira),
             "provider": "paystack",
+            "artifact_sha256": artifact_sha256,
         },
     )
     return OneTimePurchaseCheckoutResponse(
@@ -473,5 +481,7 @@ def get_one_time_fulfillment(
         "currency": purchase.currency,
         "completed_at": purchase.completed_at,
         "fulfillment_reference": purchase.fulfillment_reference,
+        "artifact_sha256": metadata.get(_ARTIFACT_HASH_KEY),
+        "verification_reference": f"/api/v1/project-receipts/{purchase.id}/verify",
         "artifact": artifact,
     }

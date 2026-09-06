@@ -12,6 +12,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.services.document_branding import (
     BRAND_NAME,
     BRAND_SUBTITLE,
@@ -34,6 +35,7 @@ from gaiafaac_api.services.one_time_exports import (
 from gaiafaac_api.services.one_time_exports import (
     build_one_time_excel as _build_legacy_excel,
 )
+from gaiafaac_api.services.project_receipts import canonical_artifact_sha256
 
 
 def _filename(product_code: str, purchase_id: str, suffix: str, *, sample: bool) -> str:
@@ -42,6 +44,13 @@ def _filename(product_code: str, purchase_id: str, suffix: str, *, sample: bool)
         return f"gaia-fiscal-intelligence-sample-{product}.{suffix}"
     short_id = "".join(character for character in purchase_id if character.isalnum())[:12]
     return f"gaia-fiscal-intelligence-{product}-{short_id or 'order'}.{suffix}"
+
+
+def _verification_url(purchase_id: str, *, sample: bool) -> str | None:
+    if sample:
+        return None
+    base = get_settings().customer_app_url.rstrip("/")
+    return f"{base}/verify/project/{purchase_id}"
 
 
 def build_one_time_excel(
@@ -73,12 +82,16 @@ def build_one_time_excel(
         summary["A3"] = SAMPLE_NOTICE
         summary["A3"].font = Font(size=10, bold=True, color="9C2A1B")
 
+    artifact_sha256 = canonical_artifact_sha256(artifact)
+    verification_url = _verification_url(purchase_id, sample=sample)
     brand_workbook(
         workbook,
         sample=sample,
         order_id=None if sample else purchase_id,
         jurisdiction=jurisdiction,
         generated_at=artifact.get("captured_at"),
+        artifact_sha256=artifact_sha256,
+        verification_url=verification_url,
     )
 
     buffer = io.BytesIO()
@@ -160,6 +173,8 @@ def build_one_time_pdf(
         spaceAfter=3 * mm,
     )
 
+    artifact_sha256 = canonical_artifact_sha256(artifact)
+    verification_url = _verification_url(purchase_id, sample=sample)
     story: list[object] = [
         Paragraph(BRAND_NAME, title_style),
         Paragraph(BRAND_SUBTITLE, subtitle_style),
@@ -174,6 +189,8 @@ def build_one_time_pdf(
         ["Payment", "Not applicable — demonstration sample" if sample else _display(completed_at)],
         ["Artifact schema", _display(artifact.get("schema"))],
         ["Evidence captured", _display(artifact.get("captured_at"))],
+        ["Artifact SHA-256", artifact_sha256],
+        ["Verification", verification_url or "Sample document — no paid receipt verification"],
     ]
     order_table = Table(
         [
@@ -275,6 +292,8 @@ def build_one_time_pdf(
             order_id=None if sample else purchase_id,
             jurisdiction=jurisdiction,
             generated_at=artifact.get("captured_at"),
+            artifact_sha256=artifact_sha256,
+            verification_url=verification_url,
         )
 
     document.build(story, onFirstPage=page_brand, onLaterPages=page_brand)
