@@ -125,9 +125,12 @@ export default function ProjectProductsPage() {
 
   useEffect(() => {
     void (async () => {
-      const productsResponse = await fetch('/api/customer/commercial/products', {
-        cache: 'no-store',
-      })
+      const productsResponse = await fetch(
+        '/api/customer/commercial/products',
+        {
+          cache: 'no-store',
+        },
+      )
       if (productsResponse.ok) {
         setProducts((await productsResponse.json()) as CommercialProduct[])
       }
@@ -226,7 +229,9 @@ export default function ProjectProductsPage() {
         <Card className="border-primary/25 bg-primary/[0.03]">
           <CardContent className="py-5">
             <PackageCheck className="text-primary size-5" />
-            <p className="mt-3 font-semibold">1. Define the decision boundary</p>
+            <p className="mt-3 font-semibold">
+              1. Define the decision boundary
+            </p>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
               Choose the jurisdiction, period and evidence scope the analysis
               must answer.
@@ -286,7 +291,8 @@ export default function ProjectProductsPage() {
                   {naira(product.price_naira)}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  one-time intelligence engagement · all delivery formats included
+                  one-time intelligence engagement · all delivery formats
+                  included
                 </p>
               </CardContent>
             </Card>
@@ -426,8 +432,8 @@ export default function ProjectProductsPage() {
                       </p>
                     </div>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {naira(purchase.amount_naira)} · payment {purchase.status} ·
-                      intelligence {purchase.fulfillment_status}
+                      {naira(purchase.amount_naira)} · payment {purchase.status}{' '}
+                      · intelligence {purchase.fulfillment_status}
                     </p>
                   </div>
                   {purchase.status === 'success' &&
