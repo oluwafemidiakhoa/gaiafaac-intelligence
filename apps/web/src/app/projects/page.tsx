@@ -246,7 +246,9 @@ export default function ProjectProductsPage() {
         <Card className="border-primary/25 bg-primary/[0.03]">
           <CardContent className="py-5">
             <FileSpreadsheet className="text-primary size-5" />
-            <p className="mt-3 font-semibold">3. Receive the intelligence package</p>
+            <p className="mt-3 font-semibold">
+              3. Receive the intelligence package
+            </p>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
               PDF for review, Excel for analysis and JSON for machine use are
               included delivery formats — not separate products.
@@ -269,14 +271,20 @@ export default function ProjectProductsPage() {
             onClick={() => setSelected(product.code as ProductCode)}
             className="text-left"
           >
-            <Card className={selected === product.code ? 'border-primary/60 shadow-sm' : ''}>
+            <Card
+              className={
+                selected === product.code ? 'border-primary/60 shadow-sm' : ''
+              }
+            >
               <CardHeader>
                 <FileCheck2 className="text-primary size-5" />
                 <CardTitle className="pt-3 text-lg">{product.label}</CardTitle>
                 <CardDescription>{product.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-xl font-semibold">{naira(product.price_naira)}</p>
+                <p className="text-xl font-semibold">
+                  {naira(product.price_naira)}
+                </p>
                 <p className="text-muted-foreground mt-1 text-xs">
                   one-time intelligence engagement · all delivery formats included
                 </p>
@@ -361,13 +369,19 @@ export default function ProjectProductsPage() {
             </label>
           )}
 
-          <Button onClick={() => void buy(selected)} disabled={buying !== null} size="lg">
+          <Button
+            onClick={() => void buy(selected)}
+            disabled={buying !== null}
+            size="lg"
+          >
             {buying === selected ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <PackageCheck className="size-4" />
             )}
-            {buying === selected ? 'Checking evidence…' : 'Check evidence & buy intelligence'}
+            {buying === selected
+              ? 'Checking evidence…'
+              : 'Check evidence & buy intelligence'}
           </Button>
         </CardContent>
       </Card>
@@ -407,25 +421,43 @@ export default function ProjectProductsPage() {
                       {purchase.fulfillment_status === 'ready' ? (
                         <CheckCircle2 className="size-4 text-emerald-600" />
                       ) : null}
-                      <p className="font-semibold">{purchase.product_code.replaceAll('_', ' ')}</p>
+                      <p className="font-semibold">
+                        {purchase.product_code.replaceAll('_', ' ')}
+                      </p>
                     </div>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {naira(purchase.amount_naira)} · payment {purchase.status} · intelligence {purchase.fulfillment_status}
+                      {naira(purchase.amount_naira)} · payment {purchase.status} ·
+                      intelligence {purchase.fulfillment_status}
                     </p>
                   </div>
-                  {purchase.status === 'success' && purchase.fulfillment_status === 'ready' ? (
+                  {purchase.status === 'success' &&
+                  purchase.fulfillment_status === 'ready' ? (
                     <div className="flex flex-wrap gap-2">
                       <Button asChild>
-                        <a href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.pdf`}>
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.pdf`}
+                        >
                           <FileText className="size-4" />
                           PDF package
                         </a>
                       </Button>
                       <Button asChild variant="outline">
-                        <a href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.xlsx`}>
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.xlsx`}
+                        >
                           <FileSpreadsheet className="size-4" />
                           Excel analysis
                         </a>
+                      </Button>
+                      <Button asChild variant="outline">
+                        <Link
+                          href={`/verify/project/${purchase.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <ShieldCheck className="size-4" />
+                          Verify receipt
+                        </Link>
                       </Button>
                       <Button asChild variant="ghost">
                         <a
