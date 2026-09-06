@@ -80,35 +80,43 @@ test.describe('Project Products commercial delivery', () => {
     await expect(link).toHaveAttribute('href', '/projects')
   })
 
-  test('paid ready order exposes Excel, PDF and governed JSON downloads', async ({
+  test('paid ready order exposes governed intelligence in all included formats', async ({
     page,
   }) => {
     await mockProjectProducts(page)
     await page.goto('/projects', { waitUntil: 'domcontentloaded' })
 
     await expect(
-      page.getByText('One-time purchase + fulfillment', { exact: true }),
+      page.getByText('Governed fiscal intelligence · one-time engagement', {
+        exact: true,
+      }),
     ).toBeVisible()
     await expect(
       page.getByRole('heading', { name: 'Project Products', exact: true }),
     ).toBeVisible()
-    await expect(page.getByText('1. Buy once', { exact: true })).toBeVisible()
     await expect(
-      page.getByText('2. Fulfillment freezes', { exact: true }),
+      page.getByText('1. Define the decision boundary', { exact: true }),
     ).toBeVisible()
     await expect(
-      page.getByText('3. Download deliverables', { exact: true }),
+      page.getByText('2. Gaia validates and freezes', { exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.getByText('3. Receive the intelligence package', { exact: true }),
     ).toBeVisible()
 
     const excel = page.getByRole('link', {
-      name: 'Download Excel',
+      name: 'Excel analysis',
       exact: true,
     })
     const pdf = page.getByRole('link', {
-      name: 'Download PDF',
+      name: 'PDF package',
       exact: true,
     })
-    const json = page.getByRole('link', { name: 'Open JSON', exact: true })
+    const json = page.getByRole('link', { name: 'JSON evidence', exact: true })
+    const verify = page.getByRole('link', {
+      name: 'Verify receipt',
+      exact: true,
+    })
 
     await expect(excel).toBeVisible()
     await expect(excel).toHaveAttribute(
@@ -124,6 +132,11 @@ test.describe('Project Products commercial delivery', () => {
     await expect(json).toHaveAttribute(
       'href',
       `/api/customer/billing/one-time/purchases/${purchaseId}/fulfillment`,
+    )
+    await expect(verify).toBeVisible()
+    await expect(verify).toHaveAttribute(
+      'href',
+      `/verify/project/${purchaseId}`,
     )
   })
 })
