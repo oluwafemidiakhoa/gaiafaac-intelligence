@@ -8,6 +8,7 @@ import {
   FileText,
   Loader2,
   PackageCheck,
+  ShieldCheck,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
@@ -116,20 +117,17 @@ export default function ProjectProductsPage() {
     const purchase = (await response.json()) as Purchase
     setMessage(
       purchase.fulfillment_status === 'ready'
-        ? 'Payment confirmed. Your governed deliverable is ready in JSON, Excel and PDF.'
-        : 'Payment confirmed. Gaia is preparing your governed deliverable.',
+        ? 'Payment confirmed. Your governed intelligence package is ready in PDF, Excel and JSON.'
+        : 'Payment confirmed. Gaia is preparing your governed intelligence package.',
     )
     window.history.replaceState({}, '', '/projects')
   }
 
   useEffect(() => {
     void (async () => {
-      const productsResponse = await fetch(
-        '/api/customer/commercial/products',
-        {
-          cache: 'no-store',
-        },
-      )
+      const productsResponse = await fetch('/api/customer/commercial/products', {
+        cache: 'no-store',
+      })
       if (productsResponse.ok) {
         setProducts((await productsResponse.json()) as CommercialProduct[])
       }
@@ -196,47 +194,62 @@ export default function ProjectProductsPage() {
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <div className="max-w-3xl">
         <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
-          One-time purchase + fulfillment
+          Governed fiscal intelligence · one-time engagement
         </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
           Project Products
         </h1>
         <p className="text-muted-foreground mt-4 text-base leading-7">
-          This is Gaia&apos;s one-time purchase and fulfillment workspace.
-          Choose a defined governed evidence product, set the evidence boundary
-          and pay once through Paystack. Gaia checks the evidence before
-          checkout and freezes the paid deliverable to the order.
+          You are buying a governed fiscal-intelligence result for a defined
+          jurisdiction, period and evidence boundary — not a file format. Gaia
+          validates the evidence before checkout, freezes the governed result to
+          the order, and includes PDF, Excel and JSON as delivery formats.
         </p>
       </div>
+
+      <Card className="border-primary/30 bg-primary/[0.035] mt-8">
+        <CardContent className="flex gap-4 py-5">
+          <ShieldCheck className="text-primary mt-0.5 size-5 shrink-0" />
+          <div>
+            <p className="font-semibold">What the price covers</p>
+            <p className="text-muted-foreground mt-1 text-sm leading-6">
+              Evidence selection, governed-source validation, provenance,
+              jurisdiction/period scoping, deterministic calculations and the
+              resulting intelligence package. PDF, Excel and JSON are included
+              representations of the same paid evidence product.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         <Card className="border-primary/25 bg-primary/[0.03]">
           <CardContent className="py-5">
             <PackageCheck className="text-primary size-5" />
-            <p className="mt-3 font-semibold">1. Buy once</p>
+            <p className="mt-3 font-semibold">1. Define the decision boundary</p>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Define the jurisdiction, period and evidence lane before Paystack
-              opens.
+              Choose the jurisdiction, period and evidence scope the analysis
+              must answer.
             </p>
           </CardContent>
         </Card>
         <Card className="border-primary/25 bg-primary/[0.03]">
           <CardContent className="py-5">
             <CheckCircle2 className="text-primary size-5" />
-            <p className="mt-3 font-semibold">2. Fulfillment freezes</p>
+            <p className="mt-3 font-semibold">2. Gaia validates and freezes</p>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Successful payment locks the governed artifact to the order and
-              organization.
+              Gaia refuses unsupported evidence boundaries and freezes the
+              governed result to the paid order.
             </p>
           </CardContent>
         </Card>
         <Card className="border-primary/25 bg-primary/[0.03]">
           <CardContent className="py-5">
             <FileSpreadsheet className="text-primary size-5" />
-            <p className="mt-3 font-semibold">3. Download deliverables</p>
+            <p className="mt-3 font-semibold">3. Receive the intelligence package</p>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Paid orders expose the governed JSON plus branded Excel and PDF
-              downloads below.
+              PDF for review, Excel for analysis and JSON for machine use are
+              included delivery formats — not separate products.
             </p>
           </CardContent>
         </Card>
@@ -256,21 +269,17 @@ export default function ProjectProductsPage() {
             onClick={() => setSelected(product.code as ProductCode)}
             className="text-left"
           >
-            <Card
-              className={
-                selected === product.code ? 'border-primary/60 shadow-sm' : ''
-              }
-            >
+            <Card className={selected === product.code ? 'border-primary/60 shadow-sm' : ''}>
               <CardHeader>
                 <FileCheck2 className="text-primary size-5" />
                 <CardTitle className="pt-3 text-lg">{product.label}</CardTitle>
                 <CardDescription>{product.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-xl font-semibold">
-                  {naira(product.price_naira)}
+                <p className="text-xl font-semibold">{naira(product.price_naira)}</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  one-time intelligence engagement · all delivery formats included
                 </p>
-                <p className="text-muted-foreground mt-1 text-xs">one-time</p>
               </CardContent>
             </Card>
           </button>
@@ -352,19 +361,13 @@ export default function ProjectProductsPage() {
             </label>
           )}
 
-          <Button
-            onClick={() => void buy(selected)}
-            disabled={buying !== null}
-            size="lg"
-          >
+          <Button onClick={() => void buy(selected)} disabled={buying !== null} size="lg">
             {buying === selected ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <PackageCheck className="size-4" />
             )}
-            {buying === selected
-              ? 'Checking evidence…'
-              : 'Check evidence & pay'}
+            {buying === selected ? 'Checking evidence…' : 'Check evidence & buy intelligence'}
           </Button>
         </CardContent>
       </Card>
@@ -376,12 +379,13 @@ export default function ProjectProductsPage() {
               Your project orders
             </p>
             <h2 id="project-orders" className="mt-2 text-2xl font-semibold">
-              Paid deliverables stay tied to your organization.
+              Paid intelligence stays tied to your organization.
             </h2>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
-              After payment is confirmed and fulfillment is ready, download the
-              branded Excel workbook or PDF package here. The JSON artifact
-              remains available for inspection and machine use.
+              After payment is confirmed and fulfillment is ready, retrieve the
+              same governed intelligence as PDF, Excel or JSON. The price is for
+              the evidence product and decision boundary, not for choosing a
+              document format.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -403,32 +407,24 @@ export default function ProjectProductsPage() {
                       {purchase.fulfillment_status === 'ready' ? (
                         <CheckCircle2 className="size-4 text-emerald-600" />
                       ) : null}
-                      <p className="font-semibold">
-                        {purchase.product_code.replaceAll('_', ' ')}
-                      </p>
+                      <p className="font-semibold">{purchase.product_code.replaceAll('_', ' ')}</p>
                     </div>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {naira(purchase.amount_naira)} · payment {purchase.status}{' '}
-                      · deliverable {purchase.fulfillment_status}
+                      {naira(purchase.amount_naira)} · payment {purchase.status} · intelligence {purchase.fulfillment_status}
                     </p>
                   </div>
-                  {purchase.status === 'success' &&
-                  purchase.fulfillment_status === 'ready' ? (
+                  {purchase.status === 'success' && purchase.fulfillment_status === 'ready' ? (
                     <div className="flex flex-wrap gap-2">
                       <Button asChild>
-                        <a
-                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.xlsx`}
-                        >
-                          <FileSpreadsheet className="size-4" />
-                          Download Excel
+                        <a href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.pdf`}>
+                          <FileText className="size-4" />
+                          PDF package
                         </a>
                       </Button>
                       <Button asChild variant="outline">
-                        <a
-                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.pdf`}
-                        >
-                          <FileText className="size-4" />
-                          Download PDF
+                        <a href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.xlsx`}>
+                          <FileSpreadsheet className="size-4" />
+                          Excel analysis
                         </a>
                       </Button>
                       <Button asChild variant="ghost">
@@ -438,7 +434,7 @@ export default function ProjectProductsPage() {
                           rel="noreferrer"
                         >
                           <FileJson2 className="size-4" />
-                          Open JSON
+                          JSON evidence
                         </a>
                       </Button>
                     </div>
