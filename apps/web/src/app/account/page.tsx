@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
@@ -43,6 +44,18 @@ interface ApiKeyItem {
   revoked_at: string | null
 }
 
+interface Purchase {
+  id: string
+  product_code: string
+  amount_naira: string
+  currency: string
+  status: string
+  fulfillment_status: string
+  fulfillment_reference: string | null
+  completed_at: string | null
+  created_at: string
+}
+
 const inputClass =
   'border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-10 w-full rounded-md border px-3 text-sm outline-none focus-visible:ring-[3px]'
 
@@ -58,10 +71,21 @@ function requestedPlan() {
   return new URLSearchParams(window.location.search).get('plan')
 }
 
+function naira(value: string | number) {
+  const amount = Number(value)
+  if (!Number.isFinite(amount)) return `₦${value}`
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
 export default function AccountPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [keys, setKeys] = useState<ApiKeyItem[]>([])
+  const [projectPurchases, setProjectPurchases] = useState<Purchase[]>([])
   const [message, setMessage] = useState('')
   const [revealedKey, setRevealedKey] = useState('')
   const [loading, setLoading] = useState(true)
@@ -86,6 +110,15 @@ export default function AccountPage() {
     }
     const nextProfile = (await response.json()) as Profile
     setProfile(nextProfile)
+
+    const projectPurchasesResponse = await fetch(
+      '/api/customer/billing/one-time/purchases',
+      { cache: 'no-store' },
+    )
+    if (projectPurchasesResponse.ok) {
+      setProjectPurchases((await projectPurchasesResponse.json()) as Purchase[])
+    }
+
     if (nextProfile.membership_role !== 'member') {
       const membersResponse = await fetch(
         '/api/customer/account/team/members',
@@ -227,6 +260,10 @@ export default function AccountPage() {
   }
 
   const canAdmin = profile.membership_role !== 'member'
+  const readyProjectPurchases = projectPurchases.filter(
+    (purchase) =>
+      purchase.status === 'success' && purchase.fulfillment_status === 'ready',
+  ).length
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -256,8 +293,11 @@ export default function AccountPage() {
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Plan</CardTitle>
-            <CardDescription>Current organization entitlement</CardDescription>
+            <CardTitle>Recurring plan</CardTitle>
+            <CardDescription>
+              Optional organization subscription. One-time Project Products are
+              purchased separately.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold capitalize">
@@ -268,7 +308,7 @@ export default function AccountPage() {
             </p>
             {profile.subscription_status ? (
               <Button className="mt-5" onClick={manageBilling}>
-                Manage billing
+                Manage subscription
               </Button>
             ) : (
               <div className="mt-5 flex flex-wrap gap-2">
@@ -288,8 +328,10 @@ export default function AccountPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Data access</CardTitle>
-            <CardDescription>Entitlements enforced by the API</CardDescription>
+            <CardTitle>Subscription data access</CardTitle>
+            <CardDescription>
+              Recurring-plan entitlements enforced by the API
+            </CardDescription>
           </CardHeader>
           <CardContent className="text-sm">
             <p>
@@ -297,7 +339,7 @@ export default function AccountPage() {
               {profile.historical_access ? 'Enabled' : 'Free tier only'}
             </p>
             <p className="mt-2">
-              Downloads: {profile.downloads ? 'Enabled' : 'Not included'}
+              Subscription exports: {profile.downloads ? 'Enabled' : 'Not included'}
             </p>
             <p className="mt-2">
               API: {profile.api_access ? 'Enabled' : 'Not included'}
@@ -317,13 +359,99 @@ export default function AccountPage() {
         </Card>
       </div>
 
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Project Products · one-time purchases</CardTitle>
+          <CardDescription>
+            Project Products do not require a subscription upgrade. Buy a
+            governed evidence engagement once, then return here or to the
+            Project Products workspace for the frozen deliverable.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="text-sm">
+              <p>
+                Orders: <span className="font-semibold">{projectPurchases.length}</span>
+              </p>
+              <p className="text-muted-foreground mt-1">
+                Ready for download: {readyProjectPurchases}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
+                <Link href="/projects">Browse Project Products</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/account/billing">Billing history</Link>
+              </Button>
+            </div>
+          </div>
+
+          {projectPurchases.length === 0 ? (
+            <p className="text-muted-foreground mt-5 border-t pt-5 text-sm">
+              No one-time project orders yet. Your current Free recurring plan
+              does not prevent you from purchasing a Project Product.
+            </p>
+          ) : (
+            <div className="mt-5 space-y-3 border-t pt-5">
+              {projectPurchases.map((purchase) => (
+                <div
+                  key={purchase.id}
+                  className="border-border flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4"
+                >
+                  <div>
+                    <p className="font-semibold capitalize">
+                      {purchase.product_code.replaceAll('_', ' ')}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      {naira(purchase.amount_naira)} · payment {purchase.status} ·
+                      {' '}deliverable {purchase.fulfillment_status}
+                    </p>
+                  </div>
+                  {purchase.status === 'success' &&
+                  purchase.fulfillment_status === 'ready' ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm">
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.xlsx`}
+                        >
+                          Download Excel
+                        </a>
+                      </Button>
+                      <Button asChild size="sm" variant="outline">
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.pdf`}
+                        >
+                          Download PDF
+                        </a>
+                      </Button>
+                      <Button asChild size="sm" variant="ghost">
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/fulfillment`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open JSON
+                        </a>
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {profile.downloads ? (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Self-service exports</CardTitle>
+            <CardTitle>Subscription self-service exports</CardTitle>
             <CardDescription>
               Download a published month with source fingerprint preserved in
-              the export.
+              the export. This entitlement is separate from one-time Project
+              Product downloads above.
             </CardDescription>
           </CardHeader>
           <CardContent>
