@@ -11,6 +11,7 @@ from gaiafaac_api.database.models import Subscription, User
 from gaiafaac_api.database.session import get_session
 from gaiafaac_api.main import app
 from gaiafaac_api.services.passwords import verify_password
+from gaiafaac_api.services.project_receipts import canonical_artifact_sha256
 
 
 def _client(session) -> TestClient:
@@ -207,6 +208,7 @@ def test_one_time_purchase_is_persisted_verified_and_fulfilled_once(session, mon
         assert purchase.purchase_metadata == {
             "request": normalized_context,
             "_fulfillment": fulfillment,
+            "_artifact_sha256": canonical_artifact_sha256(fulfillment),
         }
 
         monkeypatch.setattr(
