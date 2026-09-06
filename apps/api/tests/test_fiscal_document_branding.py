@@ -77,11 +77,7 @@ def test_paid_excel_uses_document_control_and_fingerprint_on_every_sheet():
     ]
     assert fingerprint in control_values
     assert artifact_sha256 in control_values
-    assert any(
-        "/verify/project/" in str(value)
-        for value in control_values
-        if value
-    )
+    assert any("/verify/project/" in str(value) for value in control_values if value)
     assert any(
         "Customer pays for governed fiscal intelligence" in str(value)
         for value in control_values
