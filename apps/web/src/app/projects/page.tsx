@@ -1,6 +1,14 @@
 'use client'
 
-import { CheckCircle2, FileCheck2, Loader2, PackageCheck } from 'lucide-react'
+import {
+  CheckCircle2,
+  FileCheck2,
+  FileJson2,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  PackageCheck,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -108,7 +116,7 @@ export default function ProjectProductsPage() {
     const purchase = (await response.json()) as Purchase
     setMessage(
       purchase.fulfillment_status === 'ready'
-        ? 'Payment confirmed. Your governed deliverable is ready.'
+        ? 'Payment confirmed. Your governed deliverable is ready in JSON, Excel and PDF.'
         : 'Payment confirmed. Gaia is preparing your governed deliverable.',
     )
     window.history.replaceState({}, '', '/projects')
@@ -188,16 +196,50 @@ export default function ProjectProductsPage() {
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
       <div className="max-w-3xl">
         <p className="text-primary text-xs font-semibold tracking-[0.18em] uppercase">
-          Project-based products
+          One-time purchase + fulfillment
         </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-          Start with a governed fiscal evidence engagement.
+          Project Products
         </h1>
         <p className="text-muted-foreground mt-4 text-base leading-7">
-          Choose a defined evidence product when a recurring subscription is not
-          yet the right fit. Gaia checks that governed evidence is available
-          before opening Paystack, then freezes the deliverable to the order.
+          This is Gaia&apos;s one-time purchase and fulfillment workspace.
+          Choose a defined governed evidence product, set the evidence boundary
+          and pay once through Paystack. Gaia checks the evidence before
+          checkout and freezes the paid deliverable to the order.
         </p>
+      </div>
+
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <Card className="border-primary/25 bg-primary/[0.03]">
+          <CardContent className="py-5">
+            <PackageCheck className="text-primary size-5" />
+            <p className="mt-3 font-semibold">1. Buy once</p>
+            <p className="text-muted-foreground mt-1 text-sm leading-6">
+              Define the jurisdiction, period and evidence lane before Paystack
+              opens.
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-primary/25 bg-primary/[0.03]">
+          <CardContent className="py-5">
+            <CheckCircle2 className="text-primary size-5" />
+            <p className="mt-3 font-semibold">2. Fulfillment freezes</p>
+            <p className="text-muted-foreground mt-1 text-sm leading-6">
+              Successful payment locks the governed artifact to the order and
+              organization.
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-primary/25 bg-primary/[0.03]">
+          <CardContent className="py-5">
+            <FileSpreadsheet className="text-primary size-5" />
+            <p className="mt-3 font-semibold">3. Download deliverables</p>
+            <p className="text-muted-foreground mt-1 text-sm leading-6">
+              Paid orders expose the governed JSON plus branded Excel and PDF
+              downloads below.
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {message ? (
@@ -336,6 +378,11 @@ export default function ProjectProductsPage() {
             <h2 id="project-orders" className="mt-2 text-2xl font-semibold">
               Paid deliverables stay tied to your organization.
             </h2>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+              After payment is confirmed and fulfillment is ready, download the
+              branded Excel workbook or PDF package here. The JSON artifact
+              remains available for inspection and machine use.
+            </p>
           </div>
           <Button asChild variant="outline">
             <Link href="/account/billing">Billing history</Link>
@@ -367,15 +414,34 @@ export default function ProjectProductsPage() {
                   </div>
                   {purchase.status === 'success' &&
                   purchase.fulfillment_status === 'ready' ? (
-                    <Button asChild variant="outline">
-                      <a
-                        href={`/api/customer/billing/one-time/purchases/${purchase.id}/fulfillment`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open governed deliverable
-                      </a>
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild>
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.xlsx`}
+                        >
+                          <FileSpreadsheet className="size-4" />
+                          Download Excel
+                        </a>
+                      </Button>
+                      <Button asChild variant="outline">
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/download.pdf`}
+                        >
+                          <FileText className="size-4" />
+                          Download PDF
+                        </a>
+                      </Button>
+                      <Button asChild variant="ghost">
+                        <a
+                          href={`/api/customer/billing/one-time/purchases/${purchase.id}/fulfillment`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <FileJson2 className="size-4" />
+                          Open JSON
+                        </a>
+                      </Button>
+                    </div>
                   ) : null}
                 </CardContent>
               </Card>
