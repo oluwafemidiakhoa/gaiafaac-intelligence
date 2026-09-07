@@ -8,7 +8,7 @@ from sqlalchemy import select
 from gaiafaac_api.customer_auth import CurrentCustomer, DatabaseSession
 from gaiafaac_api.database.commercial_models import OneTimePurchase
 from gaiafaac_api.services.account import membership_for
-from gaiafaac_api.services.branded_one_time_exports import (
+from gaiafaac_api.services.institutional_one_time_exports import (
     build_one_time_excel,
     build_one_time_pdf,
 )
