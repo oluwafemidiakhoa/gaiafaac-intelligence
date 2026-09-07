@@ -24,6 +24,7 @@ from gaiafaac_api.services.document_branding import (
     draw_pdf_branding,
 )
 from gaiafaac_api.services.one_time_exports import (
+    _AMBER,
     _DARK_TEAL,
     _LIGHT_AMBER,
     _LIGHT_TEAL,
@@ -164,7 +165,7 @@ def _decision_packet_month_analytics(packet: dict[str, Any]) -> list[dict[str, A
 
 
 def _decision_pack_analytics_summary(packet: dict[str, Any]) -> dict[str, Any]:
-    rows = _decision_packet_month_analytics(packet)
+    rows = _decision_pack_month_analytics(packet)
     observed = [row for row in rows if row.get("net") is not None]
     net_values = [row["net"] for row in observed]
 
@@ -482,7 +483,12 @@ def _build_decision_pack_analytics_sheet(
 
     for row_index, item in enumerate(rows, start=monthly_header_row + 1):
         sheet.cell(row=row_index, column=1, value=_month_label(item["period"]))
-        for column, key in ((2, "gross"), (3, "deductions"), (4, "net"), (8, "rolling_three_published_net")):
+        for column, key in (
+            (2, "gross"),
+            (3, "deductions"),
+            (4, "net"),
+            (8, "rolling_three_published_net"),
+        ):
             value = item[key]
             if value is not None:
                 cell = sheet.cell(row=row_index, column=column, value=float(value))
@@ -533,9 +539,7 @@ def _build_decision_pack_analytics_sheet(
             Reference(sheet, min_col=25, max_col=26, min_row=1, max_row=len(rows) + 1),
             titles_from_data=True,
         )
-        trend.set_categories(
-            Reference(sheet, min_col=24, min_row=2, max_row=len(rows) + 1)
-        )
+        trend.set_categories(Reference(sheet, min_col=24, min_row=2, max_row=len(rows) + 1))
         if trend.series:
             trend.series[0].graphicalProperties.line.solidFill = _AMBER
         if len(trend.series) > 1:
@@ -556,16 +560,16 @@ def _build_decision_pack_analytics_sheet(
             Reference(sheet, min_col=27, min_row=1, max_row=len(rows) + 1),
             titles_from_data=True,
         )
-        burden_chart.set_categories(
-            Reference(sheet, min_col=24, min_row=2, max_row=len(rows) + 1)
-        )
+        burden_chart.set_categories(Reference(sheet, min_col=24, min_row=2, max_row=len(rows) + 1))
         if burden_chart.series:
             burden_chart.series[0].graphicalProperties.solidFill = _TEAL
             burden_chart.series[0].graphicalProperties.line.solidFill = _TEAL
         burden_chart.legend = None
         sheet.add_chart(burden_chart, "J21")
 
-    sheet.merge_cells(start_row=row + len(rows) + 2, start_column=1, end_row=row + len(rows) + 3, end_column=8)
+    sheet.merge_cells(
+        start_row=row + len(rows) + 2, start_column=1, end_row=row + len(rows) + 3, end_column=8
+    )
     note = sheet.cell(
         row=row + len(rows) + 2,
         column=1,
@@ -869,7 +873,9 @@ def _pdf_flow_chart(packet: dict[str, Any]) -> Drawing | None:
     for step in range(3):
         fraction = step / 2
         y = plot_bottom + plot_height * fraction
-        drawing.add(Line(plot_left, y, plot_left + plot_width, y, strokeColor=colors.HexColor("#E4ECEA")))
+        drawing.add(
+            Line(plot_left, y, plot_left + plot_width, y, strokeColor=colors.HexColor("#E4ECEA"))
+        )
         drawing.add(
             String(
                 2,
@@ -919,7 +925,15 @@ def _pdf_flow_chart(packet: dict[str, Any]) -> Drawing | None:
                 fillColor=colors.HexColor("#42514E"),
             )
         )
-    drawing.add(Line(plot_left, plot_bottom, plot_left + plot_width, plot_bottom, strokeColor=colors.HexColor("#80908C")))
+    drawing.add(
+        Line(
+            plot_left,
+            plot_bottom,
+            plot_left + plot_width,
+            plot_bottom,
+            strokeColor=colors.HexColor("#80908C"),
+        )
+    )
     return drawing
 
 
@@ -955,7 +969,9 @@ def _pdf_burden_chart(packet: dict[str, Any]) -> Drawing | None:
     for step in range(3):
         fraction = step / 2
         y = plot_bottom + plot_height * fraction
-        drawing.add(Line(plot_left, y, plot_left + plot_width, y, strokeColor=colors.HexColor("#E4ECEA")))
+        drawing.add(
+            Line(plot_left, y, plot_left + plot_width, y, strokeColor=colors.HexColor("#E4ECEA"))
+        )
         drawing.add(
             String(
                 2,
@@ -1001,7 +1017,15 @@ def _pdf_burden_chart(packet: dict[str, Any]) -> Drawing | None:
                 fillColor=colors.HexColor("#42514E"),
             )
         )
-    drawing.add(Line(plot_left, plot_bottom, plot_left + plot_width, plot_bottom, strokeColor=colors.HexColor("#80908C")))
+    drawing.add(
+        Line(
+            plot_left,
+            plot_bottom,
+            plot_left + plot_width,
+            plot_bottom,
+            strokeColor=colors.HexColor("#80908C"),
+        )
+    )
     return drawing
 
 
