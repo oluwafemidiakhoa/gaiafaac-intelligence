@@ -53,7 +53,16 @@ jobs:
           SOURCE_ARCHIVE_ACCESS_KEY_ID: ${{ secrets.SOURCE_ARCHIVE_ACCESS_KEY_ID }}
           SOURCE_ARCHIVE_SECRET_ACCESS_KEY: ${{ secrets.SOURCE_ARCHIVE_SECRET_ACCESS_KEY }}
           SOURCE_ARCHIVE_REGION: ${{ secrets.SOURCE_ARCHIVE_REGION }}
-        run: python -m gaiafaac_api.nbs_igr_cli extract-pending
+        run: |
+          set +e
+          python -m gaiafaac_api.nbs_igr_cli extract-pending
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -eq 2 ]; then
+            echo "::warning::One or more official NBS sources failed the deterministic extraction contract and were quarantined with processing_status=failed. No partial rows were staged or published."
+            exit 0
+          fi
+          exit "$exit_code"
       - name: Extract pending DMO debt sources into the unpublished review queue
         if: always()
         env:
