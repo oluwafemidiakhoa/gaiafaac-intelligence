@@ -176,7 +176,7 @@ def brand_workbook(
     for sheet in workbook.worksheets:
         sheet.oddHeader.left.text = BRAND_NAME
         sheet.oddHeader.center.text = f"{watermark} · {fingerprint}"
-        sheet.oddHeader.center.size = 12 if sample else 9
+        sheet.oddHeader.center.size = 10 if sample else 9
         sheet.oddHeader.center.font = "Arial,Bold"
         sheet.oddHeader.right.text = "SAMPLE" if sample else "GOVERNED EVIDENCE"
         sheet.evenHeader.left.text = BRAND_NAME
@@ -199,23 +199,32 @@ def _draw_repeating_pdf_watermark(
     sample: bool,
     fingerprint: str,
 ) -> None:
+    """Add a restrained anti-resale pattern without obscuring the evidence."""
+
     canvas.saveState()
     with suppress(AttributeError):
-        canvas.setFillAlpha(0.075 if sample else 0.032)
+        canvas.setFillAlpha(0.035 if sample else 0.022)
     canvas.setFillColor(colors.HexColor(f"#{_TEAL}"))
-    canvas.setFont("Helvetica-Bold", 13 if sample else 12)
+    canvas.setFont("Helvetica-Bold", 9 if sample else 10)
 
     text = "SAMPLE · NOT FOR RESALE" if sample else BRAND_NAME
-    for x_fraction in (0.18, 0.5, 0.82):
-        for y_fraction in (0.22, 0.5, 0.78):
-            canvas.saveState()
-            canvas.translate(page_width * x_fraction, page_height * y_fraction)
-            canvas.rotate(28)
-            canvas.drawCentredString(0, 0, text)
-            canvas.setFont("Helvetica", 6)
-            canvas.drawCentredString(0, -10, fingerprint)
-            canvas.restoreState()
-            canvas.setFont("Helvetica-Bold", 13 if sample else 12)
+    positions = (
+        (0.17, 0.20),
+        (0.50, 0.20),
+        (0.83, 0.20),
+        (0.17, 0.76),
+        (0.50, 0.76),
+        (0.83, 0.76),
+    )
+    for x_fraction, y_fraction in positions:
+        canvas.saveState()
+        canvas.translate(page_width * x_fraction, page_height * y_fraction)
+        canvas.rotate(25)
+        canvas.drawCentredString(0, 0, text)
+        canvas.setFont("Helvetica", 5)
+        canvas.drawCentredString(0, -8, fingerprint)
+        canvas.restoreState()
+        canvas.setFont("Helvetica-Bold", 9 if sample else 10)
     canvas.restoreState()
 
 
@@ -250,7 +259,7 @@ def draw_pdf_branding(
     artifact_sha256: str | None = None,
     verification_url: str | None = None,
 ) -> None:
-    """Draw layered institutional watermarking and traceable document controls."""
+    """Draw readable institutional controls with a clear sample/paid classification."""
 
     generated = _generated_label(generated_at)
     fingerprint = document_fingerprint(
@@ -270,13 +279,15 @@ def draw_pdf_branding(
         fingerprint=fingerprint,
     )
 
+    # One central watermark is enough to communicate classification; keep it faint
+    # so the report remains usable in a meeting or on a projector.
     canvas.saveState()
     with suppress(AttributeError):
-        canvas.setFillAlpha(0.11 if sample else 0.045)
+        canvas.setFillAlpha(0.055 if sample else 0.030)
     canvas.setFillColor(colors.HexColor(f"#{_TEAL}"))
-    canvas.setFont("Helvetica-Bold", 28 if sample else 24)
+    canvas.setFont("Helvetica-Bold", 23 if sample else 21)
     canvas.translate(page_width / 2, page_height / 2)
-    canvas.rotate(28)
+    canvas.rotate(27)
     canvas.drawCentredString(
         0,
         0,
