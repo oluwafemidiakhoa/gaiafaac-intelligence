@@ -80,6 +80,37 @@ test.describe('Project Products commercial delivery', () => {
     await expect(link).toHaveAttribute('href', '/projects')
   })
 
+  test('Decision Pack exposes useful pre-purchase sample artifacts', async ({
+    page,
+  }) => {
+    await mockProjectProducts(page)
+    await page.goto('/projects', { waitUntil: 'domcontentloaded' })
+
+    await expect(
+      page.getByRole('heading', {
+        name: 'See the ₦50,000 Decision Pack before checkout',
+      }),
+    ).toBeVisible()
+
+    const samplePdf = page.getByRole('link', {
+      name: 'FCT 2026 sample PDF',
+      exact: true,
+    })
+    const sampleExcel = page.getByRole('link', {
+      name: 'FCT 2026 sample Excel',
+      exact: true,
+    })
+
+    await expect(samplePdf).toHaveAttribute(
+      'href',
+      '/api/customer/published/samples/decision-pack/federal-capital-territory.pdf?year=2026',
+    )
+    await expect(sampleExcel).toHaveAttribute(
+      'href',
+      '/api/customer/published/samples/decision-pack/federal-capital-territory.xlsx?year=2026',
+    )
+  })
+
   test('paid ready order exposes governed intelligence in all included formats', async ({
     page,
   }) => {
