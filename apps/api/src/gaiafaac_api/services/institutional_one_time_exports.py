@@ -10,7 +10,7 @@ from gaiafaac_api.services.branded_one_time_exports import (
     build_one_time_excel as _build_branded_excel,
 )
 from gaiafaac_api.services.branded_one_time_exports import (
-    build_one_time_pdf,
+    build_one_time_pdf as _build_branded_pdf,
 )
 
 _AMBER = "F7C948"
@@ -117,3 +117,7 @@ def build_one_time_excel(**kwargs: Any) -> tuple[str, str, bytes]:
     if kwargs.get("product_code") == "decision_pack":
         body = _rebuild_visible_analytics_charts(body)
     return filename, media_type, body
+
+
+def build_one_time_pdf(**kwargs: Any) -> tuple[str, str, bytes]:
+    return _build_branded_pdf(**kwargs)
