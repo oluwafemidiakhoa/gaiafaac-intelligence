@@ -103,6 +103,13 @@ def test_samples_and_paid_exports_have_visible_references_and_populated_caches(s
             assert len(series.findall("c:val/c:numRef/c:numCache/c:pt", _NS)) == 3
     workbook = load_workbook(io.BytesIO(body))
     assert workbook["Document Control"]["A1"].value == "GAIA FISCAL INTELLIGENCE"
+    analytics = workbook["Fiscal Analytics"]
+    assert len(analytics._charts) == 2
+    # First chart stays in the visible signal area; second sits below the monthly table.
+    assert analytics._charts[0].anchor._from.col == 4  # E
+    assert analytics._charts[0].anchor._from.row == 4  # row 5
+    assert analytics._charts[1].anchor._from.col == 0  # A
+    assert analytics._charts[1].anchor._from.row >= 31  # row 32+
 
 
 def test_chart_cache_preserves_zero_but_does_not_turn_missing_values_into_zero():
