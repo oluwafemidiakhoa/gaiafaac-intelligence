@@ -61,35 +61,59 @@ const packet: DecisionPacket = {
 describe('DecisionPacketIntelligence', () => {
   it('renders evidence, arithmetic checks and supported workflow actions', () => {
     render(<DecisionPacketIntelligence packet={packet} />)
-    expect(screen.getByRole('heading', { name: 'What the governed evidence says now' })).toBeInTheDocument()
-    expect(screen.getByText('Monthly gross vs net allocation')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', {
+        name: 'What the governed evidence says now',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Monthly gross vs net allocation'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Deduction pressure')).toBeInTheDocument()
     expect(screen.getByText('+20.00%')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Monitor jurisdiction' })).toHaveAttribute('href', '/watchlist')
-    expect(screen.getByRole('link', { name: 'Get governed intelligence package' })).toHaveAttribute('href', '/projects')
+    expect(
+      screen.getByRole('link', { name: 'Monitor jurisdiction' }),
+    ).toHaveAttribute('href', '/watchlist')
+    expect(
+      screen.getByRole('link', { name: 'Get governed intelligence package' }),
+    ).toHaveAttribute('href', '/projects')
     expect(screen.getAllByText('Verify proof \u2192')).toHaveLength(2)
-    expect(screen.getByRole('link', { name: 'Jan 2026 fiscal proof' })).toHaveAttribute('href', '/fiscal-proof/lagos/2026-01-01')
-    expect(screen.getByText('Arithmetic and coverage checks')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Jan 2026 fiscal proof' }),
+    ).toHaveAttribute('href', '/fiscal-proof/lagos/2026-01-01')
+    expect(
+      screen.getByText('Arithmetic and coverage checks'),
+    ).toBeInTheDocument()
     expect(screen.getAllByText('No record in this pack')).toHaveLength(10)
     expect(screen.getAllByTestId('fiscal-bar')).toHaveLength(4)
   })
   it('does not draw a positive bar for missing money', () => {
     const missing: DecisionPacket = {
       ...packet,
-      months: [{ ...packet.months[0], gross_total: null, net_allocation: null }],
+      months: [
+        { ...packet.months[0], gross_total: null, net_allocation: null },
+      ],
     }
     render(<DecisionPacketIntelligence packet={missing} />)
     expect(screen.queryAllByTestId('fiscal-bar')).toHaveLength(0)
     expect(screen.getAllByText('N/A')).toHaveLength(2)
   })
   it('flags inconsistent totals without changing the supplied figure', () => {
-    render(<DecisionPacketIntelligence packet={{ ...packet, annual_net: '1.00' }} />)
+    render(
+      <DecisionPacketIntelligence packet={{ ...packet, annual_net: '1.00' }} />,
+    )
     expect(screen.getByText('Evidence checks need review')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('Net total differs')
   })
   it('renders a useful empty state instead of empty chart frames', () => {
-    render(<DecisionPacketIntelligence packet={{ ...packet, months: [], months_published: 0 }} />)
-    expect(screen.getByText('No published FAAC observations to plot.')).toBeInTheDocument()
+    render(
+      <DecisionPacketIntelligence
+        packet={{ ...packet, months: [], months_published: 0 }}
+      />,
+    )
+    expect(
+      screen.getByText('No published FAAC observations to plot.'),
+    ).toBeInTheDocument()
     expect(screen.queryAllByTestId('fiscal-bar')).toHaveLength(0)
   })
 })

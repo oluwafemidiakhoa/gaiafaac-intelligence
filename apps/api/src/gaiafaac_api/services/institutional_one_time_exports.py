@@ -58,9 +58,8 @@ def _cache_series(series, sheet, column: int, header: int, last: int) -> None:
     points = []
     for index, row in enumerate(range(header + 1, last + 1)):
         value = sheet.cell(row=row, column=column).value
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            if math.isfinite(value):
-                points.append(NumVal(idx=index, v=value))
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
+            points.append(NumVal(idx=index, v=value))
     series.val.numRef.numCache = NumData(formatCode="General", ptCount=count, pt=points)
     if series.tx is not None and series.tx.strRef is not None:
         series.tx.strRef.strCache = StrData(

@@ -27,11 +27,15 @@ export function fromKobo(value: bigint): string {
 }
 
 /** Round percentages to two places using integer arithmetic, not float money. */
-export function percentage(numerator: bigint, denominator: bigint): number | null {
+export function percentage(
+  numerator: bigint,
+  denominator: bigint,
+): number | null {
   if (denominator <= BigInt(0)) return null
   const negative = numerator < BigInt(0)
   const magnitude = negative ? -numerator : numerator
-  const rounded = (magnitude * BigInt(10000) + denominator / BigInt(2)) / denominator
+  const rounded =
+    (magnitude * BigInt(10000) + denominator / BigInt(2)) / denominator
   if (rounded > BigInt(Number.MAX_SAFE_INTEGER)) return null
   return (Number(rounded) / 100) * (negative ? -1 : 1)
 }
@@ -45,12 +49,17 @@ export function monthName(period: string): string {
 }
 
 export function proofHref(month: FiscalMonth): string | null {
-  return /^\/fiscal-proof\/[a-z0-9-]+\/\d{4}-\d{2}-\d{2}$/.test(month.proof_path)
+  return /^\/fiscal-proof\/[a-z0-9-]+\/\d{4}-\d{2}-\d{2}$/.test(
+    month.proof_path,
+  )
     ? month.proof_path
     : null
 }
 
-export function analyzeFiscalEvidence(months: readonly FiscalMonth[], year: number) {
+export function analyzeFiscalEvidence(
+  months: readonly FiscalMonth[],
+  year: number,
+) {
   const valid = months.filter((month) =>
     new RegExp(`^${year}-(0[1-9]|1[0-2])-01$`).test(month.revenue_month),
   )
@@ -83,13 +92,22 @@ export function analyzeFiscalEvidence(months: readonly FiscalMonth[], year: numb
             : null,
       }
     })
-  const structurallyValid = valid.length === months.length && !duplicatePeriods.length
+  const structurallyValid =
+    valid.length === months.length && !duplicatePeriods.length
   const observed = rows.filter((row) => row.net !== null)
   const first = observed[0]
   const latest = observed.at(-1)
   const firstToLatest =
-    structurallyValid && observed.length >= 2 && first && latest && first.net !== null && latest.net !== null
-      ? percentage(latest.net - first.net, first.net < BigInt(0) ? -first.net : first.net)
+    structurallyValid &&
+    observed.length >= 2 &&
+    first &&
+    latest &&
+    first.net !== null &&
+    latest.net !== null
+      ? percentage(
+          latest.net - first.net,
+          first.net < BigInt(0) ? -first.net : first.net,
+        )
       : null
   const prior = observed.length >= 6 ? observed.slice(-6, -3) : []
   const recent = observed.length >= 6 ? observed.slice(-3) : []
@@ -102,7 +120,11 @@ export function analyzeFiscalEvidence(months: readonly FiscalMonth[], year: numb
       ? percentage(recentTotal - priorTotal, priorTotal)
       : null
   const sum = (key: 'gross' | 'deductions' | 'net') => {
-    if (!structurallyValid || !rows.length || rows.some((row) => row[key] === null)) {
+    if (
+      !structurallyValid ||
+      !rows.length ||
+      rows.some((row) => row[key] === null)
+    ) {
       return null
     }
     return rows.reduce((total, row) => total + row[key]!, BigInt(0))
@@ -116,11 +138,15 @@ export function analyzeFiscalEvidence(months: readonly FiscalMonth[], year: numb
     }
   })
   const invalidMoney = rows.some((row) =>
-    [row.month.gross_total, row.month.total_deductions, row.month.net_allocation].some(
-      (value) => value !== null && toKobo(value) === null,
-    ),
+    [
+      row.month.gross_total,
+      row.month.total_deductions,
+      row.month.net_allocation,
+    ].some((value) => value !== null && toKobo(value) === null),
   )
-  const residuals = rows.filter((row) => row.residual !== null && row.residual !== BigInt(0))
+  const residuals = rows.filter(
+    (row) => row.residual !== null && row.residual !== BigInt(0),
+  )
   const sourceCount = new Set(
     rows
       .map((row) => row.month.source_sha256)
@@ -136,8 +162,13 @@ export function analyzeFiscalEvidence(months: readonly FiscalMonth[], year: numb
     prior,
     recent,
     momentum,
-    totals: { gross: sum('gross'), deductions: sum('deductions'), net: sum('net') },
-    verifiedCount: rows.filter((row) => row.month.human_verified === true).length,
+    totals: {
+      gross: sum('gross'),
+      deductions: sum('deductions'),
+      net: sum('net'),
+    },
+    verifiedCount: rows.filter((row) => row.month.human_verified === true)
+      .length,
     checkedCount: rows.filter((row) => row.residual !== null).length,
     residuals,
     sourceCount,

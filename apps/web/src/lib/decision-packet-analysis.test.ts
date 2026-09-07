@@ -26,9 +26,19 @@ function month(index: number, net = '80.00'): FiscalMonth {
 }
 
 describe('fiscal evidence arithmetic', () => {
-  it.each([null, undefined, '', ' ', 'NaN', 'Infinity', '1e3', '0x10', '1.001', true])(
-    'does not coerce missing or malformed money %s to zero',
-    (value) => expect(toKobo(value)).toBeNull(),
+  it.each([
+    null,
+    undefined,
+    '',
+    ' ',
+    'NaN',
+    'Infinity',
+    '1e3',
+    '0x10',
+    '1.001',
+    true,
+  ])('does not coerce missing or malformed money %s to zero', (value) =>
+    expect(toKobo(value)).toBeNull(),
   )
   it('preserves zero, signed adjustments, and amounts beyond safe float precision', () => {
     expect(toKobo('0.00')).toBe(BigInt(0))
@@ -47,12 +57,16 @@ describe('fiscal evidence arithmetic', () => {
     expect(input[0].revenue_month).toBe('2026-03-01')
   })
   it('shows different, valid endpoint and recent-flow comparisons', () => {
-    const input = ['100', '200', '100', '90', '110', '130'].map((n, i) => month(i + 1, n))
+    const input = ['100', '200', '100', '90', '110', '130'].map((n, i) =>
+      month(i + 1, n),
+    )
     const result = analyzeFiscalEvidence(input, 2026)
     expect(result.firstToLatest).toBe(30)
     expect(result.momentum).toBe(-17.5)
     expect(result.prior.map((row) => row.month.revenue_month)).toEqual([
-      '2026-01-01', '2026-02-01', '2026-03-01',
+      '2026-01-01',
+      '2026-02-01',
+      '2026-03-01',
     ])
     expect(result.recent[0].month.revenue_month).toBe('2026-04-01')
   })
@@ -76,7 +90,10 @@ describe('fiscal evidence arithmetic', () => {
     expect(input.net_allocation).toBe('79.99')
   })
   it('refuses derived comparisons over duplicate periods', () => {
-    const result = analyzeFiscalEvidence([month(1), month(1, '90'), month(2)], 2026)
+    const result = analyzeFiscalEvidence(
+      [month(1), month(1, '90'), month(2)],
+      2026,
+    )
     expect(result.structurallyValid).toBe(false)
     expect(result.slots[0].conflict).toBe(true)
     expect(result.firstToLatest).toBeNull()
@@ -95,7 +112,10 @@ describe('fiscal evidence arithmetic', () => {
     expect(analyzeFiscalEvidence(input, 2026).sourceCount).toBe(1)
   })
   it('handles a complete twelve-month window', () => {
-    const result = analyzeFiscalEvidence(Array.from({ length: 12 }, (_, i) => month(i + 1)), 2026)
+    const result = analyzeFiscalEvidence(
+      Array.from({ length: 12 }, (_, i) => month(i + 1)),
+      2026,
+    )
     expect(result.rows).toHaveLength(12)
     expect(result.slots.filter((slot) => slot.row)).toHaveLength(12)
     expect(result.totals.net).toBe(BigInt(96000))
@@ -103,6 +123,8 @@ describe('fiscal evidence arithmetic', () => {
   it('does not navigate a supplied external or protocol-relative proof URL', () => {
     expect(proofHref(month(1))).toBe('/fiscal-proof/lagos/2026-01-01')
     expect(proofHref({ ...month(1), proof_path: '//example.com' })).toBeNull()
-    expect(proofHref({ ...month(1), proof_path: 'https://example.com' })).toBeNull()
+    expect(
+      proofHref({ ...month(1), proof_path: 'https://example.com' }),
+    ).toBeNull()
   })
 })
