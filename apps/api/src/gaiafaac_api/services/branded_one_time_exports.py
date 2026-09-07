@@ -111,7 +111,7 @@ def _decision_packet(artifact: dict[str, Any]) -> dict[str, Any] | None:
     return packet if isinstance(packet, dict) else None
 
 
-def _decision_packet_month_analytics(packet: dict[str, Any]) -> list[dict[str, Any]]:
+def _decision_pack_month_analytics(packet: dict[str, Any]) -> list[dict[str, Any]]:
     raw_months = packet.get("months")
     if not isinstance(raw_months, list):
         return []
