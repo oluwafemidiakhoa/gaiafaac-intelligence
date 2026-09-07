@@ -96,7 +96,7 @@ function FlowChart({ packet }: { packet: DecisionPacket }) {
               >
                 <div className="flex h-52 items-end gap-1">
                   <span
-                    className="bg-amber-300/80 group-hover:bg-amber-300 block w-4 rounded-t-sm transition-colors"
+                    className="block w-4 rounded-t-sm bg-amber-300/80 transition-colors group-hover:bg-amber-300"
                     style={{ height: `${grossHeight}px` }}
                     aria-label={`${monthLabel(month.revenue_month)} gross allocation ${formatNaira(month.gross_total)}`}
                   />
@@ -197,7 +197,10 @@ export function DecisionPacketIntelligence({
   ).size
 
   return (
-    <section className="mt-8 space-y-6" aria-labelledby="live-fiscal-intelligence">
+    <section
+      className="mt-8 space-y-6"
+      aria-labelledby="live-fiscal-intelligence"
+    >
       <div className="border-primary/20 bg-primary/[0.035] rounded-xl border p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
@@ -235,7 +238,9 @@ export function DecisionPacketIntelligence({
           <StatusPill tone="neutral">
             {verifiedMonths}/{packet.months.length} human verified
           </StatusPill>
-          <StatusPill tone="neutral">{sourceCount} source fingerprints</StatusPill>
+          <StatusPill tone="neutral">
+            {sourceCount} source fingerprints
+          </StatusPill>
         </div>
       </div>
 
