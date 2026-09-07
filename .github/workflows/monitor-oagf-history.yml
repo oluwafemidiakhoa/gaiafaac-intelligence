@@ -2,7 +2,9 @@ name: Monitor historical OAGF revisions
 
 # Weekly full-history integrity pass. It rechecks the official FAAC inventory,
 # retains exact changed bytes, and creates human review cases. It never alters
-# published allocations and never approves or publishes evidence.
+# published allocations and never approves or publishes evidence. Transient
+# network failures are retried with bounded backoff; an unverifiable history pass
+# still fails closed.
 on:
   schedule:
     - cron: '45 6 * * 0' # Sunday 06:45 UTC
@@ -26,4 +28,4 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           API_ENVIRONMENT: production
-        run: python -m gaiafaac_api.pipeline.oagf.revision_monitor --full-history
+        run: python -m gaiafaac_api.pipeline.oagf.resilient_revision_monitor --full-history
