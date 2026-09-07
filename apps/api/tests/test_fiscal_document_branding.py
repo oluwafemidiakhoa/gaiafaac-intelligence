@@ -44,6 +44,81 @@ def _artifact() -> dict:
     }
 
 
+def _decision_pack_artifact() -> dict:
+    months = [
+        {
+            "revenue_month": "2026-01-01",
+            "reporting_label": "January 2026",
+            "gross_total": "100000000000",
+            "total_deductions": "20000000000",
+            "net_allocation": "80000000000",
+            "reconciliation_status": "reconciled",
+            "proof_id": "GF1-NG-LA-202601-AAA",
+            "proof_path": "/fiscal-proof/lagos/2026-01-01",
+            "source_organization": "OAGF",
+            "source_sha256": "a" * 64,
+            "human_verified": True,
+        },
+        {
+            "revenue_month": "2026-02-01",
+            "reporting_label": "February 2026",
+            "gross_total": "120000000000",
+            "total_deductions": "24000000000",
+            "net_allocation": "96000000000",
+            "reconciliation_status": "reconciled",
+            "proof_id": "GF1-NG-LA-202602-BBB",
+            "proof_path": "/fiscal-proof/lagos/2026-02-01",
+            "source_organization": "OAGF",
+            "source_sha256": "b" * 64,
+            "human_verified": True,
+        },
+        {
+            "revenue_month": "2026-03-01",
+            "reporting_label": "March 2026",
+            "gross_total": "90000000000",
+            "total_deductions": "22500000000",
+            "net_allocation": "67500000000",
+            "reconciliation_status": "reconciled",
+            "proof_id": "GF1-NG-LA-202603-CCC",
+            "proof_path": "/fiscal-proof/lagos/2026-03-01",
+            "source_organization": "OAGF",
+            "source_sha256": "c" * 64,
+            "human_verified": True,
+        },
+    ]
+    return {
+        "schema": "gaia-sample-decision-pack-v1",
+        "captured_at": "2026-09-06T13:00:00+00:00",
+        "request": {"state_slug": "lagos", "year": 2026, "sample": True},
+        "decision_packet": {
+            "packet_version": "2",
+            "state_name": "Lagos",
+            "state_slug": "lagos",
+            "state_code": "LA",
+            "geopolitical_zone": "South West",
+            "year": 2026,
+            "coverage_label": "Partial 2026 series · 3 of 12 months published",
+            "months_published": 3,
+            "annual_gross": "310000000000",
+            "annual_deductions": "66500000000",
+            "annual_net": "243500000000",
+            "deduction_burden_pct": 21.45,
+            "net_retention_pct": 78.55,
+            "momentum": "Weakening",
+            "momentum_pct": -15.625,
+            "volatility": "Moderate",
+            "volatility_cv_pct": 14.2,
+            "evidence_status": "Verified",
+            "igr_records": [],
+            "igr_note": "No published, human-verified IGR evidence is available for Lagos in 2026.",
+            "watch_events": [],
+            "months": months,
+            "disclaimer": "Evidence dossier only.",
+        },
+        "statement": SAMPLE_NOTICE,
+    }
+
+
 def test_paid_excel_uses_document_control_and_fingerprint_on_every_sheet():
     purchase_id = "12345678-1234-5678-1234-567812345678"
     artifact = _artifact()
@@ -119,6 +194,40 @@ def test_sample_excel_is_visibly_classified_and_traceable():
         assert fingerprint in (sheet.oddHeader.center.text or "")
 
 
+def test_decision_pack_excel_adds_source_linked_fiscal_analytics():
+    artifact = _decision_pack_artifact()
+    _filename, _media_type, body = build_one_time_excel(
+        purchase_id="SAMPLE-lagos-2026",
+        product_code="decision_pack",
+        amount_naira="50000",
+        currency="NGN",
+        completed_at="Not applicable — demonstration sample",
+        artifact=artifact,
+        sample=True,
+        jurisdiction="Lagos",
+    )
+
+    workbook = load_workbook(io.BytesIO(body), data_only=True)
+    assert workbook.sheetnames[:3] == ["Document Control", "Fiscal Analytics", "Summary"]
+    analytics = workbook["Fiscal Analytics"]
+    values = [
+        cell.value
+        for row in analytics.iter_rows(min_row=1, max_row=analytics.max_row, min_col=1, max_col=8)
+        for cell in row
+        if cell.value is not None
+    ]
+    assert "Observed analytical signals" in values
+    assert "Published-period analytical series" in values
+    assert "Flow direction" in values
+    assert "Deduction pressure" in values
+    assert "Net retention" in values
+    assert "3-published-period avg net (₦)" in values
+    assert "Fiscal Analytics" in workbook.sheetnames
+    assert len(analytics._charts) == 2
+    assert analytics["A1"].value == BRAND_NAME
+    assert "SAMPLE" in (analytics.oddHeader.right.text or "")
+
+
 def test_paid_and_sample_pdf_are_real_branded_documents():
     paid_filename, paid_media_type, paid_body = build_one_time_pdf(
         purchase_id="12345678-1234-5678-1234-567812345678",
@@ -147,3 +256,21 @@ def test_paid_and_sample_pdf_are_real_branded_documents():
     assert sample_body.startswith(b"%PDF-")
     assert len(paid_body) > 1000
     assert len(sample_body) > 1000
+
+
+def test_decision_pack_pdf_with_analytics_renders():
+    filename, media_type, body = build_one_time_pdf(
+        purchase_id="SAMPLE-lagos-2026",
+        product_code="decision_pack",
+        amount_naira="50000",
+        currency="NGN",
+        completed_at="Not applicable — demonstration sample",
+        artifact=_decision_pack_artifact(),
+        sample=True,
+        jurisdiction="Lagos",
+    )
+
+    assert filename == "gaia-fiscal-intelligence-sample-decision-pack.pdf"
+    assert media_type == "application/pdf"
+    assert body.startswith(b"%PDF-")
+    assert len(body) > 4000
