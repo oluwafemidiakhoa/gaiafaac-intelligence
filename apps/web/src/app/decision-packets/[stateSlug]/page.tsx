@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { DataUnavailable } from '@/components/data-unavailable'
+import { DecisionPacketIntelligence } from '@/components/decision-packet-intelligence'
 import { PageHeader } from '@/components/page-header'
 import { PrintButton } from '@/components/print-button'
 import { StatusPill } from '@/components/status-pill'
@@ -62,10 +63,10 @@ export default async function DecisionPacketPage({
   }
 
   return (
-    <article className="mx-auto max-w-5xl px-5 py-12 lg:px-8 lg:py-16 print:max-w-none print:px-0 print:py-0">
+    <article className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16 print:max-w-none print:px-0 print:py-0">
       <div className="flex flex-wrap items-start justify-between gap-4 print:block">
         <PageHeader
-          eyebrow={`GaiaFAAC Decision Packet · v${data.packet_version}`}
+          eyebrow={`GAIA FISCAL INTELLIGENCE · Decision Packet v${data.packet_version}`}
           title={`${data.state_name} · ${data.year}`}
           description={data.coverage_label}
         />
@@ -79,6 +80,8 @@ export default async function DecisionPacketPage({
           published FAAC months
         </span>
       </div>
+
+      <DecisionPacketIntelligence packet={data} />
 
       <section className="mt-8 grid gap-4 md:grid-cols-3 print:grid-cols-3">
         <Card>
