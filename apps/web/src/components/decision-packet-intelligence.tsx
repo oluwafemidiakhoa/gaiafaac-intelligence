@@ -122,7 +122,7 @@ function FlowChart({ analysis }: { analysis: FiscalAnalysis }) {
       slot.period <= lastPeriod,
   )
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle>Monthly gross vs net allocation</CardTitle>
         <CardDescription>
