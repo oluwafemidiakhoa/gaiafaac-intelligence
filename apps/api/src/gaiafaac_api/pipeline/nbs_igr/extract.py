@@ -316,8 +316,13 @@ def extract_nbs_igr_source(
 def extract_pending_igr_sources(
     session: Session, *, text_reader: TextReader = _pdf_text
 ) -> list[PendingIgrExtractionOutcome]:
-    """Extract every archived-but-unextracted NBS IGR source. Never publishes; a failure
-    on one source is recorded and does not block the others."""
+    """Extract every archived-but-unextracted NBS IGR source.
+
+    A deterministic source-contract failure is quarantined by marking only its processing
+    status FAILED. The official source remains registered evidence, no partial rows are
+    staged, and later scheduled runs do not retry the same incompatible document forever.
+    Unexpected operational exceptions are deliberately not swallowed.
+    """
     source_ids = list(
         session.scalars(
             select(SourceDocument.id).where(
@@ -343,6 +348,10 @@ def extract_pending_igr_sources(
             )
         except ImportContractError as error:
             session.rollback()
+            source = session.get(SourceDocument, source_id)
+            if source is not None:
+                source.processing_status = ProcessingStatus.FAILED
+                session.commit()
             outcomes.append(
                 PendingIgrExtractionOutcome(
                     source_document_id=str(source_id),
