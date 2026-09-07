@@ -6,7 +6,9 @@ from typing import Any
 from xml.sax.saxutils import escape
 
 from openpyxl import load_workbook
+from openpyxl.chart import BarChart, LineChart, Reference
 from openpyxl.styles import Alignment, Font, PatternFill
+from reportlab.graphics.shapes import Drawing, Line, Rect, String
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -38,8 +40,22 @@ from gaiafaac_api.services.one_time_exports import (
 )
 from gaiafaac_api.services.project_receipts import canonical_artifact_sha256
 
-_CURRENCY_FORMAT = '₦#,##0.00'
-_PERCENT_FORMAT = '0.00%'
+_CURRENCY_FORMAT = "₦#,##0.00"
+_PERCENT_FORMAT = "0.00%"
+_MONTH_NAMES = {
+    "01": "Jan",
+    "02": "Feb",
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec",
+}
 
 
 def _filename(product_code: str, purchase_id: str, suffix: str, *, sample: bool) -> str:
@@ -57,24 +73,36 @@ def _verification_url(purchase_id: str, *, sample: bool) -> str | None:
     return f"{base}/verify/project/{purchase_id}"
 
 
-def _money(value: object) -> str:
+def _decimal(value: object) -> Decimal | None:
     if value in (None, ""):
-        return "Not available"
+        return None
     try:
-        amount = Decimal(str(value))
+        return Decimal(str(value))
     except (InvalidOperation, ValueError):
-        return _display(value)
+        return None
+
+
+def _money(value: object) -> str:
+    amount = _decimal(value)
+    if amount is None:
+        return "Not available" if value in (None, "") else _display(value)
     return f"₦{amount:,.2f}"
 
 
 def _percent(value: object) -> str:
-    if value in (None, ""):
-        return "Not available"
-    try:
-        number = Decimal(str(value))
-    except (InvalidOperation, ValueError):
-        return _display(value)
+    number = _decimal(value)
+    if number is None:
+        return "Not available" if value in (None, "") else _display(value)
     return f"{number:,.2f}%"
+
+
+def _month_label(value: object, *, compact: bool = False) -> str:
+    text = _display(value)
+    if len(text) >= 7 and text[4:5] == "-":
+        year = text[:4]
+        month = _MONTH_NAMES.get(text[5:7], text[5:7])
+        return f"{month} {year}" if not compact else month
+    return text
 
 
 def _decision_packet(artifact: dict[str, Any]) -> dict[str, Any] | None:
@@ -82,8 +110,97 @@ def _decision_packet(artifact: dict[str, Any]) -> dict[str, Any] | None:
     return packet if isinstance(packet, dict) else None
 
 
-def _write_section_header(sheet, row: int, title: str) -> int:
-    sheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+def _decision_packet_month_analytics(packet: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_months = packet.get("months")
+    if not isinstance(raw_months, list):
+        return []
+
+    months = [month for month in raw_months if isinstance(month, dict)]
+    months.sort(key=lambda month: _display(month.get("revenue_month")))
+
+    rows: list[dict[str, Any]] = []
+    net_history: list[Decimal | None] = []
+    previous_net: Decimal | None = None
+    for month in months:
+        gross = _decimal(month.get("gross_total"))
+        deductions = _decimal(month.get("total_deductions"))
+        net = _decimal(month.get("net_allocation"))
+        burden_pct = None
+        retention_pct = None
+        change_pct = None
+
+        if gross is not None and gross != 0:
+            if deductions is not None:
+                burden_pct = deductions / gross * Decimal("100")
+            if net is not None:
+                retention_pct = net / gross * Decimal("100")
+        if net is not None and previous_net not in (None, 0):
+            change_pct = (net - previous_net) / abs(previous_net) * Decimal("100")
+
+        net_history.append(net)
+        rolling_net = None
+        recent = net_history[-3:]
+        if len(recent) == 3 and all(value is not None for value in recent):
+            rolling_net = sum(value for value in recent if value is not None) / Decimal("3")
+
+        rows.append(
+            {
+                "period": month.get("revenue_month"),
+                "gross": gross,
+                "deductions": deductions,
+                "net": net,
+                "deduction_burden_pct": burden_pct,
+                "retention_pct": retention_pct,
+                "change_vs_prior_published_pct": change_pct,
+                "rolling_three_published_net": rolling_net,
+                "human_verified": bool(month.get("human_verified")),
+                "source_sha256": month.get("source_sha256"),
+            }
+        )
+        if net is not None:
+            previous_net = net
+
+    return rows
+
+
+def _decision_pack_analytics_summary(packet: dict[str, Any]) -> dict[str, Any]:
+    rows = _decision_packet_month_analytics(packet)
+    observed = [row for row in rows if row.get("net") is not None]
+    net_values = [row["net"] for row in observed]
+
+    average_net = None
+    observed_change_pct = None
+    peak = None
+    low = None
+    if net_values:
+        average_net = sum(net_values) / Decimal(len(net_values))
+        peak = max(observed, key=lambda row: row["net"])
+        low = min(observed, key=lambda row: row["net"])
+        first_net = observed[0]["net"]
+        last_net = observed[-1]["net"]
+        if first_net not in (None, 0) and last_net is not None:
+            observed_change_pct = (last_net - first_net) / abs(first_net) * Decimal("100")
+
+    source_hashes = {
+        str(row["source_sha256"]).lower()
+        for row in rows
+        if isinstance(row.get("source_sha256"), str) and row["source_sha256"]
+    }
+    verified_count = sum(1 for row in rows if row.get("human_verified"))
+
+    return {
+        "rows": rows,
+        "average_net": average_net,
+        "peak": peak,
+        "low": low,
+        "observed_change_pct": observed_change_pct,
+        "verified_count": verified_count,
+        "source_count": len(source_hashes),
+    }
+
+
+def _write_section_header(sheet, row: int, title: str, *, end_column: int = 4) -> int:
+    sheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=end_column)
     cell = sheet.cell(row=row, column=1, value=title)
     cell.font = Font(size=11, bold=True, color="FFFFFF")
     cell.fill = PatternFill("solid", fgColor=_TEAL)
@@ -174,6 +291,10 @@ def _rebuild_decision_pack_summary(
             "Freezes governed fiscal evidence for a defined jurisdiction and period, preserves source provenance, and applies deterministic fiscal calculations.",
         ),
         (
+            "Fiscal analytics",
+            "Analytics are deterministic transformations of published evidence only. No missing month is interpolated and no forecast is generated.",
+        ),
+        (
             "IGR evidence",
             packet.get("igr_note") or "No IGR note was supplied for this evidence boundary.",
         ),
@@ -199,6 +320,278 @@ def _rebuild_decision_pack_summary(
             cell.alignment = Alignment(vertical="top", wrap_text=True)
     sheet.freeze_panes = "A4"
     sheet.sheet_view.showGridLines = False
+
+
+def _build_decision_pack_analytics_sheet(
+    workbook,
+    *,
+    packet: dict[str, Any],
+    sample: bool,
+) -> None:
+    if "Fiscal Analytics" in workbook.sheetnames:
+        del workbook["Fiscal Analytics"]
+    sheet = workbook.create_sheet("Fiscal Analytics", 1)
+    summary = _decision_pack_analytics_summary(packet)
+    rows = summary["rows"]
+
+    sheet.merge_cells("A1:H1")
+    sheet["A1"] = BRAND_NAME
+    sheet["A1"].font = Font(size=20, bold=True, color="FFFFFF")
+    sheet["A1"].fill = PatternFill("solid", fgColor=_DARK_TEAL)
+    sheet["A1"].alignment = Alignment(vertical="center")
+    sheet.row_dimensions[1].height = 34
+
+    sheet.merge_cells("A2:H2")
+    sheet["A2"] = "Decision Pack · Fiscal Analytics"
+    sheet["A2"].font = Font(size=12, bold=True, color=_TEAL)
+    sheet["A2"].fill = PatternFill("solid", fgColor=_LIGHT_TEAL)
+
+    row = 4
+    if sample:
+        sheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=8)
+        sample_cell = sheet.cell(row=row, column=1, value=SAMPLE_NOTICE)
+        sample_cell.font = Font(size=10, bold=True, color="FFFFFF")
+        sample_cell.fill = PatternFill("solid", fgColor="9C2A1B")
+        sample_cell.alignment = Alignment(vertical="center", wrap_text=True)
+        sheet.row_dimensions[row].height = 26
+        row += 2
+
+    row = _write_section_header(sheet, row, "Evidence-quality snapshot", end_column=8)
+    observed_change = summary["observed_change_pct"]
+    kpis = [
+        ("Published periods", len(rows)),
+        ("Human-verified periods", f"{summary['verified_count']} / {len(rows)}"),
+        ("Unique source fingerprints", summary["source_count"]),
+        ("First-to-latest net change", _percent(observed_change)),
+    ]
+    for index, (label, value) in enumerate(kpis):
+        start_column = 1 + index * 2
+        end_column = start_column + 1
+        sheet.merge_cells(
+            start_row=row,
+            start_column=start_column,
+            end_row=row,
+            end_column=end_column,
+        )
+        label_cell = sheet.cell(row=row, column=start_column, value=label)
+        label_cell.font = Font(size=9, bold=True, color=_TEAL)
+        label_cell.fill = PatternFill("solid", fgColor=_LIGHT_TEAL)
+        label_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        sheet.merge_cells(
+            start_row=row + 1,
+            start_column=start_column,
+            end_row=row + 1,
+            end_column=end_column,
+        )
+        value_cell = sheet.cell(row=row + 1, column=start_column, value=value)
+        value_cell.font = Font(size=14, bold=True, color=_DARK_TEAL)
+        value_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    sheet.row_dimensions[row].height = 26
+    sheet.row_dimensions[row + 1].height = 32
+    row += 3
+
+    row = _write_section_header(sheet, row, "Observed analytical signals", end_column=8)
+    headers = ["Signal", "Observed value", "Interpretation", "Evidence basis"]
+    for column, header in enumerate(headers, start=1):
+        cell = sheet.cell(row=row, column=column, value=header)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor=_TEAL)
+        cell.alignment = Alignment(vertical="center", wrap_text=True)
+    signal_rows = [
+        (
+            "Flow direction",
+            f"{_display(packet.get('momentum'))} · {_percent(packet.get('momentum_pct'))}",
+            "Observed direction of governed fiscal flow over the published evidence window.",
+            "Gaia momentum metric; no forecast.",
+        ),
+        (
+            "Deduction pressure",
+            _percent(packet.get("deduction_burden_pct")),
+            "Recorded deductions as a share of governed gross allocation.",
+            "Published deductions ÷ published gross allocation.",
+        ),
+        (
+            "Net retention",
+            _percent(packet.get("net_retention_pct")),
+            "Share of governed gross allocation retained after recorded deductions.",
+            "Published net allocation ÷ published gross allocation.",
+        ),
+        (
+            "Flow stability",
+            f"{_display(packet.get('volatility'))} · CV {_percent(packet.get('volatility_cv_pct'))}",
+            "Observed dispersion of published net-allocation values.",
+            "Coefficient of variation over governed published periods.",
+        ),
+        (
+            "Average published-period net",
+            _money(summary["average_net"]),
+            "Arithmetic mean of net allocations in this evidence window.",
+            "Published periods only; missing periods are not estimated.",
+        ),
+        (
+            "Peak observed net",
+            (
+                f"{_month_label(summary['peak']['period'])} · {_money(summary['peak']['net'])}"
+                if summary["peak"]
+                else "Not available"
+            ),
+            "Highest net allocation among published periods in this pack.",
+            "Direct comparison of governed monthly evidence.",
+        ),
+        (
+            "Lowest observed net",
+            (
+                f"{_month_label(summary['low']['period'])} · {_money(summary['low']['net'])}"
+                if summary["low"]
+                else "Not available"
+            ),
+            "Lowest net allocation among published periods in this pack.",
+            "Direct comparison of governed monthly evidence.",
+        ),
+    ]
+    row += 1
+    for signal, value, interpretation, basis in signal_rows:
+        sheet.cell(row=row, column=1, value=signal).font = Font(bold=True, color=_TEAL)
+        sheet.cell(row=row, column=2, value=value)
+        sheet.cell(row=row, column=3, value=interpretation)
+        sheet.cell(row=row, column=4, value=basis)
+        for cell in sheet[row][:4]:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+        sheet.row_dimensions[row].height = 34
+        row += 1
+
+    row += 1
+    row = _write_section_header(sheet, row, "Published-period analytical series", end_column=8)
+    monthly_header_row = row
+    monthly_headers = [
+        "Published period",
+        "Gross allocation (₦)",
+        "Deductions (₦)",
+        "Net allocation (₦)",
+        "Deduction burden",
+        "Net retention",
+        "Change vs prior published period",
+        "3-published-period avg net (₦)",
+    ]
+    for column, header in enumerate(monthly_headers, start=1):
+        cell = sheet.cell(row=monthly_header_row, column=column, value=header)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor=_TEAL)
+        cell.alignment = Alignment(vertical="center", wrap_text=True)
+    sheet.row_dimensions[monthly_header_row].height = 34
+
+    for row_index, item in enumerate(rows, start=monthly_header_row + 1):
+        sheet.cell(row=row_index, column=1, value=_month_label(item["period"]))
+        for column, key in ((2, "gross"), (3, "deductions"), (4, "net"), (8, "rolling_three_published_net")):
+            value = item[key]
+            if value is not None:
+                cell = sheet.cell(row=row_index, column=column, value=float(value))
+                cell.number_format = _CURRENCY_FORMAT
+        for column, key in (
+            (5, "deduction_burden_pct"),
+            (6, "retention_pct"),
+            (7, "change_vs_prior_published_pct"),
+        ):
+            value = item[key]
+            if value is not None:
+                cell = sheet.cell(
+                    row=row_index,
+                    column=column,
+                    value=float(value / Decimal("100")),
+                )
+                cell.number_format = _PERCENT_FORMAT
+        for cell in sheet[row_index][:8]:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+    helper_row = 1
+    helper_headers = ["Published period", "Gross (₦bn)", "Net (₦bn)", "Deduction burden"]
+    for offset, header in enumerate(helper_headers, start=24):
+        sheet.cell(row=helper_row, column=offset, value=header)
+    for index, item in enumerate(rows, start=2):
+        sheet.cell(row=index, column=24, value=_month_label(item["period"], compact=True))
+        gross = item["gross"]
+        net = item["net"]
+        burden = item["deduction_burden_pct"]
+        if gross is not None:
+            sheet.cell(row=index, column=25, value=float(gross / Decimal("1000000000")))
+        if net is not None:
+            sheet.cell(row=index, column=26, value=float(net / Decimal("1000000000")))
+        if burden is not None:
+            sheet.cell(row=index, column=27, value=float(burden / Decimal("100")))
+    for column in ("X", "Y", "Z", "AA"):
+        sheet.column_dimensions[column].hidden = True
+
+    if rows:
+        trend = LineChart()
+        trend.title = "Monthly gross vs net allocation"
+        trend.style = 13
+        trend.height = 7.4
+        trend.width = 13.2
+        trend.y_axis.title = "₦bn"
+        trend.x_axis.title = "Published period"
+        trend.add_data(
+            Reference(sheet, min_col=25, max_col=26, min_row=1, max_row=len(rows) + 1),
+            titles_from_data=True,
+        )
+        trend.set_categories(
+            Reference(sheet, min_col=24, min_row=2, max_row=len(rows) + 1)
+        )
+        if trend.series:
+            trend.series[0].graphicalProperties.line.solidFill = _AMBER
+        if len(trend.series) > 1:
+            trend.series[1].graphicalProperties.line.solidFill = _TEAL
+        trend.legend.position = "b"
+        sheet.add_chart(trend, "J5")
+
+        burden_chart = BarChart()
+        burden_chart.type = "col"
+        burden_chart.title = "Deduction burden by published period"
+        burden_chart.style = 10
+        burden_chart.height = 7.4
+        burden_chart.width = 13.2
+        burden_chart.y_axis.title = "% of gross"
+        burden_chart.y_axis.numFmt = "0%"
+        burden_chart.x_axis.title = "Published period"
+        burden_chart.add_data(
+            Reference(sheet, min_col=27, min_row=1, max_row=len(rows) + 1),
+            titles_from_data=True,
+        )
+        burden_chart.set_categories(
+            Reference(sheet, min_col=24, min_row=2, max_row=len(rows) + 1)
+        )
+        if burden_chart.series:
+            burden_chart.series[0].graphicalProperties.solidFill = _TEAL
+            burden_chart.series[0].graphicalProperties.line.solidFill = _TEAL
+        burden_chart.legend = None
+        sheet.add_chart(burden_chart, "J21")
+
+    sheet.merge_cells(start_row=row + len(rows) + 2, start_column=1, end_row=row + len(rows) + 3, end_column=8)
+    note = sheet.cell(
+        row=row + len(rows) + 2,
+        column=1,
+        value=(
+            "Analytics discipline: all measures and charts above are derived only from the governed published periods in this Decision Pack. Gaia does not fill missing periods, forecast future allocations, infer unpublished IGR, or add peer/debt analytics to the single-jurisdiction Decision Pack."
+        ),
+    )
+    note.font = Font(size=9, italic=True, color=_DARK_TEAL)
+    note.fill = PatternFill("solid", fgColor=_LIGHT_AMBER)
+    note.alignment = Alignment(vertical="center", wrap_text=True)
+
+    widths = {
+        "A": 22,
+        "B": 23,
+        "C": 48,
+        "D": 40,
+        "E": 18,
+        "F": 18,
+        "G": 25,
+        "H": 25,
+    }
+    for column, width in widths.items():
+        sheet.column_dimensions[column].width = width
+    sheet.freeze_panes = f"A{monthly_header_row + 1}"
+    sheet.sheet_view.showGridLines = False
+    sheet.sheet_view.zoomScale = 85
 
 
 def _polish_months_sheet(workbook) -> None:
@@ -237,11 +630,10 @@ def _polish_months_sheet(workbook) -> None:
         for cell in row:
             original = header_by_column.get(cell.column, "")
             if cell.column in money_columns and cell.value not in (None, ""):
-                try:
-                    cell.value = float(Decimal(str(cell.value)))
+                amount = _decimal(cell.value)
+                if amount is not None:
+                    cell.value = float(amount)
                     cell.number_format = _CURRENCY_FORMAT
-                except (InvalidOperation, ValueError):
-                    pass
             if original == "human_verified":
                 cell.value = "Yes" if bool(cell.value) else "No"
             cell.alignment = Alignment(vertical="top", wrap_text=True)
@@ -287,7 +679,8 @@ def build_one_time_excel(
     )
     workbook = load_workbook(io.BytesIO(body))
 
-    if product_code == "decision_pack" and _decision_packet(artifact):
+    packet = _decision_packet(artifact)
+    if product_code == "decision_pack" and packet is not None:
         _rebuild_decision_pack_summary(
             workbook,
             artifact=artifact,
@@ -295,6 +688,7 @@ def build_one_time_excel(
             sample=sample,
             jurisdiction=jurisdiction,
         )
+        _build_decision_pack_analytics_sheet(workbook, packet=packet, sample=sample)
         _polish_months_sheet(workbook)
     else:
         summary = workbook["Summary"]
@@ -329,14 +723,47 @@ def build_one_time_excel(
 
 def _metric_table(packet: dict[str, Any], body_style) -> Table:
     rows = [
-        ["Gross allocation", _money(packet.get("annual_gross")), "Momentum", _display(packet.get("momentum"))],
-        ["Deductions", _money(packet.get("annual_deductions")), "Momentum change", _percent(packet.get("momentum_pct"))],
-        ["Net allocation", _money(packet.get("annual_net")), "Volatility", _display(packet.get("volatility"))],
-        ["Deduction burden", _percent(packet.get("deduction_burden_pct")), "Volatility CV", _percent(packet.get("volatility_cv_pct"))],
-        ["Net retention", _percent(packet.get("net_retention_pct")), "Evidence status", _display(packet.get("evidence_status"))],
+        [
+            "Gross allocation",
+            _money(packet.get("annual_gross")),
+            "Momentum",
+            _display(packet.get("momentum")),
+        ],
+        [
+            "Deductions",
+            _money(packet.get("annual_deductions")),
+            "Momentum change",
+            _percent(packet.get("momentum_pct")),
+        ],
+        [
+            "Net allocation",
+            _money(packet.get("annual_net")),
+            "Volatility",
+            _display(packet.get("volatility")),
+        ],
+        [
+            "Deduction burden",
+            _percent(packet.get("deduction_burden_pct")),
+            "Volatility CV",
+            _percent(packet.get("volatility_cv_pct")),
+        ],
+        [
+            "Net retention",
+            _percent(packet.get("net_retention_pct")),
+            "Evidence status",
+            _display(packet.get("evidence_status")),
+        ],
     ]
     table = Table(
-        [[Paragraph(f"<b>{escape(str(a))}</b>", body_style), Paragraph(_pdf_text(b), body_style), Paragraph(f"<b>{escape(str(c))}</b>", body_style), Paragraph(_pdf_text(d), body_style)] for a, b, c, d in rows],
+        [
+            [
+                Paragraph(f"<b>{escape(str(a))}</b>", body_style),
+                Paragraph(_pdf_text(b), body_style),
+                Paragraph(f"<b>{escape(str(c))}</b>", body_style),
+                Paragraph(_pdf_text(d), body_style),
+            ]
+            for a, b, c, d in rows
+        ],
         colWidths=[36 * mm, 62 * mm, 36 * mm, 62 * mm],
     )
     table.setStyle(
@@ -369,7 +796,7 @@ def _decision_pack_months_table(packet: dict[str, Any], small_style) -> Table | 
             continue
         rows.append(
             [
-                Paragraph(_pdf_text(month.get("revenue_month")), small_style),
+                Paragraph(_pdf_text(_month_label(month.get("revenue_month"))), small_style),
                 Paragraph(_pdf_text(_money(month.get("gross_total"))), small_style),
                 Paragraph(_pdf_text(_money(month.get("total_deductions"))), small_style),
                 Paragraph(_pdf_text(_money(month.get("net_allocation"))), small_style),
@@ -377,7 +804,11 @@ def _decision_pack_months_table(packet: dict[str, Any], small_style) -> Table | 
                 Paragraph(_pdf_text(month.get("proof_id")), small_style),
             ]
         )
-    table = Table(rows, colWidths=[26 * mm, 42 * mm, 38 * mm, 42 * mm, 31 * mm, 58 * mm], repeatRows=1)
+    table = Table(
+        rows,
+        colWidths=[26 * mm, 42 * mm, 38 * mm, 42 * mm, 31 * mm, 58 * mm],
+        repeatRows=1,
+    )
     table.setStyle(
         TableStyle(
             [
@@ -385,6 +816,262 @@ def _decision_pack_months_table(packet: dict[str, Any], small_style) -> Table | 
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("GRID", (0, 0), (-1, -1), 0.2, colors.HexColor("#D5E0DD")),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F7FAF9")]),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+        )
+    )
+    return table
+
+
+def _pdf_flow_chart(packet: dict[str, Any]) -> Drawing | None:
+    rows = _decision_pack_month_analytics(packet)
+    plottable = [row for row in rows if row["gross"] is not None or row["net"] is not None]
+    if not plottable:
+        return None
+
+    width = 330
+    height = 156
+    plot_left = 38
+    plot_bottom = 28
+    plot_width = 275
+    plot_height = 94
+    max_value = max(
+        float(value / Decimal("1000000000"))
+        for row in plottable
+        for value in (row["gross"], row["net"])
+        if value is not None
+    )
+    if max_value <= 0:
+        return None
+
+    drawing = Drawing(width, height)
+    drawing.add(
+        String(
+            0,
+            144,
+            "Monthly gross vs net allocation (₦bn)",
+            fontName="Helvetica-Bold",
+            fontSize=9,
+            fillColor=colors.HexColor(f"#{_DARK_TEAL}"),
+        )
+    )
+    drawing.add(
+        Rect(178, 141, 8, 8, fillColor=colors.HexColor(f"#{_LIGHT_AMBER}"), strokeColor=None)
+    )
+    drawing.add(String(189, 142, "Gross", fontSize=6.5, fillColor=colors.HexColor("#42514E")))
+    drawing.add(Rect(235, 141, 8, 8, fillColor=colors.HexColor(f"#{_TEAL}"), strokeColor=None))
+    drawing.add(String(246, 142, "Net", fontSize=6.5, fillColor=colors.HexColor("#42514E")))
+
+    for step in range(3):
+        fraction = step / 2
+        y = plot_bottom + plot_height * fraction
+        drawing.add(Line(plot_left, y, plot_left + plot_width, y, strokeColor=colors.HexColor("#E4ECEA")))
+        drawing.add(
+            String(
+                2,
+                y - 2,
+                f"{max_value * fraction:,.0f}",
+                fontSize=6,
+                fillColor=colors.HexColor("#65726F"),
+            )
+        )
+
+    group_width = plot_width / len(plottable)
+    bar_width = min(12, group_width * 0.24)
+    for index, row in enumerate(plottable):
+        center = plot_left + group_width * (index + 0.5)
+        gross_bn = float(row["gross"] / Decimal("1000000000")) if row["gross"] is not None else 0.0
+        net_bn = float(row["net"] / Decimal("1000000000")) if row["net"] is not None else 0.0
+        gross_height = plot_height * gross_bn / max_value
+        net_height = plot_height * net_bn / max_value
+        drawing.add(
+            Rect(
+                center - bar_width - 1,
+                plot_bottom,
+                bar_width,
+                gross_height,
+                fillColor=colors.HexColor(f"#{_LIGHT_AMBER}"),
+                strokeColor=colors.HexColor("#D7BE61"),
+                strokeWidth=0.3,
+            )
+        )
+        drawing.add(
+            Rect(
+                center + 1,
+                plot_bottom,
+                bar_width,
+                net_height,
+                fillColor=colors.HexColor(f"#{_TEAL}"),
+                strokeColor=colors.HexColor(f"#{_TEAL}"),
+                strokeWidth=0.3,
+            )
+        )
+        drawing.add(
+            String(
+                center - 8,
+                14,
+                _month_label(row["period"], compact=True),
+                fontSize=6,
+                fillColor=colors.HexColor("#42514E"),
+            )
+        )
+    drawing.add(Line(plot_left, plot_bottom, plot_left + plot_width, plot_bottom, strokeColor=colors.HexColor("#80908C")))
+    return drawing
+
+
+def _pdf_burden_chart(packet: dict[str, Any]) -> Drawing | None:
+    rows = [
+        row
+        for row in _decision_pack_month_analytics(packet)
+        if row["deduction_burden_pct"] is not None
+    ]
+    if not rows:
+        return None
+
+    width = 330
+    height = 156
+    plot_left = 36
+    plot_bottom = 28
+    plot_width = 278
+    plot_height = 94
+    max_value = max(float(row["deduction_burden_pct"]) for row in rows)
+    chart_max = max(10.0, max_value * 1.2)
+
+    drawing = Drawing(width, height)
+    drawing.add(
+        String(
+            0,
+            144,
+            "Deduction burden by published period (%)",
+            fontName="Helvetica-Bold",
+            fontSize=9,
+            fillColor=colors.HexColor(f"#{_DARK_TEAL}"),
+        )
+    )
+    for step in range(3):
+        fraction = step / 2
+        y = plot_bottom + plot_height * fraction
+        drawing.add(Line(plot_left, y, plot_left + plot_width, y, strokeColor=colors.HexColor("#E4ECEA")))
+        drawing.add(
+            String(
+                2,
+                y - 2,
+                f"{chart_max * fraction:,.0f}%",
+                fontSize=6,
+                fillColor=colors.HexColor("#65726F"),
+            )
+        )
+
+    group_width = plot_width / len(rows)
+    bar_width = min(20, group_width * 0.48)
+    for index, row in enumerate(rows):
+        center = plot_left + group_width * (index + 0.5)
+        value = float(row["deduction_burden_pct"])
+        bar_height = plot_height * value / chart_max
+        drawing.add(
+            Rect(
+                center - bar_width / 2,
+                plot_bottom,
+                bar_width,
+                bar_height,
+                fillColor=colors.HexColor(f"#{_TEAL}"),
+                strokeColor=colors.HexColor(f"#{_TEAL}"),
+                strokeWidth=0.3,
+            )
+        )
+        drawing.add(
+            String(
+                center - 9,
+                plot_bottom + bar_height + 4,
+                f"{value:.1f}%",
+                fontSize=5.8,
+                fillColor=colors.HexColor(f"#{_DARK_TEAL}"),
+            )
+        )
+        drawing.add(
+            String(
+                center - 8,
+                14,
+                _month_label(row["period"], compact=True),
+                fontSize=6,
+                fillColor=colors.HexColor("#42514E"),
+            )
+        )
+    drawing.add(Line(plot_left, plot_bottom, plot_left + plot_width, plot_bottom, strokeColor=colors.HexColor("#80908C")))
+    return drawing
+
+
+def _pdf_analytics_signal_table(packet: dict[str, Any], small_style) -> Table:
+    summary = _decision_pack_analytics_summary(packet)
+    peak = summary["peak"]
+    low = summary["low"]
+    rows = [
+        ["Signal", "Observed value", "Evidence basis"],
+        [
+            "Flow direction",
+            f"{_display(packet.get('momentum'))} · {_percent(packet.get('momentum_pct'))}",
+            "Gaia momentum metric over governed published periods; no forecast.",
+        ],
+        [
+            "Net retention",
+            _percent(packet.get("net_retention_pct")),
+            "Published net allocation ÷ published gross allocation.",
+        ],
+        [
+            "Deduction pressure",
+            _percent(packet.get("deduction_burden_pct")),
+            "Published deductions ÷ published gross allocation.",
+        ],
+        [
+            "Flow stability",
+            f"{_display(packet.get('volatility'))} · CV {_percent(packet.get('volatility_cv_pct'))}",
+            "Observed dispersion of published net-allocation values.",
+        ],
+        [
+            "Average published-period net",
+            _money(summary["average_net"]),
+            "Arithmetic mean of governed published net allocations only.",
+        ],
+        [
+            "Peak observed net",
+            f"{_month_label(peak['period'])} · {_money(peak['net'])}" if peak else "Not available",
+            "Highest net allocation in the current published evidence window.",
+        ],
+        [
+            "Lowest observed net",
+            f"{_month_label(low['period'])} · {_money(low['net'])}" if low else "Not available",
+            "Lowest net allocation in the current published evidence window.",
+        ],
+        [
+            "Evidence controls",
+            f"{summary['verified_count']} / {len(summary['rows'])} human-verified · {summary['source_count']} source fingerprints",
+            "Verification flags and distinct SHA-256 source fingerprints carried by this pack.",
+        ],
+    ]
+    table = Table(
+        [
+            [
+                Paragraph(f"<b>{escape(str(value))}</b>", small_style)
+                if row_index == 0
+                else Paragraph(_pdf_text(value), small_style)
+                for value in row
+            ]
+            for row_index, row in enumerate(rows)
+        ],
+        colWidths=[52 * mm, 69 * mm, 117 * mm],
+        repeatRows=1,
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(f"#{_TEAL}")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("BACKGROUND", (0, 1), (0, -1), colors.HexColor(f"#{_LIGHT_TEAL}")),
+                ("GRID", (0, 0), (-1, -1), 0.2, colors.HexColor("#D5E0DD")),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 4),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 4),
@@ -490,7 +1177,13 @@ def build_one_time_pdf(
             ["Sample value" if sample else "Package value", _money(amount_naira)],
         ]
         overview = Table(
-            [[Paragraph(f"<b>{escape(str(label))}</b>", body_style), Paragraph(_pdf_text(value), body_style)] for label, value in overview_rows],
+            [
+                [
+                    Paragraph(f"<b>{escape(str(label))}</b>", body_style),
+                    Paragraph(_pdf_text(value), body_style),
+                ]
+                for label, value in overview_rows
+            ],
             colWidths=[44 * mm, 88 * mm],
         )
         overview.setStyle(
@@ -527,6 +1220,45 @@ def build_one_time_pdf(
                     body_style,
                 ),
                 PageBreak(),
+                Paragraph("Fiscal analytics", section_style),
+                Paragraph(
+                    "The analytics below are deterministic transformations of governed published periods only. Missing months are not interpolated, and no forecast, peer ranking, debt conclusion or unpublished IGR estimate is introduced into this single-jurisdiction Decision Pack.",
+                    body_style,
+                ),
+                Spacer(1, 2.5 * mm),
+            ]
+        )
+
+        flow_chart = _pdf_flow_chart(packet)
+        burden_chart = _pdf_burden_chart(packet)
+        if flow_chart is not None and burden_chart is not None:
+            chart_table = Table(
+                [[flow_chart, burden_chart]],
+                colWidths=[119 * mm, 119 * mm],
+            )
+            chart_table.setStyle(
+                TableStyle(
+                    [
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ]
+                )
+            )
+            story.extend([chart_table, Spacer(1, 2.5 * mm)])
+
+        story.extend(
+            [
+                Paragraph("Observed analytical signals", section_style),
+                _pdf_analytics_signal_table(packet, small_style),
+                Spacer(1, 2.5 * mm),
+                Paragraph(
+                    "Scope discipline: this ₦50,000 Decision Pack analyzes one jurisdiction and its governed published fiscal flow. Cross-jurisdiction ranking belongs in the Multi-State Comparison Pack; debt analytics belong in the Due-Diligence Evidence Snapshot.",
+                    small_style,
+                ),
+                PageBreak(),
                 Paragraph("Monthly governed evidence", section_style),
             ]
         )
@@ -545,7 +1277,7 @@ def build_one_time_pdf(
             if isinstance(month, dict):
                 provenance_rows.append(
                     [
-                        _display(month.get("revenue_month")),
+                        _month_label(month.get("revenue_month")),
                         _display(month.get("source_organization")),
                         _display(month.get("source_sha256")),
                         "Yes" if month.get("human_verified") else "No",
@@ -553,7 +1285,12 @@ def build_one_time_pdf(
                 )
         provenance = Table(
             [
-                [Paragraph(f"<b>{escape(str(value))}</b>", small_style) if row_index == 0 else Paragraph(_pdf_text(value), small_style) for value in row]
+                [
+                    Paragraph(f"<b>{escape(str(value))}</b>", small_style)
+                    if row_index == 0
+                    else Paragraph(_pdf_text(value), small_style)
+                    for value in row
+                ]
                 for row_index, row in enumerate(provenance_rows)
             ],
             colWidths=[28 * mm, 82 * mm, 104 * mm, 26 * mm],
@@ -579,14 +1316,23 @@ def build_one_time_pdf(
             ["Sample reference" if sample else "Order ID", purchase_id],
             ["Product", product_code.replace("_", " ").title()],
             ["Illustrative package value" if sample else "Amount paid", _money(amount_naira)],
-            ["Payment", "Not applicable — demonstration sample" if sample else _display(completed_at)],
+            [
+                "Payment",
+                "Not applicable — demonstration sample" if sample else _display(completed_at),
+            ],
             ["Artifact schema", _display(artifact.get("schema"))],
             ["Evidence captured", _display(artifact.get("captured_at"))],
             ["Artifact SHA-256", artifact_sha256],
             ["Verification", verification_url or "Sample document — no paid receipt verification"],
         ]
         order_table = Table(
-            [[Paragraph(f"<b>{escape(label)}</b>", body_style), Paragraph(_pdf_text(value), body_style)] for label, value in order_rows],
+            [
+                [
+                    Paragraph(f"<b>{escape(label)}</b>", body_style),
+                    Paragraph(_pdf_text(value), body_style),
+                ]
+                for label, value in order_rows
+            ],
             colWidths=[54 * mm, 184 * mm],
         )
         order_table.setStyle(
@@ -606,7 +1352,10 @@ def build_one_time_pdf(
                 story.append(Paragraph(f"Record {index}", small_style))
                 flat = _flatten_mapping(row)
                 record_rows = [
-                    [Paragraph(f"<b>{escape(key)}</b>", small_style), Paragraph(_pdf_text(value), small_style)]
+                    [
+                        Paragraph(f"<b>{escape(key)}</b>", small_style),
+                        Paragraph(_pdf_text(value), small_style),
+                    ]
                     for key, value in flat.items()
                 ] or [[Paragraph("Record", small_style), Paragraph("", small_style)]]
                 table = Table(record_rows, colWidths=[64 * mm, 174 * mm])
