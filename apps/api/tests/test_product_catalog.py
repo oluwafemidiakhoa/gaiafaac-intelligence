@@ -1,3 +1,4 @@
+from gaiafaac_api.config import get_settings
 from gaiafaac_api.database.enums import PlanCode
 from gaiafaac_api.services.product_catalog import (
     PRODUCT_CATALOG,
@@ -27,7 +28,8 @@ def test_unapproved_transactional_and_enterprise_prices_are_not_invented() -> No
             assert product.price_naira is None
 
 
-def test_subscription_catalog_is_tied_to_canonical_plan_codes() -> None:
+def test_subscription_catalog_is_tied_to_canonical_plan_codes_and_naira_prices() -> None:
+    settings = get_settings()
     analyst = product_by_code("subscription_analyst")
     team = product_by_code("subscription_team")
     api = product_by_code("subscription_api")
@@ -35,6 +37,13 @@ def test_subscription_catalog_is_tied_to_canonical_plan_codes() -> None:
     assert analyst is not None and analyst.plan_code == PlanCode.ANALYST.value
     assert team is not None and team.plan_code == PlanCode.TEAM.value
     assert api is not None and api.plan_code == PlanCode.API.value
+
+    assert analyst.price_usd is None
+    assert team.price_usd is None
+    assert api.price_usd is None
+    assert analyst.price_naira == settings.paystack_price_analyst
+    assert team.price_naira == settings.paystack_price_team
+    assert api.price_naira == settings.paystack_price_api
 
 
 def test_public_catalog_is_serializable_configuration() -> None:
