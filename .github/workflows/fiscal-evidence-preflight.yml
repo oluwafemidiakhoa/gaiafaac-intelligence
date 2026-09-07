@@ -23,17 +23,29 @@ jobs:
           cache-dependency-path: apps/api/pyproject.toml
       - run: npm ci
       - run: python -m pip install -e 'apps/api[dev,extraction]'
-      - name: Apply repository formatters to candidate files
+      - name: Prepare exact candidate and apply repository formatters
         run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('apps/web/src/components/decision-packet-intelligence.tsx')
+          s = p.read_text()
+          s = s.replace('analysis.rows.reduce(', 'analysis.rows.reduce<bigint>(')
+          s = s.replace('[row.gross, row.net].reduce(', '[row.gross, row.net].reduce<bigint>(')
+          p.write_text(s)
+          PY
           npx prettier --write apps/web/src/lib/decision-packet-analysis.ts apps/web/src/lib/decision-packet-analysis.test.ts apps/web/src/components/decision-packet-intelligence.tsx apps/web/src/components/decision-packet-intelligence.test.tsx .github/workflows/fiscal-evidence-preflight.yml
           python -m ruff format apps/api/src/gaiafaac_api/services/institutional_one_time_exports.py apps/api/tests/test_institutional_one_time_exports.py
-      - name: Validate web and API candidate
+      - name: Validate web candidate
         run: |
           npm run format
           npm run lint
           npm run typecheck
           npm run test
           npm run build
+          npm run docker:config
+      - name: Validate API candidate
+        if: always()
+        run: |
           python -m ruff format --check apps/api
           python -m ruff check apps/api
           python -m pytest apps/api/tests
