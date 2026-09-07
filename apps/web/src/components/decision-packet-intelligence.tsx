@@ -136,10 +136,7 @@ function DeductionChart({ packet }: { packet: DecisionPacket }) {
         : null
     return { month, burden }
   })
-  const max = Math.max(
-    10,
-    ...series.map((row) => row.burden ?? 0),
-  )
+  const max = Math.max(10, ...series.map((row) => row.burden ?? 0))
 
   return (
     <Card>
@@ -222,23 +219,10 @@ export function DecisionPacketIntelligence({
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
             <Button asChild variant="outline" size="sm">
-              <Link href={`/watchlist?state=${packet.state_slug}`}>
-                Monitor jurisdiction
-              </Link>
+              <Link href="/watchlist">Monitor jurisdiction</Link>
             </Button>
             <Button asChild variant="outline" size="sm">
-              <a
-                href={`/api/customer-proxy/api/v1/published/samples/decision-pack/${packet.state_slug}.xlsx?year=${packet.year}`}
-              >
-                Sample Excel
-              </a>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <a
-                href={`/api/customer-proxy/api/v1/published/samples/decision-pack/${packet.state_slug}.pdf?year=${packet.year}`}
-              >
-                Sample PDF
-              </a>
+              <Link href="/projects">Get governed intelligence package</Link>
             </Button>
           </div>
         </div>
@@ -273,7 +257,11 @@ export function DecisionPacketIntelligence({
         />
         <SignalCard
           label="First-to-latest net change"
-          value={firstToLast === null ? 'Unavailable' : `${firstToLast >= 0 ? '+' : ''}${firstToLast.toFixed(2)}%`}
+          value={
+            firstToLast === null
+              ? 'Unavailable'
+              : `${firstToLast >= 0 ? '+' : ''}${firstToLast.toFixed(2)}%`
+          }
           detail="Direct comparison of the first and latest published net-allocation observations."
         />
       </div>
@@ -327,7 +315,8 @@ export function DecisionPacketIntelligence({
       </Card>
 
       <p className="text-muted-foreground text-xs leading-5">
-        Current published window: {first ? formatDate(first.revenue_month) : 'Unavailable'}
+        Current published window:{' '}
+        {first ? formatDate(first.revenue_month) : 'Unavailable'}
         {' → '}
         {last ? formatDate(last.revenue_month) : 'Unavailable'}. Peer ranking,
         debt conclusions and unpublished IGR estimates are intentionally outside
