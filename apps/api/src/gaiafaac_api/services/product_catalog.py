@@ -38,7 +38,6 @@ def _subscription_product(plan_code: PlanCode, description: str) -> CommercialPr
         billing_mode=ProductBillingMode.SUBSCRIPTION,
         description=description,
         plan_code=plan_code.value,
-        price_usd=entitlement.price_usd_monthly,
     )
 
 
@@ -49,7 +48,7 @@ PRODUCT_CATALOG: tuple[CommercialProduct, ...] = (
         billing_mode=ProductBillingMode.USAGE,
         description="Latest public governed evidence and verification surfaces.",
         plan_code=PlanCode.FREE.value,
-        price_usd=0,
+        price_naira=0,
     ),
     _subscription_product(
         PlanCode.ANALYST,
@@ -112,17 +111,27 @@ PRODUCT_CATALOG: tuple[CommercialProduct, ...] = (
 
 
 def _configured_product(product: CommercialProduct) -> CommercialProduct:
-    if product.billing_mode != ProductBillingMode.ONE_TIME:
-        return product
     settings = get_settings()
-    prices = {
-        "decision_pack": settings.paystack_price_decision_pack,
-        "multi_state_comparison_pack": settings.paystack_price_multi_state_comparison_pack,
-        "historical_evidence_export": settings.paystack_price_historical_evidence_export,
-        "due_diligence_snapshot": settings.paystack_price_due_diligence_snapshot,
-    }
-    configured_price = prices.get(product.code, 0)
-    return replace(product, price_naira=configured_price or None)
+    if product.billing_mode == ProductBillingMode.SUBSCRIPTION:
+        prices = {
+            PlanCode.ANALYST.value: settings.paystack_price_analyst,
+            PlanCode.TEAM.value: settings.paystack_price_team,
+            PlanCode.API.value: settings.paystack_price_api,
+        }
+        configured_price = prices.get(product.plan_code or "")
+        return replace(product, price_usd=None, price_naira=configured_price)
+
+    if product.billing_mode == ProductBillingMode.ONE_TIME:
+        prices = {
+            "decision_pack": settings.paystack_price_decision_pack,
+            "multi_state_comparison_pack": settings.paystack_price_multi_state_comparison_pack,
+            "historical_evidence_export": settings.paystack_price_historical_evidence_export,
+            "due_diligence_snapshot": settings.paystack_price_due_diligence_snapshot,
+        }
+        configured_price = prices.get(product.code, 0)
+        return replace(product, price_usd=None, price_naira=configured_price or None)
+
+    return product
 
 
 def product_by_code(code: str) -> CommercialProduct | None:
@@ -132,5 +141,5 @@ def product_by_code(code: str) -> CommercialProduct | None:
 
 
 def public_product_catalog() -> list[dict]:
-    """Return only approved/configured prices; zero-valued one-time prices stay unavailable."""
+    """Return approved runtime prices; unavailable one-time prices remain null."""
     return [_configured_product(product).public_dict() for product in PRODUCT_CATALOG]
