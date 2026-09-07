@@ -98,7 +98,9 @@ def _rebuild_visible_analytics_charts(body: bytes) -> bytes:
     trend.series[0].graphicalProperties.line.solidFill = _AMBER
     trend.series[1].graphicalProperties.line.solidFill = _TEAL
     trend.legend.position = "b"
-    sheet.add_chart(trend, "J5")
+    # Keep the primary chart beside the signal table instead of beyond the visible
+    # worksheet area. Columns E:H are intentionally unused above the monthly table.
+    sheet.add_chart(trend, "E5")
 
     burden = BarChart()
     burden.type = "col"
@@ -119,7 +121,9 @@ def _rebuild_visible_analytics_charts(body: bytes) -> bytes:
     burden.series[0].graphicalProperties.solidFill = _TEAL
     burden.series[0].graphicalProperties.line.solidFill = _TEAL
     burden.legend = None
-    sheet.add_chart(burden, "J21")
+    # Put the second chart below the published-period table so users never need
+    # horizontal scrolling to discover it.
+    sheet.add_chart(burden, f"A{max(last_row + 5, 32)}")
     buffer = io.BytesIO()
     workbook.save(buffer)
     return buffer.getvalue()
