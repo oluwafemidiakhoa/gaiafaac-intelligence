@@ -300,6 +300,44 @@ export default function ProjectProductsPage() {
         ))}
       </div>
 
+      {selected === 'decision_pack' ? (
+        <Card className="border-primary/30 bg-primary/[0.025] mt-6">
+          <CardHeader>
+            <CardTitle>See the ₦50,000 Decision Pack before checkout</CardTitle>
+            <CardDescription>
+              Open a clearly marked FCT 2026 demonstration built through the
+              Decision Pack export path. A paid order is frozen to the
+              jurisdiction and evidence year you choose below.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <a
+                  href="/api/customer/published/samples/decision-pack/federal-capital-territory.pdf?year=2026"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FileText className="size-4" />
+                  FCT 2026 sample PDF
+                </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="/api/customer/published/samples/decision-pack/federal-capital-territory.xlsx?year=2026">
+                  <FileSpreadsheet className="size-4" />
+                  FCT 2026 sample Excel
+                </a>
+              </Button>
+            </div>
+            <p className="text-muted-foreground mt-3 text-xs leading-5">
+              The public sample is demonstration-marked. Paid fulfilled orders
+              also include the frozen JSON evidence payload and a verifiable
+              project receipt.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Define the evidence boundary</CardTitle>
