@@ -63,21 +63,25 @@ describe('DecisionPacketIntelligence', () => {
     render(<DecisionPacketIntelligence packet={packet} />)
 
     expect(
-      screen.getByRole('heading', { name: 'What the governed evidence says now' }),
+      screen.getByRole('heading', {
+        name: 'What the governed evidence says now',
+      }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Monthly gross vs net allocation')).toBeInTheDocument()
+    expect(
+      screen.getByText('Monthly gross vs net allocation'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Deduction pressure')).toBeInTheDocument()
     expect(screen.getByText('+20.00%')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Monitor jurisdiction' })).toHaveAttribute(
-      'href',
-      '/watchlist',
-    )
+    expect(
+      screen.getByRole('link', { name: 'Monitor jurisdiction' }),
+    ).toHaveAttribute('href', '/watchlist')
     expect(
       screen.getByRole('link', { name: 'Get governed intelligence package' }),
     ).toHaveAttribute('href', '/projects')
     expect(screen.getAllByText('Verify proof →')).toHaveLength(2)
-    expect(
-      screen.getAllByRole('link', { name: /Jan|Feb/ })[0],
-    ).toHaveAttribute('href', '/fiscal-proof/lagos/2026-01-01')
+    expect(screen.getAllByRole('link', { name: /Jan|Feb/ })[0]).toHaveAttribute(
+      'href',
+      '/fiscal-proof/lagos/2026-01-01',
+    )
   })
 })
