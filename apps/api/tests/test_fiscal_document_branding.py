@@ -208,7 +208,9 @@ def test_decision_pack_excel_adds_source_linked_fiscal_analytics():
     )
 
     workbook = load_workbook(io.BytesIO(body), data_only=True)
-    assert workbook.sheetnames[:3] == ["Document Control", "Fiscal Analytics", "Summary"]
+    # Governance remains first, while the executive summary intentionally precedes
+    # the deeper analytics sheet for a cleaner customer-review flow.
+    assert workbook.sheetnames[:3] == ["Document Control", "Summary", "Fiscal Analytics"]
     analytics = workbook["Fiscal Analytics"]
     values = [
         cell.value
