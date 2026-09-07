@@ -159,7 +159,9 @@ function formatNaira(value: number | null | undefined) {
 
 export default async function PricingPage() {
   const catalog = await loadCommercialProducts()
-  const productByCode = new Map(catalog.map((product) => [product.code, product]))
+  const productByCode = new Map(
+    catalog.map((product) => [product.code, product]),
+  )
   const oneTimeProducts = oneTimeProductOrder
     .map((code) => productByCode.get(code))
     .filter((product): product is CommercialProduct => Boolean(product))
@@ -224,7 +226,10 @@ export default async function PricingPage() {
         <section aria-labelledby="subscription-access">
           <div className="mb-7 max-w-3xl">
             <p className="gaia-kicker">Subscription access</p>
-            <h2 id="subscription-access" className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+            <h2
+              id="subscription-access"
+              className="mt-2 text-3xl font-semibold tracking-[-0.04em]"
+            >
               Ongoing research, collaboration and API access
             </h2>
             <p className="text-muted-foreground mt-3 leading-7">
@@ -303,7 +308,10 @@ export default async function PricingPage() {
           <div className="flex flex-wrap items-end justify-between gap-5">
             <div className="max-w-3xl">
               <p className="gaia-kicker">One-time intelligence products</p>
-              <h2 id="one-time-products" className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+              <h2
+                id="one-time-products"
+                className="mt-2 text-3xl font-semibold tracking-[-0.04em]"
+              >
                 Buy a governed result without starting a subscription
               </h2>
               <p className="text-muted-foreground mt-3 leading-7">
@@ -324,7 +332,9 @@ export default async function PricingPage() {
               <Card key={product.code} className="flex h-full flex-col">
                 <CardHeader>
                   <FileCheck2 className="text-primary size-5" />
-                  <CardTitle className="pt-3 text-xl">{product.label}</CardTitle>
+                  <CardTitle className="pt-3 text-xl">
+                    {product.label}
+                  </CardTitle>
                   <CardDescription>{product.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex h-full flex-col">
