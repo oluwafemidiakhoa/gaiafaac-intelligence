@@ -1,4 +1,10 @@
-import { ArrowRight, FileCheck2, GitCompareArrows, Search, ShieldCheck } from 'lucide-react'
+import {
+  ArrowRight,
+  FileCheck2,
+  GitCompareArrows,
+  Search,
+  ShieldCheck,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -17,19 +23,22 @@ const researchPaths = [
   {
     href: '/compare',
     title: 'Compare jurisdictions',
-    description: 'Examine differences between states using comparable published records.',
+    description:
+      'Examine differences between states using comparable published records.',
     icon: GitCompareArrows,
   },
   {
     href: '/sources',
     title: 'Verify the evidence',
-    description: 'Inspect original sources, reporting periods and document fingerprints.',
+    description:
+      'Inspect original sources, reporting periods and document fingerprints.',
     icon: ShieldCheck,
   },
   {
     href: '/decision-packets',
     title: 'Prepare a decision report',
-    description: 'Turn a jurisdiction investigation into an evidence-backed dossier.',
+    description:
+      'Turn a jurisdiction investigation into an evidence-backed dossier.',
     icon: FileCheck2,
   },
 ] as const
@@ -184,10 +193,13 @@ export default async function Home() {
 
       <section className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 px-5 py-14 lg:flex-row lg:items-center lg:px-8">
         <div>
-          <h2 className="text-2xl font-semibold">Research for consequential decisions.</h2>
+          <h2 className="text-2xl font-semibold">
+            Research for consequential decisions.
+          </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Need a reviewed, source-backed institutional dossier or ongoing monitoring?
-            Agree on scope and evidence coverage before commissioning work.
+            Need a reviewed, source-backed institutional dossier or ongoing
+            monitoring? Agree on scope and evidence coverage before
+            commissioning work.
           </p>
         </div>
         <Link
