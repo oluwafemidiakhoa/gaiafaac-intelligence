@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { DataUnavailable } from '@/components/data-unavailable'
 import { GaiaTerminalSearch } from '@/components/gaia-terminal-search'
 import { StatusPill } from '@/components/status-pill'
+import { TerminalResearchDesks } from '@/components/terminal-research-desks'
 import {
   Card,
   CardContent,
@@ -170,6 +171,7 @@ export default async function GaiaTerminalPage() {
       </section>
 
       <div className="gaia-shell gaia-section">
+        <TerminalResearchDesks />
         {data ? (
           <>
             <section className="grid gap-4 md:grid-cols-3">
