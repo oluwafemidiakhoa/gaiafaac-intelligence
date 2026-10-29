@@ -32,4 +32,26 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
           ALERT_TO: ${{ secrets.ALERT_TO }}
-        run: gaiafaac-national collect --months-back 24
+        run: |
+          set -o pipefail
+          gaiafaac-national collect --months-back 24 | tee national-collection.log
+      - name: Report national collection outcomes
+        if: always()
+        run: |
+          if [ ! -f national-collection.log ]; then
+            echo "National collection did not produce an outcome log." >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::National collection did not produce an outcome log; inspect the collector failure."
+            exit 0
+          fi
+          summary=$(grep 'National collection complete:' national-collection.log | tail -n 1 || true)
+          if [ -z "$summary" ]; then
+            echo "National collector outcome summary was not emitted." >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::National collection completed without a parseable outcome summary."
+            exit 0
+          fi
+          echo "### National source collection outcomes" >> "$GITHUB_STEP_SUMMARY"
+          echo "$summary" >> "$GITHUB_STEP_SUMMARY"
+          quarantined=$(printf '%s' "$summary" | sed -n 's/.*quarantined=\\([0-9][0-9]*\\).*/\\1/p')
+          if [ -n "$quarantined" ] && [ "$quarantined" -gt 0 ]; then
+            echo "::warning::National collector quarantined $quarantined source candidates. Workflow success does not imply complete evidence coverage; review quarantine reasons."
+          fi
