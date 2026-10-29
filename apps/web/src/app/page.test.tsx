@@ -45,10 +45,9 @@ describe('Home', () => {
     expect(
       screen.getByRole('link', { name: /Request institutional access/i }),
     ).toHaveAttribute('href', '/pilot')
-    expect(screen.getByRole('combobox', { name: /Jurisdiction/i })).toHaveAttribute(
-      'name',
-      'q',
-    )
+    expect(
+      screen.getByRole('combobox', { name: /Jurisdiction/i }),
+    ).toHaveAttribute('name', 'q')
     expect(screen.getByRole('button', { name: /Investigate/i })).toBeVisible()
     expect(
       screen.getByRole('link', { name: /Compare jurisdictions/i }),
@@ -83,7 +82,9 @@ describe('Home', () => {
     expect(screen.getByText('Published jurisdiction coverage')).toBeVisible()
     expect(screen.getByText('Published periods')).toBeVisible()
     expect(screen.getByText('2')).toBeVisible()
-    expect(screen.getByText(/Coverage reflects published evidence/i)).toBeVisible()
+    expect(
+      screen.getByText(/Coverage reflects published evidence/i),
+    ).toBeVisible()
     expect(screen.queryByText('₦0.00')).not.toBeInTheDocument()
   })
 
