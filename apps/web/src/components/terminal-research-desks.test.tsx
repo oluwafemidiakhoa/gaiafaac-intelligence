@@ -6,14 +6,14 @@ import { TerminalResearchDesks } from './terminal-research-desks'
 describe('TerminalResearchDesks', () => {
   it('links to governed research pages', () => {
     render(<TerminalResearchDesks />)
-    expect(screen.getByText('Explore trends')).toHaveAttribute('href', '/insights')
-    expect(screen.getByText('Your fiscal watchlist')).toHaveAttribute(
-      'href',
-      '/watchlist',
-    )
-    expect(screen.getByText('Audit source registry')).toHaveAttribute(
-      'href',
-      '/sources',
-    )
+    const links = [
+      ['Explore trends', '/insights'],
+      ['Your fiscal watchlist', '/watchlist'],
+      ['Audit source registry', '/sources'],
+    ]
+    for (const [label, href] of links) {
+      const link = screen.getByRole('link', { name: label })
+      expect(link).toHaveAttribute('href', href)
+    }
   })
 })
