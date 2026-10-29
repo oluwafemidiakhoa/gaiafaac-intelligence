@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card'
 import { getDecisionPacket } from '@/lib/decision-packet-api'
 import { formatNaira } from '@/lib/format'
+import { getPublishedOverview } from '@/lib/published-api'
 
 export const metadata: Metadata = {
   title: 'Credit Committee Evidence Pack',
@@ -32,7 +33,11 @@ function pct(value: number | null) {
 export default async function CreditCommitteePackPage({
   searchParams,
 }: PageProps) {
-  const params = await searchParams
+  const [params, overviewResult] = await Promise.all([
+    searchParams,
+    getPublishedOverview(),
+  ])
+  const availableStates = overviewResult.data?.allocations ?? []
   const currentYear = new Date().getUTCFullYear()
   const yearValue = Number(params.year ?? currentYear)
   const year = Number.isInteger(yearValue) ? yearValue : currentYear
@@ -45,16 +50,16 @@ export default async function CreditCommitteePackPage({
       <PageHeader
         eyebrow="Institutional underwriting workflow"
         title="Credit Committee Evidence Pack"
-        description="A reusable evidence dossier for underwriting, investment review and diligence. It reports governed fiscal evidence and explicit gaps; it does not issue a credit rating, default probability or solvency opinion."
+        description="Explore a real jurisdiction's governed fiscal evidence before commissioning institutional diligence. See what can be verified, where the evidence is incomplete, and what needs analyst review. No credit rating or default probability is issued."
       />
 
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Build an evidence pack</CardTitle>
           <CardDescription>
-            Enter a Gaia state slug and evidence year. The pack uses the same
-            published Decision Packet source of truth rather than duplicating
-            calculations.
+            Choose a jurisdiction from the currently published ledger and an
+            evidence year. The pack uses existing verified records, not a
+            synthetic demo or separate calculation.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -63,14 +68,23 @@ export default async function CreditCommitteePackPage({
             className="grid gap-4 sm:grid-cols-[1fr_9rem_auto]"
           >
             <label className="grid gap-2 text-sm font-medium">
-              State slug
-              <input
+              Jurisdiction
+              <select
                 name="state"
                 defaultValue={state}
-                placeholder="lagos"
                 className="border-input bg-background h-11 rounded-md border px-3 text-sm"
                 required
-              />
+              >
+                <option value="">Select a published jurisdiction</option>
+                {availableStates
+                  .slice()
+                  .sort((a, b) => a.state_name.localeCompare(b.state_name))
+                  .map((item) => (
+                    <option key={item.state_code} value={item.state_slug}>
+                      {item.state_name}
+                    </option>
+                  ))}
+              </select>
             </label>
             <label className="grid gap-2 text-sm font-medium">
               Year
@@ -91,6 +105,35 @@ export default async function CreditCommitteePackPage({
           </form>
         </CardContent>
       </Card>
+
+      <div className="border-border bg-muted/20 mt-6 rounded-xl border p-5">
+        <p className="font-semibold">
+          Need a source-backed diligence deliverable?
+        </p>
+        <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
+          Explore the evidence above without committing to a purchase.
+          Institutional support can include an agreed review scope, documented
+          gaps, revision monitoring and a decision-ready evidence packet. Scope,
+          turnaround and price are confirmed before work begins; no rating or
+          investment decision is implied.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button asChild>
+            <Link href="/pilot">Request an institutional pilot</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/pricing">Compare access plans</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/sources">Inspect original sources</Link>
+          </Button>
+        </div>
+        {overviewResult.data === null ? (
+          <p className="text-muted-foreground mt-3 text-xs">
+            Published jurisdiction selection is temporarily unavailable.
+          </p>
+        ) : null}
+      </div>
 
       {state && !packet ? (
         <div className="mt-8">
