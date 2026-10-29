@@ -159,6 +159,13 @@ def main() -> None:
                 f"duplicates={len(summary.duplicates)}, "
                 f"errors={len(summary.errors)}."
             )
+            reason_counts: dict[str, int] = {}
+            for item in summary.quarantined:
+                reason = item.get("reason", "UNSPECIFIED")
+                reason_counts[reason] = reason_counts.get(reason, 0) + 1
+            for reason, count in sorted(reason_counts.items()):
+                print(f"National quarantine reason: code={reason!r}, count={count}")
+
         elif args.command == "repair-autopilot":
             from gaiafaac_api.pipeline.national_evidence_hardened import (
                 repair_unpublished_national_evidence,
