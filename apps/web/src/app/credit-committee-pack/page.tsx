@@ -68,7 +68,7 @@ export default async function CreditCommitteePackPage({
             className="grid gap-4 sm:grid-cols-[1fr_9rem_auto]"
           >
             <label className="grid gap-2 text-sm font-medium">
-              State slug
+              Jurisdiction
               <select
                 name="state"
                 defaultValue={state}
@@ -107,13 +107,15 @@ export default async function CreditCommitteePackPage({
       </Card>
 
       <div className="border-border bg-muted/20 mt-6 rounded-xl border p-5">
-        <p className="font-semibold">Need a source-backed diligence deliverable?</p>
+        <p className="font-semibold">
+          Need a source-backed diligence deliverable?
+        </p>
         <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
-          Explore the evidence above without committing to a purchase. Institutional
-          support can include an agreed review scope, documented gaps, revision
-          monitoring and a decision-ready evidence packet. Scope, turnaround and
-          price are confirmed before work begins; no rating or investment decision
-          is implied.
+          Explore the evidence above without committing to a purchase.
+          Institutional support can include an agreed review scope, documented
+          gaps, revision monitoring and a decision-ready evidence packet. Scope,
+          turnaround and price are confirmed before work begins; no rating or
+          investment decision is implied.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button asChild>
