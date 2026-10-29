@@ -86,7 +86,9 @@ export default async function Home() {
           </div>
           <div className="mt-12 grid gap-4 rounded-xl border border-white/15 bg-white/5 p-5 sm:grid-cols-3">
             <div>
-              <p className="text-xs text-emerald-50/60">Published jurisdiction coverage</p>
+              <p className="text-xs text-emerald-50/60">
+                Published jurisdiction coverage
+              </p>
               <p className="mt-2 text-2xl font-semibold tabular-nums">
                 {overview
                   ? `${overview.covered_states}/${overview.expected_states}`
@@ -100,9 +102,12 @@ export default async function Home() {
               </p>
             </div>
             <div>
-              <p className="text-xs text-emerald-50/60">Latest available reporting period</p>
+              <p className="text-xs text-emerald-50/60">
+                Latest available reporting period
+              </p>
               <p className="mt-2 text-lg font-semibold">
-                {overview?.period.reporting_label ?? 'Awaiting verified publication'}
+                {overview?.period.reporting_label ??
+                  'Awaiting verified publication'}
               </p>
             </div>
           </div>
