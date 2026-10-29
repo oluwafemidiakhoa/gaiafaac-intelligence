@@ -350,7 +350,7 @@ def main() -> None:
                 session, months_back=args.months_back, downloader=http_download
             )
             settings = get_settings()
-            queue_url = "https://gaiafaac-api-production.up.railway.app/review/pending"
+            queue_url = "https://gaiafaac-web.up.railway.app/review"
             for month in summary.queued:
                 send_review_alert(
                     settings,
@@ -358,6 +358,40 @@ def main() -> None:
                     records_extracted=month.records_extracted,
                     blocking_finding_count=month.blocking_finding_count,
                     queue_url=queue_url,
+                )
+            from gaiafaac_api.database.models import ReportingPeriod
+
+            pending_months = []
+            published_months = []
+            missing_months = []
+            for revenue in summary.skipped:
+                periods = session.scalars(
+                    select(ReportingPeriod).where(
+                        ReportingPeriod.revenue_month == revenue,
+                        ReportingPeriod.is_demo.is_(False),
+                    )
+                ).all()
+                if not periods:
+                    missing_months.append(revenue)
+                elif any(period.is_published for period in periods):
+                    published_months.append(revenue)
+                else:
+                    pending_months.append(revenue)
+            print(
+                "OAGF collection skip reasons: "
+                f"already_published={len(published_months)}, "
+                f"existing_unpublished={len(pending_months)}, "
+                f"source_not_found={len(missing_months)}."
+            )
+            if pending_months:
+                print(
+                    "OAGF review backlog months: "
+                    + ", ".join(month.isoformat() for month in sorted(pending_months))
+                )
+            if missing_months:
+                print(
+                    "OAGF source discovery gaps: "
+                    + ", ".join(month.isoformat() for month in sorted(missing_months))
                 )
             print(
                 f"Collection complete: checked={len(summary.checked)}, "
