@@ -29,7 +29,9 @@ export function FiscalResearchWorkspace({
 }) {
   const [windowSize, setWindowSize] = useState<WindowSize>('12')
   const [first, setFirst] = useState(overview.allocations[0]?.state_code ?? '')
-  const [second, setSecond] = useState(overview.allocations[1]?.state_code ?? '')
+  const [second, setSecond] = useState(
+    overview.allocations[1]?.state_code ?? '',
+  )
 
   const periods = useMemo(() => {
     const chronological = [...(analytics?.national_trend ?? [])].sort((a, b) =>
@@ -54,7 +56,7 @@ export function FiscalResearchWorkspace({
   return (
     <section
       aria-labelledby="fiscal-research-heading"
-      className="mb-10 rounded-2xl border border-emerald-900/20 bg-white p-5 text-slate-950 shadow-sm dark:border-white/10 dark:bg-[#08231d] dark:text-white sm:p-7"
+      className="mb-10 rounded-2xl border border-emerald-900/20 bg-white p-5 text-slate-950 shadow-sm sm:p-7 dark:border-white/10 dark:bg-[#08231d] dark:text-white"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -129,7 +131,9 @@ export function FiscalResearchWorkspace({
                       title={`${period.reporting_label}: ${money(period.total_net)}`}
                       aria-label={`${period.reporting_label}: ${money(period.total_net)}`}
                       className="w-full rounded-t bg-emerald-600"
-                      style={{ height: `${Math.max(4, (safe / maximum) * 165)}px` }}
+                      style={{
+                        height: `${Math.max(4, (safe / maximum) * 165)}px`,
+                      }}
                     />
                     <span className="text-center text-[10px] text-slate-600 dark:text-slate-300">
                       {period.revenue_month.slice(0, 7)}
@@ -188,7 +192,9 @@ export function FiscalResearchWorkspace({
               key={i}
               className="rounded-xl border border-slate-200 p-4 dark:border-white/15"
             >
-              <p className="font-semibold">{item?.state_name ?? 'Unavailable'}</p>
+              <p className="font-semibold">
+                {item?.state_name ?? 'Unavailable'}
+              </p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Net allocation
               </p>
