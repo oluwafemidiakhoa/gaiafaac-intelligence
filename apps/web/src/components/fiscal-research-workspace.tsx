@@ -61,7 +61,10 @@ export function FiscalResearchWorkspace({
           <p className="text-xs font-semibold tracking-widest text-emerald-700 uppercase dark:text-emerald-300">
             Published-data workspace
           </p>
-          <h2 id="fiscal-research-heading" className="mt-2 text-2xl font-semibold">
+          <h2
+            id="fiscal-research-heading"
+            className="mt-2 text-2xl font-semibold"
+          >
             Explore fiscal evidence
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -69,7 +72,10 @@ export function FiscalResearchWorkspace({
             are sourced from published records, not forecasts.
           </p>
         </div>
-        <Link href="/sources" className="text-sm font-semibold text-emerald-700 underline dark:text-emerald-300">
+        <Link
+          href="/sources"
+          className="text-sm font-semibold text-emerald-700 underline dark:text-emerald-300"
+        >
           Inspect original sources
         </Link>
       </div>
@@ -77,12 +83,18 @@ export function FiscalResearchWorkspace({
       <div className="mt-8 border-t border-slate-200 pt-6 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-semibold">National net allocations by revenue month</h3>
+            <h3 className="font-semibold">
+              National net allocations by revenue month
+            </h3>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Published reporting periods only; units in Nigerian naira
             </p>
           </div>
-          <div role="group" aria-label="Trend time window" className="flex gap-2">
+          <div
+            role="group"
+            aria-label="Trend time window"
+            className="flex gap-2"
+          >
             {(['6', '12', 'all'] as const).map((value) => (
               <button
                 key={value}
@@ -98,12 +110,18 @@ export function FiscalResearchWorkspace({
         </div>
         {periods.length ? (
           <div className="mt-6 overflow-x-auto">
-            <div className="flex min-w-[460px] items-end gap-2" style={{ height: 240 }}>
+            <div
+              className="flex min-w-[460px] items-end gap-2"
+              style={{ height: 240 }}
+            >
               {periods.map((period) => {
                 const amount = Number(period.total_net)
                 const safe = Number.isFinite(amount) && amount >= 0 ? amount : 0
                 return (
-                  <div key={period.revenue_month} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  <div
+                    key={period.revenue_month}
+                    className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                  >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400">
                       {money(period.total_net).replace(/\.00$/, '')}
                     </span>
@@ -130,9 +148,12 @@ export function FiscalResearchWorkspace({
       </div>
 
       <div className="mt-8 border-t border-slate-200 pt-6 dark:border-white/10">
-        <h3 className="font-semibold">Compare latest published jurisdictions</h3>
+        <h3 className="font-semibold">
+          Compare latest published jurisdictions
+        </h3>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {overview.period.reporting_label} · Latest ledger only, not a historical state trend
+          {overview.period.reporting_label} · Latest ledger only, not a
+          historical state trend
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[first, second].map((current, i) => (
@@ -141,7 +162,9 @@ export function FiscalResearchWorkspace({
               <select
                 value={current}
                 onChange={(event) =>
-                  i === 0 ? setFirst(event.target.value) : setSecond(event.target.value)
+                  i === 0
+                    ? setFirst(event.target.value)
+                    : setSecond(event.target.value)
                 }
                 className="rounded-lg border border-slate-300 bg-white p-3 text-slate-950"
               >
@@ -161,7 +184,10 @@ export function FiscalResearchWorkspace({
         ) : null}
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {selection.map((item, i) => (
-            <div key={i} className="rounded-xl border border-slate-200 p-4 dark:border-white/15">
+            <div
+              key={i}
+              className="rounded-xl border border-slate-200 p-4 dark:border-white/15"
+            >
               <p className="font-semibold">{item?.state_name ?? 'Unavailable'}</p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Net allocation
@@ -170,7 +196,10 @@ export function FiscalResearchWorkspace({
                 {money(item?.net_allocation ?? null)}
               </p>
               {item ? (
-                <Link href={`/states/${item.state_slug}`} className="mt-3 inline-block text-sm text-emerald-700 underline dark:text-emerald-300">
+                <Link
+                  href={`/states/${item.state_slug}`}
+                  className="mt-3 inline-block text-sm text-emerald-700 underline dark:text-emerald-300"
+                >
                   Open jurisdiction evidence
                 </Link>
               ) : null}
