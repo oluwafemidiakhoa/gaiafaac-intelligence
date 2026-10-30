@@ -24,10 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Show exact Prettier correction for terminal workspace
-        run: |
-          npx prettier --write apps/web/src/components/fiscal-research-workspace.tsx
-          git diff -- apps/web/src/components/fiscal-research-workspace.tsx
       - run: npm run format
       - run: npm run lint
       - run: npm run typecheck
