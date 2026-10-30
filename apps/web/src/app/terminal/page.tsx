@@ -11,6 +11,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { DataUnavailable } from '@/components/data-unavailable'
+import { FiscalResearchWorkspace } from '@/components/fiscal-research-workspace'
 import { GaiaTerminalSearch } from '@/components/gaia-terminal-search'
 import { StatusPill } from '@/components/status-pill'
 import { TerminalResearchDesks } from '@/components/terminal-research-desks'
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { getEvidenceNetworkStatus } from '@/lib/evidence-network-api'
+import { getPublishedAnalytics } from '@/lib/analytics-api'
 import { formatDate, formatNaira } from '@/lib/format'
 import { getPublishedOverview } from '@/lib/published-api'
 
@@ -72,7 +74,10 @@ export default async function GaiaTerminalPage({
   searchParams: Promise<{ q?: string }>
 }) {
   const params = await searchParams
-  const overview = await getPublishedOverview()
+  const [overview, analytics] = await Promise.all([
+    getPublishedOverview(),
+    getPublishedAnalytics(),
+  ])
   const data = overview.data
   const evidenceNetwork = await getEvidenceNetworkStatus({
     oagfLive: data !== null,
@@ -176,6 +181,9 @@ export default async function GaiaTerminalPage({
       </section>
 
       <div className="gaia-shell gaia-section">
+        {data ? (
+          <FiscalResearchWorkspace overview={data} analytics={analytics.data} />
+        ) : null}
         <TerminalResearchDesks />
         {data ? (
           <>
