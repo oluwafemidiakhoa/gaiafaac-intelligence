@@ -15,7 +15,7 @@ vi.mock('@/lib/published-api', () => ({
 }))
 
 describe('Home', () => {
-  it('presents the premium governed-intelligence proposition when data is available', async () => {
+  it('provides a focused research entry point with real jurisdictions', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
       error: null,
@@ -36,32 +36,31 @@ describe('Home', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /Know what changed\. Know what evidence supports it\. Preserve what your institution knew when it made the decision\./i,
+        name: /Understand public finances\. Verify every number\./i,
       }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Open Fiscal Terminal/i }),
+      screen.getByRole('link', { name: /Open research terminal/i }),
     ).toHaveAttribute('href', '/terminal')
     expect(
-      screen.getByRole('link', { name: /Request Institutional Access/i }),
+      screen.getByRole('link', { name: /Request institutional access/i }),
     ).toHaveAttribute('href', '/pilot')
     expect(
-      screen.getByRole('heading', {
-        name: /Built for expensive decisions/i,
-      }),
-    ).toBeInTheDocument()
+      screen.getByRole('combobox', { name: /Jurisdiction/i }),
+    ).toHaveAttribute('name', 'q')
+    expect(screen.getByRole('button', { name: /Investigate/i })).toBeVisible()
     expect(
-      screen.getByRole('heading', {
-        name: /From government PDFs to decision infrastructure/i,
-      }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Evidence Fabric')).toBeVisible()
-    expect(screen.getByText('Fiscal Intelligence')).toBeVisible()
-    expect(screen.getByText('Decision Rails')).toBeVisible()
-    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
+      screen.getByRole('link', { name: /Compare jurisdictions/i }),
+    ).toHaveAttribute('href', '/compare')
+    expect(
+      screen.getByRole('link', { name: /Verify the evidence/i }),
+    ).toHaveAttribute('href', '/sources')
+    expect(
+      screen.getByRole('link', { name: /Prepare a decision report/i }),
+    ).toHaveAttribute('href', '/decision-packets')
   })
 
-  it('renders governed metrics and institutional surfaces', async () => {
+  it('shows the published coverage and period without inventing totals', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: publishedOverview,
       error: null,
@@ -80,15 +79,16 @@ describe('Home', () => {
 
     render(await Home())
 
-    expect(screen.getByText('Published capital signal')).toBeVisible()
-    expect(screen.getAllByText('Jurisdiction coverage')).toHaveLength(2)
+    expect(screen.getByText('Published jurisdiction coverage')).toBeVisible()
     expect(screen.getByText('Published periods')).toBeVisible()
-    expect(screen.getByText('Banks & lenders')).toBeVisible()
-    expect(screen.getByText('Investors & DFIs')).toBeVisible()
-    expect(screen.getByText('Auditors & governments')).toBeVisible()
+    expect(screen.getByText('2')).toBeVisible()
+    expect(
+      screen.getByText(/Coverage reflects published evidence/i),
+    ).toBeVisible()
+    expect(screen.queryByText('₦0.00')).not.toBeInTheDocument()
   })
 
-  it('fails closed without inventing fiscal totals', async () => {
+  it('fails closed when published evidence is unavailable', async () => {
     vi.mocked(getPublishedOverview).mockResolvedValue({
       data: null,
       error: 'No published FAAC data is available yet.',
@@ -101,12 +101,10 @@ describe('Home', () => {
     render(await Home())
 
     expect(
-      screen.getByText(/Research workspace unavailable/i),
+      screen.getByText(/Published jurisdiction data is currently unavailable/i),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(/does not synthesize replacement values/i),
-    ).toBeInTheDocument()
-    expect(screen.queryByText('₦5,400.00')).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable')).toHaveLength(2)
     expect(screen.queryByText('₦0.00')).not.toBeInTheDocument()
   })
 })

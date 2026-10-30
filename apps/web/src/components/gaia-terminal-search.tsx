@@ -158,12 +158,14 @@ export function GaiaTerminalSearch({
   jurisdictions,
   periodLabel,
   compact = false,
+  initialQuery = '',
 }: {
   jurisdictions: Jurisdiction[]
   periodLabel: string | null
   compact?: boolean
+  initialQuery?: string
 }) {
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(initialQuery)
   const inputRef = useRef<HTMLInputElement>(null)
   const queryTokens = useMemo(() => tokens(query), [query])
 

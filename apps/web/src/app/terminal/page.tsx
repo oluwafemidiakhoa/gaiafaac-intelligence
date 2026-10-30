@@ -66,7 +66,12 @@ function compactNaira(value: string | null) {
   return formatNaira(value)
 }
 
-export default async function GaiaTerminalPage() {
+export default async function GaiaTerminalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
+  const params = await searchParams
   const overview = await getPublishedOverview()
   const data = overview.data
   const evidenceNetwork = await getEvidenceNetworkStatus({
@@ -226,6 +231,7 @@ export default async function GaiaTerminalPage() {
                 <GaiaTerminalSearch
                   jurisdictions={data.allocations}
                   periodLabel={data.period.reporting_label}
+                  initialQuery={params.q?.slice(0, 120) ?? ''}
                 />
               </div>
             </section>

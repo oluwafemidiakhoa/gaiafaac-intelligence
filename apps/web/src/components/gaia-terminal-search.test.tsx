@@ -36,6 +36,20 @@ describe('GaiaTerminalSearch', () => {
     expect(screen.queryByText('Abia')).not.toBeInTheDocument()
   })
 
+  it('preselects the homepage jurisdiction through the terminal query', () => {
+    render(
+      <GaiaTerminalSearch
+        jurisdictions={publishedOverview.allocations}
+        periodLabel={publishedOverview.period.reporting_label}
+        initialQuery="Lagos"
+      />,
+    )
+
+    expect(screen.getByLabelText('Search Gaia Terminal')).toHaveValue('Lagos')
+    expect(screen.getByText('Lagos')).toBeVisible()
+    expect(screen.queryByText('Abia')).not.toBeInTheDocument()
+  })
+
   it('finds institutional workflows by intent keywords', () => {
     render(
       <GaiaTerminalSearch
